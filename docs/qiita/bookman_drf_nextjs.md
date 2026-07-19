@@ -31,7 +31,7 @@ https://jestjs.io/
 
 - 記事管理原稿: https://github.com/duri0214/portfolio/blob/master/docs/qiita/bookman_drf_nextjs.md
 
-この記事では、現在のフロントエンド構成を上段にまとめる。バックエンド側は次回以降に改修するため、今回は書き直さず、記事の最下段に旧メモとして残す。
+この記事では、現在のフロントエンド構成を上段にまとめ、後段に `bookman_backend` の更新後の状態をまとめる。最初に作ったときの長いメモは、現行の手順と混ざらないように整理し直す。
 
 ```mermaid
 graph TB
@@ -692,7 +692,7 @@ Bookman はフロントエンドとバックエンドを別ターミナルで起
 
 ```console:console（ターミナル1: Django側サーバー起動）
 cd ../bookman_backend
-.\venv311\Scripts\Activate.ps1
+.\venv\Scripts\Activate.ps1
 python manage.py runserver 127.0.0.1:8000
 ```
 
@@ -729,293 +729,252 @@ npm audit
 
 ```console:console
 cd ../bookman_backend
-.\venv311\Scripts\Activate.ps1
+.\venv\Scripts\Activate.ps1
 python manage.py test
 ```
 
-## Backend part（次回以降の改修対象）
-以下は、最初に Bookman の Django REST Framework API を作ったときのメモ。バックエンドは次回以降に改修するため、今回は内容を大きく書き換えずに最下段へ移す。
+## Backend part
+バックエンド側は [duri0214/bookman_backend#1](https://github.com/duri0214/bookman_backend/issues/1) を親チケットにして、既存の図書管理 API の内容を大きく変えずに、現在の Python / Django / Django REST Framework で扱える状態へ戻した。
 
-## Django part
-### create root directory
-```console:console
-mkdir bookman_backend
-cd bookman_backend
-```
+今回の記事更新は [duri0214/bookman_backend#9](https://github.com/duri0214/bookman_backend/issues/9) の作業として、親チケット配下の子チケットをまとめて反映している。
 
-### venv
-```console:console
-python -m venv venv311
-```
+- [#2 portfolio の .codex 参照運用を bookman_backend に導入する](https://github.com/duri0214/bookman_backend/issues/2) / [PR #8](https://github.com/duri0214/bookman_backend/pull/8)
+- [#3 Python / Django / DRF 依存関係を内容変更なしで最新化する](https://github.com/duri0214/bookman_backend/issues/3) / [PR #10](https://github.com/duri0214/bookman_backend/pull/10)
+- [#4 Django 設定と CORS / 環境変数設定を現行形式へ整理する](https://github.com/duri0214/bookman_backend/issues/4) / [PR #11](https://github.com/duri0214/bookman_backend/pull/11)
+- [#5 Bookman のモデル・マイグレーション・fixture を現行 Django で検証する](https://github.com/duri0214/bookman_backend/issues/5)
+- [#6 書籍・支店 API のシリアライザとビューを現行 DRF で整理する](https://github.com/duri0214/bookman_backend/issues/6) / [PR #12](https://github.com/duri0214/bookman_backend/pull/12)
+- [#7 バックエンド API のテストとセットアップ手順を追加する](https://github.com/duri0214/bookman_backend/issues/7)
 
-### create project
-- 公式の `Requirements` をもとにインストール
-```console:console
-pip install django
-pip install djangorestframework
-pip install django-filter
-pip install markdown
-pip install pillow
-
-django-admin startproject config .
-```
-
-### create app
-:::note warn
-ケバブケースで startapp はできない　←めっちゃハマった
-e.g. bookman-api
-:::
-```console:console
-python manage.py startapp bookman
-```
-```diff_python:bookman_backend/config/settings.py
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-+   'rest_framework',
-+   'bookman',
-]
-+REST_FRAMEWORK = {
-+   'DEFAULT_PERMISSION_CLASSES': [
-+       'rest_framework.permissions.AllowAny',
-+   ]
-+}
-    :
--LANGUAGE_CODE = 'en-us'
-+LANGUAGE_CODE = 'ja'
--TIME_ZONE = 'UTC'
-+TIME_ZONE = 'Asia/Tokyo'
-    :
-```
 :::note
-`DEFAULT_PERMISSION_CLASSES` は「誰にアクセスを許可するか」を指定する。
-- 今回は `get` しかない、かつ、取り回しの良さで `AllowAny` だが、これだと誰でも追加したり削除したりできるので `post` リクエストなどがある場合は `IsAuthenticatedOrReadOnly` に変えるとよい。すると、`get, head, options` リクエストは誰にでも許可されるが、それ以外の `post, delete` などのリクエストは認証済みのユーザにしか許可されなくなる。
-
-- https://www.django-rest-framework.org/api-guide/permissions/
+この記事では、バックエンドのソースコード全文や fixture 全文は載せない。長い JSON や migration を記事へ貼ると、読む側も更新する側もつらくなる。実装の正本は GitHub に置き、記事では「どこを見ればよいか」と「どう動かすか」を中心にする。
 :::
 
-### 確認
+### リポジトリ構成
+`bookman_backend` は、前段の `bookman_nextjs` と同じ親フォルダに置く。
+
+```text
+dev/
+  portfolio/
+  bookman_backend/
+  bookman_nextjs/
+```
+
+この前提にしておくと、フロントエンド側では `cd ../bookman_backend`、バックエンド側では `cd ../bookman_nextjs` のように移動できる。Bookman の2リポジトリで使う Codex 運用ルールは、同じ親フォルダの `portfolio/.codex` を一元管理元として参照する。
+
+- バックエンド実装: https://github.com/duri0214/bookman_backend
+- README: https://github.com/duri0214/bookman_backend/blob/main/README.md
+- Codex 運用参照: https://github.com/duri0214/bookman_backend/blob/main/AGENTS.md
+
+### Python と依存関係
+バックエンドは Python 3.12 以上を前提にした。仮想環境名も古い `venv311` ではなく、通常の `venv` に寄せている。
+
 ```console:console
-python manage.py runserver
+cd ../bookman_backend
+python --version
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/a47d12ef-9e1e-8230-3adf-2aae9b05d454.png)
 
-### 非公開情報を.envに移す（GitGuardian対策）
-<details><summary>old</summary>
+`requirements.txt` は、Django / DRF / CORS / MySQL / 画像フィールド / フォーマッターを固定している。ここも記事に全文を貼り続けるより、GitHub のファイルを正本にする。
 
+https://github.com/duri0214/bookman_backend/blob/main/requirements.txt
 
-```diff_python:bookman_backend/config/settings.py
-from pathlib import Path
-+ import environ
+要点だけ抜くとこうなる。
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
-
-+ # read at .env
-+ env = environ.Env(DEBUG=(bool, False))
-+ environ.Env.read_env(Path(BASE_DIR, '.env'))
-+ DEBUG = env('DEBUG')  # read DEBUG at .env
-+ SECRET_KEY = env('SECRET_KEY')  # read SECRET_KEY at .env
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
-
-- # SECURITY WARNING: keep the secret key used in production secret!
-- SECRET_KEY = 'djaXXXXX'
-
-- # SECURITY WARNING: don't run with debug turned on in production!
-- DEBUG = True
-    :
+```text:requirements.txt
+Django==6.0.7
+djangorestframework==3.17.1
+django-cors-headers==4.9.0
+python-dotenv==1.2.1
+mysqlclient==2.2.8
+Pillow==12.3.0
+black==26.5.1
 ```
-</details>
 
-`.env` ファイルに `api_key` を移すためには、環境変数を読み込む設定が必要です。一般的には、Pythonの `dotenv` パッケージを使うことで `.env` ファイルから簡単に環境変数を読み込むことができます。
-
-以下に、`.env` ファイルの設定と、コードの変更手順を示します。
-
-#### 1. `.env` ファイルの作成
-プロジェクトのルートに `.env` ファイルを作成し、次のように環境変数を設定します。
+### Django 設定と .env
+設定ファイルは、`python-dotenv` の `load_dotenv(BASE_DIR / ".env")` と `os.getenv("DJANGO_...")` で読む形に整理した。以前の記事にあった `django-environ` や `DB_ENGINE` の説明は現行の実装とは合わないので使わない。
 
 ```env:bookman_backend/.env
-SECRET_KEY=djaXXXXX
-DEBUG=True
-DB_ENGINE=django.db.backends.mysql
-DB_NAME=bookman_db
-DB_USER=python
-DB_PASSWORD=python123
+DJANGO_DEBUG_MODE=True
+DJANGO_SECRET_KEY=django-insecure-...
+DJANGO_DB_HOST=127.0.0.1
+DJANGO_DB_USER=python
+DJANGO_DB_PASSWORD=...
+DJANGO_DB_NAME=bookman_db
+DJANGO_DB_PORT=3306
 ```
 
-#### 2. dotenv パッケージのインストール
-dotenv パッケージが必要です。以下のコマンドでインストールします。
+`.env` は Git 管理しない。共有するのは `.env.example` だけにして、DB 名、ユーザー名、パスワードはローカル MySQL に合わせる。
 
-```console:console
-pip install python-dotenv
+- 設定ファイル: https://github.com/duri0214/bookman_backend/blob/main/config/settings.py
+- 環境変数サンプル: https://github.com/duri0214/bookman_backend/blob/main/.env.example
+
+CORS は `CORS_ALLOWED_ORIGINS` を使う。Next.js の開発サーバーから参照するため、少なくとも `http://localhost:3000` と `http://127.0.0.1:3000` を許可する。
+
+```py:config/settings.py
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://153.126.200.229:3000",
+]
 ```
 
-#### 3. コードの変更
-コード内で dotenv をインポートして、.env ファイルから環境変数を読み込むようにします。
+### MySQL と migration
+DB は MySQL の `bookman_db` を使う。ユーザーや権限の作り方はローカル環境によるが、Django 側の接続情報は `.env` に寄せる。
 
-:::note warn
-load_dotenv()がデフォルトで検索するパスは現在の作業ディレクトリなの？
-
-ChatGPT:
-はい、load_dotenv() はデフォルトで現在の作業ディレクトリ（カレントディレクトリ）にある .env ファイルを検索します。
-
-もし現在の作業ディレクトリ以外の場所にある .env ファイルを読み込みたい場合は、load_dotenv() にファイルのパスを指定できます。
-
-Djangoの場合は `load_dotenv(BASE_DIR / ".env")` になる
-
-- [hotfix: load_dotenv()がデフォルトで検索するパスは現在の作業ディレクトリだった！？](https://github.com/duri0214/portfolio/pull/187/files)
-:::
-
-
-```py:estate.py の変更
-import os
-from dotenv import load_dotenv
-
-# .env ファイルを読み込む
-load_dotenv(BASE_DIR / ".env")
-
-@dataclass
-class EstateService:
-    url: str
-    api_key: str = os.getenv("API_KEY")  # 環境変数からAPIキーを読み込み
-
-    def post_estate_info(self, latitude: float, longitude: float):
-            :
-        return response.json()
-
-# 使用例
-if __name__ == "__main__":
-    service = EstateService(
-        url="https://ty66xxxxate-info"
-    )
-
-```
-:::note
-load_dotenv()がないとos.getenvって使えないの？
-
-os.getenv() は load_dotenv() がなくとも動作しますが、Pythonはデフォルトでは.envファイルを対象にしません。代わりに環境変数を使用します。ですので、.envファイルから環境変数を読み込むためには、load_dotenv()を呼び出す必要があります。
-つまり、os.getenv()はシステム環境変数から値を取得します。一方、load_dotenv()は.envファイルの中の環境変数をロードしてシステム環境変数に追加します。したがって、os.getenv()を使用して.envファイルから環境変数を読み込む際には、先にload_dotenv()を呼び出す必要があります。
-:::
-:::note alert
-ここでいったん pycharm を再起動したり、コンソールの再起動をしないと引きずってえんえんとハマることになる
-:::
-
-## MySQL
-```console:console
-pip install mysqlclient
-```
-```diff_python:bookman_backend/config/settings.py
-DATABASES = {
-    'default': {
--       'ENGINE': 'django.db.backends.sqlite3',
--       'NAME': BASE_DIR / 'db.sqlite3',
-+       'ENGINE': env('DB_ENGINE'),
-+       'NAME': env('DB_NAME'),
-+       'USER': env('DB_USER'),
-+       'PASSWORD': env('DB_PASSWORD'),
-    }
-}
-    :
-```
-
-### mysqlにrootで入る
 ```console:console
 mysql -u root -p
 ```
-### create database
+
+```sql:MySQL
+CREATE DATABASE bookman_db DEFAULT CHARACTER SET utf8mb4;
+CREATE USER 'python'@'localhost' IDENTIFIED BY '任意のパスワード';
+grant CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on bookman_db.* to python@localhost;
+```
+
+migration は Git 管理対象に戻した。モデルを変更したときだけ `makemigrations bookman` を実行し、通常のセットアップでは migration を適用する。
+
 ```console:console
-mysql> CREATE DATABASE bookman_db DEFAULT CHARACTER SET utf8mb4;
-       Query OK, 1 row affected (0.01 sec)
+python manage.py migrate
+python manage.py makemigrations --check --dry-run
 ```
-### create user
+
+migration ファイルは以下にまとまっている。
+
+https://github.com/duri0214/bookman_backend/tree/main/bookman/migrations
+
+### モデル
+Bookman の backend は、支店、カテゴリ、著者、書籍、所蔵、貸出を Django model として持つ。
+
+- `Branch`: 図書館支店マスタ
+- `Category`: 書籍カテゴリ
+- `Author`: 著者
+- `Book`: 自治体全体で扱う書籍マスタ
+- `Assignment`: 支店ごとの所蔵数
+- `Lending`: 貸出状態
+
+モデル全文は記事に貼らず、現行ソースを見る。
+
+https://github.com/duri0214/bookman_backend/blob/main/bookman/models.py
+
+フロントエンドの `/book` から書籍登録する都合上、`Book.authors` は `ManyToManyField` のまま、serializer では著者 ID の配列を受ける。
+
+```py:bookman/models.py
+class Book(models.Model):
+    name = models.CharField("タイトル", max_length=255, unique=True)
+    thumbnail = models.ImageField("サムネイル", blank=True, null=True)
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, verbose_name="カテゴリ")
+    authors = models.ManyToManyField(Author, verbose_name="著者")
+    lead_text = models.TextField("紹介文")
+    amount = models.PositiveSmallIntegerField("数量")
+```
+
+### fixture
+初期データは fixture で投入する。fixture 本文は長いので、記事には読み込み順だけ残す。
+
 ```console:console
-mysql> CREATE USER 'python'@'localhost' IDENTIFIED BY 'python123';
+python manage.py loaddata bookman/fixtures/m_branch-data.json
+python manage.py loaddata bookman/fixtures/m_category-data.json
+python manage.py loaddata bookman/fixtures/author-data.json
+python manage.py loaddata bookman/fixtures/book-data.json
 ```
-### create grant
+
+fixture の中身は GitHub を見る。
+
+- 支店: https://github.com/duri0214/bookman_backend/blob/main/bookman/fixtures/m_branch-data.json
+- カテゴリ: https://github.com/duri0214/bookman_backend/blob/main/bookman/fixtures/m_category-data.json
+- 著者: https://github.com/duri0214/bookman_backend/blob/main/bookman/fixtures/author-data.json
+- 書籍: https://github.com/duri0214/bookman_backend/blob/main/bookman/fixtures/book-data.json
+
+書籍 fixture は `authors` に著者 ID 配列を持つので、カテゴリと著者を先に投入してから書籍を投入する。
+
+### API
+API は `/bookman/api/` 配下に置いている。フロントエンドの `BOOKMAN_API_BASE_URL` が既定で `http://127.0.0.1:8000/bookman/api` を向くので、backend 側もこのパスを維持する。
+
+| 用途 | URL | view |
+| --- | --- | --- |
+| 支店一覧/登録 | `/bookman/api/branches/` | `BranchList` |
+| 支店登録（旧互換） | `/bookman/api/branches/create/` | `BranchCreate` |
+| 書籍一覧 | `/bookman/api/books/` | `BookList` |
+| 書籍登録 | `/bookman/api/books/create/` | `BookCreate` |
+| 書籍詳細 | `/bookman/api/books/<id>/` | `BookDetail` |
+| 著者一覧 | `/bookman/api/authors/` | `AuthorList` |
+| カテゴリ一覧 | `/bookman/api/categories/` | `CategoryList` |
+
+- URL 定義: https://github.com/duri0214/bookman_backend/blob/main/bookman/urls.py
+- view: https://github.com/duri0214/bookman_backend/blob/main/bookman/views.py
+- serializer: https://github.com/duri0214/bookman_backend/blob/main/bookman/serializers.py
+
+`BranchList` は `ListCreateAPIView` にして、`/bookman/api/branches/` で GET と POST を受ける。`/bookman/api/branches/create/` も残しているが、フロントエンド側は一覧 URL と同じ `/branches/` へ登録できる。
+
+```py:bookman/views.py
+class BranchList(generics.ListCreateAPIView):
+    serializer_class = BranchSerializer
+
+    def get_queryset(self):
+        return Branch.objects.order_by("id")
+```
+
+`BookSerializer` は、`category` と `authors` を PrimaryKey 契約にしている。フロントエンドはカテゴリ名や著者名を別 API から取得し、画面表示用に ID から名前へ変換する。
+
+```py:bookman/serializers.py
+class BookSerializer(serializers.ModelSerializer):
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.order_by("id")
+    )
+    authors = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Author.objects.order_by("id"),
+    )
+```
+
+### 起動手順
+Bookman はバックエンドとフロントエンドを別ターミナルで起動する。
+
+```console:console（ターミナル1: Django側サーバー起動）
+cd ../bookman_backend
+.\venv\Scripts\Activate.ps1
+python manage.py runserver 127.0.0.1:8000
+```
+
+```console:console（ターミナル2: Next.js側サーバー起動）
+cd ../bookman_nextjs
+npm run dev
+```
+
+ブラウザでは `http://localhost:3000` を開く。Next.js から Django API へつながらない場合は、まず backend 側の API を直接確認する。
+
 ```console:console
-mysql> grant CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on bookman_db.* to python@localhost;
+curl http://127.0.0.1:8000/bookman/api/branches/
+curl http://127.0.0.1:8000/bookman/api/books/
 ```
 
-### mysqlを出る
+### テストと検証
+backend 側で最低限見るのは、Django 設定、migration 差分、API テストだ。
+
 ```console:console
-mysql> exit
+python manage.py check
+python manage.py makemigrations --check --dry-run
+python manage.py test bookman --noinput
 ```
-```console:console（作ったユーザで入れるか確認）
-mysql -u python -p
-```
+
+DB 接続まで含めるなら、MySQL の `.env` が合っている状態で migration も確認する。
+
 ```console:console
-mysql> exit
+python manage.py migrate --noinput
 ```
 
-```python:bookman_backend/bookman/views.py
-from django.http import HttpResponse
+API 契約は `bookman/tests.py` に寄せた。支店一覧/登録、書籍一覧/登録/詳細、著者一覧、カテゴリ一覧のフィールド契約を固定している。
 
+https://github.com/duri0214/bookman_backend/blob/main/bookman/tests.py
 
-def index(request):
-    return HttpResponse("Hello, world.")
-```
-```python:bookman_backend/bookman/urls.py（新規）
-from django.urls import path
-from . import views
-
-urlpatterns = [
-    path('', views.index, name='index'),
-]
-```
-```diff_python:bookman_backend/config/urls.py
-"""config URL Configuration
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/4.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-from django.contrib import admin
--from django.urls import path
-+from django.urls import path, include
-
-urlpatterns = [
-    path('admin/', admin.site.urls),
-+   path('bookman/', include('bookman.urls')),
-]
-```
-```console:console
-python manage.py runserver
-```
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/c787b4a5-7f56-8021-23a2-c1e074220a72.png)
-※http://127.0.0.1:8000/ は `404` になっていることを確認する
-※サーバーは `ctrl + c` で落としておく
-
-## .gitignore
-- gitignoreは、gitignore.ioのdjango用のものと migrationsフォルダを指定する
-
-https://www.toptal.com/developers/gitignore/api/django
-
-```bookman_backend/.gitignore
-/bookman/migrations/
-    :
-（最下行に追加: gitignore.ioのdjango用のもの）
-```
-
-## DBeaver
-### インストール方法
-[（初心者向け）DBeaverのインストール方法](https://masafumi-blog.com/dbeaver-install)
+`bookman_backend#7` の確認では、fixture ロード後に `branches` と `books` の代表 API レスポンスも確認している。記事のコマンドを更新したときは、README とこの記事の手順がずれないように見る。
 
 ## 図書館業務をイメージしまくれ！
+ここから先は、バックエンド基盤の現行化とは別の業務実装メモとして残す。今回の `bookman_backend#1` 配下では、依存関係、設定、migration、fixture、API 契約、検証手順を現在の状態へ戻すところまでを扱った。貸出ルールや支店間移動、休館日、検索条件保存のような業務実装は、次の設計チケットで分けて考える。
+
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/eefc1ab8-d96c-448a-0eca-4077fe02c87f.png)
 
 ### 要件メモ
@@ -1027,647 +986,12 @@ https://detail.chiebukuro.yahoo.co.jp/qa/question_detail/q1377006708
 
 - 図書館の支店マスタで取り扱う情報はとりあえず4つ（休館日とかは機能が大きいから気が向いたら）
 https://www.lib.city.shibuya.tokyo.jp/?page_id=166
-    - 名称:	笹塚図書館
-    - 所在地:	〒151-0073 渋谷区笹塚1-47-1 メルクマール京王笹塚4階
-    - 電話:	03-3460-6784
-    - 備考:	鉄筋コンクリート造 地上21階地下2階の4階部分 440㎡ 57席
-
-
-### 業務フロー
-- 書籍管理
-    - （全支店）の（書籍名称）を合計すると（本の所蔵数）冊ある
-    - （支店名）に（書籍名称）が（本の所蔵数）冊ある
-    - （支店名）から（支店名）に本を移動する
-- 利用者への貸出業務
-    - （支店名）の（書籍名称）を利用者に貸し出す
-    - （支店名）が（書籍名称）の返却を受け付ける
-
-### 機能メモ
-- 設定
-    - 仕様
-        - 検索条件を保存、読み込みできる
-        - 権限によって表示されるレコードが変化
-        - JSONで読み書き
-    - ボタン
-        - 保存
-        - 読み込み
-
-## Django part
-### django-cors-headers
-```console:console
-pip install django-cors-headers
-```
-```diff_python:bookman_backend/config/settings.py
-INSTALLED_APPS = [
-      :
-+   'corsheaders',
-]
-  :
-MIDDLEWARE = [
-+   'corsheaders.middleware.CorsMiddleware',
-+   'django.middleware.common.CommonMiddleware',
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
-+CORS_ORIGIN_WHITELIST = (
-+   'http://localhost:3000',
-+)
-```
-
-### model.py
-```python:bookman_backend/bookman/models.py
-from django.contrib.auth.models import User
-from django.db import models
-
-
-class Branch(models.Model):
-    """
-    図書館支店マスタ
-    """
-    name = models.CharField(max_length=255, unique=True)
-    address = models.CharField(max_length=255)
-    phone = models.CharField(max_length=20)
-    remark = models.CharField(max_length=255)
-    created_at = models.DateField(auto_now_add=True)
-    updated_at = models.DateField(auto_now=True, null=True)
-
-    class Meta:
-        db_table = 'bookman_m_branch'
-
-    def __str__(self):
-        return self.name
-
-
-class Category(models.Model):
-    name = models.CharField('カテゴリ名', max_length=100, unique=True)
-    color = models.CharField('色(16進数)', max_length=7, default='#000000')
-
-    class Meta:
-        db_table = 'bookman_m_category'
-
-    def __str__(self):
-        return self.name
-
-
-class Author(models.Model):
-    name = models.CharField('著者名', max_length=255, unique=True)
-
-    def __str__(self):
-        return self.name
-
-
-class Book(models.Model):
-    """
-    書籍マスタ
-    システムを使用するひとつの自治体が束ねる、n個の支店図書館すべてが所蔵する本
-    """
-    name = models.CharField('タイトル', max_length=255, unique=True)
-    thumbnail = models.ImageField('サムネイル', blank=True, null=True)
-    category = models.ForeignKey(Category, on_delete=models.PROTECT, verbose_name='カテゴリ')
-    authors = models.ManyToManyField(Author, verbose_name='著者')
-    lead_text = models.TextField('紹介文')
-    amount = models.PositiveSmallIntegerField('数量')
-    isbn = models.CharField('ISBNコード', max_length=20)
-    publication_date = models.DateField('出版年月日')
-    created_at = models.DateField('登録日', auto_now_add=True)
-    updated_at = models.DateField('更新日', auto_now=True, null=True)
-
-    def __str__(self):
-        return self.name
-
-
-class Assignment(models.Model):
-    """
-    システムを使用するひとつの自治体が束ねる、n個の支店図書館がそれぞれどの本をいくつ所蔵するか
-    ある支店図書館にある本の数量合計が、Bookテーブルの amount と一致する
-    """
-    branch = models.ForeignKey('Branch', on_delete=models.CASCADE)
-    book = models.ForeignKey('Book', on_delete=models.CASCADE)
-    amount = models.PositiveSmallIntegerField()
-    created_at = models.DateField(auto_now_add=True)
-    updated_at = models.DateField(auto_now=True, null=True)
-
-    def __str__(self):
-        return f"{self.book.name}({self.amount}) {self.branch.name}"
-
-
-class Lending(models.Model):
-    """
-    貸出日と created_at は同じになる
-    返却が終わると active が 0 になる
-    """
-    return_date = models.DateField()
-    book = models.ForeignKey('Book', on_delete=models.CASCADE)
-    active = models.BooleanField(default=1)
-    customer_user = models.ForeignKey(User, related_name='customer', on_delete=models.CASCADE)
-    contact_user = models.ForeignKey(User, related_name='contact', on_delete=models.CASCADE)
-    created_at = models.DateField(auto_now_add=True)
-    updated_at = models.DateField(auto_now=True, null=True)
-```
-
-```console:console
-python manage.py makemigrations bookman
-python manage.py migrate
-```
-
-### superuserの作成
-```console:console
-python manage.py createsuperuser
-  ユーザー名 (leave blank to use 'yoshi'):
-  メールアドレス: yoshiXXXX@gmail.com
-  Password:
-  Password (again):
-  このパスワードは ユーザー名 と似すぎています。
-  Bypass password validation and create user anyway? [y/N]: y
-  Superuser created successfully.
-```
-
-### データの投下
-#### 図書館支店マスタ
-https://www.lib.city.shibuya.tokyo.jp/?page_id=132
-```json:bookman_backend/bookman/fixtures/m_branch-data.json
-[
-  {
-    "model": "bookman.branch",
-    "fields": {
-      "name": "中央図書館",
-      "address": "東京都渋谷区神宮前1-4-1",
-      "phone": "03-3403-2591",
-      "remark": "鉄筋コンクリート造 地下1階地上5階 4,450㎡（294席）",
-      "created_at": "2022-12-03"
-    }
-  },
-  {
-    "model": "bookman.branch",
-    "fields": {
-      "name": "西原図書館",
-      "address": "東京都渋谷区西原2-28-9",
-      "phone": "03-3460-8535",
-      "remark": "鉄筋コンクリート造 地下1階地上3階の2・3階部分 631㎡（61席）",
-      "created_at": "2022-12-03"
-    }
-  },
-  {
-    "model": "bookman.branch",
-    "fields": {
-      "name": "白根図書 サービススポット",
-      "address": "東京都渋谷区東4-9-1",
-      "phone": "03-3486-2820",
-      "remark": "鉄筋コンクリート造 地下2階地上2階 1,731㎡（0席）",
-      "created_at": "2022-12-03"
-    }
-  },
-  {
-    "model": "bookman.branch",
-    "fields": {
-      "name": "富ヶ谷図書館",
-      "address": "東京都渋谷区上原1-46-2",
-      "phone": "03-3468-9020",
-      "remark": "鉄筋コンクリート造 地上2階建ての1階の一部 510㎡（43席）",
-      "created_at": "2022-12-03"
-    }
-  },
-  {
-    "model": "bookman.branch",
-    "fields": {
-      "name": "笹塚図書館",
-      "address": "東京都渋谷区笹塚1-47-1　メルクマール京王笹塚4階",
-      "phone": "03-3460-6784",
-      "remark": "鉄筋コンクリート造 地上21階地下2階の4階部分 440㎡（57席）",
-      "created_at": "2022-12-03"
-    }
-  },
-  {
-    "model": "bookman.branch",
-    "fields": {
-      "name": "本町図書館",
-      "address": "東京都渋谷区本町1-33-5",
-      "phone": "03-5371-4833",
-      "remark": "鉄筋コンクリート造 地下1階地上3階 1,400㎡（97席）",
-      "created_at": "2022-12-03"
-    }
-  },
-  {
-    "model": "bookman.branch",
-    "fields": {
-      "name": "こもれび大和田図書館",
-      "address": "東京都渋谷区桜丘町23-21 文化総合ｾﾝﾀｰ大和田2階",
-      "phone": "03-3464-4780",
-      "remark": "鉄筋コンクリート造 地上12階地下1階の2階部分 608㎡（64席）",
-      "created_at": "2022-12-03"
-    }
-  },
-  {
-    "model": "bookman.branch",
-    "fields": {
-      "name": "臨川みんなの図書館",
-      "address": "東京都渋谷区広尾1-9-17",
-      "phone": "03-5793-9500",
-      "remark": "鉄筋コンクリート造 地上3階建ての1・2階部分 688㎡（29席）",
-      "created_at": "2022-12-03"
-    }
-  },
-  {
-    "model": "bookman.branch",
-    "fields": {
-      "name": "代々木図書館",
-      "address": "東京都渋谷区代々木3-51-8",
-      "phone": "03-3370-7566",
-      "remark": "鉄筋コンクリート造 地上4階建て区民施設の4階 320㎡（24席）",
-      "created_at": "2022-12-03"
-    }
-  },
-  {
-    "model": "bookman.branch",
-    "fields": {
-      "name": "笹塚こども図書館",
-      "address": "東京都渋谷区笹塚3-3-1",
-      "phone": "03-3378-1983",
-      "remark": "鉄筋コンクリート造 地上4階の2階部分 361㎡（28席）",
-      "created_at": "2022-12-03"
-    }
-  }
-]
-```
-#### 本カテゴリーマスタ
-```json:bookman_backend/bookman/fixtures/m_category-data.json
-[
-  {
-    "model": "bookman.category",
-    "fields": {
-      "name": "ひと",
-      "color": "#ff7f7f"
-    }
-  },
-  {
-    "model": "bookman.category",
-    "fields": {
-      "name": "地名",
-      "color": "#ff7fbf"
-    }
-  },
-  {
-    "model": "bookman.category",
-    "fields": {
-      "name": "行事",
-      "color": "#ff7fff"
-    }
-  },
-  {
-    "model": "bookman.category",
-    "fields": {
-      "name": "食べ物",
-      "color": "#bf7fff"
-    }
-  },
-  {
-    "model": "bookman.category",
-    "fields": {
-      "name": "その他",
-      "color": "#c0c0c0"
-    }
-  }
-]
-```
-#### 著者データ
-```json:bookman_backend/bookman/fixtures/author-data.json
-[
-  {
-    "model": "bookman.author",
-    "fields": {
-      "name": "国松俊英"
-    }
-  },
-  {
-    "model": "bookman.author",
-    "fields": {
-      "name": "熊谷聡"
-    }
-  }
-]
-```
-#### 本データ
-https://www.iwasakishoten.co.jp/search/s12761.html
-
-[many to many field の fixture の作り方](https://qiita.com/shun198/items/29b5c253be6f802403cd#many-to-many-field%E3%81%AE%E6%99%82)
-
-::: note
-pk 必須（pk書かないと中間テーブルのほうで勝手に、存在しない番号で採番される）
-:::
-
-```json:bookman_backend/bookman/fixtures/book-data.json
-[
-  {
-    "model": "bookman.book",
-    "pk": 1,
-    "fields": {
-      "name": "地名のひみつパート2",
-      "category": 2,
-      "authors": [1, 2],
-      "lead_text": "海外、国内の地名の由来をゆかいなイラストとともに、歴史的背景をまじえて解説。短いお話とコラムで構成しています。",
-      "amount": "100",
-      "isbn": "9784265039500",
-      "publication_date": "2002-04-10",
-      "created_at": "2022-12-03"
-    }
-  },
-  {
-    "model": "bookman.book",
-    "pk": 2,
-    "fields": {
-      "name": "人名のひみつパート2",
-      "category": 1,
-      "authors": [1, 2],
-      "lead_text": "「名字はこうしてできた」「家紋ってなに？」などのお話と１００以上の名字の由来をゆかいなイラストとともに紹介しています。",
-      "amount": "100",
-      "isbn": "9784265039494",
-      "publication_date": "2002-03-11",
-      "created_at": "2022-12-03"
-    }
-  },
-  {
-    "model": "bookman.book",
-    "pk": 3,
-    "fields": {
-      "name": "行事の名前のひみつ",
-      "category": 3,
-      "authors": [1, 2],
-      "lead_text": "お正月、節分、バレンタインデー、七夕やクリスマスなど、身近な年中行事の由来を、短いお話とコラムで紹介します。",
-      "amount": "100",
-      "isbn": "9784265039487",
-      "publication_date": "2002-02-11",
-      "created_at": "2022-12-03"
-    }
-  },
-  {
-    "model": "bookman.book",
-    "pk": 4,
-    "fields": {
-      "name": "たべものの名前のひみつ",
-      "category": 4,
-      "authors": [1, 2],
-      "lead_text": "たべものの名前の由来や歴史などを楽しく紹介。短いお話の中に、約１００の食べ物が登場。この１冊できみも食べ物の名前博士。",
-      "amount": "100",
-      "isbn": "9784265039470",
-      "publication_date": "2001-12-10",
-      "created_at": "2022-12-03"
-    }
-  },
-  {
-    "model": "bookman.book",
-    "pk": 5,
-    "fields": {
-      "name": "のりものの名前のひみつ",
-      "category": 5,
-      "authors": [1, 2],
-      "lead_text": "車はどのように発明されたか？「ジャンボジェット機」の意味は？など、のりものの歴史と名前の由来がよくわかる本。",
-      "amount": "100",
-      "isbn": "9784265039463",
-      "publication_date": "2001-10-10",
-      "created_at": "2022-12-03"
-    }
-  },
-  {
-    "model": "bookman.book",
-    "pk": 6,
-    "fields": {
-      "name": "道具の名前のなぞ",
-      "category": 5,
-      "authors": [1, 2],
-      "lead_text": "文房具や学校で使う道具，家の中での器具類など，ふだん身近に接している道具の誕生の歴史と名前のいわれをわかりやすく紹介。",
-      "amount": "100",
-      "isbn": "9784265039456",
-      "publication_date": "2000-03-30",
-      "created_at": "2022-12-03"
-    }
-  },
-  {
-    "model": "bookman.book",
-    "pk": 7,
-    "fields": {
-      "name": "スポーツの名前のなぞ",
-      "category": 5,
-      "authors": [1, 2],
-      "lead_text": "野球，サッカーなど，いろいろなスポーツの起源と名前のいわれをイラスト入りでやさしく解説。これできみはスポーツの名前博士！",
-      "amount": "100",
-      "isbn": "9784265039449",
-      "publication_date": "2000-03-10",
-      "created_at": "2022-12-03"
-    }
-  },
-  {
-    "model": "bookman.book",
-    "pk": 8,
-    "fields": {
-      "name": "生きものの名前のなぞ",
-      "category": 5,
-      "authors": [1, 2],
-      "lead_text": "身近な動物や植物の名前の由来をわかりやすく紹介。ねこやねずみ，カエルなどの名前がどこからきたのかを楽しいイラストで説明。",
-      "amount": "100",
-      "isbn": "9784265039432",
-      "publication_date": "2000-02-10",
-      "created_at": "2022-12-03"
-    }
-  },
-  {
-    "model": "bookman.book",
-    "pk": 9,
-    "fields": {
-      "name": "地名のひみつ",
-      "category": 2,
-      "authors": [1, 2],
-      "lead_text": "日本の代表的な地名，町村合併によってできたユニークな地名，都道府県名，山や川の名前の由来などを豊富なイラストで解説。",
-      "amount": "100",
-      "isbn": "9784265039425",
-      "publication_date": "1999-12-30",
-      "created_at": "2022-12-03"
-    }
-  },
-  {
-    "model": "bookman.book",
-    "pk": 10,
-    "fields": {
-      "name": "人名のひみつ",
-      "category": 1,
-      "authors": [1, 2],
-      "lead_text": "日本で一番多い名字は？人の名字約２００の由来をゆかいなイラストでわかりやすく解説。歴史上の人物や珍しい名前の由来も紹介。",
-      "amount": "100",
-      "isbn": "9784265039418",
-      "publication_date": "1999-11-11",
-      "created_at": "2022-12-03"
-    }
-  }
-]
-```
-
-```console:console
-python manage.py loaddata bookman/fixtures/book-data.json
-python manage.py loaddata bookman/fixtures/m_branch-data.json
-python manage.py loaddata bookman/fixtures/m_category-data.json
-python manage.py loaddata bookman/fixtures/author-data.json
-```
-
-### serializers.py
-```python:bookman_backend/bookman/serializers.py（新規）
-from rest_framework import serializers
-from bookman.models import Branch, Book, Category, Author
-
-
-class CategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Category
-        fields = ['id', 'name', 'color']
-
-
-class AuthorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Author
-        fields = ['id', 'name']
-
-
-class BranchSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Branch
-        fields = ['id', 'name', 'address', 'phone', 'remark']
-
-
-class BookSerializer(serializers.ModelSerializer):
-    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
-    authors = serializers.PrimaryKeyRelatedField(queryset=Author.objects.all(), many=True)
-
-    class Meta:
-        model = Book
-        fields = ['id',
-                  'name',
-                  'category',
-                  'thumbnail',
-                  'authors',
-                  'lead_text',
-                  'amount',
-                  'isbn',
-                  'publication_date'
-                  ]
-```
-```python:bookman_backend/bookman/views.py（全消しして上書き）
-from rest_framework import generics
-from .models import Book, Category, Branch, Author
-from .serializers import CategorySerializer, BookSerializer, BranchSerializer, AuthorSerializer
-
-
-class BranchList(generics.ListAPIView):
-    queryset = Branch.objects.all().order_by('id')
-    serializer_class = BranchSerializer
-
-
-class BranchCreate(generics.CreateAPIView):
-    serializer_class = BranchSerializer
-
-
-class AuthorList(generics.ListAPIView):
-    queryset = Author.objects.all()
-    serializer_class = AuthorSerializer
-
-
-class CategoryList(generics.ListAPIView):
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
-
-
-class BookList(generics.ListAPIView):
-    queryset = Book.objects.all().order_by('category')
-    serializer_class = BookSerializer
-
-
-class BookCreate(generics.CreateAPIView):
-    serializer_class = BookSerializer
-
-
-class BookDetail(generics.RetrieveAPIView):
-    queryset = Book.objects.all()
-    serializer_class = BookSerializer
-```
-```python:bookman_backend/bookman/urls.py（全消しして上書き）
-from django.urls import path, include
-from . import views
-
-urlpatterns = [
-   path('api-auth/', include('rest_framework.urls')),
-   path('api/branches/', views.BranchList.as_view(), name='branch_list'),
-   path('api/branches/create/', views.BranchCreate.as_view(), name='branch_create'),
-   path('api/books/', views.BookList.as_view(), name='book_list'),
-   path('api/books/create/', views.BookCreate.as_view(), name='book_create'),
-   path('api/books/<int:pk>/', views.BookDetail.as_view(), name='book_detail'),
-   path('api/authors/', views.AuthorList.as_view(), name='author_list'),
-   path('api/categories/', views.CategoryList.as_view(), name='category_list'),
-]
-```
-
-#### 入れ子のシリアライザについて
-https://www.django-rest-framework.org/api-guide/relations/#nested-relationships
-
-こういうのを出したいときがあるだろう。レコードの内側に入れ子にモデルがくっついてくるやつ
-
-```python:TrackSerializerが子だ。AlbumSerializerがtracksで受けている
-class TrackSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Track
-        fields = ['order', 'title', 'duration']
-
-class AlbumSerializer(serializers.ModelSerializer):
-    tracks = TrackSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Album
-        fields = ['album_name', 'artist', 'tracks']
-```
-```python:tracksでループ回せるようになったね！
->>> album = Album.objects.create(album_name="The Grey Album", artist='Danger Mouse')
->>> Track.objects.create(album=album, order=1, title='Public Service Announcement', duration=245)
-<Track: Track object>
->>> Track.objects.create(album=album, order=2, title='What More Can I Say', duration=264)
-<Track: Track object>
->>> Track.objects.create(album=album, order=3, title='Encore', duration=159)
-<Track: Track object>
->>> serializer = AlbumSerializer(instance=album)
->>> serializer.data
-{
-    'album_name': 'The Grey Album',
-    'artist': 'Danger Mouse',
-    'tracks': [
-        {'order': 1, 'title': 'Public Service Announcement', 'duration': 245},
-        {'order': 2, 'title': 'What More Can I Say', 'duration': 264},
-        {'order': 3, 'title': 'Encore', 'duration': 159},
-        ...
-    ],
-}
-```
-
-### djangoのrest-clientで確認
-https://www.django-rest-framework.org/api-guide/relations/#primarykeyrelatedfield
-FK項目（カテゴリー、著者）が日本語の状態で選べることを確認する
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/aa5db259-debd-44a0-1702-a5e614404d98.png)
-
-:::note
-PrimaryKeyRelatedField は、Django REST Framework のフィールドの一つで、特に ForeignKey または ManyToManyField などのリレーションフィールドに対して便利なフィールドです。
-また、このフィールドはモデルの作成や更新操作を行うAPIで非常に便利です。たとえば、上記の BookSerializer の例では、ユーザーが新しいBookオブジェクトを作成する際に、category と authors フィールドのIDを用いて指定することができます。これにより、関連エンティティの詳細を直接提供することなく、あるいは新しくエンティティを作ることなく、既存の関連エンティティを関連付けることが可能となります。
-以下に、PrimaryKeyRelatedField の基本的な使用例を示します
-```
-class BookSerializer(serializers.ModelSerializer):
-    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
-    authors = serializers.PrimaryKeyRelatedField(queryset=Author.objects.all(), many=True)
-    class Meta:
-        model = Book
-        fields = ['name', 'category', 'authors', 'lead_text', 'amount', 'isbn', 'publication_date']
-```
-:::
-
-
-## 次回以降 TODO
+    - 名称: 笹塚図書館
+    - 所在地: 〒151-0073 渋谷区笹塚1-47-1 メルクマール京王笹塚4階
+    - 電話: 03-3460-6784
+    - 備考: 鉄筋コンクリート造 地上21階地下2階の4階部分 440㎡ 57席
+
+### 次回以降 TODO
 - [ ] ひとりのユーザが同じ本を2冊以上借りることはできない
 - [ ] 休館日設定画面とかは機能が大きいから気が向いたら
 - [ ] 書籍管理（自治体∋支店）
@@ -1677,33 +1001,7 @@ class BookSerializer(serializers.ModelSerializer):
 - [ ] 利用者への貸出
   - （支店名）の（書籍名称）を利用者に貸し出す
   - （支店名）が（書籍名称）の返却を受け付ける
-
 - [ ] 設定
-    - 仕様
-        - 検索条件を保存、読み込みできる
-        - 権限によって表示されるレコードが変化
-        - JSONで読み書き
-    - [ ] 保存
-    - [ ] 読み込み
-
-
-:::note
-### 業務フロー
-- 書籍管理
-    - （全支店）の（書籍名称）を合計すると（本の所蔵数）冊ある
-    - （支店名）に（書籍名称）が（本の所蔵数）冊ある
-    - （支店名）から（支店名）に本を移動する
-- 利用者への貸出業務
-    - （支店名）の（書籍名称）を利用者に貸し出す
-    - （支店名）が（書籍名称）の返却を受け付ける
-
-### 機能メモ
-- 設定
-    - 仕様
-        - 検索条件を保存、読み込みできる
-        - 権限によって表示されるレコードが変化
-        - JSONで読み書き
-    - ボタン
-        - 保存
-        - 読み込み
-:::
+  - 検索条件を保存、読み込みできる
+  - 権限によって表示されるレコードが変化
+  - JSONで読み書き
