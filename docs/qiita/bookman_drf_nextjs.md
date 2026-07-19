@@ -834,6 +834,8 @@ CREATE USER 'python'@'localhost' IDENTIFIED BY '任意のパスワード';
 grant CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on bookman_db.* to python@localhost;
 ```
 
+`python` ユーザーには `bookman_db.*` への権限だけを付ける。Django から migration を流したり、アプリのデータを読み書きしたりするにはこれで足りる。一方で root とは違い、別の database を作ったり、MySQL ユーザーを作ったり、サーバー全体の権限を変更したりする用途には使わない。
+
 `python` ユーザーがまだないときは、上の `CREATE USER` と `grant` を実行する。MySQL では `'python'@'localhost'` と `'python'@'127.0.0.1'` は別ユーザーとして扱われる。Django の `.env` で `DJANGO_DB_HOST=127.0.0.1` を指定している場合、`localhost` のユーザーだけを作っても認証できないことがある。
 
 :::note
