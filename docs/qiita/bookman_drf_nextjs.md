@@ -31,7 +31,7 @@ https://jestjs.io/
 
 - 記事管理原稿: https://github.com/duri0214/portfolio/blob/master/docs/qiita/bookman_drf_nextjs.md
 
-この記事では、現在のフロントエンド構成を上段にまとめ、後段に `bookman_backend` の更新後の状態をまとめる。最初に作ったときの長いメモは、現行の手順と混ざらないように整理し直す。
+この記事では、現在のフロントエンド構成を上段にまとめ、後段に `bookman_backend` の更新後の状態をまとめる。
 
 ```mermaid
 graph TB
@@ -732,20 +732,7 @@ python manage.py test
 ```
 
 ## Backend part
-バックエンド側は [duri0214/bookman_backend#1](https://github.com/duri0214/bookman_backend/issues/1) を親チケットにして、既存の図書管理 API の内容を大きく変えずに、現在の Python / Django / Django REST Framework で扱える状態へ戻した。
-
-今回の記事更新は [duri0214/bookman_backend#9](https://github.com/duri0214/bookman_backend/issues/9) の作業として、親チケット配下の子チケットをまとめて反映している。
-
-- [#2 portfolio の .codex 参照運用を bookman_backend に導入する](https://github.com/duri0214/bookman_backend/issues/2) / [PR #8](https://github.com/duri0214/bookman_backend/pull/8)
-- [#3 Python / Django / DRF 依存関係を内容変更なしで最新化する](https://github.com/duri0214/bookman_backend/issues/3) / [PR #10](https://github.com/duri0214/bookman_backend/pull/10)
-- [#4 Django 設定と CORS / 環境変数設定を現行形式へ整理する](https://github.com/duri0214/bookman_backend/issues/4) / [PR #11](https://github.com/duri0214/bookman_backend/pull/11)
-- [#5 Bookman のモデル・マイグレーション・fixture を現行 Django で検証する](https://github.com/duri0214/bookman_backend/issues/5)
-- [#6 書籍・支店 API のシリアライザとビューを現行 DRF で整理する](https://github.com/duri0214/bookman_backend/issues/6) / [PR #12](https://github.com/duri0214/bookman_backend/pull/12)
-- [#7 バックエンド API のテストとセットアップ手順を追加する](https://github.com/duri0214/bookman_backend/issues/7)
-
-:::note
-この記事では、バックエンドのソースコード全文や fixture 全文は載せない。長い JSON や migration を記事へ貼ると、読む側も更新する側もつらくなる。実装の正本は GitHub に置き、記事では「どこを見ればよいか」と「どう動かすか」を中心にする。
-:::
+バックエンド側は、既存の図書管理 API の内容を大きく変えずに、現在の Python / Django / Django REST Framework で扱える状態へ戻した。作業の単位や履歴は「GitHub で記事ごと管理する」に書いた流れと同じように Issue と PR で追える。
 
 ### リポジトリ構成
 `bookman_backend` は、前段の `bookman_nextjs` と同じ親フォルダに置く。
@@ -764,7 +751,7 @@ dev/
 - Codex 運用参照: https://github.com/duri0214/bookman_backend/blob/main/AGENTS.md
 
 ### Python と依存関係
-バックエンドは Python 3.12 以上を前提にした。仮想環境名も古い `venv311` ではなく、通常の `venv` に寄せている。
+バックエンドは Python 3.12 以上を前提にした。仮想環境名は `venv` にしている。
 
 ```console:console
 cd ../bookman_backend
@@ -792,7 +779,7 @@ black==26.5.1
 ```
 
 ### Django 設定と .env
-設定ファイルは、`python-dotenv` の `load_dotenv(BASE_DIR / ".env")` と `os.getenv("DJANGO_...")` で読む形に整理した。以前の記事にあった `django-environ` や `DB_ENGINE` の説明は現行の実装とは合わないので使わない。
+設定ファイルは、portfolio 側の運用に寄せて `python-dotenv` の `load_dotenv(BASE_DIR / ".env")` と `os.getenv("DJANGO_...")` で読む形に整理した。以前の記事にあった `django-environ` や `DB_ENGINE` の説明はここでは使わない。
 
 ```env:bookman_backend/.env
 DJANGO_DEBUG_MODE=True
@@ -804,7 +791,7 @@ DJANGO_DB_NAME=bookman_db
 DJANGO_DB_PORT=3306
 ```
 
-`.env` は Git 管理しない。共有するのは `.env.example` だけにして、DB 名、ユーザー名、パスワードはローカル MySQL に合わせる。
+`.env` は Git 管理しない。これはローカルの秘密情報をリポジトリに入れないためのセオリーだ。共有するのは `.env.example` だけにして、DB 名、ユーザー名、パスワードはローカル MySQL に合わせる。
 
 - 設定ファイル: https://github.com/duri0214/bookman_backend/blob/main/config/settings.py
 - 環境変数サンプル: https://github.com/duri0214/bookman_backend/blob/main/.env.example
@@ -828,9 +815,20 @@ mysql -u root -p
 
 ```sql:MySQL
 CREATE DATABASE bookman_db DEFAULT CHARACTER SET utf8mb4;
+```
+
+`bookman_db` がすでにあるなら、database 作成は飛ばしてよい。
+
+```sql:MySQL
 CREATE USER 'python'@'localhost' IDENTIFIED BY '任意のパスワード';
 grant CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on bookman_db.* to python@localhost;
 ```
+
+`python` ユーザーがまだないときは、上の `CREATE USER` と `grant` を実行する。MySQL では `'python'@'localhost'` と `'python'@'127.0.0.1'` は別ユーザーとして扱われる。Django の `.env` で `DJANGO_DB_HOST=127.0.0.1` を指定している場合、`localhost` のユーザーだけを作っても認証できないことがある。
+
+:::note
+ローカルで `python` ユーザーのパスワードが通らなかったときは、MySQL 側のユーザーが `localhost` で作られているか、`127.0.0.1` で作られているかを確認する。Django から `127.0.0.1` へ接続するなら、必要に応じて `CREATE USER 'python'@'127.0.0.1' ...` と `grant ... to 'python'@'127.0.0.1';` を追加する。
+:::
 
 migration は Git 管理対象に戻した。モデルを変更したときだけ `makemigrations bookman` を実行し、通常のセットアップでは migration を適用する。
 
@@ -857,7 +855,7 @@ Bookman の backend は、支店、カテゴリ、著者、書籍、所蔵、貸
 
 https://github.com/duri0214/bookman_backend/blob/main/bookman/models.py
 
-フロントエンドの `/book` から書籍登録する都合上、`Book.authors` は `ManyToManyField` のまま、serializer では著者 ID の配列を受ける。
+著者は複数人になることがあるので、`Book.authors` は `ManyToManyField` にしている。Django はこの関連を `bookman_book_authors` という中間テーブルで管理する。書籍 ID と著者 ID の組み合わせを持つテーブルだ。
 
 ```py:bookman/models.py
 class Book(models.Model):
@@ -879,17 +877,14 @@ python manage.py loaddata bookman/fixtures/author-data.json
 python manage.py loaddata bookman/fixtures/book-data.json
 ```
 
-fixture の中身は GitHub を見る。
+fixture の中身は GitHub の `fixtures` フォルダを見る。
 
-- 支店: https://github.com/duri0214/bookman_backend/blob/main/bookman/fixtures/m_branch-data.json
-- カテゴリ: https://github.com/duri0214/bookman_backend/blob/main/bookman/fixtures/m_category-data.json
-- 著者: https://github.com/duri0214/bookman_backend/blob/main/bookman/fixtures/author-data.json
-- 書籍: https://github.com/duri0214/bookman_backend/blob/main/bookman/fixtures/book-data.json
+https://github.com/duri0214/bookman_backend/tree/main/bookman/fixtures
 
 書籍 fixture は `authors` に著者 ID 配列を持つので、カテゴリと著者を先に投入してから書籍を投入する。
 
 ### API
-API は `/bookman/api/` 配下に置いている。フロントエンドの `BOOKMAN_API_BASE_URL` が既定で `http://127.0.0.1:8000/bookman/api` を向くので、backend 側もこのパスを維持する。
+API の URL は `/bookman/api/` 配下になる。フロントエンドの `BOOKMAN_API_BASE_URL` が既定で `http://127.0.0.1:8000/bookman/api` を向くので、backend 側もこのパスを維持する。
 
 | 用途 | URL | view |
 | --- | --- | --- |
@@ -905,7 +900,7 @@ API は `/bookman/api/` 配下に置いている。フロントエンドの `BOO
 - view: https://github.com/duri0214/bookman_backend/blob/main/bookman/views.py
 - serializer: https://github.com/duri0214/bookman_backend/blob/main/bookman/serializers.py
 
-`BranchList` は `ListCreateAPIView` にして、`/bookman/api/branches/` で GET と POST を受ける。`/bookman/api/branches/create/` も残しているが、フロントエンド側は一覧 URL と同じ `/branches/` へ登録できる。
+`BranchList` は `ListCreateAPIView` という型にして、`/bookman/api/branches/` で GET と POST を受ける。`BranchList` のような view class は、どの URL でどの model を読み書きするかを決める入口だ。`/bookman/api/branches/create/` も残しているが、フロントエンド側は一覧 URL と同じ `/branches/` へ登録できる。
 
 ```py:bookman/views.py
 class BranchList(generics.ListCreateAPIView):
@@ -915,7 +910,7 @@ class BranchList(generics.ListCreateAPIView):
         return Branch.objects.order_by("id")
 ```
 
-`BookSerializer` は、`category` と `authors` を PrimaryKey 契約にしている。フロントエンドはカテゴリ名や著者名を別 API から取得し、画面表示用に ID から名前へ変換する。
+serializer は、Django model と API の JSON を詰め替える DTO のような役割を持つ。`BookSerializer` は、`category` と `authors` を ID で受け渡しする。フロントエンドはカテゴリ名や著者名を別 API から取得し、画面表示用に ID から名前へ変換する。
 
 ```py:bookman/serializers.py
 class BookSerializer(serializers.ModelSerializer):
@@ -964,14 +959,14 @@ DB 接続まで含めるなら、MySQL の `.env` が合っている状態で mi
 python manage.py migrate --noinput
 ```
 
-API 契約は `bookman/tests.py` に寄せた。支店一覧/登録、書籍一覧/登録/詳細、著者一覧、カテゴリ一覧のフィールド契約を固定している。
+通信テストは `bookman/tests.py` で点検した。支店一覧/登録、書籍一覧/登録/詳細、著者一覧、カテゴリ一覧で返すフィールドを確認している。
 
 https://github.com/duri0214/bookman_backend/blob/main/bookman/tests.py
 
 `bookman_backend#7` の確認では、fixture ロード後に `branches` と `books` の代表 API レスポンスも確認している。記事のコマンドを更新したときは、README とこの記事の手順がずれないように見る。
 
 ## 図書館業務をイメージしまくれ！
-ここから先は、バックエンド基盤の現行化とは別の業務実装メモとして残す。今回の `bookman_backend#1` 配下では、依存関係、設定、migration、fixture、API 契約、検証手順を現在の状態へ戻すところまでを扱った。貸出ルールや支店間移動、休館日、検索条件保存のような業務実装は、次の設計チケットで分けて考える。
+ここから先は、バックエンド基盤の現行化とは別の業務実装メモとして残す。今回の `bookman_backend#1` 配下では、依存関係、設定、migration、fixture、通信テスト、検証手順を現在の状態へ戻すところまでを扱った。貸出ルールや支店間移動、休館日、検索条件保存のような業務実装は、次の設計チケットで分けて考える。
 
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/eefc1ab8-d96c-448a-0eca-4077fe02c87f.png)
 
@@ -990,15 +985,27 @@ https://www.lib.city.shibuya.tokyo.jp/?page_id=166
     - 備考: 鉄筋コンクリート造 地上21階地下2階の4階部分 440㎡ 57席
 
 ### 次回以降 TODO
-- [ ] ひとりのユーザが同じ本を2冊以上借りることはできない
-- [ ] 休館日設定画面とかは機能が大きいから気が向いたら
 - [ ] 書籍管理（自治体∋支店）
   - （全支店）の（書籍名称）の合計を算出（自治体としての本の所蔵数）
   - （支店名）に（書籍名称）が（支店図書館の所蔵数）冊ある
   - （支店名）から（支店名）に本を移動する（支店図書館の所蔵数増減）
 - [ ] 利用者への貸出
+  - ひとりのユーザが同じ本を2冊以上借りることはできない
+  - 貸出中の本を別の利用者へ貸し出せない
+  - 利用者ごとの貸出上限冊数を超えたら貸し出せない
   - （支店名）の（書籍名称）を利用者に貸し出す
   - （支店名）が（書籍名称）の返却を受け付ける
+- [ ] 予約
+  - 貸出中の本に予約を入れる
+  - 返却された本を予約順に取り置きする
+  - 取り置き期限を過ぎた予約を取り消す
+- [ ] 利用者管理
+  - 利用者を登録する
+  - 利用者の貸出履歴を確認する
+  - 延滞中の利用者を確認する
+- [ ] 開館日・休館日
+  - 支店ごとの休館日を登録する
+  - 休館日には貸出期限日をずらす
 - [ ] 設定
   - 検索条件を保存、読み込みできる
   - 権限によって表示されるレコードが変化
