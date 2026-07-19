@@ -69,6 +69,8 @@ Closes #<Issue番号>
   - PowerShell で `Invoke-RestMethod` のJSON配列を絞り込む場合は、後続手順で使う確認対象が必ず1件のオブジェクトになる書き方にする。例: `$book = (Invoke-RestMethod -Uri <url>).Where({ $_.name -eq '<固定名>' })[0]`。取得と絞り込みを1行の代入パイプに詰め込むと、配列全体のIDが後続URLに展開されるなど確認が壊れることがある。
   - PowerShell で取得した対象のIDを後続URLや更新APIに使う場合は、手順内で確認対象を再取得し、古いセッション変数に依存しないようにする。実行済み確認でも `$book.id` が単一のIDになっていることと、詳細APIなど後続コマンドが `200` など期待ステータスを返すことまで確認してからPR本文に載せる。
   - PowerShell の確認コマンドで `Invoke-WebRequest -SkipHttpErrorCheck` を使う場合は、`StatusCode` を確認してからレスポンス本文をJSON変換する。`404` などHTMLエラーレスポンスのまま `ConvertFrom-Json` に渡すと、元の原因が分かりにくい二次エラーになるため、`if ($detail.StatusCode -ne 200) { throw ... }` のように明確に止める。
+  - PowerShell の目検コマンドは、レビュアーがコンソールから要点を拾いやすい出力にする。巨大なオブジェクトをそのまま表示せず、`[pscustomobject]`、`Select-Object`、`Format-Table` などで `status`、対象ID、合計値、支店別数量など確認に必要な列だけを出す。
+  - ネストした配列やオブジェクトを確認する場合は、親オブジェクトの省略表示に頼らず、確認対象を別テーブルとして出力する。例: `($detail.Content | ConvertFrom-Json).branch_stocks | Select-Object branch,branch_name,amount`。
   - 取得したIDや確認対象を後続手順で使う場合は、使う前に未取得でないことを検証し、未取得なら明確なエラーで止める手順を書く。空IDのまま詳細APIや更新APIへ進ませない。
   - 長い1行の `python manage.py shell -c "..."` や複雑な引用符を含むコマンドは、貼り付け時に欠けたり別コマンドと混ざりやすいため避ける。PowerShell here-string、複数行スクリプト、一時スクリプトファイルなど、貼り付けても崩れにくい形で書く。Django shell で複数行 Python を実行する場合は、標準入力へ直接パイプせず、一時 `.py` を作成して `python manage.py shell -c "exec(open(r'<path>', encoding='utf-8').read())"` のように実行する。
   - 期待した確認対象が取得できない場合に、DBリセット・fixture投入・目検用データ作成・起動中サーバーの接続DBを確認するよう補足する。
