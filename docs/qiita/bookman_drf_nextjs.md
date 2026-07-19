@@ -827,7 +827,7 @@ mysql -u root -p
 CREATE DATABASE bookman_db DEFAULT CHARACTER SET utf8mb4;
 ```
 
-`bookman_db` がすでにあるなら、database 作成は飛ばしてよい。
+`bookman_db` がすでにあるなら、database 作成は飛ばしてよい。つぎは、Django から接続する MySQL ユーザーを作り、`bookman_db` への権限を付ける。
 
 ```sql:MySQL
 CREATE USER 'python'@'localhost' IDENTIFIED BY '任意のパスワード';
