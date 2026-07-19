@@ -14,15 +14,11 @@
 :::
 
 ## 参考サイト
-https://www.django-rest-framework.org/
-
-https://nextjs.org/docs
-
-https://react.dev/
-
-https://mui.com/material-ui/
-
-https://jestjs.io/
+- https://www.django-rest-framework.org/
+- https://nextjs.org/docs
+- https://react.dev/
+- https://mui.com/material-ui/
+- https://jestjs.io/
 
 ## GitHub で記事ごと管理する
 今回の最新化では、[duri0214/bookman_nextjs#1](https://github.com/duri0214/bookman_nextjs/issues/1) を起点にしてフロントエンド更新を進めた。機能内容は基本的に変えず、依存関係、実行環境、画面構成、記事管理の流れを現在の状態に合わせて整理している。
@@ -126,7 +122,7 @@ npm --version
 
 下は最終形の要点だけを抜粋している。実際に反映するときは、既存の `package.json` と見比べて、必要なキーを追加・更新する。ここに出していない MUI 関連、Testing Library、型定義などの devDependencies もあるので、実際の全体は `bookman_nextjs` の `package.json` を見る。
 
-https://github.com/duri0214/bookman_nextjs/blob/main/package.json
+- https://github.com/duri0214/bookman_nextjs/blob/main/package.json
 
 ```json:package.json
 {
@@ -263,8 +259,9 @@ export default function Home() {
 ```
 
 ソースコード:
-https://github.com/duri0214/bookman_nextjs/blob/main/src/app/page.tsx
-https://github.com/duri0214/bookman_nextjs/blob/main/src/app/page.module.css
+
+- https://github.com/duri0214/bookman_nextjs/blob/main/src/app/page.tsx
+- https://github.com/duri0214/bookman_nextjs/blob/main/src/app/page.module.css
 
 ### MUI と Bootstrap の使い分け
 普段メインで触っている `portfolio` は Django 標準の画面が中心なので、Bootstrap を使うことが多い。フォーム、一覧、ボタン、グリッドを素早く整えるなら Bootstrap で十分に進められる。
@@ -274,7 +271,8 @@ https://github.com/duri0214/bookman_nextjs/blob/main/src/app/page.module.css
 Bookman 側では、ダッシュボード、DataGrid、Dialog、Alert、Drawer のような操作画面を React コンポーネントとして組み立てるために MUI を使った。仕事で触っていた経験があり、テンプレートから状態付き UI へ進めやすかったのも理由だ。ただし、単純な Django 画面なら Bootstrap へ寄せる判断も普通にありだと思う。
 
 当時レイアウトの参考にしたビジュアル:
-https://mui.com/material-ui/getting-started/templates/dashboard/
+
+- https://mui.com/material-ui/getting-started/templates/dashboard/
 
 :::note
 上のリンクは見た目の参考として残している。現在の `bookman_nextjs` では MUI `9.2.0` 系に更新しているので、依存関係は現在の `package.json` に合わせる。
@@ -310,7 +308,8 @@ import Link from 'next/link'
 ```
 
 ソースコード:
-https://github.com/duri0214/bookman_nextjs/tree/main/src/app/%28bookman%29
+
+- https://github.com/duri0214/bookman_nextjs/tree/main/src/app/%28bookman%29
 
 ### API クライアントと環境変数
 フロントエンドとバックエンドは別サーバーで動くので、フロントエンド側から見たバックエンド API の接続先を明示する必要がある。バックエンド API の base URL は `BOOKMAN_API_BASE_URL` で切り替える。未指定ならローカルの Django API を使う。
@@ -334,7 +333,7 @@ console.log(bookmanApiBaseUrl)
 
 ブラウザで動くコードは、サーバー側の環境変数を実行時に直接読めない。だから Next.js には、ブラウザへ渡してよい値だけを明示的に公開する仕組みがある。ブラウザ側のコードから参照できる環境変数にする場合、変数名に `NEXT_PUBLIC_` を付ける。公式ドキュメントでは、`NEXT_PUBLIC_` を付けた値は build 時にブラウザへ送られる JavaScript bundle へ埋め込まれる、と説明されている。
 
-https://nextjs.org/docs/pages/guides/environment-variables#bundling-environment-variables-for-the-browser
+- https://nextjs.org/docs/pages/guides/environment-variables#bundling-environment-variables-for-the-browser
 
 このプロジェクトでは、`NEXT_PUBLIC_` は原則として使わない方針にしている。これは Next.js の一般的なしきたりというより、このプロジェクトでの運用ルールだ。ブラウザへ渡してよい値なら、フロントエンド側の設定やコードに書けばよい。環境変数はもともと外へ出したくない値を扱うためのものなので、バックエンドにもフロントエンドにも公開用の環境変数が散らかる状態を避けたい。`BOOKMAN_API_BASE_URL` は Server Component や Route Handler 側だけで読む値なので、ブラウザへ公開する必要がない。
 
@@ -444,9 +443,9 @@ export const getBookListData = async (): Promise<BookListData> => {
 ```
 
 ソースコード:
-https://github.com/duri0214/bookman_nextjs/blob/main/src/app/%28bookman%29/branch/_components/listData.ts
 
-https://github.com/duri0214/bookman_nextjs/blob/main/src/app/%28bookman%29/book/_components/listData.ts
+- https://github.com/duri0214/bookman_nextjs/blob/main/src/app/%28bookman%29/branch/_components/listData.ts
+- https://github.com/duri0214/bookman_nextjs/blob/main/src/app/%28bookman%29/book/_components/listData.ts
 
 ### モックデータとエラー表示
 バックエンドが起動していない状態で `/branch` や `/book` を見ると、通常は画面上にデータ取得エラーを表示する。
@@ -544,7 +543,8 @@ const onCreate = async () => {
 登録中は入力とボタンを無効化し、失敗時はダイアログ上にエラーを出す。成功したら `router.refresh()` で Server Component 側の一覧を再取得する。
 
 ソースコード:
-https://github.com/duri0214/bookman_nextjs/tree/main/src/app/%28bookman%29/branch
+
+- https://github.com/duri0214/bookman_nextjs/tree/main/src/app/%28bookman%29/branch
 
 ### 書籍管理
 書籍管理も、一覧表示と登録ダイアログを持つ。バックエンドの `BookSerializer` は `category` と `authors` をIDで受けるので、フロントエンドも登録時には文字列入力を数値へ変換して payload を作る。
@@ -631,7 +631,8 @@ const onCreate = async () => {
 ```
 
 ソースコード:
-https://github.com/duri0214/bookman_nextjs/tree/main/src/app/%28bookman%29/book
+
+- https://github.com/duri0214/bookman_nextjs/tree/main/src/app/%28bookman%29/book
 
 ### Route Handler で登録を中継する
 登録処理はブラウザから直接 Django API に POST せず、Next.js の Route Handler を挟む。
@@ -650,8 +651,12 @@ graph LR
 
 関連するソースは以下。
 
-- ブラウザ側: [branch/_components/useCreateDialog.ts](https://github.com/duri0214/bookman_nextjs/blob/main/src/app/%28bookman%29/branch/_components/useCreateDialog.ts)、[book/_components/useCreateDialog.ts](https://github.com/duri0214/bookman_nextjs/blob/main/src/app/%28bookman%29/book/_components/useCreateDialog.ts)
-- Route Handler 側: [api/bookman/branches/route.ts](https://github.com/duri0214/bookman_nextjs/blob/main/src/app/api/bookman/branches/route.ts)、[api/bookman/books/route.ts](https://github.com/duri0214/bookman_nextjs/blob/main/src/app/api/bookman/books/route.ts)
+- ブラウザ側:
+  - [branch/_components/useCreateDialog.ts](https://github.com/duri0214/bookman_nextjs/blob/main/src/app/%28bookman%29/branch/_components/useCreateDialog.ts)
+  - [book/_components/useCreateDialog.ts](https://github.com/duri0214/bookman_nextjs/blob/main/src/app/%28bookman%29/book/_components/useCreateDialog.ts)
+- Route Handler 側:
+  - [api/bookman/branches/route.ts](https://github.com/duri0214/bookman_nextjs/blob/main/src/app/api/bookman/branches/route.ts)
+  - [api/bookman/books/route.ts](https://github.com/duri0214/bookman_nextjs/blob/main/src/app/api/bookman/books/route.ts)
 
 この `useCreateDialog` は登録ダイアログから呼ばれるブラウザ側の処理で、まず Next.js の `/api/bookman/books` や `/api/bookman/branches` にリクエストを投げる。Route Handler 側では `getBookmanApiUrl('booksCreate')` のように `BOOKMAN_API_ENDPOINTS` から endpoint を選び、`BOOKMAN_API_BASE_URL` と組み合わせて Django REST Framework の API へ中継する。
 
@@ -683,7 +688,8 @@ export async function POST(request: Request) {
 支店登録も同じ考え方で `/api/bookman/branches` からバックエンドの `branches/` へ POST する。
 
 ソースコード:
-https://github.com/duri0214/bookman_nextjs/tree/main/src/app/api/bookman
+
+- https://github.com/duri0214/bookman_nextjs/tree/main/src/app/api/bookman
 
 ### 起動手順
 Bookman はフロントエンドとバックエンドを別ターミナルで起動して動かす。
@@ -764,7 +770,7 @@ python -m pip install -r requirements.txt
 
 `requirements.txt` は、Django / DRF / CORS / MySQL / 画像フィールド / フォーマッターを固定している。ここも記事に全文を貼り続けるより、GitHub のファイルを正本にする。
 
-https://github.com/duri0214/bookman_backend/blob/main/requirements.txt
+- https://github.com/duri0214/bookman_backend/blob/main/requirements.txt
 
 要点だけ抜くとこうなる。
 
@@ -839,7 +845,7 @@ python manage.py makemigrations --check --dry-run
 
 migration ファイルは以下にまとまっている。
 
-https://github.com/duri0214/bookman_backend/tree/main/bookman/migrations
+- https://github.com/duri0214/bookman_backend/tree/main/bookman/migrations
 
 ### モデル
 Bookman の backend は、支店、カテゴリ、著者、書籍、所蔵、貸出を Django model として持つ。
@@ -853,7 +859,7 @@ Bookman の backend は、支店、カテゴリ、著者、書籍、所蔵、貸
 
 モデル全文は記事に貼らず、現行ソースを見る。
 
-https://github.com/duri0214/bookman_backend/blob/main/bookman/models.py
+- https://github.com/duri0214/bookman_backend/blob/main/bookman/models.py
 
 著者は複数人になることがあるので、`Book.authors` は `ManyToManyField` にしている。Django はこの関連を `bookman_book_authors` という中間テーブルで管理する。書籍 ID と著者 ID の組み合わせを持つテーブルだ。
 
@@ -879,7 +885,7 @@ python manage.py loaddata bookman/fixtures/book-data.json
 
 fixture の中身は GitHub の `fixtures` フォルダを見る。
 
-https://github.com/duri0214/bookman_backend/tree/main/bookman/fixtures
+- https://github.com/duri0214/bookman_backend/tree/main/bookman/fixtures
 
 書籍 fixture は `authors` に著者 ID 配列を持つので、カテゴリと著者を先に投入してから書籍を投入する。
 
@@ -961,7 +967,7 @@ python manage.py migrate --noinput
 
 通信テストは `bookman/tests.py` で点検した。支店一覧/登録、書籍一覧/登録/詳細、著者一覧、カテゴリ一覧で返すフィールドを確認している。
 
-https://github.com/duri0214/bookman_backend/blob/main/bookman/tests.py
+- https://github.com/duri0214/bookman_backend/blob/main/bookman/tests.py
 
 `bookman_backend#7` の確認では、fixture ロード後に `branches` と `books` の代表 API レスポンスも確認している。記事のコマンドを更新したときは、README とこの記事の手順がずれないように見る。
 
@@ -972,13 +978,13 @@ https://github.com/duri0214/bookman_backend/blob/main/bookman/tests.py
 
 ### 要件メモ
 - 図書館の業務だって考え始めると試験に出るぐらいに難しいんだよ
-https://www.fe-siken.com/kakomon/01_aki/pm03.html
+  - https://www.fe-siken.com/kakomon/01_aki/pm03.html
 
 - ひとりのユーザが同じ本を2冊以上借りることはできない
-https://detail.chiebukuro.yahoo.co.jp/qa/question_detail/q1377006708
+  - https://detail.chiebukuro.yahoo.co.jp/qa/question_detail/q1377006708
 
 - 図書館の支店マスタで取り扱う情報はとりあえず4つ（休館日とかは機能が大きいから気が向いたら）
-https://www.lib.city.shibuya.tokyo.jp/?page_id=166
+  - https://www.lib.city.shibuya.tokyo.jp/?page_id=166
     - 名称: 笹塚図書館
     - 所在地: 〒151-0073 渋谷区笹塚1-47-1 メルクマール京王笹塚4階
     - 電話: 03-3460-6784
