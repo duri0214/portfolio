@@ -66,7 +66,8 @@ Closes #<Issue番号>
   - 例: `python manage.py flush --no-input`、`python manage.py migrate`、`python manage.py loaddata ...` など、そのリポジトリで安全に再現できるコマンドを具体的に書く。本番DBや共有DBで実行してはいけない前提も必要に応じて明記する。
   - 実DBの既存ID、前回の目検で残ったデータ、手元環境だけに存在するレコードには依存しない。
   - セットアップ手順で得た一時変数だけに依存せず、APIレスポンスやDBから固定名・一意条件で確認対象を再取得する手順を書く。別ターミナルや別セッションで実行しても確認できるようにする。
-  - PowerShell で `Invoke-RestMethod` のJSON配列を絞り込む場合は、レスポンスをいったん変数に受けてから `Where-Object` で絞り込む手順を書く。取得と絞り込みを1行の代入パイプに詰め込むと、配列全体のIDが後続URLに展開されるなど確認が壊れることがある。
+  - PowerShell で `Invoke-RestMethod` のJSON配列を絞り込む場合は、後続手順で使う確認対象が必ず1件のオブジェクトになる書き方にする。例: `$book = (Invoke-RestMethod -Uri <url>).Where({ $_.name -eq '<固定名>' })[0]`。取得と絞り込みを1行の代入パイプに詰め込むと、配列全体のIDが後続URLに展開されるなど確認が壊れることがある。
+  - PowerShell で取得した対象のIDを後続URLや更新APIに使う場合は、実行済み確認でも `$book.id` が単一のIDになっていることと、詳細APIなど後続コマンドが `200` など期待ステータスを返すことまで確認してからPR本文に載せる。
   - 取得したIDや確認対象を後続手順で使う場合は、使う前に未取得でないことを検証し、未取得なら明確なエラーで止める手順を書く。空IDのまま詳細APIや更新APIへ進ませない。
   - 長い1行の `python manage.py shell -c "..."` や複雑な引用符を含むコマンドは、貼り付け時に欠けたり別コマンドと混ざりやすいため避ける。PowerShell here-string、複数行スクリプト、一時スクリプトファイルなど、貼り付けても崩れにくい形で書く。Django shell で複数行 Python を実行する場合は、標準入力へ直接パイプせず、一時 `.py` を作成して `python manage.py shell -c "exec(open(r'<path>', encoding='utf-8').read())"` のように実行する。
   - 期待した確認対象が取得できない場合に、DBリセット・fixture投入・目検用データ作成・起動中サーバーの接続DBを確認するよう補足する。
