@@ -47,7 +47,6 @@ graph TB
   subgraph backend[バックエンド: bookman_backend]
     drf[Django REST Framework API]
     models[支店 / カテゴリ / 著者 / 書籍]
-    fixtures[初期データ]
   end
 
   home --> branch
@@ -55,7 +54,6 @@ graph TB
   bookScreen --> drf
   dashboard --> drf
   drf --> models
-  fixtures --> models
 
   style bookScreen fill:#ffffff,stroke:#999999,stroke-width:1px,color:#222222
 ```
