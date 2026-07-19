@@ -785,7 +785,7 @@ black==26.5.1
 ```
 
 ### Django 設定と .env
-設定ファイルは、portfolio 側の運用に寄せて `python-dotenv` の `load_dotenv(BASE_DIR / ".env")` と `os.getenv("DJANGO_...")` で読む形に整理した。以前の記事にあった `django-environ` や `DB_ENGINE` の説明はここでは使わない。
+設定ファイルは、portfolio 側の運用に寄せて `python-dotenv` の `load_dotenv(BASE_DIR / ".env")` と `os.getenv("DJANGO_...")` で読む形にした。`django-environ` や `DB_ENGINE` は使わないことにした。
 
 ```env:bookman_backend/.env
 DJANGO_DEBUG_MODE=True
