@@ -813,7 +813,7 @@ CORS_ALLOWED_ORIGINS = [
 ```
 
 ### MySQL と migration
-DB は MySQL の `bookman_db` を使う。ユーザーや権限の作り方はローカル環境によるが、Django 側の接続情報は `.env` に寄せる。
+DB は MySQL の `bookman_db` を使う。Django 側の接続情報は `.env` に寄せる。
 
 database 作成、MySQL ユーザー作成、権限付与を行うため、ここでは root などの管理権限を持つユーザーで入る。
 
