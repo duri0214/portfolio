@@ -821,7 +821,7 @@ mysql -u root -p
 
 database 作成、MySQL ユーザー作成、権限付与を行うため、ここでは root などの管理権限を持つユーザーで入る。
 
-`CREATE DATABASE` は、Django が接続する MySQL の database を作るコマンドだ。ここでは `bookman_db` という名前で作る。
+つぎは、Django が接続する MySQL の database を作る。ここでは `bookman_db` という名前で作る。
 
 ```sql:MySQL
 CREATE DATABASE bookman_db DEFAULT CHARACTER SET utf8mb4;
