@@ -926,7 +926,7 @@ class BranchList(generics.ListCreateAPIView):
         return Branch.objects.order_by("id")
 ```
 
-serializer は、Django model と API の JSON を詰め替える DTO のような役割を持つ。`BookSerializer` は、`category` と `authors` を ID で受け渡しする。フロントエンドはカテゴリ名や著者名を別 API から取得し、画面表示用に ID から名前へ変換する。
+serializer は、Django model と API の JSON を詰め替える [DTO(Data Transfer Object)](https://martinfowler.com/eaaCatalog/dataTransferObject.html) のような役割を持つ。`BookSerializer` は、`category` と `authors` を ID で受け渡しする。フロントエンドはカテゴリ名や著者名を別 API から取得し、画面表示用に ID から名前へ変換する。
 
 ```py:bookman/serializers.py
 class BookSerializer(serializers.ModelSerializer):
