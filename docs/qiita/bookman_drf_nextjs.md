@@ -827,16 +827,20 @@ mysql -u root -p
 CREATE DATABASE bookman_db DEFAULT CHARACTER SET utf8mb4;
 ```
 
-`bookman_db` がすでにあるなら、database 作成は飛ばしてよい。つぎは、Django から接続する MySQL ユーザーを作り、`bookman_db` への権限を付ける。
+`bookman_db` がすでにあるなら、database 作成は飛ばしてよい。つぎは、Django から接続する MySQL ユーザーと権限を確認する。
+
+`python` ユーザーを新しく作るなら、ユーザー作成と権限付与を実行する。
 
 ```sql:MySQL
 CREATE USER 'python'@'localhost' IDENTIFIED BY '任意のパスワード';
 grant CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on bookman_db.* to python@localhost;
 ```
 
+`python` ユーザーがすでにあるなら、`CREATE USER` は不要だ。`bookman_db` への権限だけ確認し、足りなければ `grant` を実行する。
+
 `python` ユーザーには `bookman_db.*` への権限だけを付ける。Django から migration を流したり、アプリのデータを読み書きしたりするにはこれで足りる。一方で root とは違い、別の database を作ったり、MySQL ユーザーを作ったり、サーバー全体の権限を変更したりする用途には使わない。
 
-`python` ユーザーがまだないときは、上の `CREATE USER` と `grant` を実行する。MySQL では `'python'@'localhost'` と `'python'@'127.0.0.1'` は別ユーザーとして扱われる。Django の `.env` で `DJANGO_DB_HOST=127.0.0.1` を指定している場合、`localhost` のユーザーだけを作っても認証できないことがある。
+MySQL では `'python'@'localhost'` と `'python'@'127.0.0.1'` は別ユーザーとして扱われる。Django の `.env` で `DJANGO_DB_HOST=127.0.0.1` を指定している場合、`localhost` のユーザーだけを作っても認証できないことがある。
 
 :::note
 ローカルで `python` ユーザーのパスワードが通らなかったときは、MySQL 側のユーザーが `localhost` で作られているか、`127.0.0.1` で作られているかを確認する。Django から `127.0.0.1` へ接続するなら、必要に応じて `CREATE USER 'python'@'127.0.0.1' ...` と `grant ... to 'python'@'127.0.0.1';` を追加する。
