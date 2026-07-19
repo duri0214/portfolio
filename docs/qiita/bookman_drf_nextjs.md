@@ -982,7 +982,7 @@ python manage.py migrate --noinput
 `bookman_backend#7` の確認では、fixture ロード後に `branches` と `books` の代表 API レスポンスも確認している。記事のコマンドを更新したときは、README とこの記事の手順がずれないように見る。
 
 ## 図書館業務をイメージしまくれ！
-ここから先は、バックエンド基盤の現行化とは別の業務実装メモとして残す。今回の `bookman_backend#1` 配下では、依存関係、設定、migration、fixture、通信テスト、検証手順を現在の状態へ戻すところまでを扱った。貸出ルールや支店間移動、休館日、検索条件保存のような業務実装は、次の設計チケットで分けて考える。
+ここから先は、バックエンド基盤の現行化とは別の業務実装メモとして残す。今回の `bookman_backend#1` 配下では、依存関係、設定、migration、fixture、通信テスト、検証手順の最新化までを扱った。貸出ルールや支店間移動、休館日、検索条件保存のような業務実装は、次の設計チケットで分けて考える。
 
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/eefc1ab8-d96c-448a-0eca-4077fe02c87f.png)
 
