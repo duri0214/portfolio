@@ -836,7 +836,7 @@ grant CREATE, DROP, SELECT, UPDATE, INSERT, DELETE, ALTER, REFERENCES, INDEX on 
 ローカルで `python` ユーザーのパスワードが通らなかったときは、MySQL 側のユーザーが `localhost` で作られているか、`127.0.0.1` で作られているかを確認する。Django から `127.0.0.1` へ接続するなら、必要に応じて `CREATE USER 'python'@'127.0.0.1' ...` と `grant ... to 'python'@'127.0.0.1';` を追加する。
 :::
 
-migration は Git 管理対象に戻した。モデルを変更したときだけ `makemigrations bookman` を実行し、通常のセットアップでは migration を適用する。
+migration は Git 管理対象にする。migration ファイルがあれば、別の環境で clone したときも同じ DB 構造を再現できる。モデルを変更したときだけ `makemigrations bookman` を実行し、通常のセットアップでは migration を適用する。
 
 ```console:console
 python manage.py migrate
