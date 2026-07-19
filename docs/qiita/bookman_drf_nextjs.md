@@ -45,7 +45,6 @@ graph TB
   end
 
   subgraph backend[バックエンド: bookman_backend]
-    backendSpacer[" "]
     drf[Django REST Framework API]
     models[支店 / カテゴリ / 著者 / 書籍]
   end
@@ -54,10 +53,8 @@ graph TB
   branch --> drf
   bookScreen --> drf
   dashboard --> drf
-  backendSpacer ~~~ drf
   drf --> models
 
-  style backendSpacer fill:transparent,stroke:transparent,color:transparent
   style bookScreen fill:#ffffff,stroke:#999999,stroke-width:1px,color:#222222
 ```
 
