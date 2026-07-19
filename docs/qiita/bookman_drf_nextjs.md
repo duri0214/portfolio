@@ -44,7 +44,8 @@ graph TB
     end
   end
 
-  subgraph backend[バックエンド: bookman_backend]
+  subgraph backend[バックエンド構成]
+    backendLabel[バックエンド: bookman_backend]
     drf[Django REST Framework API]
     models[支店 / カテゴリ / 著者 / 書籍]
   end
@@ -53,8 +54,10 @@ graph TB
   branch --> drf
   bookScreen --> drf
   dashboard --> drf
+  backendLabel ~~~ drf
   drf --> models
 
+  style backendLabel fill:#ffffff,stroke:#999999,stroke-width:1px,color:#222222
   style bookScreen fill:#ffffff,stroke:#999999,stroke-width:1px,color:#222222
 ```
 
