@@ -738,7 +738,7 @@ python manage.py test
 ```
 
 ## Backend part
-バックエンド側は、既存の図書管理 API の内容を大きく変えずに、現在の Python / Django / Django REST Framework で扱える状態へ戻した。作業の単位や履歴は「GitHub で記事ごと管理する」に書いた流れと同じように Issue と PR で追える。
+バックエンド側は、Django REST Framework で図書館業務のデータを API として返す構成にする。Django model で支店、カテゴリ、著者、書籍などのデータ構造を定義し、serializer で JSON の形へ詰め替え、view と URL でフロントエンドから呼び出せる入口を作る。作業の単位や履歴は「GitHub で記事ごと管理する」に書いた流れと同じように Issue と PR で追える。
 
 ### リポジトリ構成
 `bookman_backend` は、前段の `bookman_nextjs` と同じ親フォルダに置く。
