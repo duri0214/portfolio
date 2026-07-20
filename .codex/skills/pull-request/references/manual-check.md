@@ -23,7 +23,7 @@
 - 取得したIDや確認対象は、使う前に未取得でないこと、単一IDであることを検証し、取得できない場合は明確なエラーで止める。
 - `Invoke-WebRequest -SkipHttpErrorCheck` を使う場合は、`StatusCode` を確認してからレスポンス本文をJSON変換する。HTMLエラーレスポンスを `ConvertFrom-Json` に渡さない。
 - 確認コマンドの出力は、レビュアーが要点を拾いやすい形にする。巨大なオブジェクトをそのまま表示せず、`[pscustomobject]`、`Select-Object`、`Format-Table` などで確認に必要な列だけを出す。
-- ネストした配列やオブジェクトは、親オブジェクトの省略表示に頼らず、確認対象を別テーブルとして出力する。
+- ネストした配列やオブジェクトは、親オブジェクトの省略表示に頼らず、確認対象を別テーブルとして出力する。`branch_stocks` などを親オブジェクトに含めたまま表示すると `{@{...}` のように省略され、期待値を目視できないため禁止する。
 
 ### PowerShellテンプレート
 
@@ -39,13 +39,15 @@ if ($response.StatusCode -ne 200) {
 }
 
 $detail = $response.Content | ConvertFrom-Json
+"SUMMARY"
 [pscustomobject]@{
     status = $response.StatusCode
     id = $detail.id
     name = $detail.name
-}
+} | Format-Table -AutoSize
 
-$detail.<nested_items> | Select-Object <columns>
+"NESTED_ITEMS"
+$detail.<nested_items> | Select-Object <columns> | Format-Table -AutoSize
 ```
 
 ## 貼り付けやすさ
