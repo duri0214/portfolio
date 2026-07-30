@@ -1026,3 +1026,189 @@ python manage.py migrate --noinput
   - 検索条件を保存、読み込みできる
   - 権限によって表示されるレコードが変化
   - JSONで読み書き
+
+### 第二期 Backend part
+上の TODO を、第二期では backend 側から先に肉付けした。第一期の backend は「Django REST Framework で支店、書籍、著者、カテゴリを API として返す骨組み」までに留め、第二期では図書館業務として必要な model / migration / API / test を追加している。
+
+第二期 backend の親チケットはこれ。
+
+- https://github.com/duri0214/bookman_backend/issues/13
+
+第二期 frontend 側の親チケットも、backend API を前提にしている。
+
+- https://github.com/duri0214/bookman_nextjs/issues/20
+
+#### 第二期で追加した model
+第二期では、書籍マスタに直接冊数を持たせるのではなく、支店別所蔵を中間 model として扱うようにした。これで「自治体全体として何冊あるか」と「どの支店に何冊あるか」を分けて扱える。
+
+- `Municipality`: 自治体マスタ
+- `BranchBookStock`: 支店ごとの所蔵数
+- `Customer`: 図書館利用者
+- `LibraryStaff`: 図書館職員
+- `Lending`: 支店別所蔵を起点にした貸出
+- `Reservation`: 予約と取り置き状態
+- `BranchClosedDay`: 支店ごとの休館日
+- `SearchCondition`: 管理側画面の保存済み検索条件
+
+```py:bookman/models.py
+class Book(models.Model):
+    name = models.CharField("タイトル", max_length=255, unique=True)
+    thumbnail = models.ImageField("サムネイル", blank=True, null=True)
+    category = models.ForeignKey("Category", on_delete=models.PROTECT, verbose_name="カテゴリ")
+    authors = models.ManyToManyField("Author", verbose_name="著者")
+    branches = models.ManyToManyField(
+        "Branch",
+        through="BranchBookStock",
+        related_name="books",
+        verbose_name="所蔵支店",
+    )
+    lead_text = models.TextField("紹介文")
+    isbn = models.CharField("ISBNコード", max_length=20, unique=True)
+
+
+class BranchBookStock(models.Model):
+    branch = models.ForeignKey("Branch", related_name="book_stocks", on_delete=models.CASCADE)
+    book = models.ForeignKey("Book", related_name="branch_stocks", on_delete=models.CASCADE)
+    amount = models.PositiveSmallIntegerField()
+```
+
+実装全文は記事に貼らず、GitHub の現行ソースを正本にする。
+
+- model: https://github.com/duri0214/bookman_backend/blob/main/bookman/models.py
+- serializer: https://github.com/duri0214/bookman_backend/tree/main/bookman/serializers
+- domain: https://github.com/duri0214/bookman_backend/tree/main/bookman/domain
+
+#### serializer と domain 層
+第一期では serializer の説明を単一ファイル前提で書いていたが、第二期では処理量が増えたので `bookman/serializers/` 配下へ分割した。貸出、返却、予約、支店間移動などの業務ルールは serializer に直接書き続けず、`bookman/domain/` 配下の service / valueobject / repository に寄せている。
+
+`BookSerializer` は、カテゴリと著者を ID で受け渡ししつつ、表示用に `total_amount`、`branch_stocks`、`created_at` も返す。ISBN は保存前にハイフンを除いて正規化し、ISBN-10 / ISBN-13 の形式と重複を backend 側で検証する。
+
+```py:bookman/serializers/book.py
+class BookSerializer(serializers.ModelSerializer):
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.order_by("id")
+    )
+    authors = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Author.objects.order_by("id"),
+    )
+    branch_stocks = serializers.SerializerMethodField()
+    total_amount = serializers.SerializerMethodField()
+```
+
+貸出・返却、予約・取り置き、支店間移動は、フロントエンドが分岐しやすいように業務エラーへ `code` と `message` を持たせた。
+
+```json:response.json
+{
+  "code": "lending_stock_unavailable",
+  "message": "対象の本は貸出可能冊数が残っていません。",
+  "status_code": 400
+}
+```
+
+#### 第二期 fixture
+第二期の fixture は、画面確認で毎回手作業データを作らなくてもよいように増やした。複数自治体、複数支店、支店別所蔵、貸出中、予約中、休館日、職員 role、保存済み検索条件が入っている。
+
+```console:console
+python manage.py loaddata bookman/fixtures/municipality-data.json
+python manage.py loaddata bookman/fixtures/branch-data.json
+python manage.py loaddata bookman/fixtures/category-data.json
+python manage.py loaddata bookman/fixtures/author-data.json
+python manage.py loaddata bookman/fixtures/book-data.json
+python manage.py loaddata bookman/fixtures/branch-book-stock-data.json
+python manage.py loaddata bookman/fixtures/customer-data.json
+python manage.py loaddata bookman/fixtures/library-staff-data.json
+python manage.py loaddata bookman/fixtures/branch-closed-day-data.json
+python manage.py loaddata bookman/fixtures/lending-data.json
+python manage.py loaddata bookman/fixtures/reservation-data.json
+python manage.py loaddata bookman/fixtures/search-condition-data.json
+```
+
+fixture の読み込み順と代表確認シナリオは README 側にも置いている。
+
+- https://github.com/duri0214/bookman_backend/blob/main/README.md
+- https://github.com/duri0214/bookman_backend/tree/main/bookman/fixtures
+
+#### 第二期 API
+第一期の API は支店、書籍、著者、カテゴリの骨組みだった。第二期では、図書館業務を回すための API を追加した。
+
+| 用途 | URL | view |
+| --- | --- | --- |
+| 自治体一覧/登録 | `/bookman/api/municipalities/` | `MunicipalityList` |
+| 自治体詳細/更新/削除 | `/bookman/api/municipalities/<id>/` | `MunicipalityDetail` |
+| 支店詳細/更新 | `/bookman/api/branches/<id>/` | `BranchDetail` |
+| 支店休館日一覧/登録 | `/bookman/api/branch-closed-days/` | `BranchClosedDayList` |
+| 支店休館日削除 | `/bookman/api/branch-closed-days/<id>/` | `BranchClosedDayDetail` |
+| 書籍 CSV 登録 | `/bookman/api/books/import-csv/` | `BookCsvImport` |
+| 支店別所蔵一覧/登録 | `/bookman/api/branch-book-stocks/` | `BranchBookStockList` |
+| 支店別所蔵詳細/更新 | `/bookman/api/branch-book-stocks/<id>/` | `BranchBookStockDetail` |
+| 支店間移動 | `/bookman/api/branch-book-stocks/transfer/` | `BranchBookStockTransfer` |
+| 利用者一覧/登録 | `/bookman/api/customers/` | `CustomerList` |
+| 利用者詳細/更新 | `/bookman/api/customers/<id>/` | `CustomerDetail` |
+| 職員一覧/登録 | `/bookman/api/staff/` | `LibraryStaffList` |
+| 職員詳細/更新 | `/bookman/api/staff/<id>/` | `LibraryStaffDetail` |
+| 貸出一覧/登録 | `/bookman/api/lendings/` | `LendingList` |
+| 返却 | `/bookman/api/lendings/return/` | `LendingReturn` |
+| 予約一覧/登録 | `/bookman/api/reservations/` | `ReservationList` |
+| 予約取消 | `/bookman/api/reservations/<id>/cancel/` | `ReservationCancel` |
+| 取り置き期限切れ処理 | `/bookman/api/reservations/expire/` | `ReservationExpire` |
+| 検索条件一覧/登録 | `/bookman/api/search-conditions/` | `SearchConditionList` |
+| 検索条件詳細/更新/削除 | `/bookman/api/search-conditions/<id>/` | `SearchConditionDetail` |
+| 検索条件の権限文脈 | `/bookman/api/search-conditions/permissions/` | `SearchConditionPermissionContext` |
+| 著者詳細/更新 | `/bookman/api/authors/<id>/` | `AuthorDetail` |
+| カテゴリ詳細/更新 | `/bookman/api/categories/<id>/` | `CategoryDetail` |
+
+- URL 定義: https://github.com/duri0214/bookman_backend/blob/main/bookman/urls.py
+- view: https://github.com/duri0214/bookman_backend/blob/main/bookman/views.py
+
+代表 API を直接確認するなら、backend 起動後に以下を見る。
+
+```console:console
+curl "http://127.0.0.1:8000/bookman/api/municipalities/"
+curl "http://127.0.0.1:8000/bookman/api/branches/?municipality=1"
+curl "http://127.0.0.1:8000/bookman/api/books/?municipality=1"
+curl "http://127.0.0.1:8000/bookman/api/branch-book-stocks/?municipality=1"
+curl "http://127.0.0.1:8000/bookman/api/lendings/?municipality=1"
+curl "http://127.0.0.1:8000/bookman/api/reservations/?municipality=1"
+```
+
+#### 第二期 backend の実装チケット
+第二期 backend の子チケットでは、次の範囲を実装した。
+
+| 範囲 | 主な内容 | Issue |
+| --- | --- | --- |
+| 支店別所蔵 | `BranchBookStock`、自治体全体の所蔵数集計、貸出可能冊数 | https://github.com/duri0214/bookman_backend/issues/14 |
+| 支店間移動 | 移動元/移動先、同一支店不可、自治体またぎ不可、在庫不足エラー | https://github.com/duri0214/bookman_backend/issues/15 |
+| 利用者と貸出/返却 | `Customer`、`Lending`、貸出登録、返却、貸出上限 | https://github.com/duri0214/bookman_backend/issues/16 |
+| 予約と取り置き | `Reservation`、予約待ち、取り置き、取消、期限切れ、返却時の予約繰り上げ | https://github.com/duri0214/bookman_backend/issues/17 |
+| 休館日と返却期限調整 | `BranchClosedDay`、日付単位の休館日、返却予定日の繰り延べ | https://github.com/duri0214/bookman_backend/issues/18 |
+| 検索条件保存 | `SearchCondition`、職員 role、個人/支店/管理者共有、disabled 表示用の権限文脈 | https://github.com/duri0214/bookman_backend/issues/19 |
+| 自治体境界 | `Municipality`、支店/所蔵/貸出/予約の自治体スコープ | https://github.com/duri0214/bookman_backend/issues/25 |
+| 職員 | `LibraryStaff`、貸出対応者、職員 role 更新 | https://github.com/duri0214/bookman_backend/issues/29 |
+| マスタ管理 | 自治体、著者、カテゴリ、書籍、支店、利用者の登録/更新 API | https://github.com/duri0214/bookman_backend/issues/44, https://github.com/duri0214/bookman_backend/issues/46, https://github.com/duri0214/bookman_backend/issues/47, https://github.com/duri0214/bookman_backend/issues/48, https://github.com/duri0214/bookman_backend/issues/49, https://github.com/duri0214/bookman_backend/issues/50, https://github.com/duri0214/bookman_backend/issues/51 |
+| 自治体スコープ補強 | 支店別所蔵、貸出、予約、支店作成時の自治体指定 | https://github.com/duri0214/bookman_backend/issues/25, https://github.com/duri0214/bookman_backend/issues/45, https://github.com/duri0214/bookman_backend/issues/57 |
+| 書籍登録補強 | 初期支店別所蔵の同時作成、ISBN 一意制約、登録日時追加 | https://github.com/duri0214/bookman_backend/issues/63, https://github.com/duri0214/bookman_backend/issues/64, https://github.com/duri0214/bookman_backend/issues/79 |
+| validation 補強 | 支店電話番号、支店更新経路、書籍 ISBN の回帰テスト | https://github.com/duri0214/bookman_backend/issues/70, https://github.com/duri0214/bookman_backend/issues/72 |
+| fixture | 第二期画面確認用データ、複数自治体確認用データ | https://github.com/duri0214/bookman_backend/issues/42, https://github.com/duri0214/bookman_backend/issues/52 |
+| API 整理 | 支店登録 API を一覧/登録 URL に集約 | https://github.com/duri0214/bookman_backend/issues/21 |
+| serializer 分割 | serializer から domain service へ業務ルールを切り出す | https://github.com/duri0214/bookman_backend/issues/58 |
+
+第二期の backend テストは `bookman/tests.py` で確認している。自治体、支店別所蔵、支店間移動、利用者、職員、貸出/返却、予約/取消/期限切れ、休館日、検索条件保存、CSV 登録、fixture ロードまで含めた。
+
+```console:console
+python manage.py check
+python manage.py makemigrations --check --dry-run
+python manage.py test bookman --noinput
+```
+
+### 第二期 Frontend part
+第二期 frontend 側では、backend API を前提に画面を肉付けしていく。今回の backend 記事更新では、対応する frontend チケットだけを置いて、画面ごとの説明は frontend 側の記事更新で追記する。
+
+- 第二期 frontend 親チケット: https://github.com/duri0214/bookman_nextjs/issues/20
+- 支店別所蔵/支店間移動画面: https://github.com/duri0214/bookman_nextjs/issues/21
+- 利用者登録/参照画面: https://github.com/duri0214/bookman_nextjs/issues/22
+- 貸出/返却画面: https://github.com/duri0214/bookman_nextjs/issues/23
+- 予約/取り置き画面: https://github.com/duri0214/bookman_nextjs/issues/24
+- 休館日設定画面: https://github.com/duri0214/bookman_nextjs/issues/25
+- 検索条件保存 UI: https://github.com/duri0214/bookman_nextjs/issues/26
+- ダッシュボード再設計: https://github.com/duri0214/bookman_nextjs/issues/28
