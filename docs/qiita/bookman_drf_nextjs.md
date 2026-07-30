@@ -1202,13 +1202,138 @@ python manage.py test bookman --noinput
 ```
 
 ### 第二期 Frontend part
-第二期 frontend 側では、backend API を前提に画面を肉付けしていく。今回の backend 記事更新では、対応する frontend チケットだけを置いて、画面ごとの説明は frontend 側の記事更新で追記する。
+第二期 frontend 側では、上で追加した backend API を使って、図書館員が画面上で業務を回せるところまで肉付けした。第一期の frontend は Next.js / React / MUI の現行構成へ追随する骨組みとして残し、第二期では「支店別所蔵」「貸出・予約」「利用者」「休館日」「検索条件」「ダッシュボード」を業務画面として追加している。
 
-- 第二期 frontend 親チケット: https://github.com/duri0214/bookman_nextjs/issues/20
-- 支店別所蔵/支店間移動画面: https://github.com/duri0214/bookman_nextjs/issues/21
-- 利用者登録/参照画面: https://github.com/duri0214/bookman_nextjs/issues/22
-- 貸出/返却画面: https://github.com/duri0214/bookman_nextjs/issues/23
-- 予約/取り置き画面: https://github.com/duri0214/bookman_nextjs/issues/24
-- 休館日設定画面: https://github.com/duri0214/bookman_nextjs/issues/25
-- 検索条件保存 UI: https://github.com/duri0214/bookman_nextjs/issues/26
-- ダッシュボード再設計: https://github.com/duri0214/bookman_nextjs/issues/28
+第二期 frontend の親チケットはこれ。
+
+- https://github.com/duri0214/bookman_nextjs/issues/20
+
+#### frontend から見た API 接続
+frontend は、画面から直接 Django API を叩かず、Next.js の API Route を薄い proxy として挟んでいる。画面側は入力値を整え、API Route が `BOOKMAN_API_BASE_URL` 配下の backend API へ転送する。CSV 登録のように backend 側で検証すべき処理は、frontend で CSV 本文を解析しすぎず、`multipart/form-data` をそのまま転送して結果だけ表示する方針にした。
+
+```env:.env.local
+BOOKMAN_API_BASE_URL=http://127.0.0.1:8000/bookman/api
+```
+
+mock data で画面だけ確認したい場合は `USE_MOCK_DATA=true`、backend とつないで確認したい場合は未設定または `false` にする。
+
+```env:.env.local
+USE_MOCK_DATA=false
+```
+
+#### 支店別所蔵と支店間移動
+書籍一覧では、書籍マスタの情報に加えて、自治体全体の合計所蔵数と支店別所蔵数を表示するようにした。backend 側の `BranchBookStock` を frontend 側では画面用の list data に変換し、0冊の支店は一覧や移動元候補から外す。
+
+支店間移動は、書籍一覧の `支店間移動` ダイアログから行う。移動元支店、移動先支店、冊数を入力し、通常操作では同じ支店を移動先に選べないようにしている。backend が返す在庫不足などの業務エラーは、画面上のメッセージとして出す。
+
+- https://github.com/duri0214/bookman_nextjs/issues/21
+- https://github.com/duri0214/bookman_nextjs/pull/29
+
+#### 利用者台帳
+利用者台帳では、貸出に必要な利用者名、電話番号、貸出上限数を登録・参照・編集できるようにした。利用者名が空、貸出上限数が0以下のような入力不備は、API を呼ぶ前に画面で止める。backend validation error が返った場合も、画面のエラーメッセージとして表示する。
+
+登録・更新後は一覧を再取得するので、貸出・予約画面の利用者セレクトにも変更後の氏名や貸出上限数が反映される。
+
+- https://github.com/duri0214/bookman_nextjs/issues/22
+- https://github.com/duri0214/bookman_nextjs/issues/45
+- https://github.com/duri0214/bookman_nextjs/pull/31
+- https://github.com/duri0214/bookman_nextjs/pull/56
+
+#### 貸出・返却と予約・取り置き
+最初は貸出・返却画面と予約・取り置き画面を分けていたが、第二期の後半で `/lending` に統合した。図書館カウンターでは、利用者対応の流れの中で「貸出できるなら貸出」「貸出可能冊数が0なら予約」「返却されたら予約順に取り置き」という状態を同じ画面で見る方が自然だからだ。
+
+貸出登録では、支店別所蔵、利用者、対応職員、返却予定日を選択する。貸出中一覧には、本名、支店名、利用者名、対応職員名、返却予定日、状態、返却操作を表示する。重複貸出、貸出可能冊数不足、貸出上限超過、返却済み再返却のような backend 業務エラーは、`code` / `message` を受け取って画面に出す。
+
+予約側では、貸出可能冊数が0冊の支店別所蔵に対して予約登録できる。返却時に backend が取り置き対象を返した場合は、「誰に貸し出せるようになったか」をフラッシュメッセージで表示し、貸出画面側にも取り置き中の利用者と、所蔵数 / 貸出中 / 取り置き中 / 貸出可能の内訳を出す。
+
+自治体と支店のフィルターも追加した。支店未選択時は選択中自治体の全支店を対象にし、支店を選ぶと候補と貸出中一覧をその支店に絞る。自治体を変えたときは、別自治体の支店別所蔵で誤登録しないように選択値をクリアする。
+
+- https://github.com/duri0214/bookman_nextjs/issues/23
+- https://github.com/duri0214/bookman_nextjs/issues/24
+- https://github.com/duri0214/bookman_nextjs/issues/47
+- https://github.com/duri0214/bookman_nextjs/issues/51
+- https://github.com/duri0214/bookman_nextjs/pull/32
+- https://github.com/duri0214/bookman_nextjs/pull/33
+- https://github.com/duri0214/bookman_nextjs/pull/58
+- https://github.com/duri0214/bookman_nextjs/pull/59
+
+#### 休館日と返却期限調整
+支店管理画面では、支店ごとの休館日を日付単位で登録・削除できるようにした。登録時は支店、休館日、理由を入力し、削除後は一覧から対象行を消す。
+
+貸出登録時に返却予定日が休館日に当たる場合は、backend が調整した `original_return_date`、`return_date_adjusted`、`return_date_adjustment_reason` を frontend が読み取り、画面に「返却予定日が休館日のため、どの日に調整されたか」を表示する。
+
+- https://github.com/duri0214/bookman_nextjs/issues/25
+- https://github.com/duri0214/bookman_nextjs/pull/35
+
+#### 検索条件保存と権限別表示
+書籍、貸出、予約の各管理画面では、現在の検索条件を名前付きで保存し、あとから読み込めるようにした。backend 側の `SearchCondition` と permission context API を使い、保存条件の名称変更、削除、共有範囲変更も画面から行う。
+
+共有範囲は、個人、支店共有、管理者共有を扱う。操作職員が manager / admin でない場合は、支店共有と管理者共有の作成・変更を disabled にし、なぜ選べないのかを同じパネル内に表示する。権限のないユーザーに機能の存在を隠さず、ただし操作不可であることが分かる UI にしている。
+
+- https://github.com/duri0214/bookman_nextjs/issues/26
+- https://github.com/duri0214/bookman_nextjs/issues/37
+- https://github.com/duri0214/bookman_nextjs/pull/36
+- https://github.com/duri0214/bookman_nextjs/pull/38
+
+#### マスタ管理と CSV 登録
+第二期の後半では、backend 側に追加したマスタ更新 API に合わせて、自治体、著者、カテゴリ、書籍、支店、利用者を画面から登録・更新できるようにした。支店登録では自治体を選択し、書籍登録ではカテゴリと著者を選ぶ。書籍 ISBN は frontend 側でも最低限の入力補助を行い、最終的な一意性や形式 validation は backend に任せる。
+
+CSV 登録は書籍管理画面のダイアログとして追加した。frontend は、CSV ファイル選択、CSV 拡張子 / Content-Type の最小チェック、自治体選択済みチェック、サンプル CSV ダウンロード、backend の登録件数と行別エラー表示を担当する。CSV ヘッダー、ISBN、出版年月日、初期所蔵数、カテゴリ / 著者 / 支店、自治体境界、重複の判定は backend の責務として残した。
+
+- https://github.com/duri0214/bookman_nextjs/issues/39
+- https://github.com/duri0214/bookman_nextjs/issues/41
+- https://github.com/duri0214/bookman_nextjs/issues/42
+- https://github.com/duri0214/bookman_nextjs/issues/43
+- https://github.com/duri0214/bookman_nextjs/issues/44
+- https://github.com/duri0214/bookman_nextjs/issues/54
+- https://github.com/duri0214/bookman_nextjs/pull/46
+- https://github.com/duri0214/bookman_nextjs/pull/60
+
+#### ダッシュボードと HOME 導線
+ダッシュボードは、自治体全体の業務状態を見る画面として更新した。貸出中件数、予約 / 期限注意件数、自治体別の支店所蔵数を表示し、自治体を選ぶと支店別所蔵数もその自治体に絞る。
+
+右上のベル通知は固定値ではなく、取り置き中予約数を表示して `/lending` へ遷移できるようにした。HOME の「本をかりる」導線も未実装表示から `/lending` へのリンクに変更し、「次に見る業務」には貸出・予約と CSV 登録への導線を置いた。CSV 登録リンクは `/book?csvImport=1` を開き、書籍画面の CSV 登録ダイアログを初期表示する。
+
+- https://github.com/duri0214/bookman_nextjs/issues/28
+- https://github.com/duri0214/bookman_nextjs/issues/34
+- https://github.com/duri0214/bookman_nextjs/issues/63
+- https://github.com/duri0214/bookman_nextjs/pull/30
+- https://github.com/duri0214/bookman_nextjs/pull/61
+- https://github.com/duri0214/bookman_nextjs/pull/62
+
+#### 第二期 frontend の実装チケット
+第二期 frontend の子チケットでは、次の範囲を実装した。
+
+| 範囲 | 主な内容 | Issue |
+| --- | --- | --- |
+| 支店別所蔵 / 支店間移動 | 合計所蔵数、支店別所蔵、移動ダイアログ、在庫不足エラー | https://github.com/duri0214/bookman_nextjs/issues/21 |
+| 利用者台帳 | 利用者一覧、登録、編集、貸出上限数、貸出/予約画面への反映 | https://github.com/duri0214/bookman_nextjs/issues/22, https://github.com/duri0214/bookman_nextjs/issues/45 |
+| 貸出 / 返却 | 貸出登録、返却、貸出中一覧、業務エラー表示 | https://github.com/duri0214/bookman_nextjs/issues/23 |
+| 予約 / 取り置き | 予約登録、取消、期限切れ反映、返却後の取り置き案内 | https://github.com/duri0214/bookman_nextjs/issues/24 |
+| 貸出・予約統合 | `/lending` へ貸出登録、予約登録、貸出中一覧、予約一覧を集約 | https://github.com/duri0214/bookman_nextjs/issues/47 |
+| 自治体 / 支店フィルター | 貸出・返却画面へ自治体・支店スコープを明示 | https://github.com/duri0214/bookman_nextjs/issues/49, https://github.com/duri0214/bookman_nextjs/issues/51 |
+| 休館日 | 支店ごとの休館日登録/削除、返却期限調整結果の表示 | https://github.com/duri0214/bookman_nextjs/issues/25 |
+| 検索条件保存 | 書籍、貸出、予約の保存条件、共有範囲、権限別 disabled 表示 | https://github.com/duri0214/bookman_nextjs/issues/26 |
+| 職員 role | 画面から職員 role を管理し、保存条件の権限制御に利用 | https://github.com/duri0214/bookman_nextjs/issues/37 |
+| マスタ管理 | 自治体、著者、カテゴリ、書籍、支店、利用者の登録/更新画面 | https://github.com/duri0214/bookman_nextjs/issues/39, https://github.com/duri0214/bookman_nextjs/issues/41, https://github.com/duri0214/bookman_nextjs/issues/42, https://github.com/duri0214/bookman_nextjs/issues/43, https://github.com/duri0214/bookman_nextjs/issues/44, https://github.com/duri0214/bookman_nextjs/issues/45 |
+| CSV 登録 | 書籍 CSV 登録ダイアログ、サンプル CSV、結果件数と行別エラー表示 | https://github.com/duri0214/bookman_nextjs/issues/54 |
+| ダッシュボード / HOME | 自治体全体ビュー、通知、CSV導線、HOME から貸出・予約への遷移 | https://github.com/duri0214/bookman_nextjs/issues/28, https://github.com/duri0214/bookman_nextjs/issues/34, https://github.com/duri0214/bookman_nextjs/issues/63 |
+
+第二期 frontend の確認は、backend と frontend をつないで業務フローを目検しつつ、画面用変換、hook、API Route のテストで補っている。
+
+```console:console
+npm run lint
+npx tsc --noEmit
+npm test -- --runInBand
+npm run build
+```
+
+代表的な目検は、backend fixture を入れた状態で次を見る。
+
+```text
+/dashboard  自治体別の貸出・予約・所蔵状況を見る
+/book       書籍、支店別所蔵、支店間移動、CSV登録を見る
+/customer   利用者台帳を登録・編集する
+/branch     支店と休館日を登録・削除する
+/lending    貸出、返却、予約、取り置き、自治体/支店フィルターを見る
+```
