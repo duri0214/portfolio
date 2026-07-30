@@ -738,7 +738,14 @@ python manage.py test
 ```
 
 ## Backend part
-バックエンド側は、Django REST Framework で図書館業務のデータを API として返す構成にする。Django model で支店、カテゴリ、著者、書籍などのデータ構造を定義し、serializer で JSON の形へ詰め替え、view と URL でフロントエンドから呼び出せる入口を作る。作業の単位や履歴は「GitHub で記事ごと管理する」に書いた流れと同じように Issue と PR で追える。
+バックエンド側は、Django REST Framework で図書館業務のデータを API として返す構成にする。第一期では、支店、カテゴリ、著者、書籍の既存 API を現在の Python / Django / Django REST Framework で動く状態へ戻した。第二期では、この記事の下書きに残していた「所蔵、貸出、予約、利用者、休館日、設定まわり」を、実際の model / migration / API / test として追加した。
+
+作業の単位や履歴は「GitHub で記事ごと管理する」に書いた流れと同じように Issue と PR で追える。大きな流れは次の親チケットにまとめている。
+
+- 第一期 backend: https://github.com/duri0214/bookman_backend/issues/1
+- 第一期 frontend: https://github.com/duri0214/bookman_nextjs/issues/1
+- 第二期 backend: https://github.com/duri0214/bookman_backend/issues/13
+- 第二期 frontend: https://github.com/duri0214/bookman_nextjs/issues/20
 
 ### リポジトリ構成
 `bookman_backend` は、前段の `bookman_nextjs` と同じ親フォルダに置く。
@@ -858,20 +865,26 @@ migration ファイルは以下にまとまっている。
 - https://github.com/duri0214/bookman_backend/tree/main/bookman/migrations
 
 ### モデル
-Bookman の backend は、支店、カテゴリ、著者、書籍、所蔵、貸出を Django model として持つ。
+Bookman の backend は、図書館支店や書籍だけでなく、支店別所蔵、貸出、予約、休館日、検索条件保存まで Django model として持つ。
 
+- `Municipality`: 自治体マスタ
 - `Branch`: 図書館支店マスタ
 - `Category`: 書籍カテゴリ
 - `Author`: 著者
 - `Book`: 自治体全体で扱う書籍マスタ
-- `Assignment`: 支店ごとの所蔵数
+- `BranchBookStock`: 支店ごとの所蔵数
+- `Customer`: 図書館利用者
+- `LibraryStaff`: 図書館職員
 - `Lending`: 貸出状態
+- `Reservation`: 予約と取り置き状態
+- `BranchClosedDay`: 支店ごとの休館日
+- `SearchCondition`: 管理側画面の保存済み検索条件
 
 モデル全文は記事に貼らず、現行ソースを見る。
 
 - https://github.com/duri0214/bookman_backend/blob/main/bookman/models.py
 
-著者は複数人になることがあるので、`Book.authors` は `ManyToManyField` にしている。Django はこの関連を `bookman_book_authors` という中間テーブルで管理する。書籍 ID と著者 ID の組み合わせを持つテーブルだ。
+書籍は自治体全体のマスタとして扱い、冊数は `Book.amount` に持たせない。支店ごとの所蔵数は `BranchBookStock.amount` に寄せ、自治体全体の所蔵数は、選択中自治体に属する支店の `amount` を合計して返す。
 
 ```py:bookman/models.py
 class Book(models.Model):
@@ -879,44 +892,93 @@ class Book(models.Model):
     thumbnail = models.ImageField("サムネイル", blank=True, null=True)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, verbose_name="カテゴリ")
     authors = models.ManyToManyField(Author, verbose_name="著者")
+    branches = models.ManyToManyField(
+        "Branch",
+        through="BranchBookStock",
+        related_name="books",
+        verbose_name="所蔵支店",
+    )
     lead_text = models.TextField("紹介文")
-    amount = models.PositiveSmallIntegerField("数量")
+    isbn = models.CharField("ISBNコード", max_length=20, unique=True)
+
+
+class BranchBookStock(models.Model):
+    branch = models.ForeignKey("Branch", related_name="book_stocks", on_delete=models.CASCADE)
+    book = models.ForeignKey("Book", related_name="branch_stocks", on_delete=models.CASCADE)
+    amount = models.PositiveSmallIntegerField()
 ```
+
+著者は複数人になることがあるので、`Book.authors` は `ManyToManyField` にしている。支店と書籍の関係も多対多だが、ここは冊数を持たせたいので、中間 model として `BranchBookStock` を明示している。
+
+第二期では serializer が大きくなりすぎないように、`bookman/serializers/` 配下へ分割した。貸出、返却、予約、支店間移動などの業務ルールは、serializer に直接書き続けず、`bookman/domain/` 配下の service / valueobject / repository へ寄せている。
+
+- serializer: https://github.com/duri0214/bookman_backend/tree/main/bookman/serializers
+- domain: https://github.com/duri0214/bookman_backend/tree/main/bookman/domain
 
 ### fixture
 初期データは fixture で投入する。fixture 本文は長いので、記事には読み込み順だけ残す。
 
 ```console:console
-python manage.py loaddata bookman/fixtures/m_branch-data.json
-python manage.py loaddata bookman/fixtures/m_category-data.json
+python manage.py loaddata bookman/fixtures/municipality-data.json
+python manage.py loaddata bookman/fixtures/branch-data.json
+python manage.py loaddata bookman/fixtures/category-data.json
 python manage.py loaddata bookman/fixtures/author-data.json
 python manage.py loaddata bookman/fixtures/book-data.json
+python manage.py loaddata bookman/fixtures/branch-book-stock-data.json
+python manage.py loaddata bookman/fixtures/customer-data.json
+python manage.py loaddata bookman/fixtures/library-staff-data.json
+python manage.py loaddata bookman/fixtures/branch-closed-day-data.json
+python manage.py loaddata bookman/fixtures/lending-data.json
+python manage.py loaddata bookman/fixtures/reservation-data.json
+python manage.py loaddata bookman/fixtures/search-condition-data.json
 ```
 
 fixture の中身は GitHub の `fixtures` フォルダを見る。
 
 - https://github.com/duri0214/bookman_backend/tree/main/bookman/fixtures
 
-書籍 fixture は `authors` に著者 ID 配列を持つので、カテゴリと著者を先に投入してから書籍を投入する。
+第二期の fixture は、画面確認で毎回手作業データを作らなくてもよいように増やした。複数自治体、複数支店、支店別所蔵、貸出中、予約中、休館日、職員 role、保存済み検索条件が入っている。
 
 ### API
 API の URL は `/bookman/api/` 配下になる。フロントエンドの `BOOKMAN_API_BASE_URL` が既定で `http://127.0.0.1:8000/bookman/api` を向くので、backend 側もこのパスを維持する。
 
 | 用途 | URL | view |
 | --- | --- | --- |
+| 自治体一覧/登録 | `/bookman/api/municipalities/` | `MunicipalityList` |
+| 自治体詳細/更新/削除 | `/bookman/api/municipalities/<id>/` | `MunicipalityDetail` |
 | 支店一覧/登録 | `/bookman/api/branches/` | `BranchList` |
-| 支店登録（旧互換） | `/bookman/api/branches/create/` | `BranchCreate` |
+| 支店詳細/更新 | `/bookman/api/branches/<id>/` | `BranchDetail` |
+| 支店休館日一覧/登録 | `/bookman/api/branch-closed-days/` | `BranchClosedDayList` |
+| 支店休館日削除 | `/bookman/api/branch-closed-days/<id>/` | `BranchClosedDayDetail` |
 | 書籍一覧 | `/bookman/api/books/` | `BookList` |
 | 書籍登録 | `/bookman/api/books/create/` | `BookCreate` |
+| 書籍 CSV 登録 | `/bookman/api/books/import-csv/` | `BookCsvImport` |
 | 書籍詳細 | `/bookman/api/books/<id>/` | `BookDetail` |
-| 著者一覧 | `/bookman/api/authors/` | `AuthorList` |
-| カテゴリ一覧 | `/bookman/api/categories/` | `CategoryList` |
+| 支店別所蔵一覧/登録 | `/bookman/api/branch-book-stocks/` | `BranchBookStockList` |
+| 支店別所蔵詳細/更新 | `/bookman/api/branch-book-stocks/<id>/` | `BranchBookStockDetail` |
+| 支店間移動 | `/bookman/api/branch-book-stocks/transfer/` | `BranchBookStockTransfer` |
+| 利用者一覧/登録 | `/bookman/api/customers/` | `CustomerList` |
+| 利用者詳細/更新 | `/bookman/api/customers/<id>/` | `CustomerDetail` |
+| 職員一覧/登録 | `/bookman/api/staff/` | `LibraryStaffList` |
+| 職員詳細/更新 | `/bookman/api/staff/<id>/` | `LibraryStaffDetail` |
+| 貸出一覧/登録 | `/bookman/api/lendings/` | `LendingList` |
+| 返却 | `/bookman/api/lendings/return/` | `LendingReturn` |
+| 予約一覧/登録 | `/bookman/api/reservations/` | `ReservationList` |
+| 予約取消 | `/bookman/api/reservations/<id>/cancel/` | `ReservationCancel` |
+| 取り置き期限切れ処理 | `/bookman/api/reservations/expire/` | `ReservationExpire` |
+| 検索条件一覧/登録 | `/bookman/api/search-conditions/` | `SearchConditionList` |
+| 検索条件詳細/更新/削除 | `/bookman/api/search-conditions/<id>/` | `SearchConditionDetail` |
+| 検索条件の権限文脈 | `/bookman/api/search-conditions/permissions/` | `SearchConditionPermissionContext` |
+| 著者一覧/登録 | `/bookman/api/authors/` | `AuthorList` |
+| 著者詳細/更新 | `/bookman/api/authors/<id>/` | `AuthorDetail` |
+| カテゴリ一覧/登録 | `/bookman/api/categories/` | `CategoryList` |
+| カテゴリ詳細/更新 | `/bookman/api/categories/<id>/` | `CategoryDetail` |
 
 - URL 定義: https://github.com/duri0214/bookman_backend/blob/main/bookman/urls.py
 - view: https://github.com/duri0214/bookman_backend/blob/main/bookman/views.py
-- serializer: https://github.com/duri0214/bookman_backend/blob/main/bookman/serializers.py
+- serializer: https://github.com/duri0214/bookman_backend/tree/main/bookman/serializers
 
-`BranchList` は `ListCreateAPIView` という型にして、`/bookman/api/branches/` で GET と POST を受ける。`BranchList` のような view class は、どの URL でどの model を読み書きするかを決める入口だ。`/bookman/api/branches/create/` も残しているが、フロントエンド側は一覧 URL と同じ `/branches/` へ登録できる。
+`BranchList` は `ListCreateAPIView` という型にして、`/bookman/api/branches/` で GET と POST を受ける。`BranchList` のような view class は、どの URL でどの model を読み書きするかを決める入口だ。登録と一覧は同じ URL に寄せ、詳細更新は `/<id>/` 側で扱う。
 
 ```py:bookman/views.py
 class BranchList(generics.ListCreateAPIView):
@@ -926,9 +988,9 @@ class BranchList(generics.ListCreateAPIView):
         return Branch.objects.order_by("id")
 ```
 
-serializer は、Django model と API の JSON を詰め替える [DTO(Data Transfer Object)](https://martinfowler.com/eaaCatalog/dataTransferObject.html) のような役割を持つ。`BookSerializer` は、`category` と `authors` を ID で受け渡しする。フロントエンドはカテゴリ名や著者名を別 API から取得し、画面表示用に ID から名前へ変換する。
+serializer は、Django model と API の JSON を詰め替える [DTO(Data Transfer Object)](https://martinfowler.com/eaaCatalog/dataTransferObject.html) のような役割を持つ。`BookSerializer` は、`category` と `authors` を ID で受け渡ししつつ、表示用に `total_amount`、`branch_stocks`、`created_at` も返す。ISBN は保存前にハイフンを除いて正規化し、ISBN-10 / ISBN-13 の形式と重複を backend 側で検証する。
 
-```py:bookman/serializers.py
+```py:bookman/serializers/book.py
 class BookSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.order_by("id")
@@ -937,7 +999,51 @@ class BookSerializer(serializers.ModelSerializer):
         many=True,
         queryset=Author.objects.order_by("id"),
     )
+    branch_stocks = serializers.SerializerMethodField()
+    total_amount = serializers.SerializerMethodField()
 ```
+
+貸出・返却、予約・取り置き、支店間移動は、フロントエンドが分岐しやすいように業務エラーへ `code` と `message` を持たせた。たとえば、同じ利用者が同じ本を借りようとした場合は `duplicate_book_lending`、貸出可能冊数がない場合は `lending_stock_unavailable` のように返す。
+
+```json:response.json
+{
+  "code": "lending_stock_unavailable",
+  "message": "対象の本は貸出可能冊数が残っていません。",
+  "status_code": 400
+}
+```
+
+### 第二期で追加した業務
+第二期 backend の子チケットでは、次の範囲を実装した。
+
+| 範囲 | 主な内容 | Issue |
+| --- | --- | --- |
+| 支店別所蔵 | `BranchBookStock`、自治体全体の所蔵数集計、貸出可能冊数 | https://github.com/duri0214/bookman_backend/issues/14 |
+| 支店間移動 | 移動元/移動先、同一支店不可、自治体またぎ不可、在庫不足エラー | https://github.com/duri0214/bookman_backend/issues/15 |
+| 利用者と貸出/返却 | `Customer`、`Lending`、貸出登録、返却、貸出上限 | https://github.com/duri0214/bookman_backend/issues/16 |
+| 予約と取り置き | `Reservation`、予約待ち、取り置き、取消、期限切れ、返却時の予約繰り上げ | https://github.com/duri0214/bookman_backend/issues/17 |
+| 休館日と返却期限調整 | `BranchClosedDay`、日付単位の休館日、返却予定日の繰り延べ | https://github.com/duri0214/bookman_backend/issues/18 |
+| 検索条件保存 | `SearchCondition`、職員 role、個人/支店/管理者共有、disabled 表示用の権限文脈 | https://github.com/duri0214/bookman_backend/issues/19 |
+| 自治体境界 | `Municipality`、支店/所蔵/貸出/予約の自治体スコープ | https://github.com/duri0214/bookman_backend/issues/25 |
+| 職員 | `LibraryStaff`、貸出対応者、職員 role 更新 | https://github.com/duri0214/bookman_backend/issues/29 |
+| マスタ管理 | 自治体、著者、カテゴリ、書籍、支店、利用者の登録/更新 API | https://github.com/duri0214/bookman_backend/issues/44, https://github.com/duri0214/bookman_backend/issues/46, https://github.com/duri0214/bookman_backend/issues/47, https://github.com/duri0214/bookman_backend/issues/48, https://github.com/duri0214/bookman_backend/issues/49, https://github.com/duri0214/bookman_backend/issues/50, https://github.com/duri0214/bookman_backend/issues/51 |
+| 自治体スコープ補強 | 支店別所蔵、貸出、予約、支店作成時の自治体指定 | https://github.com/duri0214/bookman_backend/issues/25, https://github.com/duri0214/bookman_backend/issues/45, https://github.com/duri0214/bookman_backend/issues/57 |
+| 書籍登録補強 | 初期支店別所蔵の同時作成、ISBN 一意制約、登録日時追加 | https://github.com/duri0214/bookman_backend/issues/63, https://github.com/duri0214/bookman_backend/issues/64, https://github.com/duri0214/bookman_backend/issues/79 |
+| validation 補強 | 支店電話番号、支店更新経路、書籍 ISBN の回帰テスト | https://github.com/duri0214/bookman_backend/issues/70, https://github.com/duri0214/bookman_backend/issues/72 |
+| fixture | 第二期画面確認用データ、複数自治体確認用データ | https://github.com/duri0214/bookman_backend/issues/42, https://github.com/duri0214/bookman_backend/issues/52 |
+| API 整理 | 支店登録 API を一覧/登録 URL に集約 | https://github.com/duri0214/bookman_backend/issues/21 |
+| serializer 分割 | serializer から domain service へ業務ルールを切り出す | https://github.com/duri0214/bookman_backend/issues/58 |
+
+frontend 側では、これらの API を前提に第二期画面を追加した。支店別所蔵、貸出・返却、予約・取り置き、休館日、検索条件保存、ダッシュボード再設計、各種マスタ編集画面が対応する。
+
+- 第二期 frontend 親チケット: https://github.com/duri0214/bookman_nextjs/issues/20
+- 支店別所蔵/支店間移動画面: https://github.com/duri0214/bookman_nextjs/issues/21
+- 利用者登録/参照画面: https://github.com/duri0214/bookman_nextjs/issues/22
+- 貸出/返却画面: https://github.com/duri0214/bookman_nextjs/issues/23
+- 予約/取り置き画面: https://github.com/duri0214/bookman_nextjs/issues/24
+- 休館日設定画面: https://github.com/duri0214/bookman_nextjs/issues/25
+- 検索条件保存 UI: https://github.com/duri0214/bookman_nextjs/issues/26
+- ダッシュボード再設計: https://github.com/duri0214/bookman_nextjs/issues/28
 
 ### 起動手順
 Bookman はバックエンドとフロントエンドを別ターミナルで起動する。
@@ -958,6 +1064,9 @@ npm run dev
 ```console:console
 curl http://127.0.0.1:8000/bookman/api/branches/
 curl http://127.0.0.1:8000/bookman/api/books/
+curl "http://127.0.0.1:8000/bookman/api/branch-book-stocks/?municipality=1"
+curl "http://127.0.0.1:8000/bookman/api/lendings/?municipality=1"
+curl "http://127.0.0.1:8000/bookman/api/reservations/?municipality=1"
 ```
 
 ### テストと検証
@@ -975,14 +1084,14 @@ DB 接続まで含めるなら、MySQL の `.env` が合っている状態で mi
 python manage.py migrate --noinput
 ```
 
-通信テストは `bookman/tests.py` で点検した。支店一覧/登録、書籍一覧/登録/詳細、著者一覧、カテゴリ一覧で返すフィールドを確認している。
+通信テストは `bookman/tests.py` で点検した。第二期では、支店一覧/登録、書籍一覧/登録/詳細、著者一覧、カテゴリ一覧だけでなく、自治体、支店別所蔵、支店間移動、利用者、職員、貸出/返却、予約/取消/期限切れ、休館日、検索条件保存、CSV 登録、fixture ロードまで確認している。
 
 - https://github.com/duri0214/bookman_backend/blob/main/bookman/tests.py
 
-`bookman_backend#7` の確認では、fixture ロード後に `branches` と `books` の代表 API レスポンスも確認している。記事のコマンドを更新したときは、README とこの記事の手順がずれないように見る。
+記事のコマンドを更新したときは、README とこの記事の手順がずれないように見る。
 
 ## 図書館業務をイメージしまくれ！
-ここから先は、バックエンド基盤の現行化とは別の業務実装メモとして残す。今回の `bookman_backend#1` 配下では、依存関係、設定、migration、fixture、通信テスト、検証手順の最新化までを扱った。貸出ルールや支店間移動、休館日、検索条件保存のような業務実装は、次の設計チケットで分けて考える。
+ここから先は、最初に図書館業務を考えたときのメモとして残す。第二期の `bookman_backend#13` 配下で、支店別所蔵、支店間移動、利用者、貸出/返却、予約/取り置き、休館日、検索条件保存、自治体境界は backend API とテストまで実装した。frontend 側も `bookman_nextjs#20` 配下で主要画面を追加している。
 
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/eefc1ab8-d96c-448a-0eca-4077fe02c87f.png)
 
@@ -1000,29 +1109,29 @@ python manage.py migrate --noinput
     - 電話: 03-3460-6784
     - 備考: 鉄筋コンクリート造 地上21階地下2階の4階部分 440㎡ 57席
 
-### 次回以降 TODO
-- [ ] 書籍管理（自治体∋支店）
+### 第二期で実装した範囲
+- [x] 書籍管理（自治体∋支店）
   - （全支店）の（書籍名称）の合計を算出（自治体としての本の所蔵数）
   - （支店名）に（書籍名称）が（支店図書館の所蔵数）冊ある
   - （支店名）から（支店名）に本を移動する（支店図書館の所蔵数増減）
-- [ ] 利用者への貸出
+- [x] 利用者への貸出
   - ひとりのユーザが同じ本を2冊以上借りることはできない
   - 貸出中の本を別の利用者へ貸し出せない
   - 利用者ごとの貸出上限冊数を超えたら貸し出せない
   - （支店名）の（書籍名称）を利用者に貸し出す
   - （支店名）が（書籍名称）の返却を受け付ける
-- [ ] 予約
+- [x] 予約
   - 貸出中の本に予約を入れる
   - 返却された本を予約順に取り置きする
   - 取り置き期限を過ぎた予約を取り消す
-- [ ] 利用者管理
+- [x] 利用者管理
   - 利用者を登録する
   - 利用者の貸出履歴を確認する
-  - 延滞中の利用者を確認する
-- [ ] 開館日・休館日
+  - 貸出上限や電話番号を後から更新する
+- [x] 開館日・休館日
   - 支店ごとの休館日を登録する
   - 休館日には貸出期限日をずらす
-- [ ] 設定
+- [x] 設定
   - 検索条件を保存、読み込みできる
   - 権限によって表示されるレコードが変化
   - JSONで読み書き
