@@ -1158,8 +1158,6 @@ fixture の読み込み順と代表確認シナリオは README 側にも置い�
 | 著者詳細/更新 | `/bookman/api/authors/<id>/` | `AuthorDetail` |
 | カテゴリ詳細/更新 | `/bookman/api/categories/<id>/` | `CategoryDetail` |
 
-`旧互換` として残っていた `/bookman/api/branches/create/` は、第二期の途中で削除した。支店登録は `/bookman/api/branches/` の POST に集約している。
-
 - URL 定義: https://github.com/duri0214/bookman_backend/blob/main/bookman/urls.py
 - view: https://github.com/duri0214/bookman_backend/blob/main/bookman/views.py
 
