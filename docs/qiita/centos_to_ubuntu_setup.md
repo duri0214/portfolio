@@ -202,7 +202,7 @@ $ chmod 600 ~/.ssh/authorized_keys
         2. 「鍵ファイルの追加(A)」をクリックし、秘密鍵（例: `C:\Users\yoshi\.ssh\id_rsa` など）を選択
         3. 「FileZilla用に変換して ppk にしますか？」と聞かれたら OK を選択し、例: `id_rsa_filezilla.ppk` のように保存
     - サイトマネージャーで上記 ppk を指定して接続し、`/home/ubuntu` など転送先へドラッグ＆ドロップで配置
-    - 参考: FileZilla の画面操作や鍵変換の詳細は旧記事にも残しています: https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#ftp
+    - 参考: もとの記事の FileZilla 手順（鍵の変換含む）: https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#ftp
 
 ### よくあるエラーと対処（SSH）
 
@@ -1698,9 +1698,7 @@ $ sudo -u www-data test -w /var/www/html/portfolio/media && echo OK_media_w || e
 
 ## FTP
 
-ファイル転送は、基本的には SSH セクションで触れた `scp` または FileZilla の SFTP を使います。
-この手順では FTP サーバーを新しく立てる前提にはせず、SSH の公開鍵認証を使った安全な転送を優先します。
-旧記事の FTP / FileZilla 画面操作は、GUIでの転送手順を確認したい場合の参考として残しています: https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#ftp
+いったんパス [もとの記事](https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#ftp)
 
 ## 代替ルート: Django プロジェクトを新規作成する場合（クローンしない運用）
 
