@@ -202,7 +202,7 @@ $ chmod 600 ~/.ssh/authorized_keys
         2. 「鍵ファイルの追加(A)」をクリックし、秘密鍵（例: `C:\Users\yoshi\.ssh\id_rsa` など）を選択
         3. 「FileZilla用に変換して ppk にしますか？」と聞かれたら OK を選択し、例: `id_rsa_filezilla.ppk` のように保存
     - サイトマネージャーで上記 ppk を指定して接続し、`/home/ubuntu` など転送先へドラッグ＆ドロップで配置
-    - 参考: もとの記事の FileZilla 手順（鍵の変換含む）: https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#ftp
+    - 参考: FileZilla の画面操作や鍵変換の詳細は旧記事にも残しています: https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#ftp
 
 ### よくあるエラーと対処（SSH）
 
@@ -400,7 +400,12 @@ LANG=C.UTF-8 と表示されれば OK。
 
 ## バーチャルホスト
 
-いったんパス [もとの記事](https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#%E3%83%90%E3%83%BC%E3%83%81%E3%83%A3%E3%83%AB%E3%83%9B%E3%82%B9%E3%83%88)
+ここでは Apache 側で、ドメイン名ごとの受け口を `VirtualHost` として定義します。
+DNS 側で `www.henojiya.net` がこのサーバーのグローバルIPを向くようにしたあと、この設定の `ServerName` と一致していれば Apache が該当サイトとして処理できます。
+DNS は `www.henojiya.net` や `app.henojiya.net` を同じ VPS のIPへ届けるところまでを担当します。
+この記事では、独自Webアプリケーション1を `www.henojiya.net`、2つ目の独自Webアプリケーションを `app.henojiya.net` で公開するケースとして考えます。
+同じIPへ届いたアクセスを、`www.henojiya.net` なら `/var/www/html/portfolio`、`app.henojiya.net` なら2つ目のアプリ、というように分けるのが Apache の `VirtualHost` です。
+旧記事のスクリーンショット付き手順は参考として残しています: https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#%E3%83%90%E3%83%BC%E3%83%81%E3%83%A3%E3%83%AB%E3%83%9B%E3%82%B9%E3%83%88
 
 ```bash:console
 $ sudo vi /etc/apache2/sites-available/virtual.host.conf
@@ -434,7 +439,98 @@ $ sudo systemctl restart apache2
 
 ## ネームサーバーを設定
 
-いったんパス [もとの記事](https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#%E3%83%8D%E3%83%BC%E3%83%A0%E3%82%B5%E3%83%BC%E3%83%90%E3%83%BC%E3%82%92%E8%A8%AD%E5%AE%9A)
+ここでやることは、お名前.com で管理している `henojiya.net` と、さくらのVPSで発行されたグローバルIP `153.126.200.229` をひもづけることです。
+独自Webアプリケーション1を `www.henojiya.net`、2つ目の独自Webアプリケーションを `app.henojiya.net` として、どちらも同じVPSへ向けます。
+
+名前解決の流れは、ざっくり次のようになります。
+
+1. ブラウザが `www.henojiya.net` にアクセスしようとする
+2. DNS の仕組みで、`henojiya.net` は `ns1.dns.ne.jp` / `ns2.dns.ne.jp` に聞けばよいと分かる
+3. `ns1.dns.ne.jp` / `ns2.dns.ne.jp` に問い合わせる
+4. `www.henojiya.net` は `153.126.200.229` だと分かる
+5. ブラウザが `153.126.200.229` の VPS に接続する
+
+設定は2つです。
+
+1つ目は、お名前.com 側で `henojiya.net` の問い合わせ先を `ns1.dns.ne.jp` / `ns2.dns.ne.jp` にすることです。
+`ns1.dns.ne.jp` / `ns2.dns.ne.jp` は、さくらインターネットが用意している DNS サーバーです。
+
+2つ目は、さくらのVPS側で DNS レコードを設定し、`www` と `app` をVPSのIPへ向けることです。
+
+DNS レコードの設定画面では、次のように `@` や `app`、`www` が並びます。
+
+![DNSレコード設定例](https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-image-store.s3.ap-northeast-1.amazonaws.com%2F0%2F94562%2F59ef1cdd-2d2c-47a7-b018-583b90f56a52.png?ixlib=rb-4.1.1&auto=format&gif-q=60&q=75&s=cc2a3dd557ba3804fed52cdcc01bbb45)
+
+この画面の読み方は次の通りです。
+
+- `@` は `henojiya.net` そのものを表す
+- `app` は、2つ目の独自Webアプリケーション用の `app.henojiya.net` を表す
+- `@` は A レコードで VPS のIPへ向ける
+- `www` や `app` は CNAME で `@` を見るようにしておく
+- その結果、`www.henojiya.net` や `app.henojiya.net` は `henojiya.net` と同じVPSへ向く
+
+| 種別 | 管理画面で入力する名前 | 値 | 意味 |
+|---|---|---|---|
+| A | `@` | `153.126.200.229` | `henojiya.net` を VPS のIPへ向ける |
+| CNAME | `www` | `@` | `www.henojiya.net` を `henojiya.net` と同じ向き先にする |
+| CNAME | `app` | `@` | `app.henojiya.net` を `henojiya.net` と同じ向き先にする |
+
+ここまでの DNS 設定でできるのは、`www.henojiya.net` や `app.henojiya.net` を同じ VPS に到達させるところまでです。
+同じIPに届いたあと、どの名前をどのアプリやディレクトリに割り当てるかは Apache の `VirtualHost` で設定します。
+
+この画面では「エントリー名」に `www.henojiya.net` ではなく `www` だけを入力します。
+`app.henojiya.net` の場合は、「エントリー名」に `app` を入力します。
+A レコードでも CNAME レコードでも、左側に入れる `@` / `www` / `app` はこの「エントリー名」です。
+
+DNS の反映には数分から数時間かかることがあります。
+この確認は、VPS に入らず PC の PowerShell から実行します。
+外から `www.henojiya.net` や `app.henojiya.net` がどう見えているかを確認してから、Apache や certbot の設定に進みます。
+出力は環境によって「サーバー」や「権限のない回答」の表示が変わるため、ここでは見るべき行だけを抜粋します。
+
+```bash:console
+# henojiya.net の問い合わせ先が ns1.dns.ne.jp / ns2.dns.ne.jp になっていることを確認
+PS C:\Users\yoshi> nslookup -type=NS henojiya.net
+henojiya.net nameserver = ns1.dns.ne.jp
+henojiya.net nameserver = ns2.dns.ne.jp
+
+# CNAME を確認する
+PS C:\Users\yoshi> nslookup -type=CNAME www.henojiya.net
+www.henojiya.net canonical name = henojiya.net
+
+# app も同じ向き先を見ることを確認
+PS C:\Users\yoshi> nslookup -type=CNAME app.henojiya.net
+app.henojiya.net canonical name = henojiya.net
+```
+
+PowerShell の `nslookup` では「権限のない回答」と表示されることがありますが、これはエラーではありません。
+`nameserver`、`canonical name` の行が期待通りなら OK です。
+
+期待値:
+
+- `henojiya.net` の `nameserver` が `ns1.dns.ne.jp` / `ns2.dns.ne.jp` になっている
+- `www.henojiya.net` の CNAME が `henojiya.net` を返す
+- `app.henojiya.net` の CNAME も `henojiya.net` を返す
+- `www.henojiya.net` は HTTPS で正常応答する
+- `app.henojiya.net` は DNS では同じ VPS に届くが、Apache の VirtualHost と証明書をまだ用意していないため HTTPS では証明書エラーになる
+
+```bash:console
+# www は HTTPS で正常応答する
+PS C:\Users\yoshi> curl.exe -I https://www.henojiya.net
+HTTP/1.1 200 OK
+Server: Apache
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+Content-Type: text/html; charset=utf-8
+
+# app は DNS 上は同じVPSに向くが、HTTPS の受け口をまだ用意していないので失敗する
+PS C:\Users\yoshi> curl.exe -I https://app.henojiya.net
+curl: (60) schannel: SNI or certificate check failed: SEC_E_WRONG_PRINCIPAL (0x80090322) - 対象のプリンシパル名が間違っています。
+```
+
+うまくいかない場合の切り分け（参考）
+
+- `curl.exe` の結果が想定と違う場合: DNS キャッシュまたは TTL の反映待ち
+- `www.henojiya.net` の HTTPS が返らない場合: VPS 側のパケットフィルタ、UFW、Apache の `VirtualHost`、証明書設定を確認
+- `app.henojiya.net` の HTTPS が証明書エラーになる場合: DNS ではなく、`app.henojiya.net` 用の Apache `VirtualHost` と証明書が未設定の状態
 
 ## HTTPS の準備（443番ポート開放と Apache の SSL 有効化）
 
@@ -1602,7 +1698,9 @@ $ sudo -u www-data test -w /var/www/html/portfolio/media && echo OK_media_w || e
 
 ## FTP
 
-いったんパス [もとの記事](https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#ftp)
+ファイル転送は、基本的には SSH セクションで触れた `scp` または FileZilla の SFTP を使います。
+この手順では FTP サーバーを新しく立てる前提にはせず、SSH の公開鍵認証を使った安全な転送を優先します。
+旧記事の FTP / FileZilla 画面操作は、GUIでの転送手順を確認したい場合の参考として残しています: https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#ftp
 
 ## 代替ルート: Django プロジェクトを新規作成する場合（クローンしない運用）
 
