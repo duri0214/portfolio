@@ -183,7 +183,7 @@ chmod +x scripts/step2_import_data.sh
 ./scripts/step2_import_data.sh
 ```
 
-#### 8. サービスの再起動
+#### 8. Apache の再起動
 
 ```bash
 sudo systemctl restart apache2
