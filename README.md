@@ -200,7 +200,7 @@ Git管理外のファイルを削除するコマンドではありません。
 cd /var/www/html/bookman_nextjs
 git fetch --prune origin
 git reset --hard origin/master
-# package-lock.json に固定された依存関係をクリーンインストールする
+# package-lock.json に固定された依存関係を Clean Install する
 npm ci
 npm run build
 sudo systemctl restart bookman-nextjs
