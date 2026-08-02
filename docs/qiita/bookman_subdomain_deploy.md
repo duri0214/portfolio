@@ -68,49 +68,6 @@ backend API は外部のエンドポイントとしては公開せず、Next.js 
 この形にすると、外部から見える入口は `bookman.henojiya.net` の Apache `VirtualHost` だけになる。
 Django REST Framework API をインターネットから直接触らせないため、公開面が小さくなり、不要な API 露出や CORS / CSRF まわりのリスクを抑えやすい。
 
-## バーチャルホスト
-
-ここでは Apache 側で、ドメイン名ごとの受け口を `VirtualHost` として定義する。
-DNS 側で `www.henojiya.net` や `bookman.henojiya.net` がこのサーバーのグローバルIPを向くようにしたあと、この設定の `ServerName` と一致していれば Apache が該当サイトとして処理できる。
-
-DNS は `www.henojiya.net` や `bookman.henojiya.net` を同じ VPS のIPへ届けるところまでを担当する。
-この記事では、1つ目の独自Webアプリケーションを `www.henojiya.net`、2つ目以降の独自Webアプリケーションを `bookman.henojiya.net` で公開するケースとして考える。
-同じIPへ届いたアクセスを、`www.henojiya.net` なら portfolio、`bookman.henojiya.net` なら Bookman、というように分けるのが Apache の `VirtualHost` だ。
-
-portfolio が Django + mod_wsgi で動いている場合でも、Bookman 側の画面は Next.js へつなぐ（リバースプロキシする）。
-やっていることは、`www` と `bookman` というホスト名の違いで同じIPに届いた通信を別のアプリケーションへ振り分けることだ。
-たとえば Next.js を `127.0.0.1:3000` で待ち受けるなら、Apache 側は `bookman.henojiya.net` へのアクセスを Next.js へ流す。
-
-```bash:console
-$ sudo vi /etc/apache2/sites-available/virtual.host.conf
-```
-
-```conf:/etc/apache2/sites-available/virtual.host.conf
-<VirtualHost *:80>
-    ServerName bookman.henojiya.net
-
-    ProxyPreserveHost On
-    ProxyPass / http://127.0.0.1:3000/
-    ProxyPassReverse / http://127.0.0.1:3000/
-</VirtualHost>
-```
-
-backend API のエンドポイントは外部公開しない。
-Apache の `VirtualHost` には backend API 向けの `ProxyPass` を書かず、Next.js だけが BFF を通して Bookman backend の Django REST Framework に接続する。
-
-`ProxyPass` は `bookman.henojiya.net` に届いたリクエストを Next.js へ転送する設定で、`ProxyPassReverse` は Next.js から返るリダイレクトなどのレスポンスヘッダを外向きのURLに補正する設定だ。
-どちらも同じ転送先を書くので似て見えるが、入口の転送と戻りの補正で役割が違う。
-
-`ProxyPass` / `ProxyPassReverse` を使うため、Apache の proxy 関連モジュールを有効化する。
-
-```bash:console
-$ sudo a2enmod proxy
-$ sudo a2enmod proxy_http
-$ sudo a2ensite virtual.host
-$ sudo apache2ctl configtest
-$ sudo systemctl restart apache2
-```
-
 ## ネームサーバーを設定
 
 ここでやることは、お名前.com で管理している `henojiya.net` と、さくらのVPSで発行されたグローバルIP `153.126.200.229` をひもづけることだ。
@@ -204,6 +161,49 @@ curl: (60) schannel: SNI or certificate check failed: SEC_E_WRONG_PRINCIPAL (0x8
 - `curl.exe` の結果が想定と違う場合: DNS キャッシュまたは TTL の反映待ち
 - `www.henojiya.net` の HTTPS が返らない場合: VPS 側のパケットフィルタ、UFW、Apache の `VirtualHost`、証明書設定を確認
 - `bookman.henojiya.net` の HTTPS が証明書エラーになる場合: DNS ではなく、`bookman.henojiya.net` 用の Apache `VirtualHost` と証明書が未設定の状態
+
+## バーチャルホスト
+
+ここでは Apache 側で、ドメイン名ごとの受け口を `VirtualHost` として定義する。
+DNS 側で `www.henojiya.net` や `bookman.henojiya.net` がこのサーバーのグローバルIPを向くようにしたあと、この設定の `ServerName` と一致していれば Apache が該当サイトとして処理できる。
+
+DNS は `www.henojiya.net` や `bookman.henojiya.net` を同じ VPS のIPへ届けるところまでを担当する。
+この記事では、1つ目の独自Webアプリケーションを `www.henojiya.net`、2つ目以降の独自Webアプリケーションを `bookman.henojiya.net` で公開するケースとして考える。
+同じIPへ届いたアクセスを、`www.henojiya.net` なら portfolio、`bookman.henojiya.net` なら Bookman、というように分けるのが Apache の `VirtualHost` だ。
+
+portfolio が Django + mod_wsgi で動いている場合でも、Bookman 側の画面は Next.js へつなぐ（リバースプロキシする）。
+やっていることは、`www` と `bookman` というホスト名の違いで同じIPに届いた通信を別のアプリケーションへ振り分けることだ。
+たとえば Next.js を `127.0.0.1:3000` で待ち受けるなら、Apache 側は `bookman.henojiya.net` へのアクセスを Next.js へ流す。
+
+```bash:console
+$ sudo vi /etc/apache2/sites-available/virtual.host.conf
+```
+
+```conf:/etc/apache2/sites-available/virtual.host.conf
+<VirtualHost *:80>
+    ServerName bookman.henojiya.net
+
+    ProxyPreserveHost On
+    ProxyPass / http://127.0.0.1:3000/
+    ProxyPassReverse / http://127.0.0.1:3000/
+</VirtualHost>
+```
+
+backend API のエンドポイントは外部公開しない。
+Apache の `VirtualHost` には backend API 向けの `ProxyPass` を書かず、Next.js だけが BFF を通して Bookman backend の Django REST Framework に接続する。
+
+`ProxyPass` は `bookman.henojiya.net` に届いたリクエストを Next.js へ転送する設定で、`ProxyPassReverse` は Next.js から返るリダイレクトなどのレスポンスヘッダを外向きのURLに補正する設定だ。
+どちらも同じ転送先を書くので似て見えるが、入口の転送と戻りの補正で役割が違う。
+
+`ProxyPass` / `ProxyPassReverse` を使うため、Apache の proxy 関連モジュールを有効化する。
+
+```bash:console
+$ sudo a2enmod proxy
+$ sudo a2enmod proxy_http
+$ sudo a2ensite virtual.host
+$ sudo apache2ctl configtest
+$ sudo systemctl restart apache2
+```
 
 ## backend を配置する
 
