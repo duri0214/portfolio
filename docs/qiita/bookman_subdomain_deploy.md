@@ -96,7 +96,7 @@ $ sudo vi /etc/apache2/sites-available/bookman.conf
 ```
 
 backend API のエンドポイントは外部公開しない。
-Apache の `VirtualHost` には backend API 向けの `ProxyPass` を書かず、Next.js のサーバー側だけが `BOOKMAN_API_BASE_URL=http://127.0.0.1:8000/bookman/api` で Django REST Framework に接続する。
+Apache の `VirtualHost` には backend API 向けの `ProxyPass` を書かず、Next.js だけが BFF を通して Django REST Framework に接続する。
 
 `ProxyPass` / `ProxyPassReverse` を使うため、Apache の proxy 関連モジュールを有効化する。
 
