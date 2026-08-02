@@ -193,6 +193,8 @@ sudo tail -n 50 /var/log/apache2/error.log
 #### 9. Bookman Next.js を同じサーバーで動かしている場合
 
 `bookman_nextjs` を更新した場合は、Next.js 側で依存関係の反映、build、サービス再起動を行ってください。
+`git reset --hard origin/master` は、Git管理下のファイルを本番ブランチの状態へそろえるために使います。
+Git管理外のファイルを削除するコマンドではありません。
 
 ```bash
 cd /var/www/html/bookman_nextjs
