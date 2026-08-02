@@ -5,14 +5,14 @@
 この記事では、既存の VPS で `www.henojiya.net` が動いている状態から、`bookman.henojiya.net` のように別サブドメインを追加して複数のアプリケーションを公開する流れを整理する。
 
 Bookman は、frontend の `bookman_nextjs` と backend の `bookman_backend` に分かれている。
-portfolio のように Apache + mod_wsgi だけで画面まで返す構成ではなく、Next.js が画面を返し、Django REST Framework が API を返す。
+portfolio のように Apache + mod_wsgi だけで画面まで返す構成ではなく、Bookman は Next.js が画面を返し、Apache + mod_wsgi 上の Django REST Framework が API を返す。
 
 そのため、DNS / Apache / Next.js / Django REST Framework の責務を分けて考える。
 
 - DNS: `bookman.henojiya.net` を既存 VPS に到達させる
 - Apache: `bookman.henojiya.net` に届いた HTTP/HTTPS リクエストを Next.js に振り分ける
 - Next.js: Bookman の画面を返し、サーバー側で Django REST Framework API と通信する
-- Django REST Framework: localhost 上で `/bookman/api/` 配下の API を返す
+- Django REST Framework: Apache + mod_wsgi の localhost チャンネルで `/bookman/api/` 配下の API を返す
 
 Bookman のアプリケーション実装メモはこちら。
 
@@ -47,10 +47,11 @@ flowchart TB
   dns[DNS]
 
   subgraph vps[VPS]
-    apache[Apache VirtualHost]
+    apache[Apache VirtualHost<br>public]
 
     subgraph localhost[ここから localhost]
       nextjs[bookman_nextjs<br>Next.js]
+      backendApache[Apache + mod_wsgi<br>127.0.0.1:8000]
       drf[bookman_backend<br>Django REST Framework]
     end
   end
@@ -58,13 +59,15 @@ flowchart TB
   browser --> dns
   dns --> apache
   apache -->|ProxyPass /| nextjs
-  nextjs -->|BOOKMAN_API_BASE_URL| drf
+  nextjs -->|BOOKMAN_API_BASE_URL| backendApache
+  backendApache --> drf
 ```
 
 DNS は `bookman.henojiya.net` を同じ VPS に到達させるところまでを担当する。
 Apache は、届いたリクエストの `Host` が `bookman.henojiya.net` なら Bookman frontend へ流す。
-frontend は画面を返し、必要に応じて Next.js の API Route から `BOOKMAN_API_BASE_URL` 配下の Django REST Framework API へ接続する。
+frontend は画面を返し、必要に応じて Next.js の API Route から `BOOKMAN_API_BASE_URL` 配下の Bookman backend へ接続する。
 backend API は外部のエンドポイントとしては公開せず、Next.js のサーバー側から `http://127.0.0.1:8000/bookman/api` に接続する。
+この `127.0.0.1:8000` は Bookman backend 用の Apache + mod_wsgi チャンネルで、インターネット側には開かない。
 この形にすると、外部から見える入口は `bookman.henojiya.net` の Apache `VirtualHost` だけになる。
 Django REST Framework API をインターネットから直接触らせないため、公開面が小さくなり、不要な API 露出や CORS / CSRF まわりのリスクを抑えやすい。
 
@@ -192,7 +195,7 @@ $ sudo vi /etc/apache2/sites-available/virtual.host.conf
 ```
 
 backend API のエンドポイントは外部公開しない。
-Apache の `VirtualHost` には backend API 向けの `ProxyPass` / `ProxyPassReverse` を書かず、Next.js だけが BFF を通して Bookman backend の Django REST Framework に接続する。
+外向きの Apache `VirtualHost` には backend API 向けの `ProxyPass` / `ProxyPassReverse` を書かず、Next.js だけが BFF を通して localhost の Apache + mod_wsgi に接続する。
 
 `ProxyPass` は `bookman.henojiya.net` に届いたリクエストを Next.js へ転送する設定で、`ProxyPassReverse` は Next.js から返るリダイレクトなどのレスポンスヘッダを外向きのURLに補正する設定だ。
 どちらも同じ転送先を書くので似て見えるが、入口の転送と戻りの補正で役割が違う。
@@ -228,8 +231,54 @@ $ tree -L 1
 ```
 
 backend 側は、通常の Django アプリケーションとして `.env`、venv、migration、static の設定を整える。
-Bookman backend は Apache + mod_wsgi には載せず、gunicorn などの別プロセスとして localhost の `127.0.0.1:8000` で待ち受ける想定にする。
-Bookman frontend から見える API URL は固定しておく。
+Bookman backend も portfolio と同じく Apache + mod_wsgi に載せる。
+ただし、portfolio とはチャンネルを分け、Bookman backend 用に localhost の `127.0.0.1:8000` だけで待ち受ける Apache 設定を作る。
+Next.js の BFF から見える API URL は固定しておく。
+
+まず Apache が localhost の 8000 番ポートでも待ち受けるようにする。
+既存の `Listen 80` はそのまま残し、`Listen 127.0.0.1:8000` を追加する。
+
+```bash:console
+$ sudo vi /etc/apache2/ports.conf
+```
+
+```apache:/etc/apache2/ports.conf
+Listen 80
+Listen 127.0.0.1:8000
+```
+
+次に、`virtual.host.conf` に Bookman backend 用の localhost 専用 `VirtualHost` を追記する。
+
+```bash:console
+$ sudo vi /etc/apache2/sites-available/virtual.host.conf
+```
+
+```conf:/etc/apache2/sites-available/virtual.host.conf
+<VirtualHost 127.0.0.1:8000>
+    ServerName 127.0.0.1
+
+    WSGIDaemonProcess bookman_backend python-home=/var/www/html/bookman_backend/venv python-path=/var/www/html/bookman_backend
+    WSGIProcessGroup bookman_backend
+    WSGIScriptAlias / /var/www/html/bookman_backend/config/wsgi.py
+
+    <Directory /var/www/html/bookman_backend/config>
+        <Files wsgi.py>
+            Require all granted
+        </Files>
+    </Directory>
+</VirtualHost>
+```
+
+この `VirtualHost` は `127.0.0.1:8000` だけで待ち受けるため、外部から直接は到達できない。
+Next.js の BFF が同じサーバー内から `http://127.0.0.1:8000/bookman/api` に接続し、そこから mod_wsgi 経由で Bookman backend の Django REST Framework が動く。
+
+`mod_wsgi` を使うため、Apache の wsgi モジュールを有効化して設定を反映する。
+
+```bash:console
+$ sudo a2enmod wsgi
+$ sudo apache2ctl configtest
+$ sudo systemctl restart apache2
+```
 
 ローカル開発では次のようにしていた。
 
@@ -237,8 +286,7 @@ Bookman frontend から見える API URL は固定しておく。
 BOOKMAN_API_BASE_URL=http://127.0.0.1:8000/bookman/api
 ```
 
-本番では、Next.js のサーバー側から到達できる backend API の URL に変える。
-同じサーバー内だけで閉じるなら、たとえば次のように考える。
+本番でも、同じサーバー内だけで閉じるなら次のようにする。
 
 ```env:.env.production
 BOOKMAN_API_BASE_URL=http://127.0.0.1:8000/bookman/api
@@ -246,7 +294,7 @@ BOOKMAN_API_BASE_URL=http://127.0.0.1:8000/bookman/api
 
 Bookman の frontend は、Next.js のバックエンド（BFF）が Django REST Framework API と通信する方針にしている。
 そのため、`BOOKMAN_API_BASE_URL` は Next.js のサーバー側で読む値として扱う。
-backend API を外部公開しないなら、Apache 側に backend 用の `ProxyPass` は書かない。
+backend API を外部公開しないなら、外向きの Apache `VirtualHost` には backend 用の `ProxyPass` / `ProxyPassReverse` は書かない。
 
 ## frontend を配置する
 
@@ -317,12 +365,12 @@ frontend と backend の接続確認は、画面から行う。
 - `https://bookman.henojiya.net/branch` や `https://bookman.henojiya.net/book` で一覧が表示される
 - 一覧が表示されれば、Next.js のサーバー側から Django REST Framework API へ接続できている
 
-もし画面は表示されるが一覧だけ失敗する場合、DNS ではなく `BOOKMAN_API_BASE_URL`、Django 側の URL、Next.js の Route Handler、Django REST Framework の起動状態を確認する。
+もし画面は表示されるが一覧だけ失敗する場合、DNS ではなく `BOOKMAN_API_BASE_URL`、Django 側の URL、Next.js の Route Handler、localhost 側の Apache + mod_wsgi 設定を確認する。
 
 ## まとめ
 
 サブドメインを追加しても、DNS がやることは `bookman.henojiya.net` を同じ VPS へ届けるところまでだ。
 同じIPへ届いたあと、Bookman に振り分けるのは Apache の `VirtualHost`。
-Next.js は画面を返し、Next.js のサーバー側が Django REST Framework API と通信する。
+Next.js は画面を返し、Next.js の BFF が localhost の Apache + mod_wsgi 経由で Bookman backend の Django REST Framework API と通信する。
 
 この責務を分けておくと、`www.henojiya.net` の既存 Django サイトと、`bookman.henojiya.net` の Next.js + Django REST Framework アプリを同じ VPS 上で共存させやすい。
