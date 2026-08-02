@@ -227,8 +227,9 @@ $ cd /var/www/html
 $ tree -L 1
 ```
 
-backend 側は、通常の Django アプリケーションとして `.env`、venv、migration、static、Apache / mod_wsgi の設定を整える。
-既存の Django サイトと同じ Apache プロセスに載せるか、別プロセスにするかはサーバーの構成次第だが、Bookman frontend から見える API URL は固定しておく。
+backend 側は、通常の Django アプリケーションとして `.env`、venv、migration、static の設定を整える。
+Bookman backend は Apache + mod_wsgi には載せず、gunicorn などの別プロセスとして localhost の `127.0.0.1:8000` で待ち受ける想定にする。
+Bookman frontend から見える API URL は固定しておく。
 
 ローカル開発では次のようにしていた。
 
