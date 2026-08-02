@@ -79,7 +79,7 @@ DNS は `www.henojiya.net` や `bookman.henojiya.net` を同じ VPS のIPへ届�
 
 既存サイトが Django + mod_wsgi で動いている場合でも、Bookman 側の画面は Next.js へつなぐ（リバースプロキシする）。
 やっていることは、`www` と `bookman` というホスト名の違いで同じIPに届いた通信を別のアプリケーションへ振り分けることだ。
-たとえば Next.js を `127.0.0.1:3000`、Django REST Framework API を `127.0.0.1:8000` で待ち受けるなら、Apache 側は `bookman.henojiya.net` へのアクセスを Next.js へ流す。
+たとえば Next.js を `127.0.0.1:3000` で待ち受けるなら、Apache 側は `bookman.henojiya.net` へのアクセスを Next.js へ流す。
 
 ```bash:console
 $ sudo vi /etc/apache2/sites-available/bookman.conf
