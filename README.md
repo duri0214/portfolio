@@ -198,6 +198,7 @@ sudo tail -n 50 /var/log/apache2/error.log
 cd /var/www/html/bookman_nextjs
 git fetch --prune origin
 git reset --hard origin/master
+# package-lock.json に固定された依存関係をクリーンインストールする
 npm ci
 npm run build
 sudo systemctl restart bookman-nextjs
