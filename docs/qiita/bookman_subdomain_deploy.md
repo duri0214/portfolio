@@ -82,10 +82,10 @@ portfolio が Django + mod_wsgi で動いている場合でも、Bookman 側の�
 たとえば Next.js を `127.0.0.1:3000` で待ち受けるなら、Apache 側は `bookman.henojiya.net` へのアクセスを Next.js へ流す。
 
 ```bash:console
-$ sudo vi /etc/apache2/sites-available/bookman.conf
+$ sudo vi /etc/apache2/sites-available/virtual.host.conf
 ```
 
-```conf:/etc/apache2/sites-available/bookman.conf
+```conf:/etc/apache2/sites-available/virtual.host.conf
 <VirtualHost *:80>
     ServerName bookman.henojiya.net
 
@@ -103,7 +103,7 @@ Apache の `VirtualHost` には backend API 向けの `ProxyPass` を書かず�
 ```bash:console
 $ sudo a2enmod proxy
 $ sudo a2enmod proxy_http
-$ sudo a2ensite bookman
+$ sudo a2ensite virtual.host
 $ sudo apache2ctl configtest
 $ sudo systemctl restart apache2
 ```
@@ -268,9 +268,9 @@ $ sudo certbot --apache -d bookman.henojiya.net
 ```
 
 証明書取得後は、HTTPS 側の `VirtualHost *:443` にも `ProxyPass` / `ProxyPassReverse` が入っていることを確認する。
-certbot が生成した SSL 設定ファイルを確認し、HTTP 側と同じように Bookman の Next.js へ流す。
+certbot が生成または更新した SSL 設定ファイルを確認し、HTTP 側と同じように Bookman の Next.js へ流す。
 
-```conf:/etc/apache2/sites-available/bookman-le-ssl.conf
+```conf:/etc/apache2/sites-available/virtual.host-le-ssl.conf
 <IfModule mod_ssl.c>
 <VirtualHost *:443>
     ServerName bookman.henojiya.net
