@@ -96,7 +96,10 @@ $ sudo vi /etc/apache2/sites-available/virtual.host.conf
 ```
 
 backend API のエンドポイントは外部公開しない。
-Apache の `VirtualHost` には backend API 向けの `ProxyPass` を書かず、Next.js だけが BFF を通して Django REST Framework に接続する。
+Apache の `VirtualHost` には backend API 向けの `ProxyPass` を書かず、Next.js だけが BFF を通して Bookman backend の Django REST Framework に接続する。
+
+`ProxyPass` は `bookman.henojiya.net` に届いたリクエストを Next.js へ転送する設定で、`ProxyPassReverse` は Next.js から返るリダイレクトなどのレスポンスヘッダを外向きのURLに補正する設定だ。
+どちらも同じ転送先を書くので似て見えるが、入口の転送と戻りの補正で役割が違う。
 
 `ProxyPass` / `ProxyPassReverse` を使うため、Apache の proxy 関連モジュールを有効化する。
 
