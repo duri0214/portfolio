@@ -29,7 +29,7 @@ VPS、Ubuntu、Apache、MySQL、Django の一般セットアップはこちら�
 - `henojiya.net` はお名前.com で管理している
 - DNS はさくらインターネットの `ns1.dns.ne.jp` / `ns2.dns.ne.jp` を使っている
 - VPS のグローバルIPは `153.126.200.229`
-- 既存サイト `www.henojiya.net` は同じ VPS で公開済み
+- portfolio `www.henojiya.net` は同じ VPS で公開済み
 - Bookman は同じ VPS 上に2つ目の独自 Web アプリケーションとして配置する
 - frontend は [`bookman_nextjs`](https://github.com/duri0214/bookman_nextjs)
 - backend は [`bookman_backend`](https://github.com/duri0214/bookman_backend)
@@ -75,9 +75,9 @@ DNS 側で `www.henojiya.net` や `bookman.henojiya.net` がこのサーバー�
 
 DNS は `www.henojiya.net` や `bookman.henojiya.net` を同じ VPS のIPへ届けるところまでを担当する。
 この記事では、1つ目の独自Webアプリケーションを `www.henojiya.net`、2つ目以降の独自Webアプリケーションを `bookman.henojiya.net` で公開するケースとして考える。
-同じIPへ届いたアクセスを、`www.henojiya.net` なら既存サイト、`bookman.henojiya.net` なら Bookman、というように分けるのが Apache の `VirtualHost` だ。
+同じIPへ届いたアクセスを、`www.henojiya.net` なら portfolio、`bookman.henojiya.net` なら Bookman、というように分けるのが Apache の `VirtualHost` だ。
 
-既存サイトが Django + mod_wsgi で動いている場合でも、Bookman 側の画面は Next.js へつなぐ（リバースプロキシする）。
+portfolio が Django + mod_wsgi で動いている場合でも、Bookman 側の画面は Next.js へつなぐ（リバースプロキシする）。
 やっていることは、`www` と `bookman` というホスト名の違いで同じIPに届いた通信を別のアプリケーションへ振り分けることだ。
 たとえば Next.js を `127.0.0.1:3000` で待ち受けるなら、Apache 側は `bookman.henojiya.net` へのアクセスを Next.js へ流す。
 
