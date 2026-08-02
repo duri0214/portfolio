@@ -130,7 +130,7 @@ $ sudo systemctl restart apache2
 
 DNS レコードの設定画面では、次のように `@` や `bookman`、`www` が並ぶ。
 
-![DNSレコード設定例](https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-image-store.s3.ap-northeast-1.amazonaws.com%2F0%2F94562%2F59ef1cdd-2d2c-47a7-b018-583b90f56a52.png?ixlib=rb-4.1.1&auto=format&gif-q=60&q=75&s=cc2a3dd557ba3804fed52cdcc01bbb45)
+![DNSレコード設定例](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/3f085d89-1aee-47a4-ba8f-3cd8206e46e3.png)
 
 この画面の読み方は次の通り。
 
