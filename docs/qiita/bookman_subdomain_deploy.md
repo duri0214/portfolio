@@ -2,7 +2,7 @@
 
 ## はじめに
 
-この記事では、既存の VPS で `www.henojiya.net` が動いている状態から、図書管理システムを `bookman.henojiya.net` のように別サブドメインを追加して複数のアプリケーションを公開する流れを整理する。
+この記事では、既存の VPS で `www.henojiya.net` が動いている状態から、`bookman.henojiya.net` のように別サブドメインを追加して複数のアプリケーションを公開する流れを整理する。
 
 Bookman は、frontend の `bookman_nextjs` と backend の `bookman_backend` に分かれている。
 portfolio のように Apache + mod_wsgi だけで画面まで返す構成ではなく、Next.js が画面を返し、Django REST Framework が API を返す。
