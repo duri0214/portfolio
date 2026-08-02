@@ -45,20 +45,28 @@ VPS、Ubuntu、Apache、MySQL、Django の一般セットアップはこちら�
 flowchart TB
   browser[Browser]
   dns[DNS]
-  apache[Apache VirtualHost]
-  nextjs[bookman_nextjs<br>Next.js]
-  drf[bookman_backend<br>Django REST Framework]
+
+  subgraph vps[VPS]
+    apache[Apache VirtualHost]
+
+    subgraph localhost[ここから localhost<br>127.0.0.1]
+      nextjs[bookman_nextjs<br>Next.js]
+      drf[bookman_backend<br>Django REST Framework]
+    end
+  end
 
   browser --> dns
   dns --> apache
-  apache --> nextjs
-  nextjs --> drf
+  apache -->|ProxyPass /| nextjs
+  nextjs -->|BOOKMAN_API_BASE_URL| drf
 ```
 
 DNS は `bookman.henojiya.net` を同じ VPS に到達させるところまでを担当する。
 Apache は、届いたリクエストの `Host` が `bookman.henojiya.net` なら Bookman frontend へ流す。
 frontend は画面を返し、必要に応じて Next.js の API Route から `BOOKMAN_API_BASE_URL` 配下の Django REST Framework API へ接続する。
 backend API は外部のエンドポイントとしては公開せず、Next.js のサーバー側から `http://127.0.0.1:8000/bookman/api` に接続する。
+この形にすると、外部から見える入口は `bookman.henojiya.net` の Apache `VirtualHost` だけになる。
+Django REST Framework API をインターネットから直接触らせないため、公開面が小さくなり、不要な API 露出や CORS / CSRF まわりのリスクを抑えやすい。
 
 ## バーチャルホスト
 
