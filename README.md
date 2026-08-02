@@ -190,6 +190,20 @@ sudo systemctl restart apache2
 sudo tail -n 50 /var/log/apache2/error.log
 ```
 
+#### 9. Bookman Next.js を同じサーバーで動かしている場合
+
+`bookman_nextjs` を更新した場合は、Next.js 側で依存関係の反映、build、サービス再起動を行ってください。
+
+```bash
+cd /var/www/html/bookman_nextjs
+git fetch --prune origin
+git reset --hard origin/master
+npm ci
+npm run build
+sudo systemctl restart bookman-nextjs
+sudo systemctl status bookman-nextjs --no-pager
+```
+
 ## 3. 各アプリケーションの機能とバッチ
 
 ### [vietnam_research] ベトナム株価分析・統計

@@ -26,7 +26,7 @@
 記事の管理原稿も GitHub に置き、実装の作業履歴と記事更新の履歴を追えるようにする。Qiita に直接書き足していくと、時間が空いたときに「どの実装変更を受けて、どこを書き換えたのか」が分からなくなる。だから、記事もコードと同じように Issue、branch、PR の流れに乗せる。
 
 - 記事管理原稿: https://github.com/duri0214/portfolio/blob/master/docs/qiita/bookman_drf_nextjs.md
-- 本番公開手順: [Next.js + Django REST Framework アプリをサブドメインで本番公開する](./bookman_subdomain_deploy.md)
+- 本番公開手順: [図書管理システムをサブドメインで本番公開する](./bookman_subdomain_deploy.md)
 
 この記事では、現在のフロントエンド構成を上段にまとめ、後段に `bookman_backend` の更新後の状態をまとめる。
 
@@ -331,10 +331,6 @@ console.log(bookmanApiBaseUrl)
 ```
 
 実際のコードでは、この base URL と endpoint 名を組み合わせて Django API の URL を作っている。登録処理のようにブラウザ、Next.js API、Django API の2段階になるところは、後ろの「Route Handler で登録を中継する」で整理する。
-
-`bookman.henojiya.net` のようなサブドメインを切って本番公開するときの `BOOKMAN_API_BASE_URL`、Apache の `VirtualHost`、Next.js の待受ポートの関係は、アプリケーション説明とは別の記事に分けた。
-
-- [Next.js + Django REST Framework アプリをサブドメインで本番公開する](./bookman_subdomain_deploy.md)
 
 ブラウザで動くコードは、サーバー側の環境変数を実行時に直接読めない。だから Next.js には、ブラウザへ渡してよい値だけを明示的に公開する仕組みがある。ブラウザ側のコードから参照できる環境変数にする場合、変数名に `NEXT_PUBLIC_` を付ける。公式ドキュメントでは、`NEXT_PUBLIC_` を付けた値は build 時にブラウザへ送られる JavaScript bundle へ埋め込まれる、と説明されている。
 

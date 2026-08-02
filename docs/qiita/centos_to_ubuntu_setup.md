@@ -408,7 +408,7 @@ DNS はドメイン名を VPS のIPへ届けるところまでを担当します
 
 既存サイトとは別に `bookman.henojiya.net` のようなサブドメインを切って、Next.js + Django REST Framework の別アプリケーションを公開する手順は、Bookman の本番公開記事へ分けました。
 
-- [Next.js + Django REST Framework アプリをサブドメインで本番公開する](./bookman_subdomain_deploy.md)
+- [図書管理システムをサブドメインで本番公開する](./bookman_subdomain_deploy.md)
 
 ```bash:console
 $ sudo vi /etc/apache2/sites-available/virtual.host.conf
@@ -439,7 +439,6 @@ $ sudo systemctl restart apache2
 ## ネームサーバーを設定
 
 ここでやることは、お名前.com で管理している `henojiya.net` と、さくらのVPSで発行されたグローバルIP `153.126.200.229` をひもづけることです。
-このサーバー移行記事では、まず `www.henojiya.net` を同じ VPS へ向けるところまでを扱います。
 
 名前解決の流れは、ざっくり次のようになります。
 
@@ -478,11 +477,11 @@ DNS レコードの設定画面では、次のように `@` や `www` が並び�
 この画面では「エントリー名」に `www.henojiya.net` ではなく `www` だけを入力します。
 A レコードでも CNAME レコードでも、左側に入れる `@` / `www` はこの「エントリー名」です。
 
-`bookman.henojiya.net` のような別アプリケーション用サブドメインを追加する場合も考え方は同じです。
+2つ目以上のアプリケーションをサブドメインで追加する場合も考え方は同じです。
 ただし、同じ VPS に届いたあとのアプリケーション振り分け、Next.js の待受ポート、Django REST Framework API への接続、Apache のリバースプロキシ設定はアプリケーション固有の話になります。
 そのため、Bookman の公開手順は別記事へ切り出しました。
 
-- [Next.js + Django REST Framework アプリをサブドメインで本番公開する](./bookman_subdomain_deploy.md)
+- [図書管理システムをサブドメインで本番公開する](./bookman_subdomain_deploy.md)
 
 DNS の反映には数分から数時間かかることがあります。
 この確認は、VPS に入らず PC の PowerShell から実行します。
