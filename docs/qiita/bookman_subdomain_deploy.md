@@ -49,7 +49,7 @@ flowchart TB
   subgraph vps[VPS]
     apache[Apache VirtualHost]
 
-    subgraph localhost[ここから localhost<br>127.0.0.1]
+    subgraph localhost[ここから localhost]
       nextjs[bookman_nextjs<br>Next.js]
       drf[bookman_backend<br>Django REST Framework]
     end
