@@ -206,13 +206,12 @@ $ sudo vi /etc/apache2/sites-available/000-default.conf
     DocumentRoot /var/www/html
 </VirtualHost>
 
-+<VirtualHost *:80>
-+    ServerName bookman.henojiya.net
-+
-+    ProxyPreserveHost On
-+    ProxyPass / http://127.0.0.1:3000/
-+    ProxyPassReverse / http://127.0.0.1:3000/
-+</VirtualHost>
++ <VirtualHost *:80>
++     ServerName bookman.henojiya.net
++     ProxyPreserveHost On
++     ProxyPass / http://127.0.0.1:3000/
++     ProxyPassReverse / http://127.0.0.1:3000/
++ </VirtualHost>
 ```
 
 backend API のエンドポイントは外部公開しない。
@@ -264,7 +263,7 @@ $ sudo vi /etc/apache2/ports.conf
 
 ```diff:/etc/apache2/ports.conf
 Listen 80
-+Listen 127.0.0.1:8000
++ Listen 127.0.0.1:8000
 ```
 
 次に、同じ `000-default.conf` に Bookman backend 用の localhost 専用 `VirtualHost` も追記する。
@@ -274,30 +273,27 @@ $ sudo vi /etc/apache2/sites-available/000-default.conf
 ```
 
 ```diff:/etc/apache2/sites-available/000-default.conf
- <VirtualHost *:80>
-     ServerName www.henojiya.net
-     DocumentRoot /var/www/html
- </VirtualHost>
- <VirtualHost *:80>
-     ServerName bookman.henojiya.net
-     ProxyPreserveHost On
-     ProxyPass / http://127.0.0.1:3000/
-     ProxyPassReverse / http://127.0.0.1:3000/
- </VirtualHost>
-+
-+<VirtualHost 127.0.0.1:8000>
-+    ServerName 127.0.0.1
-+
-+    WSGIDaemonProcess bookman_backend python-home=/var/www/html/bookman_backend/venv python-path=/var/www/html/bookman_backend
-+    WSGIProcessGroup bookman_backend
-+    WSGIScriptAlias / /var/www/html/bookman_backend/config/wsgi.py
-+
-+    <Directory /var/www/html/bookman_backend/config>
-+        <Files wsgi.py>
-+            Require all granted
-+        </Files>
-+    </Directory>
-+</VirtualHost>
+<VirtualHost *:80>
+    ServerName www.henojiya.net
+    DocumentRoot /var/www/html
+</VirtualHost>
+<VirtualHost *:80>
+    ServerName bookman.henojiya.net
+    ProxyPreserveHost On
+    ProxyPass / http://127.0.0.1:3000/
+    ProxyPassReverse / http://127.0.0.1:3000/
+</VirtualHost>
++ <VirtualHost 127.0.0.1:8000>
++     ServerName 127.0.0.1
++     WSGIDaemonProcess bookman_backend python-home=/var/www/html/bookman_backend/venv python-path=/var/www/html/bookman_backend
++     WSGIProcessGroup bookman_backend
++     WSGIScriptAlias / /var/www/html/bookman_backend/config/wsgi.py
++     <Directory /var/www/html/bookman_backend/config>
++         <Files wsgi.py>
++             Require all granted
++         </Files>
++     </Directory>
++ </VirtualHost>
 ```
 
 この `VirtualHost` は `127.0.0.1:8000` だけで待ち受けるため、外部から直接は到達できない。

@@ -400,41 +400,22 @@ LANG=C.UTF-8 と表示されれば OK。
 
 ## バーチャルホスト
 
-ここでは Apache 側で、ドメイン名ごとの受け口を `VirtualHost` として定義します。
-DNS 側で `www.henojiya.net` がこのサーバーのグローバルIPを向くようにしたあと、この設定の `ServerName` と一致していれば Apache が該当サイトとして処理できます。
-DNS はドメイン名を VPS のIPへ届けるところまでを担当します。
-同じIPへ届いたアクセスを、どのディレクトリやアプリケーションに割り当てるかを決めるのが Apache の `VirtualHost` です。
-旧記事のスクリーンショット付き手順は参考として残しています: https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#%E3%83%90%E3%83%BC%E3%83%81%E3%83%A3%E3%83%AB%E3%83%9B%E3%82%B9%E3%83%88
+ここでは Apache 側で、ドメイン名ごとの受け口を `VirtualHost` として扱います。
+DNS 側で `www.henojiya.net` がこのサーバーのグローバルIPを向くようにしたあと、Apache は `000-default.conf` の `<VirtualHost *:80>` で受けます。
+
+`www.henojiya.net` の `ServerName` は、前の「000-default 設定ファイルの編集」で既存の `/etc/apache2/sites-enabled/000-default.conf` に追記済みです。
+そのため、この段階で `virtual.host.conf` を新しく作って `www.henojiya.net` の `<VirtualHost *:80>` をもう1つ有効化する必要はありません。
+同じ `ServerName www.henojiya.net` の `VirtualHost` を複数有効化すると、Apache のサイト設定が重複します。
+
+確認する場合は、次のコマンドで `www.henojiya.net` の `*:80` が `000-default.conf` だけになっていることを見ます。
+
+```bash:console
+$ sudo apache2ctl -S
+```
 
 既存サイトとは別に `bookman.henojiya.net` のようなサブドメインを切って、Next.js + Django REST Framework の別アプリケーションを公開する手順は、Bookman の本番公開記事へ分けました。
 
 - [図書管理システムをサブドメインで本番公開する](./bookman_subdomain_deploy.md)
-
-```bash:console
-$ sudo vi /etc/apache2/sites-available/virtual.host.conf
-```
-
-```conf:/etc/apache2/sites-available/virtual.host.conf
-<VirtualHost *:80>
-    ServerName www.henojiya.net
-    DocumentRoot /var/www/html
-</VirtualHost>
-```
-
-> **Note:**
-> 自分メモ（エントリポイントを増やすときはこう書く）
->
-> ```
-> <VirtualHost *:80>
->     ServerName www.henojiya.net
->     DocumentRoot /var/www/html/portfolio
-> </VirtualHost>
-> ```
-
-```bash:console
-$ sudo a2ensite virtual.host
-$ sudo systemctl restart apache2
-```
 
 ## ネームサーバーを設定
 
