@@ -10,9 +10,9 @@ portfolio のように Apache + mod_wsgi だけで画面まで返す構成では
 そのため、DNS / Apache / Next.js / Django REST Framework の責務を分けて考える。
 
 - DNS: `bookman.henojiya.net` を既存 VPS に到達させる
-- Apache: `bookman.henojiya.net` に届いた HTTP/HTTPS リクエストを Next.js に振り分ける
-- Next.js: Bookman の画面を返し、サーバー側で Django REST Framework API と通信する
-- Django REST Framework: Apache + mod_wsgi の localhost チャンネルで `/bookman/api/` 配下の API を返す
+- Apache: `www.henojiya.net` なら portfolio、`bookman.henojiya.net` なら Bookman へ振り分ける
+- Next.js: Bookman の画面を返し、サーバー側で Bookman backend の Django REST Framework API と通信する
+- Django REST Framework: Bookman backend として Apache + mod_wsgi の localhost チャンネルで `/bookman/api/` 配下の API を返す
 
 Bookman のアプリケーション実装メモはこちら。
 
