@@ -92,6 +92,8 @@ Django REST Framework API をインターネットから直接触らせないた
 
 設定は2つ。
 
+### さくらのVPS側の設定
+
 1つ目は、お名前.com 側で `henojiya.net` の問い合わせ先を `ns1.dns.ne.jp` / `ns2.dns.ne.jp` にすること。
 `ns1.dns.ne.jp` / `ns2.dns.ne.jp` は、さくらインターネットが用意している DNS サーバーだ。
 
@@ -119,6 +121,8 @@ DNS レコードの設定画面では、次のように `@` や `www`、`bookman
 
 この画面では「エントリー名」に完全なドメイン名ではなく、サブドメインだけを入力する。
 A レコードでも CNAME レコードでも、左側に入れる `@` / `www` / `bookman` はこの「エントリー名」だ。
+
+### DNS の疎通確認
 
 DNS の反映には数分から数時間かかることがある。
 この確認は、VPS に入らず PC の PowerShell から実行する。
@@ -149,6 +153,8 @@ DNS の期待値:
 - `www.henojiya.net` の CNAME が `henojiya.net` を返す
 - `bookman.henojiya.net` の CNAME も `henojiya.net` を返す
 
+### curl で疎通確認
+
 ```bash:console
 # www は HTTPS で正常応答する
 PS C:\Users\yoshi> curl.exe -I https://www.henojiya.net
@@ -166,6 +172,8 @@ curl の期待値:
 
 - `www.henojiya.net` は HTTPS で正常応答する
 - `bookman.henojiya.net` は DNS では同じ VPS に届くが、Apache の VirtualHost と証明書をまだ用意していない場合は HTTPS では証明書エラーになる
+
+### トラブルシューティング
 
 うまくいかない場合の切り分け。
 
