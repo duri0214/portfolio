@@ -104,7 +104,6 @@ DNS レコードの設定画面では、次のように `@` や `bookman`、`www
 この画面の読み方は次の通り。
 
 - `@` は `henojiya.net` そのものを表す
-- `bookman` は、2つ目の独自Webアプリケーション用の `bookman.henojiya.net` を表す
 - `@` は A レコードで VPS のIPへ向ける
 - `www` や `bookman` は CNAME で `@` を見るようにしておく
 - その結果、`www.henojiya.net` や `bookman.henojiya.net` は `henojiya.net` と同じVPSへ向く
