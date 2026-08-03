@@ -97,7 +97,7 @@ Django REST Framework API をインターネットから直接触らせないた
 
 2つ目は、さくらのVPS側で DNS レコードを設定し、`www` と `bookman` をVPSのIPへ向けること。
 
-DNS レコードの設定画面では、次のように `@` や `bookman`、`www` が並ぶ。
+DNS レコードの設定画面では、次のように `@` や `www`、`bookman` が並ぶ。
 
 ![DNSレコード設定例](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/3f085d89-1aee-47a4-ba8f-3cd8206e46e3.png)
 
