@@ -198,7 +198,6 @@ $ sudo vi /etc/apache2/sites-available/virtual.host.conf
 ```
 
 既存の `virtual.host.conf` に、Bookman frontend 用の `<VirtualHost *:80>` ブロックを追記する。
-すでに同じ `ServerName bookman.henojiya.net` のブロックがある場合は重複させず、そのブロックを次の内容に合わせる。
 
 ```conf:/etc/apache2/sites-available/virtual.host.conf
 <VirtualHost *:80>
@@ -226,10 +225,20 @@ $ sudo apache2ctl configtest
 $ sudo systemctl restart apache2
 ```
 
+各コマンドの意味は次の通り。
+
+- `a2enmod proxy`: Apache の proxy モジュールを有効化する
+- `a2enmod proxy_http`: HTTP 向けの proxy 転送を有効化する
+- `a2ensite virtual.host`: `virtual.host.conf` を有効なサイト設定として読み込む
+- `apache2ctl configtest`: Apache 設定の構文エラーを確認する
+- `systemctl restart apache2`: Apache を再起動して設定を反映する
+
 ## backend を配置する
 
-`bookman_backend` は Django REST Framework API を返す。
+Bookman backend の `bookman_backend` は Django REST Framework API を返す。
 この記事では、API の URL は `/bookman/api/` 配下に置く。
+
+portfolio と同じように、本番サーバーでは `/var/www/html/` 配下に `bookman_backend/` と `bookman_nextjs/` を clone する。
 
 ```text
 /var/www/html/
@@ -314,7 +323,8 @@ backend API を外部公開しないなら、外向きの Apache `VirtualHost` �
 
 ## frontend を配置する
 
-`bookman_nextjs` は Next.js のアプリケーションとして build して、`next start` で起動する。
+Bookman frontend の `bookman_nextjs` は、portfolio と同じ `/var/www/html/` 配下に clone した Next.js アプリケーションだ。
+これを build して、`next start` で起動する。
 Apache から Next.js へつなぐため、外部に直接公開せず、localhost の別ポートで待ち受ける。
 
 ```bash:console
