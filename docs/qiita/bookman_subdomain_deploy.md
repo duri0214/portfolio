@@ -197,16 +197,22 @@ portfolio は Apache + mod_wsgi で画面まで返す一方、Bookman は画面�
 $ sudo vi /etc/apache2/sites-available/virtual.host.conf
 ```
 
-既存の `virtual.host.conf` に、Bookman frontend 用の `<VirtualHost *:80>` ブロックを追記する。
+既存の `virtual.host.conf` には `www.henojiya.net` 用の `<VirtualHost *:80>` がある。
+その下に Bookman frontend 用の `<VirtualHost *:80>` ブロックを追記する。
 
-```conf:/etc/apache2/sites-available/virtual.host.conf
+```diff:/etc/apache2/sites-available/virtual.host.conf
 <VirtualHost *:80>
-    ServerName bookman.henojiya.net
-
-    ProxyPreserveHost On
-    ProxyPass / http://127.0.0.1:3000/
-    ProxyPassReverse / http://127.0.0.1:3000/
+    ServerName www.henojiya.net
+    DocumentRoot /var/www/html
 </VirtualHost>
+
++<VirtualHost *:80>
++    ServerName bookman.henojiya.net
++
++    ProxyPreserveHost On
++    ProxyPass / http://127.0.0.1:3000/
++    ProxyPassReverse / http://127.0.0.1:3000/
++</VirtualHost>
 ```
 
 backend API のエンドポイントは外部公開しない。
@@ -269,29 +275,40 @@ $ sudo vi /etc/apache2/ports.conf
 
 ```diff:/etc/apache2/ports.conf
 Listen 80
-+　Listen 127.0.0.1:8000
++Listen 127.0.0.1:8000
 ```
 
-次に、`virtual.host.conf` に Bookman backend 用の localhost 専用 `VirtualHost` を追記する。
+次に、同じ `virtual.host.conf` に Bookman backend 用の localhost 専用 `VirtualHost` も追記する。
 
 ```bash:console
 $ sudo vi /etc/apache2/sites-available/virtual.host.conf
 ```
 
-```conf:/etc/apache2/sites-available/virtual.host.conf
-<VirtualHost 127.0.0.1:8000>
-    ServerName 127.0.0.1
-
-    WSGIDaemonProcess bookman_backend python-home=/var/www/html/bookman_backend/venv python-path=/var/www/html/bookman_backend
-    WSGIProcessGroup bookman_backend
-    WSGIScriptAlias / /var/www/html/bookman_backend/config/wsgi.py
-
-    <Directory /var/www/html/bookman_backend/config>
-        <Files wsgi.py>
-            Require all granted
-        </Files>
-    </Directory>
-</VirtualHost>
+```diff:/etc/apache2/sites-available/virtual.host.conf
+ <VirtualHost *:80>
+     ServerName www.henojiya.net
+     DocumentRoot /var/www/html
+ </VirtualHost>
+ <VirtualHost *:80>
+     ServerName bookman.henojiya.net
+     ProxyPreserveHost On
+     ProxyPass / http://127.0.0.1:3000/
+     ProxyPassReverse / http://127.0.0.1:3000/
+ </VirtualHost>
++
++<VirtualHost 127.0.0.1:8000>
++    ServerName 127.0.0.1
++
++    WSGIDaemonProcess bookman_backend python-home=/var/www/html/bookman_backend/venv python-path=/var/www/html/bookman_backend
++    WSGIProcessGroup bookman_backend
++    WSGIScriptAlias / /var/www/html/bookman_backend/config/wsgi.py
++
++    <Directory /var/www/html/bookman_backend/config>
++        <Files wsgi.py>
++            Require all granted
++        </Files>
++    </Directory>
++</VirtualHost>
 ```
 
 この `VirtualHost` は `127.0.0.1:8000` だけで待ち受けるため、外部から直接は到達できない。
