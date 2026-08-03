@@ -11,6 +11,7 @@ portfolio のように Apache + mod_wsgi だけで画面まで返す構成では
 
 - DNS: `bookman.henojiya.net` を既存 VPS に到達させる
 - Apache: `www.henojiya.net` なら portfolio、`bookman.henojiya.net` なら Bookman へ振り分ける
+- portfolio: Apache + mod_wsgi で画面まで返す
 - bookman(Next.js): Bookman の画面を返し、サーバー側で Bookman backend の DRF API と通信する
 - bookman(DRF): Bookman backend として Apache + mod_wsgi の localhost チャンネルで `/bookman/api/` 配下の API を返す
 
