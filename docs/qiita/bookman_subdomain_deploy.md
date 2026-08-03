@@ -117,7 +117,7 @@ DNS レコードの設定画面では、次のように `@` や `www`、`bookman
 ここまでの DNS 設定でできるのは、`www.henojiya.net` や `bookman.henojiya.net` を同じ VPS に到達させるところまで。
 同じIPに届いたあと、どの名前をどのアプリやディレクトリに割り当てるかは Apache の `VirtualHost` で設定する。
 
-この画面では「エントリー名」に `bookman.henojiya.net` ではなく `bookman` だけを入力する。
+この画面では「エントリー名」に完全なドメイン名ではなく、サブドメインだけを入力する。
 A レコードでも CNAME レコードでも、左側に入れる `@` / `www` / `bookman` はこの「エントリー名」だ。
 
 DNS の反映には数分から数時間かかることがある。
