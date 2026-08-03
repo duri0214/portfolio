@@ -143,13 +143,11 @@ bookman.henojiya.net canonical name = henojiya.net
 PowerShell の `nslookup` では「権限のない回答」と表示されることがあるが、これはエラーではない。
 `nameserver`、`canonical name` の行が期待通りなら OK。
 
-期待値:
+DNS の期待値:
 
 - `henojiya.net` の `nameserver` が `ns1.dns.ne.jp` / `ns2.dns.ne.jp` になっている
 - `www.henojiya.net` の CNAME が `henojiya.net` を返す
 - `bookman.henojiya.net` の CNAME も `henojiya.net` を返す
-- `www.henojiya.net` は HTTPS で正常応答する
-- `bookman.henojiya.net` は DNS では同じ VPS に届くが、Apache の VirtualHost と証明書をまだ用意していない場合は HTTPS では証明書エラーになる
 
 ```bash:console
 # www は HTTPS で正常応答する
@@ -164,6 +162,11 @@ PS C:\Users\yoshi> curl.exe -I https://bookman.henojiya.net
 curl: (60) schannel: SNI or certificate check failed: SEC_E_WRONG_PRINCIPAL (0x80090322) - 対象のプリンシパル名が間違っています。
 ```
 
+curl の期待値:
+
+- `www.henojiya.net` は HTTPS で正常応答する
+- `bookman.henojiya.net` は DNS では同じ VPS に届くが、Apache の VirtualHost と証明書をまだ用意していない場合は HTTPS では証明書エラーになる
+
 うまくいかない場合の切り分け。
 
 - `curl.exe` の結果が想定と違う場合: DNS キャッシュまたは TTL の反映待ち
@@ -175,13 +178,10 @@ curl: (60) schannel: SNI or certificate check failed: SEC_E_WRONG_PRINCIPAL (0x8
 ここでは Apache 側で、ドメイン名ごとの受け口を `VirtualHost` として定義する。
 DNS 側で `www.henojiya.net` や `bookman.henojiya.net` がこのサーバーのグローバルIPを向くようにしたあと、この設定の `ServerName` と一致していれば Apache が該当サイトとして処理できる。
 
-DNS は `www.henojiya.net` や `bookman.henojiya.net` を同じ VPS のIPへ届けるところまでを担当する。
-この記事では、1つ目の独自Webアプリケーションを `www.henojiya.net`、2つ目以降の独自Webアプリケーションを `bookman.henojiya.net` で公開するケースとして考える。
-同じIPへ届いたアクセスを、`www.henojiya.net` なら portfolio、`bookman.henojiya.net` なら Bookman、というように分けるのが Apache の `VirtualHost` だ。
 `virtual.host.conf` の中に複数の `<VirtualHost *:80>` があっても、Apache はリクエストの `Host` と `ServerName` を見て使うブロックを選ぶ。
 そのため、`www.henojiya.net` 側が `DocumentRoot` で portfolio を返し、`bookman.henojiya.net` 側が `ProxyPass /` で Next.js へ流しても衝突しない。
 
-portfolio が Django + mod_wsgi で動いている場合でも、Bookman 側の画面は Next.js へつなぐ（リバースプロキシする）。
+portfolio は Apache + mod_wsgi で画面まで返す一方、Bookman は画面を Next.js に任せ、backend API だけを localhost 側の Apache + mod_wsgi に載せる。
 やっていることは、`www` と `bookman` というホスト名の違いで同じIPに届いた通信を別のアプリケーションへ振り分けることだ。
 たとえば Next.js を `127.0.0.1:3000` で待ち受けるなら、Apache 側は `bookman.henojiya.net` へのアクセスを Next.js へ流す。
 
