@@ -7,13 +7,15 @@
 Bookman は、frontend の `bookman_nextjs` と backend の `bookman_backend` に分かれている。
 portfolio のように Apache + mod_wsgi だけで画面まで返す構成ではなく、Bookman は Next.js が画面を返し、Apache + mod_wsgi 上の Django REST Framework が API を返す。
 
-そのため、DNS / Apache / portfolio / bookman の責務を分けて考える。
+そのため、DNS / 公開 Apache / portfolio / Bookman frontend / Bookman backend の責務を分けて考える。
 
-- DNS: `bookman.henojiya.net` を既存 VPS に到達させる
-- Apache: `www.henojiya.net` なら portfolio、`bookman.henojiya.net` なら Bookman へ振り分ける
-- portfolio: Apache + mod_wsgi で画面まで返す
-- bookman(Next.js): Bookman の画面を返し、サーバー側で Bookman backend の DRF API と通信する
-- bookman(DRF): Apache + mod_wsgi で Bookman backend の `/bookman/api/` 配下の API を返す
+| 対象 | 責務 |
+| --- | --- |
+| DNS | `www.henojiya.net` と `bookman.henojiya.net` を同じ VPS に到達させる |
+| 公開 Apache | `Host` を見て、`www.henojiya.net` は portfolio、`bookman.henojiya.net` は Bookman frontend へ振り分ける |
+| portfolio | Apache + mod_wsgi で `www.henojiya.net` の画面を返す |
+| Bookman frontend | Next.js で `bookman.henojiya.net` の画面を返し、サーバー側で Bookman backend の DRF API と通信する |
+| Bookman backend | Apache + mod_wsgi で `/bookman/api/` 配下の DRF API を localhost 向けに返す |
 
 Bookman のアプリケーション実装メモはこちら。
 
@@ -49,6 +51,7 @@ flowchart TB
 
   subgraph vps[VPS]
     apache[Apache VirtualHost<br>public]
+    portfolio[portfolio<br>Apache + mod_wsgi]
 
     subgraph localhost[ここから localhost]
       nextjs[bookman_nextjs<br>Next.js]
@@ -59,17 +62,19 @@ flowchart TB
 
   browser --> dns
   dns --> apache
-  apache -->|ProxyPass /| nextjs
+  apache -->|www.henojiya.net| portfolio
+  apache -->|bookman.henojiya.net<br>ProxyPass /| nextjs
   nextjs -->|BOOKMAN_API_BASE_URL| backendApache
   backendApache --> drf
 ```
 
-DNS は `bookman.henojiya.net` を同じ VPS に到達させるところまでを担当する。
-Apache は、届いたリクエストの `Host` が `bookman.henojiya.net` なら Bookman frontend へ流す。
-frontend は画面を返し、必要に応じて Next.js の API Route から `BOOKMAN_API_BASE_URL` 配下の Bookman backend へ接続する。
-backend API は外部のエンドポイントとしては公開せず、Next.js のサーバー側から `http://127.0.0.1:8000/bookman/api` に接続する。
+DNS は `www.henojiya.net` と `bookman.henojiya.net` を同じ VPS に到達させるところまでを担当する。
+公開 Apache は、届いたリクエストの `Host` を見て、`www.henojiya.net` なら portfolio、`bookman.henojiya.net` なら Bookman frontend へ流す。
+portfolio は Apache + mod_wsgi で画面まで返す。
+Bookman frontend は Next.js で画面を返し、必要に応じて Next.js の API Route から `BOOKMAN_API_BASE_URL` 配下の Bookman backend へ接続する。
+Bookman backend API は外部のエンドポイントとしては公開せず、Next.js のサーバー側から `http://127.0.0.1:8000/bookman/api` に接続する。
 この `127.0.0.1:8000` は Bookman backend 用の Apache + mod_wsgi チャンネルで、インターネット側には開かない。
-この形にすると、外部から見える入口は `bookman.henojiya.net` の Apache `VirtualHost` だけになる。
+この形にすると、Bookman として外部から見える入口は `bookman.henojiya.net` の Apache `VirtualHost` だけになる。
 Django REST Framework API をインターネットから直接触らせないため、公開面が小さくなり、不要な API 露出や CORS / CSRF まわりのリスクを抑えやすい。
 
 ## ネームサーバーを設定
