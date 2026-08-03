@@ -359,7 +359,7 @@ BOOKMAN_API_BASE_URL=http://127.0.0.1:8000/bookman/api
 ```
 
 Bookman の frontend は、Next.js のバックエンド（BFF）が Django REST Framework API と通信する方針にしている。
-ローカル開発で `.env.local` に書いていた `BOOKMAN_API_BASE_URL` と同じように、本番の `.env.production` でも同じサーバー内の backend API を指す値として扱う。
+ローカル開発で `.env.local` に書いていた `BOOKMAN_API_BASE_URL` は、本番の `.env.production` でも同じ値を使い回せる。
 backend API を外部公開しないなら、外向きの Apache `VirtualHost` には backend 用の `ProxyPass` / `ProxyPassReverse` は書かない。
 
 ## Bookman frontend を配置する
