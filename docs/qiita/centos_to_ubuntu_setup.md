@@ -1301,39 +1301,39 @@ $ sudo apache2ctl configtest     # 期待: Syntax OK
 $ sudo vi /etc/apache2/sites-available/000-default.conf
 ```
 
-開いたら、ファイルの最後に、以下の設定ブロック（WSGIScriptAlias〜最後の </Directory> まで）をそのまま追記してください。
+開いたら、`www.henojiya.net` の `<VirtualHost *:80>` ブロック内に、portfolio 用の WSGI / static / media 設定を入れます。
+`WSGISocketPrefix` は Apache 全体の設定なので、`<VirtualHost>` の外に1行だけ置きます。
 すでに同等設定がある場合は重複しないように調整します（順序や値は既存を優先）。
 
-```conf:/etc/apache2/sites-available/000-default.conf
+```diff:/etc/apache2/sites-available/000-default.conf
 # 方針: APT 方式（`libapache2-mod-wsgi-py3` + `a2enmod wsgi`）に従う。
 # LoadModule は mods-enabled/wsgi.load に任せ、このファイルには書かない。
 
-WSGIScriptAlias / /var/www/html/portfolio/config/wsgi.py
-WSGIDaemonProcess wsgi_app python-home=/var/www/html/portfolio/venv python-path=/var/www/html/portfolio
-WSGIProcessGroup wsgi_app
 WSGISocketPrefix /var/run/wsgi
-WSGIApplicationGroup %{GLOBAL}
 
-# 静的ファイル（CSS/JS/画像）の設定
-Alias /static/ /var/www/html/portfolio/static/
-<Directory /var/www/html/portfolio/static>
-    Require all granted
-    Options -Indexes
-</Directory>
-
-# メディアファイル（画像・チャート等）の設定
-Alias /media/ /var/www/html/portfolio/media/
-<Directory /var/www/html/portfolio/media>
-    Require all granted
-    Options -Indexes
-</Directory>
-
-# プロジェクトディレクトリへのアクセス許可
-<Directory /var/www/html/portfolio/config>
-    <Files wsgi.py>
-        Require all granted
-    </Files>
-</Directory>
+<VirtualHost *:80>
+    ServerName www.henojiya.net
+    DocumentRoot /var/www/html
++     WSGIScriptAlias / /var/www/html/portfolio/config/wsgi.py
++     WSGIDaemonProcess wsgi_app python-home=/var/www/html/portfolio/venv python-path=/var/www/html/portfolio
++     WSGIProcessGroup wsgi_app
++     WSGIApplicationGroup %{GLOBAL}
++     Alias /static/ /var/www/html/portfolio/static/
++     <Directory /var/www/html/portfolio/static>
++         Require all granted
++         Options -Indexes
++     </Directory>
++     Alias /media/ /var/www/html/portfolio/media/
++     <Directory /var/www/html/portfolio/media>
++         Require all granted
++         Options -Indexes
++     </Directory>
++     <Directory /var/www/html/portfolio/config>
++         <Files wsgi.py>
++             Require all granted
++         </Files>
++     </Directory>
+</VirtualHost>
 ```
 
 ```bash:console

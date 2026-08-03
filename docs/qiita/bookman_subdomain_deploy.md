@@ -198,12 +198,36 @@ $ sudo vi /etc/apache2/sites-available/000-default.conf
 ```
 
 既存の `000-default.conf` には `www.henojiya.net` 用の `<VirtualHost *:80>` がある。
+portfolio の WSGI / static / media 設定は、この `www.henojiya.net` の `VirtualHost` 内に入れておく。
+`WSGIScriptAlias /` を `VirtualHost` の外に置くと、Bookman 用の `ProxyPass /` と衝突しやすくなる。
+`WSGISocketPrefix` は Apache 全体の設定なので、`VirtualHost` の外に置いたままにする。
 その下に Bookman frontend 用の `<VirtualHost *:80>` ブロックを追記する。
 
 ```diff:/etc/apache2/sites-available/000-default.conf
+WSGISocketPrefix /var/run/wsgi
+
 <VirtualHost *:80>
     ServerName www.henojiya.net
     DocumentRoot /var/www/html
+    WSGIScriptAlias / /var/www/html/portfolio/config/wsgi.py
+    WSGIDaemonProcess wsgi_app python-home=/var/www/html/portfolio/venv python-path=/var/www/html/portfolio
+    WSGIProcessGroup wsgi_app
+    WSGIApplicationGroup %{GLOBAL}
+    Alias /static/ /var/www/html/portfolio/static/
+    <Directory /var/www/html/portfolio/static>
+        Require all granted
+        Options -Indexes
+    </Directory>
+    Alias /media/ /var/www/html/portfolio/media/
+    <Directory /var/www/html/portfolio/media>
+        Require all granted
+        Options -Indexes
+    </Directory>
+    <Directory /var/www/html/portfolio/config>
+        <Files wsgi.py>
+            Require all granted
+        </Files>
+    </Directory>
 </VirtualHost>
 
 + <VirtualHost *:80>
@@ -273,9 +297,30 @@ $ sudo vi /etc/apache2/sites-available/000-default.conf
 ```
 
 ```diff:/etc/apache2/sites-available/000-default.conf
+WSGISocketPrefix /var/run/wsgi
+
 <VirtualHost *:80>
     ServerName www.henojiya.net
     DocumentRoot /var/www/html
+    WSGIScriptAlias / /var/www/html/portfolio/config/wsgi.py
+    WSGIDaemonProcess wsgi_app python-home=/var/www/html/portfolio/venv python-path=/var/www/html/portfolio
+    WSGIProcessGroup wsgi_app
+    WSGIApplicationGroup %{GLOBAL}
+    Alias /static/ /var/www/html/portfolio/static/
+    <Directory /var/www/html/portfolio/static>
+        Require all granted
+        Options -Indexes
+    </Directory>
+    Alias /media/ /var/www/html/portfolio/media/
+    <Directory /var/www/html/portfolio/media>
+        Require all granted
+        Options -Indexes
+    </Directory>
+    <Directory /var/www/html/portfolio/config>
+        <Files wsgi.py>
+            Require all granted
+        </Files>
+    </Directory>
 </VirtualHost>
 <VirtualHost *:80>
     ServerName bookman.henojiya.net
