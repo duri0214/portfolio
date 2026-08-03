@@ -269,7 +269,7 @@ $ sudo vi /etc/apache2/ports.conf
 
 ```diff:/etc/apache2/ports.conf
 Listen 80
-+Listen 127.0.0.1:8000
++　Listen 127.0.0.1:8000
 ```
 
 次に、`virtual.host.conf` に Bookman backend 用の localhost 専用 `VirtualHost` を追記する。
