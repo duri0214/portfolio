@@ -261,15 +261,15 @@ Bookman backend も portfolio と同じく Apache + mod_wsgi に載せる。
 Next.js の BFF から見える API URL は固定しておく。
 
 まず Apache が localhost の 8000 番ポートでも待ち受けるようにする。
-既存の `Listen 80` はそのまま残し、`Listen 127.0.0.1:8000` を追加する。
+`/etc/apache2/ports.conf` は Apache インストール時点で存在する既存ファイルなので、新規作成せずに `Listen 127.0.0.1:8000` だけ追記する。
 
 ```bash:console
 $ sudo vi /etc/apache2/ports.conf
 ```
 
-```apache:/etc/apache2/ports.conf
+```diff:/etc/apache2/ports.conf
 Listen 80
-Listen 127.0.0.1:8000
++Listen 127.0.0.1:8000
 ```
 
 次に、`virtual.host.conf` に Bookman backend 用の localhost 専用 `VirtualHost` を追記する。
