@@ -50,10 +50,10 @@ flowchart TB
   dns[DNS]
 
   subgraph vps[VPS]
-    apache[Apache VirtualHost<br>public]
+    apache[公開 Apache]
     portfolio[portfolio<br>Apache + mod_wsgi]
 
-    subgraph localhost[ここから localhost]
+    subgraph localhost[localhost]
       nextjs[bookman_nextjs<br>Next.js]
       backendApache[Apache + mod_wsgi<br>127.0.0.1:8000]
       drf[bookman_backend<br>Django REST Framework]
@@ -62,7 +62,7 @@ flowchart TB
 
   browser --> dns
   dns --> apache
-  apache -->|www.henojiya.net| portfolio
+  apache -->|www.henojiya.net<br>ProxyPass /| portfolio
   apache -->|bookman.henojiya.net<br>ProxyPass /| nextjs
   nextjs -->|BOOKMAN_API_BASE_URL| backendApache
   backendApache --> drf
