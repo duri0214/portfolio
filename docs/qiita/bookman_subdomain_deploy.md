@@ -186,7 +186,7 @@ curl の期待値:
 ここでは Apache 側で、ドメイン名ごとの受け口を `VirtualHost` として定義する。
 DNS 側で `www.henojiya.net` や `bookman.henojiya.net` がこのサーバーのグローバルIPを向くようにしたあと、この設定の `ServerName` と一致していれば Apache が該当サイトとして処理できる。
 
-`virtual.host.conf` の中に複数の `<VirtualHost *:80>` があっても、Apache はリクエストの `Host` と `ServerName` を見て使うブロックを選ぶ。
+`000-default.conf` の中に複数の `<VirtualHost *:80>` があっても、Apache はリクエストの `Host` と `ServerName` を見て使うブロックを選ぶ。
 そのため、`www.henojiya.net` 側が `DocumentRoot` で portfolio を返し、`bookman.henojiya.net` 側が `ProxyPass /` で Next.js へ流しても衝突しない。
 
 portfolio は Apache + mod_wsgi で画面まで返す一方、Bookman は画面を Next.js に任せ、backend API だけを localhost 側の Apache + mod_wsgi に載せる。
@@ -194,13 +194,13 @@ portfolio は Apache + mod_wsgi で画面まで返す一方、Bookman は画面�
 たとえば Next.js を `127.0.0.1:3000` で待ち受けるなら、Apache 側は `bookman.henojiya.net` へのアクセスを Next.js へ流す。
 
 ```bash:console
-$ sudo vi /etc/apache2/sites-available/virtual.host.conf
+$ sudo vi /etc/apache2/sites-available/000-default.conf
 ```
 
-既存の `virtual.host.conf` には `www.henojiya.net` 用の `<VirtualHost *:80>` がある。
+既存の `000-default.conf` には `www.henojiya.net` 用の `<VirtualHost *:80>` がある。
 その下に Bookman frontend 用の `<VirtualHost *:80>` ブロックを追記する。
 
-```diff:/etc/apache2/sites-available/virtual.host.conf
+```diff:/etc/apache2/sites-available/000-default.conf
 <VirtualHost *:80>
     ServerName www.henojiya.net
     DocumentRoot /var/www/html
@@ -226,7 +226,6 @@ backend API のエンドポイントは外部公開しない。
 ```bash:console
 $ sudo a2enmod proxy
 $ sudo a2enmod proxy_http
-$ sudo a2ensite virtual.host
 $ sudo apache2ctl configtest
 $ sudo systemctl restart apache2
 ```
@@ -235,7 +234,6 @@ $ sudo systemctl restart apache2
 
 - `a2enmod proxy`: Apache の proxy モジュールを有効化する
 - `a2enmod proxy_http`: HTTP 向けの proxy 転送を有効化する
-- `a2ensite virtual.host`: `virtual.host.conf` を有効なサイト設定として読み込む
 - `apache2ctl configtest`: Apache 設定の構文エラーを確認する
 - `systemctl restart apache2`: Apache を再起動して設定を反映する
 
@@ -278,13 +276,13 @@ Listen 80
 +Listen 127.0.0.1:8000
 ```
 
-次に、同じ `virtual.host.conf` に Bookman backend 用の localhost 専用 `VirtualHost` も追記する。
+次に、同じ `000-default.conf` に Bookman backend 用の localhost 専用 `VirtualHost` も追記する。
 
 ```bash:console
-$ sudo vi /etc/apache2/sites-available/virtual.host.conf
+$ sudo vi /etc/apache2/sites-available/000-default.conf
 ```
 
-```diff:/etc/apache2/sites-available/virtual.host.conf
+```diff:/etc/apache2/sites-available/000-default.conf
  <VirtualHost *:80>
      ServerName www.henojiya.net
      DocumentRoot /var/www/html
@@ -367,7 +365,7 @@ $ sudo certbot --apache -d bookman.henojiya.net
 証明書取得後は、HTTPS 側の `VirtualHost *:443` にも `ProxyPass` / `ProxyPassReverse` が入っていることを確認する。
 certbot が生成または更新した SSL 設定ファイルを確認し、HTTP 側と同じように Bookman の Next.js へ流す。
 
-```conf:/etc/apache2/sites-available/virtual.host-le-ssl.conf
+```conf:/etc/apache2/sites-available/000-default-le-ssl.conf
 <IfModule mod_ssl.c>
 <VirtualHost *:443>
     ServerName bookman.henojiya.net
