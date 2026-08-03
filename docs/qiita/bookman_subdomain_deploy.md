@@ -189,6 +189,9 @@ portfolio は Apache + mod_wsgi で画面まで返す一方、Bookman は画面�
 $ sudo vi /etc/apache2/sites-available/virtual.host.conf
 ```
 
+既存の `virtual.host.conf` に、Bookman frontend 用の `<VirtualHost *:80>` ブロックを追記する。
+すでに同じ `ServerName bookman.henojiya.net` のブロックがある場合は重複させず、そのブロックを次の内容に合わせる。
+
 ```conf:/etc/apache2/sites-available/virtual.host.conf
 <VirtualHost *:80>
     ServerName bookman.henojiya.net
