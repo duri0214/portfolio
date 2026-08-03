@@ -237,28 +237,19 @@ $ sudo systemctl restart apache2
 - `apache2ctl configtest`: Apache 設定の構文エラーを確認する
 - `systemctl restart apache2`: Apache を再起動して設定を反映する
 
-## backend を配置する
+## Bookman backend を配置する
 
 Bookman backend の `bookman_backend` は Django REST Framework API を返す。
 この記事では、API の URL は `/bookman/api/` 配下に置く。
 
 portfolio と同じように、本番サーバーでは `/var/www/html/` 配下に `bookman_backend/` と `bookman_nextjs/` を clone する。
 
-```text
-/var/www/html/
-  portfolio/
-  bookman_backend/
-  bookman_nextjs/
-```
-
-ローカル開発では `~/dev/` 配下に置いていても、本番サーバーでは `portfolio` と同じ階層の `/var/www/html/` 配下に `bookman_backend` と `bookman_nextjs` を配置する想定だ。
-サーバー上の配置は次のように確認できる。
-
 ```bash:console
 $ cd /var/www/html
-$ tree -L 1
+$ git clone https://github.com/duri0214/bookman_backend.git
 ```
 
+ローカル開発では `~/dev/` 配下に置いていても、本番サーバーでは `portfolio` と同じ階層の `/var/www/html/` 配下に `bookman_backend` を配置する想定だ。
 backend 側は、通常の Django アプリケーションとして `.env`、venv、migration、static の設定を整える。
 Bookman backend も portfolio と同じく Apache + mod_wsgi に載せる。
 ただし、portfolio とはチャンネルを分け、Bookman backend 用に localhost の `127.0.0.1:8000` だけで待ち受ける Apache 設定を作る。
@@ -336,13 +327,15 @@ Bookman の frontend は、Next.js のバックエンド（BFF）が Django REST
 そのため、`BOOKMAN_API_BASE_URL` は Next.js のサーバー側で読む値として扱う。
 backend API を外部公開しないなら、外向きの Apache `VirtualHost` には backend 用の `ProxyPass` / `ProxyPassReverse` は書かない。
 
-## frontend を配置する
+## Bookman frontend を配置する
 
 Bookman frontend の `bookman_nextjs` は、portfolio と同じ `/var/www/html/` 配下に clone した Next.js アプリケーションだ。
 これを build して、`next start` で起動する。
 Apache から Next.js へつなぐため、外部に直接公開せず、localhost の別ポートで待ち受ける。
 
 ```bash:console
+$ cd /var/www/html
+$ git clone https://github.com/duri0214/bookman_nextjs.git
 $ cd /var/www/html/bookman_nextjs
 $ npm ci
 $ npm run build
