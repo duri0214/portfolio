@@ -368,7 +368,7 @@ portfolio 側では、Django アプリケーションを Apache + mod_wsgi に�
 Apache を再起動すれば、Apache が `WSGIScriptAlias` で `config/wsgi.py` を読み込み、mod_wsgi 経由で Django を動かしてくれるのだ。
 
 一方、Bookman frontend は build したあと、Apache の設定反映に伴う再起動にあわせて Next.js のサーバーを起動する必要がある。
-Apache は `ProxyPass` で `bookman.henojiya.net` へのリクエストを `127.0.0.1:3000` の Next.js へつなぐだけなので、Next.js 側が止まっていると画面を返せない。
+Apache は `ProxyPass` で `bookman.henojiya.net` へのリクエストを `127.0.0.1:3000` の Next.js へつなぐだけなので、Next.js のサーバーが止まっていると画面を返せない。
 この Next.js の起動管理に使うのが systemd で、ここでは `bookman-nextjs.service` を作る。
 
 Bookman frontend の `bookman_nextjs` は、portfolio と同じ `/var/www/html/` 配下に clone した Next.js アプリケーションだ。
