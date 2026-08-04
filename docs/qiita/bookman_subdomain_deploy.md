@@ -377,15 +377,20 @@ Apache 再起動後、VPS 上で localhost の backend API に接続できるか
 この確認は外部公開の確認ではなく、Next.js の BFF から見える `127.0.0.1:8000` の受け口の確認だ。
 
 ```bash:console
-$ curl -m 5 -v http://127.0.0.1:8000/bookman/api/
+$ curl -m 5 -v http://127.0.0.1:8000/bookman/api/branches/
 *   Trying 127.0.0.1:8000...
 * Connected to 127.0.0.1 (127.0.0.1) port 8000
-> GET /bookman/api/ HTTP/1.1
+> GET /bookman/api/branches/ HTTP/1.1
 > Host: 127.0.0.1:8000
+< HTTP/1.1 200 OK
+< Content-Type: application/json
+[]
 ```
 
 `Connected to 127.0.0.1 port 8000` が出れば、Apache は `127.0.0.1:8000` で待ち受けている。
-そのあとに `500 Internal Server Error` が返る場合は、Apache の受け口ではなく Django 側まで処理が進んだうえでエラーになっている。
+`200 OK` と JSON が返れば、Apache + mod_wsgi + Django + DB 接続まで通っている。
+`[]` は branch データがまだ空という意味なので、疎通確認としては OK。
+そのかわりに `500 Internal Server Error` が返る場合は、Apache の受け口ではなく Django 側まで処理が進んだうえでエラーになっている。
 この場合は `.env`、DB 接続、migration、Django のログを確認する。
 
 ```bash:console
