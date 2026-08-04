@@ -1,9 +1,5 @@
 # 図書管理システムをサブドメインで本番公開する
 
-Qiita 公開版はこちら。
-
-https://qiita.com/YoshitakaOkada/items/e74555b56e3903708309
-
 ## はじめに
 
 この記事では、既存の VPS で `www.henojiya.net` が動いている状態から、`bookman.henojiya.net` のように別サブドメインを追加して複数のアプリケーションを公開する流れを整理する。
@@ -38,8 +34,6 @@ https://qiita.com/YoshitakaOkada/items/d1e14776040e64cd1434
 - VPS のグローバルIPは `153.126.200.229`
 - portfolio `www.henojiya.net` は同じ VPS で公開済み
 - Bookman は同じ VPS 上に2つ目の独自 Web アプリケーションとして配置する
-- frontend は `bookman_nextjs`
-- backend は `bookman_backend`
 
 frontend のリポジトリはこちら。
 
