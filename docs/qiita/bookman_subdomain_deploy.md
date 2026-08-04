@@ -364,6 +364,13 @@ backend API を外部公開しないなら、ローカル開発で `.env.local` 
 
 ## Bookman frontend を配置する
 
+portfolio 側では、Django アプリケーションを Apache + mod_wsgi に載せているため、portfolio 専用の systemd サービスは作っていない。
+Apache 自体は `apache2` サービスとして systemd で管理されており、Apache が `WSGIScriptAlias` で `config/wsgi.py` を読み込み、mod_wsgi 経由で Django を動かす。
+
+一方、Bookman frontend は Next.js の Node.js プロセスとして動く。
+Apache は `ProxyPass` で `bookman.henojiya.net` へのリクエストを `127.0.0.1:3000` の Next.js へつなぐだけなので、Next.js 側のプロセスは別途常駐させる必要がある。
+そのため、Bookman frontend では `bookman-nextjs.service` を作って systemd で管理する。
+
 Bookman frontend の `bookman_nextjs` は、portfolio と同じ `/var/www/html/` 配下に clone した Next.js アプリケーションだ。
 これを build して、systemd で Next.js を起動する。
 外部から見える入口は `bookman.henojiya.net` の Apache `VirtualHost` だが、そこから先は Apache が localhost の Next.js へつなぐ。
