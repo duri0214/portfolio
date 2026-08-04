@@ -356,6 +356,24 @@ $ python manage.py migrate
 `migrate` が `Access denied for user 'python'@'127.0.0.1' to database 'bookman_db'` で失敗する場合は、MySQL 側の `GRANT ALL PRIVILEGES ON bookman_db.*` が足りていない。
 `Table ... doesn't exist` が出る場合は、migration がまだ完了していないか、接続先 DB 名が `.env` と MySQL 側でずれている。
 
+次に、画面確認用の初期データを fixture で投入する。
+Bookman は自治体、支店、カテゴリ、著者、書籍、支店別所蔵、利用者、職員、休館日、貸出、予約、検索条件の順に依存しているため、この順番で読み込む。
+
+```bash:console
+$ python manage.py loaddata bookman/fixtures/municipality-data.json
+$ python manage.py loaddata bookman/fixtures/branch-data.json
+$ python manage.py loaddata bookman/fixtures/category-data.json
+$ python manage.py loaddata bookman/fixtures/author-data.json
+$ python manage.py loaddata bookman/fixtures/book-data.json
+$ python manage.py loaddata bookman/fixtures/branch-book-stock-data.json
+$ python manage.py loaddata bookman/fixtures/customer-data.json
+$ python manage.py loaddata bookman/fixtures/library-staff-data.json
+$ python manage.py loaddata bookman/fixtures/branch-closed-day-data.json
+$ python manage.py loaddata bookman/fixtures/lending-data.json
+$ python manage.py loaddata bookman/fixtures/reservation-data.json
+$ python manage.py loaddata bookman/fixtures/search-condition-data.json
+```
+
 Bookman backend も portfolio と同じく Apache + mod_wsgi に載せる。
 ただし、portfolio とはチャンネルを分け、前の「バーチャルホスト」で設定した localhost の `127.0.0.1:8000` だけで待ち受ける Apache 設定に載せる。
 Next.js の BFF から見える API URL は固定しておく。
@@ -495,6 +513,19 @@ $ sudo systemctl enable --now bookman-nextjs
 $ sudo systemctl status bookman-nextjs
 ```
 
+`Active: active (running)` になっていれば、Next.js のサービスは起動している。
+続けて、サーバー内から Next.js へ直接 `curl` し、frontend が `127.0.0.1:3000` で応答していることを確認する。
+
+```bash:console
+$ curl -I http://127.0.0.1:3000
+HTTP/1.1 200 OK
+X-Powered-By: Next.js
+Content-Type: text/html; charset=utf-8
+```
+
+ここで `HTTP/1.1 200 OK` が返れば、Apache を経由する前の frontend 単体の疎通確認はできている。
+このあと Apache の `ProxyPass` 経由で `bookman.henojiya.net` から同じ Next.js へ到達できるかを確認する。
+
 `bookman_nextjs` を pull して更新したときは、`npm ci`、`npm run build` のあとにサービスを再起動する。
 
 ```bash:console
@@ -504,13 +535,62 @@ $ sudo systemctl restart bookman-nextjs
 ## HTTPS 化する
 
 DNS で `bookman.henojiya.net` が同じ VPS へ到達し、Apache の HTTP VirtualHost が有効になったら、certbot で証明書を取得する。
+同じサーバーで portfolio などの HTTPS 化をすでに済ませている場合は、Certbot のアカウント登録やメールアドレス入力は済んでいるため、対話入力が省略されることがある。
+その場合も、`bookman.henojiya.net` 用の証明書が `/etc/letsencrypt/live/bookman.henojiya.net/` に作成されていれば問題ない。
 
 ```bash:console
+# 証明書を取得する
 $ sudo certbot --apache -d bookman.henojiya.net
+
+# メールアドレスの入力
+Enter email address (used for urgent renewal and security notices)
+ (Enter 'c' to cancel): your.name@example.com
+
+# 規約同意
+Please read the Terms of Service at
+https://letsencrypt.org/documents/LE-SA-v1.6-August-18-2025.pdf. You must agree
+in order to register with the ACME server. Do you agree?
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+(Y)es/(N)o: Y
+
+# 任意のアンケート。不要なら N
+Would you be willing to share your email address with the Electronic Frontier Foundation
+so they can send you EFF news, campaigns, and ways to support digital freedom?
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+(Y)es/(N)o: N
+
+# 以降は発行から Apache への反映までの要約
+Account registered.
+Requesting a certificate for bookman.henojiya.net
+
+Successfully received certificate.
+Certificate is saved at: /etc/letsencrypt/live/bookman.henojiya.net/fullchain.pem
+Key is saved at:         /etc/letsencrypt/live/bookman.henojiya.net/privkey.pem
+These files will be updated when the certificate renews.
+Certbot has set up a scheduled task to automatically renew this certificate in the background.
+
+Deploying certificate
+Successfully deployed certificate for bookman.henojiya.net to /etc/apache2/sites-available/000-default-le-ssl.conf
+Congratulations! You have successfully enabled HTTPS on https://bookman.henojiya.net
+```
+
+証明書の配置先も確認しておく。
+
+```bash:console
+$ sudo certbot certificates
+$ sudo ls /etc/letsencrypt/live/bookman.henojiya.net
+README  cert.pem  chain.pem  fullchain.pem  privkey.pem
 ```
 
 証明書取得後は、HTTPS 側の `VirtualHost *:443` にも `ProxyPass` / `ProxyPassReverse` が入っていることを確認する。
-現行の `/etc/apache2/sites-available/000-default-le-ssl.conf` に `www.henojiya.net` 用の `<VirtualHost *:443>` がある場合は、それを置き換えず、Bookman 用の `<VirtualHost *:443>` を同じ `<IfModule mod_ssl.c>` の中に追加する。
+certbot が既存の `www.henojiya.net` 用 `<VirtualHost *:443>` に `ServerAlias bookman.henojiya.net` や Bookman 用の証明書パスを追記した場合は、そのまま使わず、下の内容で作り直す。
+作業前に現行ファイルを `mv` で退避し、`www.henojiya.net` 用と `bookman.henojiya.net` 用の `<VirtualHost *:443>` を分けた設定として新規作成する。
+また、HTTPS 用ファイルの中に `<VirtualHost *:80>` が追加されている場合は、ここでは使わない。
+
+```bash:console
+$ sudo mv /etc/apache2/sites-available/000-default-le-ssl.conf /etc/apache2/sites-available/000-default-le-ssl.conf.bak
+$ sudo vi /etc/apache2/sites-available/000-default-le-ssl.conf
+```
 
 ```conf:/etc/apache2/sites-available/000-default-le-ssl.conf
 <IfModule mod_ssl.c>
@@ -555,10 +635,10 @@ $ sudo systemctl reload apache2
 
 ## 確認する
 
-まず PC の PowerShell から HTTPS の入口を確認する。
+まずサーバー上で HTTPS の入口を確認する。
 
 ```bash:console
-PS C:\Users\yoshi> curl.exe -I https://bookman.henojiya.net
+$ curl -I https://bookman.henojiya.net
 HTTP/1.1 200 OK
 Server: Apache
 Content-Type: text/html; charset=utf-8
