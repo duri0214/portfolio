@@ -365,12 +365,11 @@ backend API を外部公開しないなら、ローカル開発で `.env.local` 
 ## Bookman frontend を配置する
 
 portfolio 側では、Django アプリケーションを Apache + mod_wsgi に載せているため、アプリケーション単体に再起動の仕組みを用意しなくてよかった。
-Apache を再起動すれば、Apache が `WSGIScriptAlias` で `config/wsgi.py` を読み込み、mod_wsgi 経由で Django を動かしてくれる。
+Apache を再起動すれば、Apache が `WSGIScriptAlias` で `config/wsgi.py` を読み込み、mod_wsgi 経由で Django を動かしてくれるのだ。
 
-一方、Bookman frontend は build したあとも、Next.js のサーバーを起動しておく必要がある。
+一方、Bookman frontend は build したあと、Apache の再起動とは別に Next.js のサーバーを起動する必要がある。
 Apache は `ProxyPass` で `bookman.henojiya.net` へのリクエストを `127.0.0.1:3000` の Next.js へつなぐだけなので、Next.js 側が止まっていると画面を返せない。
-そのため、Ubuntu の再起動後に自動で立ち上がること、落ちたときに再起動すること、更新時に明示的に再起動できることを Next.js 側に用意する。
-この起動管理に使うのが systemd で、ここでは `bookman-nextjs.service` を作る。
+この Next.js の起動管理に使うのが systemd で、ここでは `bookman-nextjs.service` を作る。
 
 Bookman frontend の `bookman_nextjs` は、portfolio と同じ `/var/www/html/` 配下に clone した Next.js アプリケーションだ。
 これを build して、Next.js を起動できる状態にする。
