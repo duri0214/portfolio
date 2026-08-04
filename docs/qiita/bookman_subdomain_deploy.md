@@ -297,6 +297,31 @@ $ git clone https://github.com/duri0214/bookman_backend.git
 
 ローカル開発では `~/dev/` 配下に置いていても、本番サーバーでは `portfolio` と同じ階層の `/var/www/html/` 配下に `bookman_backend` を配置する想定だ。
 backend 側は、通常の Django アプリケーションとして `.env`、venv、migration、static の設定を整える。
+venv は portfolio のものを共有せず、`bookman_backend` の中に別途作る。
+前の「バーチャルホスト」で追加した Apache 設定の `python-home=/var/www/html/bookman_backend/venv` は、この venv を指している。
+
+```bash:console
+$ cd /var/www/html/bookman_backend
+$ python3 -m venv venv
+$ source venv/bin/activate
+$ python -m pip install --upgrade pip setuptools wheel
+$ python -m pip install -r requirements.txt
+$ python manage.py check
+```
+
+既存の venv が壊れている場合や、Python のバージョンを変えた場合は作り直す。
+
+```bash:console
+$ cd /var/www/html/bookman_backend
+$ deactivate 2>/dev/null || true
+$ rm -rf venv
+$ python3 -m venv venv
+$ source venv/bin/activate
+$ python -m pip install --upgrade pip setuptools wheel
+$ python -m pip install -r requirements.txt
+$ python manage.py check
+```
+
 Bookman backend も portfolio と同じく Apache + mod_wsgi に載せる。
 ただし、portfolio とはチャンネルを分け、前の「バーチャルホスト」で設定した localhost の `127.0.0.1:8000` だけで待ち受ける Apache 設定に載せる。
 Next.js の BFF から見える API URL は固定しておく。
