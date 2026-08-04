@@ -343,13 +343,18 @@ EXIT;
 すでに `python`@`127.0.0.1` が存在する場合は、既存ユーザーを使い、`bookman_db.*` への `GRANT` を追加する。
 権限が不足していると、API 確認時に `Access denied for user 'python'@'127.0.0.1' to database 'bookman_db'` のような `OperationalError` になる。
 
-DB 権限を用意したら migration を実行する。
+DB 権限を用意したら、README の本番メンテナンス手順と同じように Django 側の確認と migration を実行する。
+`check` で Django 設定の問題を先に見てから、`migrate` で `bookman_db` にテーブルを作る。
 
 ```bash:console
 $ cd /var/www/html/bookman_backend
 $ source venv/bin/activate
+$ python manage.py check
 $ python manage.py migrate
 ```
+
+`migrate` が `Access denied for user 'python'@'127.0.0.1' to database 'bookman_db'` で失敗する場合は、MySQL 側の `GRANT ALL PRIVILEGES ON bookman_db.*` が足りていない。
+`Table ... doesn't exist` が出る場合は、migration がまだ完了していないか、接続先 DB 名が `.env` と MySQL 側でずれている。
 
 Bookman backend も portfolio と同じく Apache + mod_wsgi に載せる。
 ただし、portfolio とはチャンネルを分け、前の「バーチャルホスト」で設定した localhost の `127.0.0.1:8000` だけで待ち受ける Apache 設定に載せる。
