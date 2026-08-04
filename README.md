@@ -195,6 +195,22 @@ sudo tail -n 50 /var/log/apache2/error.log
 `bookman_nextjs` を更新した場合は、Next.js 側で依存関係の反映、build、サービス再起動を行ってください。
 `git reset --hard origin/master` は、Git管理下のファイルを本番ブランチの状態へそろえるために使います。
 Git管理外のファイルを削除するコマンドではありません。
+`which npm` が何も返さない場合は、Node.js/npm が未インストールです。
+`bookman_nextjs` は Node.js `>=20.9.0`、npm `>=10` を要求するため、条件を満たすバージョンを入れてから更新します。
+
+```bash
+which npm
+node -v
+npm -v
+
+sudo apt update
+sudo apt install -y ca-certificates curl gnupg
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs
+node -v
+npm -v
+which npm
+```
 
 ```bash
 cd /var/www/html/bookman_nextjs
