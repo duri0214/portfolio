@@ -589,8 +589,8 @@ README  cert.pem  chain.pem  fullchain.pem  privkey.pem
 ```
 
 証明書取得後は、HTTPS 側の `VirtualHost *:443` にも `ProxyPass` / `ProxyPassReverse` が入っていることを確認する。
-certbot が既存の `www.henojiya.net` 用 `<VirtualHost *:443>` に Bookman 用の証明書パスを追記するケースでは、追記する。
-作業前に現行ファイルを `cp` で退避し、`www.henojiya.net` 用の `<VirtualHost *:443>` は残したまま、Bookman 用の `<VirtualHost *:443>` だけを追記する。
+certbot が既存の `www.henojiya.net` 用 `<VirtualHost *:443>` に Bookman 用の証明書パスを混ぜた場合は、`www.henojiya.net` 用の `<VirtualHost *:443>` は残したまま、Bookman 用の `<VirtualHost *:443>` を別ブロックとして追記する。
+作業前に現行ファイルを `cp` で退避しておく。
 また、HTTPS 用ファイルの中に `<VirtualHost *:80>` が追加されている場合は、ここでは使わない。
 
 ```bash:console
