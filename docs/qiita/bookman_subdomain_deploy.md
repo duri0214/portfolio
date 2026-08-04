@@ -365,8 +365,9 @@ backend API を外部公開しないなら、ローカル開発で `.env.local` 
 ## Bookman frontend を配置する
 
 Bookman frontend の `bookman_nextjs` は、portfolio と同じ `/var/www/html/` 配下に clone した Next.js アプリケーションだ。
-これを build して、`next start` で起動する。
-Apache から Next.js へつなぐため、外部に直接公開せず、localhost の別ポートで待ち受ける。
+これを build して、systemd で Next.js を起動する。
+外部から見える入口は `bookman.henojiya.net` の Apache `VirtualHost` だが、そこから先は Apache が localhost の Next.js へつなぐ。
+そのため、Next.js は `127.0.0.1:3000` で待ち受ける。
 
 ```bash:console
 $ cd /var/www/html
@@ -374,13 +375,49 @@ $ git clone https://github.com/duri0214/bookman_nextjs.git
 $ cd /var/www/html/bookman_nextjs
 $ npm ci
 $ npm run build
-$ PORT=3000 npm run start
 ```
 
-この `npm run start` は、起動している間だけ Next.js を動かすコマンドだ。
-本番では手動実行のままにせず、systemd などでサービス化して、Ubuntu の再起動後も自動で立ち上がるようにする。
-`bookman_nextjs` を pull して更新したときは、`npm ci`、`npm run build` のあとに Next.js のサービスを再起動する。
+次に、Next.js を systemd のサービスとして登録する。
+
+```bash:console
+$ sudo vi /etc/systemd/system/bookman-nextjs.service
+```
+
+```ini:/etc/systemd/system/bookman-nextjs.service
+[Unit]
+Description=Bookman Next.js frontend
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/var/www/html/bookman_nextjs
+Environment=NODE_ENV=production
+Environment=HOSTNAME=127.0.0.1
+Environment=PORT=3000
+ExecStart=/usr/bin/npm run start
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+`User=ubuntu` は、実際に `/var/www/html/bookman_nextjs` を配置・更新するユーザーに合わせる。
+`ExecStart` の `/usr/bin/npm` は `which npm` で確認し、違う場所にある場合はそのパスに置き換える。
 ここでは Apache の `ProxyPass` が `http://127.0.0.1:3000/` を向いているため、Next.js 側も同じポートで起動する。
+
+```bash:console
+$ sudo systemctl daemon-reload
+$ sudo systemctl enable --now bookman-nextjs
+$ sudo systemctl status bookman-nextjs
+```
+
+`bookman_nextjs` を pull して更新したときは、`npm ci`、`npm run build` のあとにサービスを再起動する。
+
+```bash:console
+$ sudo systemctl restart bookman-nextjs
+```
 
 ## HTTPS 化する
 
@@ -391,13 +428,28 @@ $ sudo certbot --apache -d bookman.henojiya.net
 ```
 
 証明書取得後は、HTTPS 側の `VirtualHost *:443` にも `ProxyPass` / `ProxyPassReverse` が入っていることを確認する。
-certbot が生成または更新した SSL 設定ファイルを確認し、HTTP 側と同じように Bookman の Next.js へ流す。
+現行の `/etc/apache2/sites-available/000-default-le-ssl.conf` に `www.henojiya.net` 用の `<VirtualHost *:443>` がある場合は、それを置き換えず、Bookman 用の `<VirtualHost *:443>` を同じ `<IfModule mod_ssl.c>` の中に追加する。
 
 ```conf:/etc/apache2/sites-available/000-default-le-ssl.conf
 <IfModule mod_ssl.c>
 <VirtualHost *:443>
-    ServerName bookman.henojiya.net
+    ServerName www.henojiya.net
+    ServerAdmin webmaster@localhost
+    DocumentRoot /var/www/html
 
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+    SSLCertificateFile /etc/letsencrypt/live/www.henojiya.net/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/www.henojiya.net/privkey.pem
+    Include /etc/letsencrypt/options-ssl-apache.conf
+
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    Header always set X-Content-Type-Options "nosniff"
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName bookman.henojiya.net
     ProxyPreserveHost On
     ProxyPass / http://127.0.0.1:3000/
     ProxyPassReverse / http://127.0.0.1:3000/
@@ -405,6 +457,9 @@ certbot が生成または更新した SSL 設定ファイルを確認し、HTTP
     SSLCertificateFile /etc/letsencrypt/live/bookman.henojiya.net/fullchain.pem
     SSLCertificateKeyFile /etc/letsencrypt/live/bookman.henojiya.net/privkey.pem
     Include /etc/letsencrypt/options-ssl-apache.conf
+
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    Header always set X-Content-Type-Options "nosniff"
 </VirtualHost>
 </IfModule>
 ```
