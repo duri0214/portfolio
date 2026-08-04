@@ -337,6 +337,31 @@ $ sudo apache2ctl configtest
 $ sudo systemctl restart apache2
 ```
 
+### curl で backend の疎通を確認する
+
+Apache 再起動後、VPS 上で localhost の backend API に接続できるか確認する。
+この確認は外部公開の確認ではなく、Next.js の BFF から見える `127.0.0.1:8000` の受け口の確認だ。
+
+```bash:console
+$ curl -m 5 -v http://127.0.0.1:8000/bookman/api/
+*   Trying 127.0.0.1:8000...
+* Connected to 127.0.0.1 (127.0.0.1) port 8000
+> GET /bookman/api/ HTTP/1.1
+> Host: 127.0.0.1:8000
+```
+
+`Connected to 127.0.0.1 port 8000` が出れば、Apache は `127.0.0.1:8000` で待ち受けている。
+そのあとに `500 Internal Server Error` が返る場合は、Apache の受け口ではなく Django 側まで処理が進んだうえでエラーになっている。
+この場合は `.env`、DB 接続、migration、Django のログを確認する。
+
+```bash:console
+$ sudo tail -n 100 /var/log/apache2/error.log
+$ cd /var/www/html/bookman_backend
+$ source venv/bin/activate
+$ python manage.py check
+$ python manage.py migrate
+```
+
 ローカル開発では次のようにしていた。
 
 ```env:.env.local
