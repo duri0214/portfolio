@@ -193,6 +193,18 @@ portfolio は Apache + mod_wsgi で画面まで返す一方、Bookman は画面�
 やっていることは、`www` と `bookman` というホスト名の違いで同じIPに届いた通信を別のアプリケーションへ振り分けることだ。
 たとえば Next.js を `127.0.0.1:3000` で待ち受けるなら、Apache 側は `bookman.henojiya.net` へのアクセスを Next.js へ流す。
 
+backend API は `127.0.0.1:8000` だけで待ち受けるため、先に Apache が localhost の 8000 番ポートでも待ち受けるようにする。
+`/etc/apache2/ports.conf` は Apache インストール時点で存在する既存ファイルなので、新規作成せずに `Listen 127.0.0.1:8000` だけ追記する。
+
+```bash:console
+$ sudo vi /etc/apache2/ports.conf
+```
+
+```diff:/etc/apache2/ports.conf
+Listen 80
++ Listen 127.0.0.1:8000
+```
+
 ```bash:console
 $ sudo vi /etc/apache2/sites-available/000-default.conf
 ```
@@ -201,7 +213,7 @@ $ sudo vi /etc/apache2/sites-available/000-default.conf
 portfolio の WSGI / static / media 設定は、この `www.henojiya.net` の `VirtualHost` 内に入れておく。
 `WSGIScriptAlias /` を `VirtualHost` の外に置くと、Bookman 用の `ProxyPass /` と衝突しやすくなる。
 `WSGISocketPrefix` は Apache 全体の設定なので、`VirtualHost` の外に置いたままにする。
-その下に Bookman frontend 用の `<VirtualHost *:80>` ブロックを追記する。
+その下に Bookman frontend 用の `<VirtualHost *:80>` ブロックと、Bookman backend 用の localhost 専用 `<VirtualHost 127.0.0.1:8000>` ブロックを追記する。
 
 ```diff:/etc/apache2/sites-available/000-default.conf
 WSGISocketPrefix /var/run/wsgi
@@ -235,6 +247,17 @@ WSGISocketPrefix /var/run/wsgi
 +     ProxyPreserveHost On
 +     ProxyPass / http://127.0.0.1:3000/
 +     ProxyPassReverse / http://127.0.0.1:3000/
++ </VirtualHost>
++ <VirtualHost 127.0.0.1:8000>
++     ServerName 127.0.0.1
++     WSGIDaemonProcess bookman_backend python-home=/var/www/html/bookman_backend/venv python-path=/var/www/html/bookman_backend
++     WSGIProcessGroup bookman_backend
++     WSGIScriptAlias / /var/www/html/bookman_backend/config/wsgi.py
++     <Directory /var/www/html/bookman_backend/config>
++         <Files wsgi.py>
++             Require all granted
++         </Files>
++     </Directory>
 + </VirtualHost>
 ```
 
@@ -275,73 +298,10 @@ $ git clone https://github.com/duri0214/bookman_backend.git
 ローカル開発では `~/dev/` 配下に置いていても、本番サーバーでは `portfolio` と同じ階層の `/var/www/html/` 配下に `bookman_backend` を配置する想定だ。
 backend 側は、通常の Django アプリケーションとして `.env`、venv、migration、static の設定を整える。
 Bookman backend も portfolio と同じく Apache + mod_wsgi に載せる。
-ただし、portfolio とはチャンネルを分け、Bookman backend 用に localhost の `127.0.0.1:8000` だけで待ち受ける Apache 設定を作る。
+ただし、portfolio とはチャンネルを分け、前の「バーチャルホスト」で設定した localhost の `127.0.0.1:8000` だけで待ち受ける Apache 設定に載せる。
 Next.js の BFF から見える API URL は固定しておく。
 
-まず Apache が localhost の 8000 番ポートでも待ち受けるようにする。
-`/etc/apache2/ports.conf` は Apache インストール時点で存在する既存ファイルなので、新規作成せずに `Listen 127.0.0.1:8000` だけ追記する。
-
-```bash:console
-$ sudo vi /etc/apache2/ports.conf
-```
-
-```diff:/etc/apache2/ports.conf
-Listen 80
-+ Listen 127.0.0.1:8000
-```
-
-次に、同じ `000-default.conf` に Bookman backend 用の localhost 専用 `VirtualHost` も追記する。
-
-```bash:console
-$ sudo vi /etc/apache2/sites-available/000-default.conf
-```
-
-```diff:/etc/apache2/sites-available/000-default.conf
-WSGISocketPrefix /var/run/wsgi
-
-<VirtualHost *:80>
-    ServerName www.henojiya.net
-    DocumentRoot /var/www/html
-    WSGIScriptAlias / /var/www/html/portfolio/config/wsgi.py
-    WSGIDaemonProcess wsgi_app python-home=/var/www/html/portfolio/venv python-path=/var/www/html/portfolio
-    WSGIProcessGroup wsgi_app
-    WSGIApplicationGroup %{GLOBAL}
-    Alias /static/ /var/www/html/portfolio/static/
-    <Directory /var/www/html/portfolio/static>
-        Require all granted
-        Options -Indexes
-    </Directory>
-    Alias /media/ /var/www/html/portfolio/media/
-    <Directory /var/www/html/portfolio/media>
-        Require all granted
-        Options -Indexes
-    </Directory>
-    <Directory /var/www/html/portfolio/config>
-        <Files wsgi.py>
-            Require all granted
-        </Files>
-    </Directory>
-</VirtualHost>
-<VirtualHost *:80>
-    ServerName bookman.henojiya.net
-    ProxyPreserveHost On
-    ProxyPass / http://127.0.0.1:3000/
-    ProxyPassReverse / http://127.0.0.1:3000/
-</VirtualHost>
-+ <VirtualHost 127.0.0.1:8000>
-+     ServerName 127.0.0.1
-+     WSGIDaemonProcess bookman_backend python-home=/var/www/html/bookman_backend/venv python-path=/var/www/html/bookman_backend
-+     WSGIProcessGroup bookman_backend
-+     WSGIScriptAlias / /var/www/html/bookman_backend/config/wsgi.py
-+     <Directory /var/www/html/bookman_backend/config>
-+         <Files wsgi.py>
-+             Require all granted
-+         </Files>
-+     </Directory>
-+ </VirtualHost>
-```
-
-この `VirtualHost` は `127.0.0.1:8000` だけで待ち受けるため、外部から直接は到達できない。
+前の「バーチャルホスト」で追加した `VirtualHost` は `127.0.0.1:8000` だけで待ち受けるため、外部から直接は到達できない。
 Next.js の BFF が同じサーバー内から `http://127.0.0.1:8000/bookman/api` に接続し、そこから mod_wsgi 経由で Bookman backend の Django REST Framework が動く。
 
 `mod_wsgi` を使うため、Apache の wsgi モジュールを有効化して設定を反映する。
