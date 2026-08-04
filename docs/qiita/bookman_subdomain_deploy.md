@@ -589,21 +589,40 @@ README  cert.pem  chain.pem  fullchain.pem  privkey.pem
 ```
 
 証明書取得後は、HTTPS 側の `VirtualHost *:443` にも `ProxyPass` / `ProxyPassReverse` が入っていることを確認する。
-certbot が既存の `www.henojiya.net` 用 `<VirtualHost *:443>` に `ServerAlias bookman.henojiya.net` や Bookman 用の証明書パスを追記した場合は、そのまま使わず、下の内容で作り直す。
-作業前に現行ファイルを `mv` で退避し、`www.henojiya.net` 用と `bookman.henojiya.net` 用の `<VirtualHost *:443>` を分けた設定として新規作成する。
+certbot が既存の `www.henojiya.net` 用 `<VirtualHost *:443>` に `ServerAlias bookman.henojiya.net` や Bookman 用の証明書パスを追記した場合は、そのまま使わない。
+ただし、既存の `www.henojiya.net` 用設定をファイルごと上書きすると、portfolio の `WSGIScriptAlias`、`Alias /static/`、`Alias /media/` などを消してしまう。
+作業前に現行ファイルを `cp` で退避し、`www.henojiya.net` 用の `<VirtualHost *:443>` は残したまま、Bookman 用の `<VirtualHost *:443>` だけを追記する。
 また、HTTPS 用ファイルの中に `<VirtualHost *:80>` が追加されている場合は、ここでは使わない。
 
 ```bash:console
-$ sudo mv /etc/apache2/sites-available/000-default-le-ssl.conf /etc/apache2/sites-available/000-default-le-ssl.conf.bak
+$ sudo cp /etc/apache2/sites-available/000-default-le-ssl.conf /etc/apache2/sites-available/000-default-le-ssl.conf.bak
 $ sudo vi /etc/apache2/sites-available/000-default-le-ssl.conf
 ```
 
-```conf:/etc/apache2/sites-available/000-default-le-ssl.conf
+```diff:/etc/apache2/sites-available/000-default-le-ssl.conf
 <IfModule mod_ssl.c>
 <VirtualHost *:443>
     ServerName www.henojiya.net
     ServerAdmin webmaster@localhost
     DocumentRoot /var/www/html
+    WSGIScriptAlias / /var/www/html/portfolio/config/wsgi.py
+    WSGIProcessGroup wsgi_app
+    WSGIApplicationGroup %{GLOBAL}
+    Alias /static/ /var/www/html/portfolio/static/
+    <Directory /var/www/html/portfolio/static>
+        Require all granted
+        Options -Indexes
+    </Directory>
+    Alias /media/ /var/www/html/portfolio/media/
+    <Directory /var/www/html/portfolio/media>
+        Require all granted
+        Options -Indexes
+    </Directory>
+    <Directory /var/www/html/portfolio/config>
+        <Files wsgi.py>
+            Require all granted
+        </Files>
+    </Directory>
 
     ErrorLog ${APACHE_LOG_DIR}/error.log
     CustomLog ${APACHE_LOG_DIR}/access.log combined
@@ -616,19 +635,19 @@ $ sudo vi /etc/apache2/sites-available/000-default-le-ssl.conf
     Header always set X-Content-Type-Options "nosniff"
 </VirtualHost>
 
-<VirtualHost *:443>
-    ServerName bookman.henojiya.net
-    ProxyPreserveHost On
-    ProxyPass / http://127.0.0.1:3000/
-    ProxyPassReverse / http://127.0.0.1:3000/
-
-    SSLCertificateFile /etc/letsencrypt/live/bookman.henojiya.net/fullchain.pem
-    SSLCertificateKeyFile /etc/letsencrypt/live/bookman.henojiya.net/privkey.pem
-    Include /etc/letsencrypt/options-ssl-apache.conf
-
-    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-    Header always set X-Content-Type-Options "nosniff"
-</VirtualHost>
++ <VirtualHost *:443>
++     ServerName bookman.henojiya.net
++     ProxyPreserveHost On
++     ProxyPass / http://127.0.0.1:3000/
++     ProxyPassReverse / http://127.0.0.1:3000/
++
++     SSLCertificateFile /etc/letsencrypt/live/bookman.henojiya.net/fullchain.pem
++     SSLCertificateKeyFile /etc/letsencrypt/live/bookman.henojiya.net/privkey.pem
++     Include /etc/letsencrypt/options-ssl-apache.conf
++
++     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
++     Header always set X-Content-Type-Options "nosniff"
++ </VirtualHost>
 </IfModule>
 ```
 
