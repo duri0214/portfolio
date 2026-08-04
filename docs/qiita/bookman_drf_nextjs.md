@@ -20,12 +20,11 @@
 - https://mui.com/material-ui/
 - https://jestjs.io/
 
-## GitHub で記事ごと管理する
-今回の最新化では、[duri0214/bookman_nextjs#1](https://github.com/duri0214/bookman_nextjs/issues/1) を起点にしてフロントエンド更新を進めた。機能内容は基本的に変えず、依存関係、実行環境、画面構成、記事管理の流れを現在の状態に合わせて整理している。
+## 本番公開手順
 
-記事の管理原稿も GitHub に置き、実装の作業履歴と記事更新の履歴を追えるようにする。Qiita に直接書き足していくと、時間が空いたときに「どの実装変更を受けて、どこを書き換えたのか」が分からなくなる。だから、記事もコードと同じように Issue、branch、PR の流れに乗せる。
+本番公開手順はこちら。
 
-- 記事管理原稿: https://github.com/duri0214/portfolio/blob/master/docs/qiita/bookman_drf_nextjs.md
+https://qiita.com/YoshitakaOkada/items/e74555b56e3903708309
 
 この記事では、現在のフロントエンド構成を上段にまとめ、後段に `bookman_backend` の更新後の状態をまとめる。
 

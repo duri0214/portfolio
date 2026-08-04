@@ -183,11 +183,44 @@ chmod +x scripts/step2_import_data.sh
 ./scripts/step2_import_data.sh
 ```
 
-#### 8. サービスの再起動
+#### 8. Apache の再起動
 
 ```bash
 sudo systemctl restart apache2
 sudo tail -n 50 /var/log/apache2/error.log
+```
+
+#### 9. Bookman Next.js を同じサーバーで動かしている場合
+
+`bookman_nextjs` を更新した場合は、Next.js 側で依存関係の反映、build、サービス再起動を行ってください。
+`git reset --hard origin/master` は、Git管理下のファイルを本番ブランチの状態へそろえるために使います。
+Git管理外のファイルを削除するコマンドではありません。
+`which npm` が何も返さない場合は、Node.js/npm が未インストールです。
+`bookman_nextjs` は Node.js `>=20.9.0`、npm `>=10` を要求するため、条件を満たすバージョンを入れてから更新します。
+
+```bash
+which npm
+node -v
+npm -v
+
+sudo apt update
+sudo apt install -y ca-certificates curl gnupg
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs
+node -v
+npm -v
+which npm
+```
+
+```bash
+cd /var/www/html/bookman_nextjs
+git fetch --prune origin
+git reset --hard origin/master
+# package-lock.json に固定された依存関係を Clean Install する
+npm ci
+npm run build
+sudo systemctl restart bookman-nextjs
+sudo systemctl status bookman-nextjs --no-pager
 ```
 
 ## 3. 各アプリケーションの機能とバッチ
