@@ -322,6 +322,35 @@ $ python -m pip install -r requirements.txt
 $ python manage.py check
 ```
 
+次に、Bookman backend 用の MySQL データベースと権限を用意する。
+基本は Ubuntu セットアップ記事の「データベースとユーザーの作成」と同じで、DB 名だけ `bookman_db` に読み替える。
+VPS 上の Django から接続するため、ユーザーは `python`@`127.0.0.1` にそろえる。
+
+```bash:console
+$ sudo mysql
+```
+
+```sql
+CREATE DATABASE IF NOT EXISTS bookman_db DEFAULT CHARACTER SET utf8mb4;
+CREATE USER IF NOT EXISTS 'python'@'127.0.0.1' IDENTIFIED BY '自分の .env に書いた DB_PASSWORD';
+GRANT ALL PRIVILEGES ON bookman_db.* TO 'python'@'127.0.0.1';
+FLUSH PRIVILEGES;
+SHOW GRANTS FOR 'python'@'127.0.0.1';
+EXIT;
+```
+
+`CREATE USER` で指定するパスワードは、Bookman backend の `.env` に書く DB パスワードと合わせる。
+すでに `python`@`127.0.0.1` が存在する場合は、既存ユーザーを使い、`bookman_db.*` への `GRANT` を追加する。
+権限が不足していると、API 確認時に `Access denied for user 'python'@'127.0.0.1' to database 'bookman_db'` のような `OperationalError` になる。
+
+DB 権限を用意したら migration を実行する。
+
+```bash:console
+$ cd /var/www/html/bookman_backend
+$ source venv/bin/activate
+$ python manage.py migrate
+```
+
 Bookman backend も portfolio と同じく Apache + mod_wsgi に載せる。
 ただし、portfolio とはチャンネルを分け、前の「バーチャルホスト」で設定した localhost の `127.0.0.1:8000` だけで待ち受ける Apache 設定に載せる。
 Next.js の BFF から見える API URL は固定しておく。
