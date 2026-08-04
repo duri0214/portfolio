@@ -603,51 +603,22 @@ $ sudo vi /etc/apache2/sites-available/000-default-le-ssl.conf
 <IfModule mod_ssl.c>
 <VirtualHost *:443>
     ServerName www.henojiya.net
-    ServerAdmin webmaster@localhost
-    DocumentRoot /var/www/html
-    WSGIScriptAlias / /var/www/html/portfolio/config/wsgi.py
-    WSGIProcessGroup wsgi_app
-    WSGIApplicationGroup %{GLOBAL}
-    Alias /static/ /var/www/html/portfolio/static/
-    <Directory /var/www/html/portfolio/static>
-        Require all granted
-        Options -Indexes
-    </Directory>
-    Alias /media/ /var/www/html/portfolio/media/
-    <Directory /var/www/html/portfolio/media>
-        Require all granted
-        Options -Indexes
-    </Directory>
-    <Directory /var/www/html/portfolio/config>
-        <Files wsgi.py>
-            Require all granted
-        </Files>
-    </Directory>
-
-    ErrorLog ${APACHE_LOG_DIR}/error.log
-    CustomLog ${APACHE_LOG_DIR}/access.log combined
-
-    SSLCertificateFile /etc/letsencrypt/live/www.henojiya.net/fullchain.pem
-    SSLCertificateKeyFile /etc/letsencrypt/live/www.henojiya.net/privkey.pem
-    Include /etc/letsencrypt/options-ssl-apache.conf
-
-    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-    Header always set X-Content-Type-Options "nosniff"
+    # 既存の portfolio 用 HTTPS 設定は残す
 </VirtualHost>
 
-+ <VirtualHost *:443>
-+     ServerName bookman.henojiya.net
-+     ProxyPreserveHost On
-+     ProxyPass / http://127.0.0.1:3000/
-+     ProxyPassReverse / http://127.0.0.1:3000/
++<VirtualHost *:443>
++    ServerName bookman.henojiya.net
++    ProxyPreserveHost On
++    ProxyPass / http://127.0.0.1:3000/
++    ProxyPassReverse / http://127.0.0.1:3000/
 +
-+     SSLCertificateFile /etc/letsencrypt/live/bookman.henojiya.net/fullchain.pem
-+     SSLCertificateKeyFile /etc/letsencrypt/live/bookman.henojiya.net/privkey.pem
-+     Include /etc/letsencrypt/options-ssl-apache.conf
++    SSLCertificateFile /etc/letsencrypt/live/bookman.henojiya.net/fullchain.pem
++    SSLCertificateKeyFile /etc/letsencrypt/live/bookman.henojiya.net/privkey.pem
++    Include /etc/letsencrypt/options-ssl-apache.conf
 +
-+     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-+     Header always set X-Content-Type-Options "nosniff"
-+ </VirtualHost>
++    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
++    Header always set X-Content-Type-Options "nosniff"
++</VirtualHost>
 </IfModule>
 ```
 
