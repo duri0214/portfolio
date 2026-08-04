@@ -376,6 +376,32 @@ Bookman frontend の `bookman_nextjs` は、portfolio と同じ `/var/www/html/`
 外部から見える入口は `bookman.henojiya.net` の Apache `VirtualHost` だが、そこから先は Apache が localhost の Next.js へつなぐ。
 そのため、Next.js は `127.0.0.1:3000` で待ち受ける。
 
+まず Node.js と npm が使えるか確認する。
+`which npm` が何も返さない場合は、npm がまだ入っていない。
+`bookman_nextjs` は `package.json` で Node.js `>=20.9.0`、npm `>=10` を要求しているため、その条件を満たすバージョンを入れる。
+
+```bash:console
+$ which npm
+$ node -v
+$ npm -v
+```
+
+未インストールの場合は、Node.js 22.x を入れる。
+NodeSource の APT リポジトリを追加してから `nodejs` を入れると、npm も一緒に入る。
+
+```bash:console
+$ sudo apt update
+$ sudo apt install -y ca-certificates curl gnupg
+$ curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+$ sudo apt install -y nodejs
+$ node -v
+v22.x.x
+$ npm -v
+10.x.x
+$ which npm
+/usr/bin/npm
+```
+
 ```bash:console
 $ cd /var/www/html
 $ git clone https://github.com/duri0214/bookman_nextjs.git
