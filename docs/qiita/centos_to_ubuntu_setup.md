@@ -415,7 +415,7 @@ $ sudo apache2ctl -S
 
 既存サイトとは別に `bookman.henojiya.net` のようなサブドメインを切って、Next.js + Django REST Framework の別アプリケーションを公開する手順は、Bookman の本番公開記事へ分けました。
 
-- [図書管理システムをサブドメインで本番公開する](./bookman_subdomain_deploy.md)
+https://qiita.com/YoshitakaOkada/items/e74555b56e3903708309
 
 ## ネームサーバーを設定
 
@@ -462,7 +462,7 @@ A レコードでも CNAME レコードでも、左側に入れる `@` / `www` �
 ただし、同じ VPS に届いたあとのアプリケーション振り分け、Next.js の待受ポート、Django REST Framework API への接続、Apache のリバースプロキシ設定はアプリケーション固有の話になります。
 そのため、Bookman の公開手順は別記事へ切り出しました。
 
-- [図書管理システムをサブドメインで本番公開する](./bookman_subdomain_deploy.md)
+https://qiita.com/YoshitakaOkada/items/e74555b56e3903708309
 
 DNS の反映には数分から数時間かかることがあります。
 この確認は、VPS に入らず PC の PowerShell から実行します。

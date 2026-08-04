@@ -25,8 +25,11 @@
 
 記事の管理原稿も GitHub に置き、実装の作業履歴と記事更新の履歴を追えるようにする。Qiita に直接書き足していくと、時間が空いたときに「どの実装変更を受けて、どこを書き換えたのか」が分からなくなる。だから、記事もコードと同じように Issue、branch、PR の流れに乗せる。
 
-- 記事管理原稿: https://github.com/duri0214/portfolio/blob/master/docs/qiita/bookman_drf_nextjs.md
-- 本番公開手順: [図書管理システムをサブドメインで本番公開する](./bookman_subdomain_deploy.md)
+記事管理原稿: https://github.com/duri0214/portfolio/blob/master/docs/qiita/bookman_drf_nextjs.md
+
+本番公開手順はこちら。
+
+https://qiita.com/YoshitakaOkada/items/e74555b56e3903708309
 
 この記事では、現在のフロントエンド構成を上段にまとめ、後段に `bookman_backend` の更新後の状態をまとめる。
 
