@@ -1,44 +1,5 @@
 # 図書管理システムをサブドメインで本番公開する
 
-## 本番反映の更新手順
-
-Bookman の本番反映では、`portfolio`、`bookman_backend`、`bookman_nextjs` の 3 リポジトリを順番に更新する。
-通常更新では fixture を再投入せず、データを入れ直す場合だけ backend のスクリプトを実行する。
-
-```bash
-cd /var/www/html/portfolio
-git fetch --prune origin
-git pull
-source venv/bin/activate
-python manage.py check
-python manage.py migrate
-python manage.py collectstatic --noinput
-
-cd /var/www/html/bookman_backend
-git fetch --prune origin
-git pull
-source venv/bin/activate
-python manage.py check
-python manage.py migrate
-
-# データを入れ直す場合だけ実行する
-python manage.py flush --noinput
-chmod +x scripts/import_data.sh
-./scripts/import_data.sh
-
-cd /var/www/html/bookman_nextjs
-git fetch --prune origin
-git pull
-npm ci
-npm run build
-sudo systemctl restart bookman-nextjs
-sudo systemctl status bookman-nextjs --no-pager
-
-sudo systemctl restart apache2
-```
-
-`flush --noinput` は既存データを削除するため、対象 DB を確認したうえで明示的に実行する。`scripts/import_data.sh` は依存順の fixture 投入だけを行う。
-
 ## はじめに
 
 この記事では、既存の VPS で `www.henojiya.net` が動いている状態から、`bookman.henojiya.net` のように別サブドメインを追加して複数のアプリケーションを公開する流れを整理する。
