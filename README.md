@@ -212,6 +212,7 @@ python manage.py check
 python manage.py migrate
 
 # データを入れ直す場合だけ実行する
+python manage.py flush --noinput
 chmod +x scripts/import_data.sh
 ./scripts/import_data.sh
 
@@ -226,7 +227,7 @@ sudo systemctl status bookman-nextjs --no-pager
 sudo systemctl restart apache2
 ```
 
-`scripts/import_data.sh` は既存データを削除して fixture を投入するため、通常更新では実行しません。
+`flush --noinput` は既存データを削除するため、対象 DB を確認したうえでデータを入れ直す場合だけ実行します。`scripts/import_data.sh` は fixture 投入だけを行います。
 
 ## 3. 各アプリケーションの機能とバッチ
 
