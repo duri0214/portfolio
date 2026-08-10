@@ -362,22 +362,17 @@ $ python manage.py migrate
 `migrate` が `Access denied for user 'python'@'127.0.0.1' to database 'bookman_db'` で失敗する場合は、MySQL 側の `GRANT ALL PRIVILEGES ON bookman_db.*` が足りていない。
 `Table ... doesn't exist` が出る場合は、migration がまだ完了していないか、接続先 DB 名が `.env` と MySQL 側でずれている。
 
-次に、画面確認用の初期データを fixture で投入する。
-Bookman は自治体、支店、カテゴリ、著者、書籍、支店別所蔵、利用者、職員、休館日、貸出、予約、検索条件の順に依存しているため、この順番で読み込む。
+次に、画面確認用の初期データを fixture で投入する。依存順の管理は backend リポジトリのスクリプトに集約している。
 
 ```bash:console
-$ python manage.py loaddata bookman/fixtures/municipality-data.json
-$ python manage.py loaddata bookman/fixtures/branch-data.json
-$ python manage.py loaddata bookman/fixtures/category-data.json
-$ python manage.py loaddata bookman/fixtures/author-data.json
-$ python manage.py loaddata bookman/fixtures/book-data.json
-$ python manage.py loaddata bookman/fixtures/branch-book-stock-data.json
-$ python manage.py loaddata bookman/fixtures/customer-data.json
-$ python manage.py loaddata bookman/fixtures/library-staff-data.json
-$ python manage.py loaddata bookman/fixtures/branch-closed-day-data.json
-$ python manage.py loaddata bookman/fixtures/lending-data.json
-$ python manage.py loaddata bookman/fixtures/reservation-data.json
-$ python manage.py loaddata bookman/fixtures/search-condition-data.json
+$ chmod +x scripts/import_data.sh
+$ ./scripts/import_data.sh
+```
+
+Windows PowerShell では、backend リポジトリのルートから次を実行する。
+
+```powershell
+PS> .\scripts\import_data.ps1
 ```
 
 Bookman backend も portfolio と同じく Apache + mod_wsgi に載せる。
@@ -449,9 +444,7 @@ Bookman frontend の `bookman_nextjs` は、portfolio と同じ `/var/www/html/`
 外部から見える入口は `bookman.henojiya.net` の Apache `VirtualHost` だが、そこから先は Apache が localhost の Next.js へつなぐ。
 そのため、Next.js は `127.0.0.1:3000` で待ち受ける。
 
-まず Node.js と npm が使えるか確認する。
-`which npm` が何も返さない場合は、npm がまだ入っていない。
-`bookman_nextjs` は `package.json` で Node.js `>=20.9.0`、npm `>=10` を要求しているため、その条件を満たすバージョンを入れる。
+Node.js と npm の確認・インストールは初回セットアップ時だけ行う。本番反映時は `npm ci`、build、systemd サービス再起動を行う。
 
 ```bash:console
 $ which npm
