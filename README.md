@@ -192,18 +192,11 @@ sudo tail -n 50 /var/log/apache2/error.log
 
 #### 9. Bookman を同じサーバーで動かしている場合
 
-Bookman は `portfolio`、`bookman_backend`、`bookman_nextjs` の 3 リポジトリを更新します。
-Node.js の初回インストールや `which npm` の確認は各環境のセットアップ時に行い、通常の更新では次の手順を使います。
+Bookman は `bookman_backend` と `bookman_nextjs` の 2 リポジトリで構成されています。
+portfolio と同じサーバーに配置しますが、portfolio 自身の更新は上記の日常更新手順で行います。
+frontend の初回セットアップは `bookman_nextjs` の README を参照し、ここでは本番更新手順だけを示します。
 
 ```bash
-cd /var/www/html/portfolio
-git fetch --prune origin
-git pull
-source venv/bin/activate
-python manage.py check
-python manage.py migrate
-python manage.py collectstatic --noinput
-
 cd /var/www/html/bookman_backend
 git fetch --prune origin
 git pull
