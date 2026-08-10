@@ -1,5 +1,43 @@
 # 図書管理システムをサブドメインで本番公開する
 
+## 本番反映の更新手順
+
+Bookman の本番反映では、`portfolio`、`bookman_backend`、`bookman_nextjs` の 3 リポジトリを順番に更新する。
+通常更新では fixture を再投入せず、データを入れ直す場合だけ backend のスクリプトを実行する。
+
+```bash
+cd /var/www/html/portfolio
+git fetch --prune origin
+git pull
+source venv/bin/activate
+python manage.py check
+python manage.py migrate
+python manage.py collectstatic --noinput
+
+cd /var/www/html/bookman_backend
+git fetch --prune origin
+git pull
+source venv/bin/activate
+python manage.py check
+python manage.py migrate
+
+# データを入れ直す場合だけ実行する
+chmod +x scripts/import_data.sh
+./scripts/import_data.sh
+
+cd /var/www/html/bookman_nextjs
+git fetch --prune origin
+git pull
+npm ci
+npm run build
+sudo systemctl restart bookman-nextjs
+sudo systemctl status bookman-nextjs --no-pager
+
+sudo systemctl restart apache2
+```
+
+`scripts/import_data.sh` は `flush --noinput` を実行して既存データを削除する。開発・デモ環境の初期化や、明示的にデータを入れ直す場合だけ使用する。
+
 ## はじめに
 
 この記事では、既存の VPS で `www.henojiya.net` が動いている状態から、`bookman.henojiya.net` のように別サブドメインを追加して複数のアプリケーションを公開する流れを整理する。
@@ -362,22 +400,11 @@ $ python manage.py migrate
 `migrate` が `Access denied for user 'python'@'127.0.0.1' to database 'bookman_db'` で失敗する場合は、MySQL 側の `GRANT ALL PRIVILEGES ON bookman_db.*` が足りていない。
 `Table ... doesn't exist` が出る場合は、migration がまだ完了していないか、接続先 DB 名が `.env` と MySQL 側でずれている。
 
-次に、画面確認用の初期データを fixture で投入する。
-Bookman は自治体、支店、カテゴリ、著者、書籍、支店別所蔵、利用者、職員、休館日、貸出、予約、検索条件の順に依存しているため、この順番で読み込む。
+次に、画面確認用の初期データを fixture で投入する。依存順の管理は backend リポジトリのスクリプトに集約している。
 
 ```bash:console
-$ python manage.py loaddata bookman/fixtures/municipality-data.json
-$ python manage.py loaddata bookman/fixtures/branch-data.json
-$ python manage.py loaddata bookman/fixtures/category-data.json
-$ python manage.py loaddata bookman/fixtures/author-data.json
-$ python manage.py loaddata bookman/fixtures/book-data.json
-$ python manage.py loaddata bookman/fixtures/branch-book-stock-data.json
-$ python manage.py loaddata bookman/fixtures/customer-data.json
-$ python manage.py loaddata bookman/fixtures/library-staff-data.json
-$ python manage.py loaddata bookman/fixtures/branch-closed-day-data.json
-$ python manage.py loaddata bookman/fixtures/lending-data.json
-$ python manage.py loaddata bookman/fixtures/reservation-data.json
-$ python manage.py loaddata bookman/fixtures/search-condition-data.json
+$ chmod +x scripts/import_data.sh
+$ ./scripts/import_data.sh
 ```
 
 Bookman backend も portfolio と同じく Apache + mod_wsgi に載せる。
@@ -449,9 +476,7 @@ Bookman frontend の `bookman_nextjs` は、portfolio と同じ `/var/www/html/`
 外部から見える入口は `bookman.henojiya.net` の Apache `VirtualHost` だが、そこから先は Apache が localhost の Next.js へつなぐ。
 そのため、Next.js は `127.0.0.1:3000` で待ち受ける。
 
-まず Node.js と npm が使えるか確認する。
-`which npm` が何も返さない場合は、npm がまだ入っていない。
-`bookman_nextjs` は `package.json` で Node.js `>=20.9.0`、npm `>=10` を要求しているため、その条件を満たすバージョンを入れる。
+Node.js と npm の確認・インストールは初回セットアップ時だけ行う。本番反映時は `npm ci`、build、systemd サービス再起動を行う。
 
 ```bash:console
 $ which npm
