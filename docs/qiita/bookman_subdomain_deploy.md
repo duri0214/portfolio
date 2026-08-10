@@ -369,6 +369,12 @@ $ chmod +x scripts/import_data.sh
 $ ./scripts/import_data.sh
 ```
 
+Windows PowerShell では、backend リポジトリのルートから次を実行する。
+
+```powershell
+PS> .\scripts\import_data.ps1
+```
+
 Bookman backend も portfolio と同じく Apache + mod_wsgi に載せる。
 ただし、portfolio とはチャンネルを分け、前の「バーチャルホスト」で設定した localhost の `127.0.0.1:8000` だけで待ち受ける Apache 設定に載せる。
 Next.js の BFF から見える API URL は固定しておく。
