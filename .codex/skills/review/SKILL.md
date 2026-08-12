@@ -17,6 +17,13 @@ description: このリポジトリでPRレビュー、レビューコメント�
    - `gh` の認証が無効な場合は、GitHubの読み書きを止めて `gh auth login -h github.com` が必要だと伝える。
 2. レビューコメントをスレッド単位で確認する。
    - 未解決レビュー、インラインコメント、requested changes が関係する場合は `github:gh-address-comments` を使う。
+   - `gh pr view --comments` だけで「コメントなし」と判断しない。この表示ではインラインレビューコメントを取得できない場合がある。
+   - `github:gh-address-comments` が利用できない場合は、少なくとも以下を実行してレビュー本文とインラインコメントを別々に取得する。
+     - `gh api repos/<owner>/<repo>/pulls/<PR番号>/reviews --paginate`
+     - `gh api repos/<owner>/<repo>/pulls/<PR番号>/comments --paginate`
+   - インラインコメントでは `id`、`in_reply_to_id`、`pull_request_review_id`、`body`、`path`、`line`、`html_url` を確認する。レビュー本文の `state` だけではインラインコメントの有無や対応状況を判定しない。
+   - 解決済みかどうかが必要な場合は、`github:gh-address-comments` のスレッド取得手順、またはGitHub GraphQLの `reviewThreads` を使ってスレッド状態を確認する。
+   - レビュー取得結果が空でも、レビュー対象PRのAPIレスポンスと取得コマンドを確認するまで「コメントなし」と結論づけない。
    - 対応が必要なコメントを、ファイル別または挙動別にまとめる。
    - 解決済み、重複、情報共有のみのコメントは、ユーザーが求めていない限り対応対象から外す。
    - 未解決で内容が明確な実行可能コメントは、ユーザーへの追加確認なしにすべて対応対象とする。
@@ -44,6 +51,8 @@ description: このリポジトリでPRレビュー、レビューコメント�
    - 可能なら `in_reply_to_id` が元コメントを指すスレッド返信にする。
    - どのコミットまたは変更で対応したかを簡潔に残す。
    - コメントが outdated などで直接返信できない場合だけ、元コメントURLと対応内容をPRコメントに書く。
+   - REST APIで返信する場合は、`POST /repos/<owner>/<repo>/pulls/<PR番号>/comments` に `in_reply_to` を付ける。`/pulls/comments/<comment_id>/replies` が404でも、返信不能とは判断しない。
+   - 返信後は `gh api repos/<owner>/<repo>/pulls/<PR番号>/comments --paginate` で `in_reply_to_id` と返信本文を確認する。
 
 ## レビュー結果の書き方
 
