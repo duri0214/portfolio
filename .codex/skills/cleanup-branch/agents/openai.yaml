@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cleanup Branch"
+  short_description: "マージ済みPR後のローカル・リモートブランチを整理します"
+  default_prompt: "$cleanup-branch を使って、マージ済みPRのブランチを整理してください。"
