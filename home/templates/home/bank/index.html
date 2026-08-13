@@ -6,8 +6,9 @@
             <header>
                 <h1 class="display-4 text-center">銀行CSV分析基盤</h1>
                 <p class="text-muted text-center">銀行ごとの月次CSVを取り込み資金分析を行う基盤構築</p>
-                <div class="d-flex justify-content-center my-4">
+                <div class="d-flex justify-content-center gap-2 my-4">
                     <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
+                    <a href="{% url 'bank:index' %}" class="btn btn-primary" target="_blank" rel="noopener noreferrer">BANKを開く</a>
                 </div>
             </header>
 
@@ -17,6 +18,31 @@
                     現在、銀行ごとに異なるCSVフォーマットで提供される取引明細を、毎月手動でExcelに取り込み加工して分析している。
                     本プロジェクトでは、これらをDjangoベースのポートフォリオ基盤に移植し、長期的に拡張可能な資金分析基盤を構築することを目指している。
                 </p>
+                <p>
+                    まずは銀行口座を登録し、入出金 CSV を取り込むところから始めます。
+                    取り込んだデータを生活費ルールやカテゴリ別の月次集計へつなげ、銀行ごとの形式差を利用者が意識せずに分析できる形を目指しています。
+                </p>
+            </section>
+
+            <section class="py-3">
+                <h2>できること</h2>
+                <ul>
+                    <li>銀行マスタと分析対象口座の登録</li>
+                    <li>MUFG 普通預金の Eco 通帳 CSV のアップロード</li>
+                    <li>生活費取引のルールベース分析</li>
+                    <li>カテゴリ別・月次のクロス集計</li>
+                    <li>銀行固有の Raw CSV を保持したまま、分析処理を追加できる拡張構成</li>
+                </ul>
+            </section>
+
+            <section class="py-3">
+                <h2>使い方</h2>
+                <ol>
+                    <li>分析対象の銀行と口座を登録する</li>
+                    <li>銀行から取得した CSV をアップロードする</li>
+                    <li>生活費分析またはカテゴリ別月次集計を選ぶ</li>
+                    <li>対象口座と期間を指定して、支出の傾向を確認する</li>
+                </ol>
             </section>
 
             <section class="py-3">
@@ -32,6 +58,7 @@
                     <li>銀行ドメイン単位でRaw CSVフォーマット準拠のテーブルを持つ</li>
                     <li>中間変換テーブルは持たず、集計・分析は View / Query / VO で吸収する</li>
                     <li>銀行マスタを持ち、銀行ごとのドメインを管理する</li>
+                    <li>Raw データを残し、銀行ごとの CSV 形式や分析ルールを後から追加できるようにする</li>
                 </ul>
             </section>
 

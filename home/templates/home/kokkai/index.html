@@ -6,8 +6,9 @@
             <header>
                 <h1 class="display-4 text-center">国会議事録検索・分析システム</h1>
                 <p class="text-muted text-center">国会の議事録をRAGやLLMを用いて検索・分析するプロジェクト</p>
-                <div class="d-flex justify-content-center my-4">
+                <div class="d-flex justify-content-center gap-2 my-4">
                     <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
+                    <a href="{% url 'kokkai:index' %}" class="btn btn-primary" target="_blank" rel="noopener noreferrer">KOKKAIを開く</a>
                 </div>
             </header>
 
@@ -16,6 +17,10 @@
                 <p>
                     国会の膨大な議事録の中から必要な情報を効率的に検索し、AI（LLM）を用いて内容を要約・分析するシステムです。
                     RAG（Retrieval-Augmented Generation）技術を活用し、正確な根拠に基づいた回答を生成することを目指しています。
+                </p>
+                <p>
+                    まずは取得した会議録を日付と委員会から追い、必要な会議の詳細と発言を確認できるようにしています。
+                    期間を指定して会議録を取り込み、検索・要約・分析へつなげるための基盤です。
                 </p>
             </section>
 
@@ -33,7 +38,19 @@
                     <li>LLMによる議事録の要約・解説</li>
                     <li>RAGを用いた高度な質問応答</li>
                     <li>特定の議員や委員会の発言抽出</li>
+                    <li>期間を指定した会議録の取得と一覧化</li>
+                    <li>会議録の Markdown ダウンロード</li>
                 </ul>
+            </section>
+
+            <section class="py-3">
+                <h2>使い方</h2>
+                <ol>
+                    <li>対象期間を指定して会議録を取り込む</li>
+                    <li>日付と委員会から対象の会議を選ぶ</li>
+                    <li>会議の発言を確認し、必要な情報を検索・分析する</li>
+                    <li>調査結果を Markdown として持ち出す</li>
+                </ol>
             </section>
         </article>
     </div>

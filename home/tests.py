@@ -28,3 +28,34 @@ class BookmanHomeTests(SimpleTestCase):
         self.assertContains(response, "https://bookman.henojiya.net/")
         self.assertContains(response, "支店別所蔵")
         self.assertContains(response, "貸出・返却と予約・取り置き")
+
+    def test_catalog_details_have_app_open_buttons(self):
+        """
+        シナリオ:
+        - 入力: 各カタログ詳細ページと対応するアプリ URL の組み合わせ。
+        - 処理: 各詳細ページを GET する。
+        - 期待値: ヘッダーにアプリを開くリンクが表示されること。
+        """
+        catalog_links = (
+            ("about_hospital", "hsp:index"),
+            ("about_soil_analysis", "soil:home"),
+            ("about_vietnam_research", "vnm:index"),
+            ("about_usa_research", "usa:index"),
+            ("about_gmarker", "mrk:index"),
+            ("about_shopping", "shp:index"),
+            ("about_rental_shop", "ren:index"),
+            ("about_taxonomy", "txo:index"),
+            ("about_securities", "sec:index"),
+            ("about_llm_chat", "llm:index"),
+            ("about_ai_agent", "agt:index"),
+            ("about_jp_stocks", "jpn:index"),
+            ("about_welfare_services", "welf:index"),
+            ("about_kokkai", "kokkai:index"),
+            ("about_bank", "bank:index"),
+        )
+
+        for detail_name, app_name in catalog_links:
+            with self.subTest(detail_name=detail_name):
+                response = self.client.get(reverse(f"home:{detail_name}"))
+
+                self.assertContains(response, reverse(app_name))
