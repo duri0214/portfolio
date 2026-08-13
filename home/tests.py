@@ -59,3 +59,21 @@ class BookmanHomeTests(SimpleTestCase):
                 response = self.client.get(reverse(f"home:{detail_name}"))
 
                 self.assertContains(response, reverse(app_name))
+                button_href = f'href="{reverse(app_name)}" class="btn btn-primary"'
+                self.assertEqual(response.content.decode().count(button_href), 1)
+
+    def test_catalog_app_links_follow_current_host(self):
+        """
+        シナリオ:
+        - 入力: 本番ホストを指定して BANK の紹介ページを GET する。
+        - 処理: アプリ起動ボタンの URL をレスポンスから確認する。
+        - 期待値: 固定した localhost URL ではなく、現在のホストに解決できる相対 URL が使われること。
+        """
+        response = self.client.get(
+            reverse("home:about_bank"),
+            secure=True,
+            HTTP_HOST="www.henojiya.net",
+        )
+
+        self.assertContains(response, 'href="/bank/"')
+        self.assertNotContains(response, "127.0.0.1:8000/bank/")
