@@ -27,6 +27,10 @@ class BookmanHomeTests(SimpleTestCase):
 
         self.assertContains(response, "https://bookman.henojiya.net/")
         self.assertContains(response, "Bookmanを開く")
+        self.assertContains(
+            response,
+            'href="https://bookman.henojiya.net/" class="btn btn-primary">Bookmanを開く</a>',
+        )
         self.assertContains(response, "支店別所蔵")
         self.assertContains(response, "貸出・返却と予約・取り置き")
 
@@ -63,6 +67,10 @@ class BookmanHomeTests(SimpleTestCase):
                 self.assertContains(response, f"{app_label}を開く")
                 button_href = f'href="{reverse(app_name)}" class="btn btn-primary"'
                 self.assertEqual(response.content.decode().count(button_href), 1)
+                self.assertNotContains(
+                    response,
+                    f'href="{reverse(app_name)}" class="btn btn-primary" target="_blank"',
+                )
 
     def test_catalog_app_links_follow_current_host(self):
         """
