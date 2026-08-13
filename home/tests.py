@@ -26,6 +26,7 @@ class BookmanHomeTests(SimpleTestCase):
         response = self.client.get(reverse("home:about_bookman"))
 
         self.assertContains(response, "https://bookman.henojiya.net/")
+        self.assertContains(response, "Bookmanを開く")
         self.assertContains(response, "支店別所蔵")
         self.assertContains(response, "貸出・返却と予約・取り置き")
 
@@ -37,28 +38,29 @@ class BookmanHomeTests(SimpleTestCase):
         - 期待値: ヘッダーにアプリを開くリンクが表示されること。
         """
         catalog_links = (
-            ("about_hospital", "hsp:index"),
-            ("about_soil_analysis", "soil:home"),
-            ("about_vietnam_research", "vnm:index"),
-            ("about_usa_research", "usa:index"),
-            ("about_gmarker", "mrk:index"),
-            ("about_shopping", "shp:index"),
-            ("about_rental_shop", "ren:index"),
-            ("about_taxonomy", "txo:index"),
-            ("about_securities", "sec:index"),
-            ("about_llm_chat", "llm:index"),
-            ("about_ai_agent", "agt:index"),
-            ("about_jp_stocks", "jpn:index"),
-            ("about_welfare_services", "welf:index"),
-            ("about_kokkai", "kokkai:index"),
-            ("about_bank", "bank:index"),
+            ("about_hospital", "hsp:index", "HOSPITAL"),
+            ("about_soil_analysis", "soil:home", "SOIL ANALYSIS"),
+            ("about_vietnam_research", "vnm:index", "VIETNAM"),
+            ("about_usa_research", "usa:index", "USA"),
+            ("about_gmarker", "mrk:index", "GMARKER"),
+            ("about_shopping", "shp:index", "SHOPPING"),
+            ("about_rental_shop", "ren:index", "RENTAL SHOP"),
+            ("about_taxonomy", "txo:index", "TAXONOMY"),
+            ("about_securities", "sec:index", "SECURITIES REPORT"),
+            ("about_llm_chat", "llm:index", "LLM CHAT"),
+            ("about_ai_agent", "agt:index", "AI AGENT"),
+            ("about_jp_stocks", "jpn:index", "JP STOCKS"),
+            ("about_welfare_services", "welf:index", "WELFARE SERVICES"),
+            ("about_kokkai", "kokkai:index", "KOKKAI"),
+            ("about_bank", "bank:index", "BANK"),
         )
 
-        for detail_name, app_name in catalog_links:
+        for detail_name, app_name, app_label in catalog_links:
             with self.subTest(detail_name=detail_name):
                 response = self.client.get(reverse(f"home:{detail_name}"))
 
                 self.assertContains(response, reverse(app_name))
+                self.assertContains(response, f"{app_label}を開く")
                 button_href = f'href="{reverse(app_name)}" class="btn btn-primary"'
                 self.assertEqual(response.content.decode().count(button_href), 1)
 
