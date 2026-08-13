@@ -27,6 +27,7 @@
                             <option value="{% url 'welf:index' %}" {% if '/welfare_services/' in active_path and '/about/' not in active_path %}selected{% endif %}>WELFARE SERVICES</option>
                             <option value="{% url 'kokkai:index' %}" {% if '/kokkai/' in active_path and '/about/' not in active_path %}selected{% endif %}>KOKKAI</option>
                             <option value="{% url 'bank:index' %}" {% if '/bank/' in active_path and '/about/' not in active_path %}selected{% endif %}>BANK</option>
+                            <option value="https://bookman.henojiya.net/">BOOKMAN</option>
                         </select>
                         {% endwith %}
                     </li>

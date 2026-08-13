@@ -6,8 +6,9 @@
             <header>
                 <h1 class="display-4 text-center">ベトナムの株価を分析する</h1>
                 <p class="text-muted text-center">2019年、チャイナリスクを見据えた投資対象としてのベトナム研究</p>
-                <div class="d-flex justify-content-center my-4">
+                <div class="d-flex justify-content-center gap-2 my-4">
                     <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
+                    <a href="{% url 'vnm:index' %}" class="btn btn-primary">VIETNAMを開く</a>
                 </div>
             </header>
 
@@ -28,14 +29,12 @@
             </section>
 
             <section class="py-3">
-                <h2>リンク</h2>
+                <h2>参考リンク</h2>
                 <ul>
                     <li><a href="https://qiita.com/YoshitakaOkada/items/7b42ee18cc703f622564" target="_blank">ベトナムを分析する（テーマ設定の大切さ）</a>
                     </li>
                     <li><a href="https://www.slideshare.net/slideshow/data-research-of-vietnam/182746150#1"
                            target="_blank">ベトナムリサーチ（slideshare）</a></li>
-                    <li><a href="{% url 'vnm:index' %}" target="_blank">ベトナムリサーチ（Web
-                        アプリ）</a></li>
                 </ul>
             </section>
 

@@ -7,8 +7,9 @@
                 <h1 class="display-4 text-center">金融庁の有価証券報告書を分析する</h1>
                 <p class="text-muted text-center">2019年当時、金融の業務知識を総動員して "有価証券報告書"
                     をpythonで取得するプログラムを作成した</p>
-                <div class="d-flex justify-content-center my-4">
+                <div class="d-flex justify-content-center gap-2 my-4">
                     <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
+                    <a href="{% url 'sec:index' %}" class="btn btn-primary">SECURITIES REPORTを開く</a>
                 </div>
             </header>
 
@@ -30,12 +31,10 @@
             </section>
 
             <section class="py-3">
-                <h2>リンク</h2>
+                <h2>参考リンク</h2>
                 <ul>
                     <li><a href="https://qiita.com/YoshitakaOkada/items/877a331a450a8f27f985" target="_blank">Qiita記事：「有価証券報告書をpythonで取得してみる2024
                         金融庁API版」</a></li>
-                    <li><a href="{% url 'sec:index' %}" target="_blank">作成したWebアプリ『SECURITIES
-                        REPORT』</a></li>
                 </ul>
             </section>
 

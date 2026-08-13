@@ -6,8 +6,9 @@
             <header>
                 <h1 class="display-4 text-center">米国株を分析する</h1>
                 <p class="text-muted text-center">世界最大の市場である米国株を体系的に調査する研究プロジェクト</p>
-                <div class="d-flex justify-content-center my-4">
+                <div class="d-flex justify-content-center gap-2 my-4">
                     <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
+                    <a href="{% url 'usa:index' %}" class="btn btn-primary">USAを開く</a>
                 </div>
             </header>
 
@@ -33,11 +34,10 @@
             </section>
 
             <section class="py-3">
-                <h2>リンク</h2>
+                <h2>参考リンク</h2>
                 <ul>
                     <li><a href="https://go.sbisec.co.jp/media/report/fo_america/" target="_blank">SBI - アメリカ NOW！</a></li>
                     <li><a href="https://www.nasdaq.com/market-activity/index/ndx" target="_blank">NASDAQ100 構成銘柄</a></li>
-                    <li><a href="{% url 'usa:index' %}" target="_blank">USAリサーチ（Webアプリ）</a></li>
                 </ul>
             </section>
 
@@ -56,34 +56,6 @@
                     <li>VIXの急騰・沈静化は相場の転換点を示しやすい</li>
                     <li>セクターローテーションによりどのセクターが買われているか可視化できる</li>
                 </ul>
-            </section>
-
-            <section class="py-3">
-                <h2>ギャラリー</h2>
-                <div id="galleryCarousel" class="carousel slide" data-ride="carousel">
-                    <!-- インジケータ -->
-                    <ol class="carousel-indicators">
-                        <li data-target="#galleryCarousel" data-slide-to="0" class="active"></li>
-                    </ol>
-
-                    <!-- カルーセル -->
-                    <div class="carousel-inner rounded shadow">
-                        <div class="carousel-item active">
-                            <img src="https://www.msci.com/documents/10199/178e6643-6ae6-47b9-82be-e1fc565ededb"
-                                 class="d-block w-50" alt="米国株研究のイメージ">
-                        </div>
-                    </div>
-
-                    <!-- 次/前 -->
-                    <a class="carousel-control-prev" href="#galleryCarousel" role="button" data-slide="prev">
-                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                        <span class="sr-only">前へ</span>
-                    </a>
-                    <a class="carousel-control-next" href="#galleryCarousel" role="button" data-slide="next">
-                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                        <span class="sr-only">次へ</span>
-                    </a>
-                </div>
             </section>
 
             <section class="py-3">
