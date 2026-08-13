@@ -77,3 +77,15 @@ class BookmanHomeTests(SimpleTestCase):
 
         self.assertContains(response, 'href="/bank/"')
         self.assertNotContains(response, "127.0.0.1:8000/bank/")
+
+    def test_usa_research_does_not_render_broken_external_gallery(self):
+        """
+        シナリオ:
+        - 入力: USA リサーチの紹介ページを GET する。
+        - 処理: 紹介ページの HTML を確認する。
+        - 期待値: 画像では表示できない外部 PDF のギャラリーが存在しないこと。
+        """
+        response = self.client.get(reverse("home:about_usa_research"))
+
+        self.assertNotContains(response, "galleryCarousel")
+        self.assertNotContains(response, "www.msci.com/documents")
