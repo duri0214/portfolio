@@ -292,6 +292,24 @@
                     </div>
                 </div>
             </div>
+
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0">
+                    <figure class="card-img-top mb-0">
+                        <img src="{% static 'home/images/no-image.png' %}" alt="図書館業務システム Bookman"
+                             class="img-fluid rounded-top">
+                        <figcaption class="cat-name bg-info text-white px-2 py-1">図書館</figcaption>
+                    </figure>
+                    <div class="card-body">
+                        <h5 class="card-title">図書館業務システム Bookman</h5>
+                        <p class="card-text small text-secondary">
+                            図書の所蔵・貸出・予約・利用者管理など、図書館業務を扱うWebアプリケーション。</p>
+                    </div>
+                    <div class="card-footer bg-white border-top-0">
+                        <a href="{% url 'home:about_bookman' %}" class="btn btn-primary btn-sm">詳細を見る</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}

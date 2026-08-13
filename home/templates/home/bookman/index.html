@@ -1,0 +1,31 @@
+{% extends "home/base.html" %}
+{% load static %}
+{% block content %}
+    <div class="container">
+        <article class="my-5">
+            <header>
+                <h1 class="display-4 text-center">図書館業務システム Bookman</h1>
+                <p class="text-muted text-center">図書館業務を扱うWebアプリケーション</p>
+                <div class="d-flex justify-content-center gap-2 my-4">
+                    <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
+                    <a href="https://bookman.henojiya.net/" class="btn btn-primary" target="_blank"
+                       rel="noopener noreferrer">Bookmanを開く</a>
+                </div>
+            </header>
+
+            <section class="py-3">
+                <h2>概要</h2>
+                <p>
+                    図書の所蔵・貸出・予約・利用者管理など、図書館業務を扱うWebアプリケーションです。
+                </p>
+            </section>
+
+            <section class="py-3">
+                <h2>リンク</h2>
+                <ul>
+                    <li><a href="https://bookman.henojiya.net/" target="_blank" rel="noopener noreferrer">Bookman（Webアプリ）</a></li>
+                </ul>
+            </section>
+        </article>
+    </div>
+{% endblock %}

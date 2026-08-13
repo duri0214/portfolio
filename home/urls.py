@@ -17,6 +17,7 @@ from home.views import (
     UsaResearchIndexView,
     KokkaiIndexView,
     BankIndexView,
+    BookmanIndexView,
 )
 
 app_name = "home"
@@ -53,4 +54,5 @@ urlpatterns = [
     ),
     path("about/kokkai/", KokkaiIndexView.as_view(), name="about_kokkai"),
     path("about/bank/", BankIndexView.as_view(), name="about_bank"),
+    path("about/bookman/", BookmanIndexView.as_view(), name="about_bookman"),
 ]
