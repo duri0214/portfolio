@@ -14,6 +14,7 @@ class BookmanHomeTests(SimpleTestCase):
 
         self.assertContains(response, "図書館業務システム Bookman")
         self.assertContains(response, reverse("home:about_bookman"))
+        self.assertContains(response, "https://bookman.henojiya.net/")
 
     def test_bookman_detail_links_to_external_application(self):
         """
