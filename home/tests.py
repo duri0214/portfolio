@@ -26,3 +26,5 @@ class BookmanHomeTests(SimpleTestCase):
         response = self.client.get(reverse("home:about_bookman"))
 
         self.assertContains(response, "https://bookman.henojiya.net/")
+        self.assertContains(response, "支店別所蔵")
+        self.assertContains(response, "貸出・返却と予約・取り置き")

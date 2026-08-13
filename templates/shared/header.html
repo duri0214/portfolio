@@ -12,7 +12,6 @@
                         {% with active_path=request.GET.next|default:request.path %}
                         <select class="form-select d-flex align-items-center" onChange="location.href=value;">
                             <option value="{% url 'home:index' %}" {% if active_path == '/' or '/about/' in active_path %}selected{% endif %}>HOME</option>
-                            <option value="https://bookman.henojiya.net/">BOOKMAN</option>
                             <option value="{% url 'vnm:index' %}" {% if '/vietnam_research/' in active_path and '/about/' not in active_path %}selected{% endif %}>VIETNAM</option>
                             <option value="{% url 'usa:index' %}" {% if '/usa_research/' in active_path and '/about/' not in active_path %}selected{% endif %}>USA</option>
                             <option value="{% url 'mrk:index' %}" {% if '/gmarker/' in active_path and '/about/' not in active_path %}selected{% endif %}>GMARKER</option>
@@ -28,6 +27,7 @@
                             <option value="{% url 'welf:index' %}" {% if '/welfare_services/' in active_path and '/about/' not in active_path %}selected{% endif %}>WELFARE SERVICES</option>
                             <option value="{% url 'kokkai:index' %}" {% if '/kokkai/' in active_path and '/about/' not in active_path %}selected{% endif %}>KOKKAI</option>
                             <option value="{% url 'bank:index' %}" {% if '/bank/' in active_path and '/about/' not in active_path %}selected{% endif %}>BANK</option>
+                            <option value="https://bookman.henojiya.net/">BOOKMAN</option>
                         </select>
                         {% endwith %}
                     </li>

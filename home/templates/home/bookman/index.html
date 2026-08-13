@@ -5,7 +5,7 @@
         <article class="my-5">
             <header>
                 <h1 class="display-4 text-center">図書館業務システム Bookman</h1>
-                <p class="text-muted text-center">図書館業務を扱うWebアプリケーション</p>
+                <p class="text-muted text-center">蔵書・支店・貸出・予約を、ひとつの業務フローにつなぐ</p>
                 <div class="d-flex justify-content-center gap-2 my-4">
                     <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
                     <a href="https://bookman.henojiya.net/" class="btn btn-primary" target="_blank"
@@ -14,16 +14,121 @@
             </header>
 
             <section class="py-3">
+                <div class="text-center">
+                    <img src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/da4733c0-e4d1-4bdf-b534-15976392824a.png"
+                         alt="図書カードをモチーフにした Bookman のホーム画面"
+                         class="img-fluid rounded shadow">
+                </div>
+            </section>
+
+            <section class="py-3">
                 <h2>概要</h2>
                 <p>
-                    図書の所蔵・貸出・予約・利用者管理など、図書館業務を扱うWebアプリケーションです。
+                    Bookman は、図書館の現場で発生する「どの本が、どの支店に、何冊あるか」から、
+                    「誰に貸し出し、返却後に誰の予約へ回すか」までを扱う図書館業務システムです。
+                    書籍マスタだけを管理するのではなく、自治体・支店・職員・利用者の関係を持たせ、
+                    日々のカウンター業務を一つの画面で追えるようにしています。
                 </p>
+                <p>
+                    フロントエンドは Next.js / React / MUI、バックエンドは Django REST Framework で構成しています。
+                    画面と API を分離しながら、図書館員が実際に操作する業務画面として仕上げています。
+                </p>
+            </section>
+
+            <section class="py-3">
+                <h2>できること</h2>
+                <div class="row row-cols-1 row-cols-md-2 g-3">
+                    <div class="col">
+                        <div class="border rounded p-3 h-100">
+                            <h3 class="h5">自治体・支店・蔵書を管理</h3>
+                            <p class="mb-0">
+                                自治体と支店を分けて管理し、書籍ごとの自治体全体の所蔵数と支店別の所蔵数を確認できます。
+                                支店間の蔵書移動では、移動元・移動先・冊数を指定し、在庫不足や自治体をまたぐ誤操作も防ぎます。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="border rounded p-3 h-100">
+                            <h3 class="h5">書籍を CSV でまとめて登録</h3>
+                            <p class="mb-0">
+                                書籍管理画面から CSV を取り込み、タイトル、ISBN、著者、カテゴリ、支店、初期所蔵数を登録できます。
+                                登録件数と行ごとのエラーを確認できるため、大量の書籍を一件ずつ入力する手間を減らせます。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="border rounded p-3 h-100">
+                            <h3 class="h5">貸出・返却と予約・取り置き</h3>
+                            <p class="mb-0">
+                                利用者、支店別所蔵、対応職員、返却予定日を選んで貸出を登録します。
+                                貸出可能冊数が足りない本には予約を入れ、返却された本は予約順に取り置きへ回せます。
+                                貸出上限超過や二重貸出などの業務エラーも画面に表示します。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="border rounded p-3 h-100">
+                            <h3 class="h5">利用者と職員を業務につなぐ</h3>
+                            <p class="mb-0">
+                                利用者の連絡先や貸出上限数を管理し、貸出・予約画面の選択肢へすぐ反映します。
+                                職員 role に応じて、個人・支店共有・管理者共有の保存条件を制御できます。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="border rounded p-3 h-100">
+                            <h3 class="h5">休館日を考慮した返却期限</h3>
+                            <p class="mb-0">
+                                支店ごとの休館日を登録でき、返却予定日が休館日に当たる場合は、調整前の日付、調整後の日付、理由を表示します。
+                                カレンダーを見ながら別途計算する必要がありません。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="border rounded p-3 h-100">
+                            <h3 class="h5">ダッシュボードで全体を把握</h3>
+                            <p class="mb-0">
+                                自治体全体の貸出中件数、予約・期限注意件数、支店別所蔵数を確認できます。
+                                取り置き中の予約は通知から貸出画面へ移動でき、次に対応すべき業務へすぐ進めます。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="py-3">
+                <h2>カウンター業務の流れ</h2>
+                <ol>
+                    <li>自治体と支店を選び、対象の書籍と支店別所蔵を確認する</li>
+                    <li>利用者と対応職員を選び、返却予定日を確認して貸出する</li>
+                    <li>貸出できない本は、その場で予約として登録する</li>
+                    <li>返却された本に予約があれば、予約順に取り置きへ回す</li>
+                    <li>ダッシュボードと通知から、次に対応すべき貸出・予約を確認する</li>
+                </ol>
+                <p>
+                    「所蔵数を確認する」「貸出する」「返却された本を次の利用者へ回す」という流れを、
+                    それぞれ別の台帳で管理せずに済むことが Bookman のポイントです。
+                </p>
+            </section>
+
+            <section class="py-3">
+                <h2>設計のポイント</h2>
+                <ul>
+                    <li>Next.js の画面と Django REST Framework の API を分離し、Next.js の Route Handler を API proxy として利用</li>
+                    <li>画面だけを確認したいときは mock data、実データで確認したいときは backend API へ切り替え可能</li>
+                    <li>貸出、返却、予約、取り置き、支店間移動などの業務ルールは backend 側で検証</li>
+                    <li>自治体スコープを持たせ、別自治体の支店・所蔵・貸出・予約を誤操作しない構成</li>
+                    <li>権限のない操作も画面から隠さず、disabled 表示と理由の説明を残す</li>
+                </ul>
             </section>
 
             <section class="py-3">
                 <h2>リンク</h2>
                 <ul>
                     <li><a href="https://bookman.henojiya.net/" target="_blank" rel="noopener noreferrer">Bookman（Webアプリ）</a></li>
+                    <li><a href="https://github.com/duri0214/bookman_nextjs" target="_blank" rel="noopener noreferrer">Bookman frontend（GitHub）</a></li>
+                    <li><a href="https://github.com/duri0214/bookman_backend" target="_blank" rel="noopener noreferrer">Bookman backend（GitHub）</a></li>
+                    <li><a href="https://qiita.com/YoshitakaOkada/items/e74555b56e3903708300" target="_blank" rel="noopener noreferrer">Bookman をサブドメインで本番公開する手順</a></li>
                 </ul>
             </section>
         </article>
