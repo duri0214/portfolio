@@ -1,7 +1,7 @@
 # （途中）AI Agent を試作する
 
 ## はじめに
-これは会話型のマルチエージェントシステムです。各エージェント（エンティティ）が専門領域を持ち、RAG やモデレーション（ガードレール）を使いながら応答を作ります。現状はターン制で順にエージェントを動かす（＝ターン式AIチャット）実装になっています。
+これは会話型のマルチエージェントシステムです。各エージェント（エンティティ）が専門領域を持ち、RAG やモデレーション（ガードレール）を使いながら応答を作ります。Phase 1ではターン制で順にエージェントを動かす実装を管理し、Phase 2ではAgentがToolを選択して実行する基盤へ移行しています。
 
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/f44613c5-c35e-421e-b1cd-f302baacc91a.png)
 
@@ -14,12 +14,12 @@ https://github.com/duri0214/portfolio/issues/310
 https://github.com/duri0214/portfolio/issues/324
 
 ## アーキテクチャ概要
-- コア概念：複数エージェント（Entity）が行動順序（Turn）に従って会話を生成
+- コア概念：Phase 1は複数エージェント（Entity）のターン制会話、Phase 2はAgentによるTool選択と実行
 - 検索/知識基盤：RAG 材料（fixtures/rag_material.json 等）
 - 安全性：静的ガードレール（禁止ワード等）＋動的ガードレール（OpenAI Moderation API 想定）
-- 永続化：ActionHistory / Message 等のモデルで会話履歴を管理
+- 永続化：Phase 1はActionHistory / Message、Phase 2のAgent実行履歴は現在AgentRunとして構造化し、後続Issueで保存する
 
-## 典型的な処理フロー（1ターンのライフサイクル）
+## Phase 1の処理フロー（移行前の1ターン）
 1. ユーザーがテキストを送信（`IndexView` 経由でリクエストを受ける）
 2. InputProcessor がガードレールチェックを実施
 ユーザー入力に対して安全性を審査し、問題なければ加工済みメッセージを返す（危険ならエラー応答）
@@ -29,6 +29,17 @@ https://github.com/duri0214/portfolio/issues/324
     - 必要に応じて外部情報や素材もRAG処理経由で参照
 5. TurnManagementRepository を通じて Message を保存し、ActionHistory を更新（done=True）
 6. 次の未処理 ActionHistory を取得し、ユーザーに次のエンティティ情報を返却
+
+## Phase 2の処理フロー（Agent実行基盤）
+Issue #904で、固定された発言順をAgent実行の中心から外す最小基盤を追加しています。
+
+1. `AgentExecutionService` が入力、Function Tool、入力・出力ガードレールを設定した `Agent` を構築する
+2. `Runner` に入力と `max_turns` を渡し、Agentの判断でToolを選択・実行する
+3. Toolの結果を次のAgent判断へ渡し、必要なTool ChainをSDKのRunnerで継続する
+4. `ToolCall` と `ToolResult` を抽出し、`Report` と `AgentRun` にまとめる
+5. 成功、ガードレール遮断、失敗、タイムアウトを同じ構造で後続処理へ渡す
+
+`AgentRun` は現時点ではDBへ保存しません。UIへのイベント配信と実行履歴の永続化は、後続のPhase 2 Issueで扱います。
 
 
 ## 主要コンポーネント
@@ -94,10 +105,11 @@ Service層は、複数のリポジトリやドメインオブジェクトを横�
 - `InputProcessor` を通じ、入力テキストのサニタイズ・ガードレール判定・各種LLM/外部サービス連携まで一括実行
 - `TurnManagementService` で、ワークフロー内のターン数更新・シミュレーション・リセット・進行状況記録をまとめて一元管理
 - `ContextAnalyzerService` で、発話内容から文脈や思考タイプの分類、キーワード抽出、関連エンティティの再構成を一括実施
+- `AgentExecutionService` で、Agent・Runner・Function Tool・ガードレールを組み合わせ、`AgentRun` と `Report` に実行結果をまとめる
 - ViewやController層で「どの順番・どの条件で個別Repositoryを使うか」「外部API結果のサニタイズ/統合」など面倒なビジネスロジックをすべてService層で肩代わりしてもらうことで、呼び出し側をシンプルにできる
 
 このように「どのような順序・組合せで業務処理を行うか？」のロジックや外部インタフェースとの実装はService層に集約し、上位層は「何をしたいか（どのシナリオ型Serviceを使うか）」だけ意識すればよくなります。
-具体実装例としては、「InputProcessor」「TurnManagementService」「ContextAnalyzerService」などがあり、`process_input(input_text, entity)`や`progress_turn(entity_id)`のような意図が明解で使いやすいI/Fを持ちます。
+具体実装例としては、「InputProcessor」「TurnManagementService」「ContextAnalyzerService」「AgentExecutionService」などがあり、各サービスが担当する処理を明確なI/Fで提供します。
 
 ## 4. ValueObject層（値オブジェクト層）
 #### ValueObject層の役割とイメージ
@@ -117,6 +129,7 @@ ValueObject層は、**業務上の意味や制約付きの「値」を、不変�
 - 入力ガードレール判定（禁止ワードOK/NGや違反カテゴリ等）の**チェック結果をVOで一括返却**
 → 呼び出し側は`blocked`や`violation_categories`だけ判定すればよい
 - Entity/進行状況など、「この時点でのスナップショット」を意味する小さな値集合もVOで管理
+- Agentの依頼、Tool Call、Tool Result、最終Reportなど、1回の実行履歴を不変な構造として管理
 - VOの`from_dict()/to_dict()`でAPI⇔ドメイン変換や永続化時の変換も一元化できる
 - 上位層・サービス層は**「すでに業務意味的に正しいデータしか受け取らない」**前提で安心して処理可能
 - ValueObjectに検証や変換（例：日付のiso変換、範囲チェック）が組み込まれているため、
@@ -124,4 +137,4 @@ ValueObject層は、**業務上の意味や制約付きの「値」を、不変�
 
 このように、**「複数値を束ね、意味・制約を保証するもの」はValueObjectとして実装・流通させる**ことで、
 「業務ロジックの安全性」と「保守性」、および「ドキュメント性」の向上が期待できます。
-具体例には「GoogleMapsMetadata」「PdfSourceMetadata」「EntityVO」「GuardrailResult」「InputProcessorConfig」などがあり、`from_dict()`/`to_dict()`などのI/Fやバリデーションが組み込まれています。
+具体例には「GoogleMapsMetadata」「PdfSourceMetadata」「EntityVO」「GuardrailResult」「InputProcessorConfig」「AgentRun」「ToolCall」「ToolResult」「Report」などがあります。Agent実行履歴は`AgentRun.to_dict()`で後続のAPI・保存処理へ渡せます。
