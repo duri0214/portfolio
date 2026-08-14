@@ -19,19 +19,6 @@ Agentとは、複数の業務機能（ツール）を連携させながら、統
 - **多様なRAGソース対応**: GoogleマップレビューやPDFなど様々な情報源からの知識拡張
 - **堅牢なテスト**: 厳密なユニットテストによる品質保証
 
-### Phase 2のAgent実行基盤
-
-`domain/service/agent_execution.py` の `AgentExecutionService` は、OpenAI Agents SDKの `Agent` と `Runner` を使って1件の依頼を実行します。利用可能なFunction Toolと入力・出力ガードレールをAgentへ設定し、Runnerへ最大ターン数と入力を渡します。
-
-実行結果は `domain/valueobject/agent_execution.py` の構造化された値として返します。
-
-- `AgentRun`: 依頼全体の識別子、入力、制限、終了状態、実行時刻を保持
-- `ToolCall`: Agentが選択したTool名と構造化引数を保持
-- `ToolResult`: Toolの出力と成功状態を保持
-- `Report`: 最終出力、Tool履歴、ターン数、エラーをまとめて保持
-
-実行状態は `completed`、`blocked`、`failed`、`timed_out` に分類します。実行履歴は現在DBへ保存せず、`AgentRun.to_dict()`で後続のUI・履歴保存へ渡せる状態にしています。既存のターン制UIと `ActionHistory` の移行は後続のPhase 2 Issueで行います。
-
 ## 主要コンポーネント
 
 ### 1. ターン管理システム (TurnManagementService)
@@ -76,8 +63,6 @@ Agentとは、複数の業務機能（ツール）を連携させながら、統
 - リスクレベルに基づいた処理分岐
 - 堅牢なエラーハンドリングとフォールバック処理
 - OpenAI APIの障害に対する耐性
-
-`InputProcessor`が構築した入力・出力ガードレールは、`AgentExecutionService`のコンストラクタへ渡してAgent実行に組み込めます。
 
 ### 4. コンテキスト分析システム (ContextAnalyzer)
 
