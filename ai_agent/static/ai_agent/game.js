@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const agentForms = document.querySelectorAll("[data-agent-form]");
     const progressBar = document.querySelector("[data-agent-progress-bar]");
     const progressText = document.querySelector("[data-agent-progress-text]");
+    const currentTool = document.querySelector("[data-agent-current-tool]");
     const liveExecution = document.querySelector("[data-live-execution]");
     const liveSummary = document.querySelector("[data-live-summary]");
     const liveSteps = document.querySelector("[data-live-steps]");
@@ -31,6 +32,11 @@ document.addEventListener("DOMContentLoaded", () => {
         progressBar.style.width = `${value}%`;
         progressBar.parentElement.setAttribute("aria-valuenow", value);
         progressText.textContent = text;
+    };
+
+    const setCurrentTool = (status, event) => {
+        const name = textValue(event.display_name, event.tool_name);
+        currentTool.textContent = `${status}: ${name}`;
     };
 
     const outputPayload = (event) => {
@@ -116,15 +122,18 @@ document.addEventListener("DOMContentLoaded", () => {
         } else if (event.type === "tool.selected") {
             addLiveTool(event);
             liveSummary.textContent = `${event.sequence}番目のSkillを選択しました。`;
+            setCurrentTool("発生", event);
             setProgress(50, `${textValue(event.display_name, event.tool_name)}を実行します。`);
         } else if (event.type === "tool.started") {
             const item = findLiveTool(event.call_id);
             if (item) {
                 item.querySelector(".badge").textContent = "実行中";
             }
+            setCurrentTool("実行中", event);
             setProgress(65, `${textValue(event.display_name, event.tool_name)}を処理しています。`);
         } else if (event.type === "tool.completed" || event.type === "tool.failed") {
             updateLiveTool(event);
+            setCurrentTool(event.type === "tool.completed" ? "完了" : "失敗", event);
             liveSummary.textContent = "Skillの結果を受け取りました。次のSkillを確認しています。";
             setProgress(75, "Skillの結果をゲーム状態へ反映しています。");
         } else if (event.type === "report.completed") {
