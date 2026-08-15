@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import base64
 from dataclasses import asdict
 from dataclasses import dataclass, replace
 import json
 from typing import Any
+import zlib
 
 from ai_agent.domain.valueobject.skill_tool import SkillCategory
 
@@ -182,6 +184,8 @@ class GameState:
     tool_history: tuple[str, ...] = ()
     execution_history: tuple[AgentExecutionRecord, ...] = ()
 
+    _COOKIE_PREFIX = "z1:"
+
     def __post_init__(self) -> None:
         if self.board_size < 1:
             raise ValueError("board_size must be greater than zero")
@@ -287,12 +291,23 @@ class GameState:
         return replace(self, execution_history=(record,) + self.execution_history)
 
     def to_json(self) -> str:
-        """ブラウザへ署名付きCookieとして保存できるJSONを返す。"""
-        return json.dumps(asdict(self), ensure_ascii=True)
+        """圧縮してブラウザへ署名付きCookieとして保存できる文字列を返す。"""
+        payload = json.dumps(
+            asdict(self), ensure_ascii=False, separators=(",", ":")
+        ).encode("utf-8")
+        compressed = zlib.compress(payload, level=9)
+        return self._COOKIE_PREFIX + base64.urlsafe_b64encode(compressed).decode(
+            "ascii"
+        )
 
     @classmethod
     def from_json(cls, value: str) -> GameState:
         """署名付きCookieのJSONからゲーム状態を復元する。"""
+        if value.startswith(cls._COOKIE_PREFIX):
+            compressed = base64.urlsafe_b64decode(
+                value[len(cls._COOKIE_PREFIX) :].encode("ascii")
+            )
+            value = zlib.decompress(compressed).decode("utf-8")
         payload = json.loads(value)
         initial = cls.initial()
         health_by_enemy = {
