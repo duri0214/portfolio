@@ -23,7 +23,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const progressBar = document.querySelector("[data-agent-progress-bar]");
     const progressText = document.querySelector("[data-agent-progress-text]");
     const currentTool = document.querySelector("[data-agent-current-tool]");
+    const liveCombo = document.querySelector("[data-live-combo]");
     const liveSteps = document.querySelector("[data-live-steps]");
+    let liveSkillCount = 0;
     const csrfToken = (form) => form.querySelector("[name=csrfmiddlewaretoken]").value;
 
     const setProgress = (value, text) => {
@@ -39,6 +41,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const setCurrentTool = (status, event) => {
         const name = textValue(event.display_name, event.tool_name);
         currentTool.textContent = `${status}: ${name}`;
+    };
+
+    const updateLiveCombo = () => {
+        liveCombo.textContent = `${liveSkillCount} Skill Combo`;
+        liveCombo.classList.remove("d-none");
     };
 
     const textValue = (value, fallback = "") => {
@@ -114,6 +121,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (event.type === "run.started") {
             setProgress(35, "Agentが利用するToolを選んでいます。");
         } else if (event.type === "tool.selected") {
+            liveSkillCount += 1;
+            updateLiveCombo();
             addLiveTool(event);
             setCurrentTool("発生", event);
             setProgress(50, `${textValue(event.display_name, event.tool_name)}を実行します。`);
@@ -195,6 +204,8 @@ document.addEventListener("DOMContentLoaded", () => {
     agentForms.forEach((form) => {
         form.addEventListener("submit", async (event) => {
             event.preventDefault();
+            liveSkillCount = 0;
+            liveCombo.classList.add("d-none");
             liveSteps.replaceChildren();
             agentForms.forEach((agentForm) => {
                 const button = agentForm.querySelector("[data-agent-submit]");
