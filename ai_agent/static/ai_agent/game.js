@@ -194,11 +194,21 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         const response = await fetch(endpoint, {
             method: "POST",
-            headers: { "X-CSRFToken": csrfToken(form) },
+            headers: {
+                "Accept": "application/json",
+                "X-CSRFToken": csrfToken(form),
+            },
             body,
         });
         if (!response.ok) {
-            throw new Error("実行結果を保存できませんでした。");
+            let reason = "実行結果を保存できませんでした。";
+            try {
+                const payload = await response.json();
+                reason = payload.error || reason;
+            } catch (error) {
+                // Keep the generic message when the server response is not JSON.
+            }
+            throw new Error(reason);
         }
         return response.text();
     };

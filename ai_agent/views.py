@@ -1,10 +1,12 @@
 import asyncio
 from dataclasses import asdict, replace
+from hashlib import sha256
 import json
+from uuid import uuid4
 
 from django.contrib import messages
 from django.core import signing
-from django.http import StreamingHttpResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from django.shortcuts import redirect
 from django.views.generic import TemplateView
 
@@ -21,6 +23,7 @@ class IndexView(TemplateView):
     template_name = "ai_agent/index.html"
     state_cookie_name = "ai_agent_game_state"
     execution_history_session_key = "ai_agent_execution_history"
+    stream_pending_session_key = "ai_agent_pending_stream_state"
     stream_state_salt = "ai_agent.stream_state"
 
     def get_context_data(self, **kwargs):
@@ -47,12 +50,13 @@ class IndexView(TemplateView):
             elif action == "stream_agent":
                 if not game.selected_mondai_id:
                     raise ValueError("先に対象の問題を選択してください")
+                base_state = game
                 game = GameService.select_line(game, request.POST["line_id"])
-                return self._stream_agent_response(game)
+                return self._stream_agent_response(game, base_state)
             elif action == "save_stream_state":
-                game = GameService.create_game().from_json(
-                    self._unsign_stream_state(request.POST["state_token"])
-                )
+                payload = self._unsign_stream_state(request.POST["state_token"])
+                self._consume_stream_state(payload)
+                game = GameService.create_game().from_json(payload["state"])
                 self._add_saved_agent_message(request, game)
                 response = redirect("agt:index")
                 self._set_game_cookie(response, game)
@@ -78,16 +82,27 @@ class IndexView(TemplateView):
             json.JSONDecodeError,
             signing.BadSignature,
         ) as error:
+            if (
+                action == "save_stream_state"
+                and request.headers.get("Accept") == "application/json"
+            ):
+                return JsonResponse({"error": str(error)}, status=409)
             messages.error(request, f"操作できません: {error}")
 
         response = redirect("agt:index")
         self._set_game_cookie(response, game)
         return response
 
-    def _stream_agent_response(self, game):
+    def _stream_agent_response(self, game, base_state):
         """AgentのToolイベントをSSEで逐次配信する。"""
         tools = GameToolSet(game)
         agent = GameAgentService(tools=tools)
+        token_id = uuid4().hex
+        base_state_digest = self._state_fingerprint(base_state)
+        self.request.session[self.stream_pending_session_key] = {
+            "token_id": token_id,
+            "base_state": base_state_digest,
+        }
 
         def event_stream():
             loop = asyncio.new_event_loop()
@@ -107,7 +122,9 @@ class IndexView(TemplateView):
                                 tools.state, event["run"]
                             )
                         )
-                        payload["state_token"] = self._sign_stream_state(final_state)
+                        payload["state_token"] = self._sign_stream_state(
+                            final_state, token_id, base_state_digest
+                        )
                     yield self._sse(payload)
             finally:
                 try:
@@ -126,11 +143,44 @@ class IndexView(TemplateView):
     def _sse(payload):
         return f"event: {payload['type']}\ndata: {json.dumps(payload, ensure_ascii=False, default=str)}\n\n"
 
-    def _sign_stream_state(self, game):
-        return signing.Signer(salt=self.stream_state_salt).sign(game.to_json())
+    def _sign_stream_state(self, game, token_id, base_state_digest):
+        payload = json.dumps(
+            {
+                "state": game.to_json(),
+                "token_id": token_id,
+                "base_state": base_state_digest,
+            },
+            separators=(",", ":"),
+        )
+        return signing.Signer(salt=self.stream_state_salt).sign(payload)
 
     def _unsign_stream_state(self, value):
-        return signing.Signer(salt=self.stream_state_salt).unsign(value)
+        payload = json.loads(signing.Signer(salt=self.stream_state_salt).unsign(value))
+        if not isinstance(payload, dict) or not all(
+            isinstance(payload.get(key), str)
+            for key in ("state", "token_id", "base_state")
+        ):
+            raise ValueError("ストリーム状態Tokenの形式が不正です")
+        return payload
+
+    @staticmethod
+    def _state_fingerprint(game):
+        state_without_history = replace(game, execution_history=())
+        return sha256(state_without_history.to_json().encode("utf-8")).hexdigest()
+
+    def _consume_stream_state(self, payload):
+        pending = self.request.session.get(self.stream_pending_session_key)
+        if not isinstance(pending, dict) or any(
+            pending.get(key) != payload[key] for key in ("token_id", "base_state")
+        ):
+            raise ValueError("ストリーム状態Tokenは期限切れか、すでに使用されています")
+
+        self.request.session.pop(self.stream_pending_session_key, None)
+        current_state = self._load_state()
+        if self._state_fingerprint(current_state) != payload["base_state"]:
+            raise ValueError(
+                "ゲーム状態が更新されています。画面を再読み込みしてください"
+            )
 
     def _set_game_cookie(self, response, game):
         self._save_execution_history(game)

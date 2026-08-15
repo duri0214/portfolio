@@ -105,6 +105,71 @@ class AgentStreamingViewTest(TestCase):
         page = self.client.get(response["Location"])
         self.assertContains(page, "操作できません")
 
+    def test_stale_stream_state_token_does_not_overwrite_newer_game_state(self):
+        self.client.post(
+            "/ai_agent/",
+            {"action": "select_mondai", "mondai_id": "mondai-language"},
+        )
+
+        with patch.object(GameAgentService, "stream_selected", fake_stream_selected):
+            response = self.client.post(
+                "/ai_agent/",
+                {"action": "stream_agent", "line_id": "line-observe"},
+            )
+            body = b"".join(response.streaming_content).decode("utf-8")
+
+        state_token = next(
+            json.loads(line[6:])["state_token"]
+            for line in body.splitlines()
+            if line.startswith("data: ") and '"state_token"' in line
+        )
+        self.client.post(
+            "/ai_agent/",
+            {"action": "select_mondai", "mondai_id": "mondai-mathematics"},
+        )
+
+        saved = self.client.post(
+            "/ai_agent/",
+            {"action": "save_stream_state", "state_token": state_token},
+        )
+        page = self.client.get(saved["Location"])
+
+        self.assertEqual(saved.status_code, 302)
+        self.assertContains(page, "ゲーム状態が更新されています")
+        self.assertContains(page, "算数の問題")
+        self.assertNotContains(page, "計算で条件を確かめました")
+
+    def test_stream_state_token_can_only_be_saved_once(self):
+        self.client.post(
+            "/ai_agent/",
+            {"action": "select_mondai", "mondai_id": "mondai-language"},
+        )
+
+        with patch.object(GameAgentService, "stream_selected", fake_stream_selected):
+            response = self.client.post(
+                "/ai_agent/",
+                {"action": "stream_agent", "line_id": "line-observe"},
+            )
+            body = b"".join(response.streaming_content).decode("utf-8")
+
+        state_token = next(
+            json.loads(line[6:])["state_token"]
+            for line in body.splitlines()
+            if line.startswith("data: ") and '"state_token"' in line
+        )
+        self.client.post(
+            "/ai_agent/",
+            {"action": "save_stream_state", "state_token": state_token},
+        )
+        replayed = self.client.post(
+            "/ai_agent/",
+            {"action": "save_stream_state", "state_token": state_token},
+        )
+
+        page = self.client.get(replayed["Location"])
+        self.assertContains(page, "すでに使用されています")
+        self.assertContains(page, "Agent実行 #1")
+
     def test_streaming_endpoint_persists_completed_tool_history(self):
         self.client.post(
             "/ai_agent/",
