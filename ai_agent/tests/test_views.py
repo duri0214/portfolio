@@ -151,3 +151,46 @@ class AgentStreamingViewTest(TestCase):
         self.assertNotContains(page, "入力:")
         self.assertNotContains(page, "判定スコア")
         self.assertNotContains(page, "結果:")
+
+    def test_streaming_endpoint_keeps_six_histories_without_growing_game_cookie(self):
+        mondai_ids = (
+            "mondai-language",
+            "mondai-language-mathematics",
+            "mondai-mathematics",
+            "mondai-language-science",
+            "mondai-mathematics-science",
+            "mondai-science",
+        )
+
+        for mondai_id in mondai_ids:
+            self.client.post(
+                "/ai_agent/",
+                {"action": "select_mondai", "mondai_id": mondai_id},
+            )
+            with patch.object(
+                GameAgentService, "stream_selected", fake_stream_selected
+            ):
+                response = self.client.post(
+                    "/ai_agent/",
+                    {"action": "stream_agent", "line_id": "line-observe"},
+                )
+                body = b"".join(response.streaming_content).decode("utf-8")
+            state_token = next(
+                json.loads(line[6:])["state_token"]
+                for line in body.splitlines()
+                if line.startswith("data: ") and '"state_token"' in line
+            )
+            saved = self.client.post(
+                "/ai_agent/",
+                {
+                    "action": "save_stream_state",
+                    "state_token": state_token,
+                },
+            )
+            self.assertLess(
+                len(saved.cookies["ai_agent_game_state"].value),
+                4096,
+            )
+
+        page = self.client.get("/ai_agent/")
+        self.assertContains(page, "Agent実行 #6")

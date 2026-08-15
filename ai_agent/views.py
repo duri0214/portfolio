@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import asdict, replace
 import json
 
 from django.contrib import messages
@@ -11,7 +12,7 @@ from ai_agent.domain.service.game import GameService
 from ai_agent.domain.service.game_agent import GameAgentService
 from ai_agent.domain.service.skill_tools import GameToolSet
 from ai_agent.domain.valueobject.agent_execution import AgentRunStatus
-from ai_agent.domain.valueobject.game import Position
+from ai_agent.domain.valueobject.game import AgentExecutionRecord, Position
 
 
 class IndexView(TemplateView):
@@ -19,6 +20,7 @@ class IndexView(TemplateView):
 
     template_name = "ai_agent/index.html"
     state_cookie_name = "ai_agent_game_state"
+    execution_history_session_key = "ai_agent_execution_history"
     stream_state_salt = "ai_agent.stream_state"
 
     def get_context_data(self, **kwargs):
@@ -33,7 +35,7 @@ class IndexView(TemplateView):
         return context
 
     def post(self, request, *args, **kwargs):
-        """画面操作をドメインサービスへ渡し、署名付きCookieへ状態を保存する。"""
+        """画面操作をドメインサービスへ渡し、状態を保存する。"""
         game = self._load_state()
         action = request.POST.get("action")
         try:
@@ -131,22 +133,47 @@ class IndexView(TemplateView):
         return signing.Signer(salt=self.stream_state_salt).unsign(value)
 
     def _set_game_cookie(self, response, game):
+        self._save_execution_history(game)
+        cookie_game = replace(game, execution_history=())
         response.set_signed_cookie(
             self.state_cookie_name,
-            game.to_json(),
+            cookie_game.to_json(),
             httponly=True,
             samesite="Lax",
         )
 
     def _load_state(self):
-        """署名付きCookieから状態を読み、壊れていれば初期状態へ戻す。"""
+        """Cookieとセッションから状態を読み、壊れていれば初期状態へ戻す。"""
         raw_state = self.request.get_signed_cookie(self.state_cookie_name, default=None)
         if raw_state is None:
-            return GameService.create_game()
-        try:
-            return GameService.create_game().from_json(raw_state)
-        except (TypeError, ValueError, json.JSONDecodeError):
-            return GameService.create_game()
+            game = GameService.create_game()
+        else:
+            try:
+                game = GameService.create_game().from_json(raw_state)
+            except (TypeError, ValueError, json.JSONDecodeError):
+                game = GameService.create_game()
+        history = self._load_execution_history()
+        return replace(game, execution_history=history) if history is not None else game
+
+    def _load_execution_history(self):
+        """セッションに保存した実行履歴を画面表示用の値へ復元する。"""
+        payload = self.request.session.get(self.execution_history_session_key)
+        if payload is None:
+            return None
+        return tuple(
+            AgentExecutionRecord.from_dict(record)
+            for record in payload
+            if isinstance(record, dict)
+        )
+
+    def _save_execution_history(self, game):
+        """Cookie上限を避けるため、増え続ける履歴をセッションへ保存する。"""
+        if game.execution_history:
+            self.request.session[self.execution_history_session_key] = [
+                asdict(record) for record in game.execution_history
+            ]
+        else:
+            self.request.session.pop(self.execution_history_session_key, None)
 
     @staticmethod
     def _board_cells(game):
