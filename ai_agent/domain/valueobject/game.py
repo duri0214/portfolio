@@ -186,7 +186,7 @@ class GameState:
     tool_history: tuple[str, ...] = ()
     execution_history: tuple[AgentExecutionRecord, ...] = ()
 
-    _COOKIE_PREFIX = "z3:"
+    _COOKIE_PREFIX = "z2:"
 
     def __post_init__(self) -> None:
         if self.board_size < 1:
