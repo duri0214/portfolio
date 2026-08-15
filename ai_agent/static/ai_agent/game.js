@@ -210,8 +210,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     headers: { Accept: "text/event-stream" },
                     body: new FormData(form),
                 });
-                if (!response.ok || !response.body) {
-                    throw new Error("Agent実行を開始できませんでした。");
+                if (!response.ok) {
+                    throw new Error(`Agent実行開始に失敗しました (HTTP ${response.status})`);
+                }
+                if (!response.body) {
+                    throw new Error("Agent実行のストリームを受信できませんでした。");
                 }
                 const stateToken = await readSse(response, handleAgentEvent);
                 if (!stateToken) {
