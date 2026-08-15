@@ -134,9 +134,9 @@
                                 {% for step in execution.steps %}
                                     <tr>
                                         <td>
-                                            <span class="badge {% if step.success %}text-bg-success{% else %}text-bg-danger{% endif %}" title="{{ step.display_name }}: {{ step.operation }}">{{ step.tool_name }}</span>
+                                            <span class="badge {% if step.success %}text-bg-success{% else %}text-bg-danger{% endif %}" title="{{ step.display_name }}: {{ step.operation }} / 効果: 問題HPを{{ step.power }}減らす">{{ step.tool_name }}</span>
                                         </td>
-                                        <td class="small text-muted">ダメージ {{ step.damage }} / 経験値 +{{ step.experience_gained }} / 問題の残りHP {{ step.remaining_hit_points }}</td>
+                                        <td class="small text-muted">{% if step.damage %}問題HP -{{ step.damage }}{% else %}問題HP 変化なし{% endif %} / 残りHP {{ step.remaining_hit_points }} / 経験値 +{{ step.experience_gained }}</td>
                                     </tr>
                                 {% endfor %}
                                 </tbody>

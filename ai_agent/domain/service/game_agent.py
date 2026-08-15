@@ -57,6 +57,7 @@ class GameAgentService:
                     **event,
                     "display_name": definition.display_name,
                     "operation": definition.description,
+                    "power": definition.power,
                 }
             except ValueError:
                 pass
@@ -68,6 +69,7 @@ class GameAgentService:
                     "tool_name": tool_name,
                     "display_name": event.get("display_name", tool_name),
                     "operation": event.get("operation", ""),
+                    "power": event.get("power"),
                     "arguments": event.get("arguments", {}),
                     "sequence": event.get("sequence", 0),
                 }
@@ -166,6 +168,7 @@ class GameAgentService:
             result_summary=GameAgentService._compact_text(
                 payload.get("message") or result.error or payload
             ),
+            power=definition.power,
             damage=int(payload.get("damage", 0)),
             experience_gained=int(payload.get("experience_gained", 0)),
             remaining_hit_points=int(

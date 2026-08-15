@@ -82,7 +82,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const heading = document.createElement("div");
         heading.className = "d-flex flex-wrap align-items-center gap-2";
         const skillBadge = appendText(heading, "span", "badge text-bg-warning", textValue(event.tool_name));
-        skillBadge.title = `${textValue(event.display_name, event.tool_name)}: ${textValue(event.operation, "Skillの処理内容")}`;
+        const power = event.power === undefined ? "" : ` / 効果: 問題HPを${event.power}減らす`;
+        skillBadge.title = `${textValue(event.display_name, event.tool_name)}: ${textValue(event.operation, "Skillの処理内容")}${power}`;
         const statusBadge = appendText(heading, "span", "badge text-bg-warning", "選択済み");
         statusBadge.dataset.liveStatus = "true";
         item.appendChild(heading);
@@ -106,7 +107,9 @@ document.addEventListener("DOMContentLoaded", () => {
         status.className = `badge ${succeeded ? "text-bg-success" : "text-bg-danger"}`;
         item.classList.remove("list-group-item-warning");
         item.classList.add(succeeded ? "list-group-item-success" : "list-group-item-danger");
-        stateChange.textContent = `状態変化: ダメージ ${textValue(payload.damage, 0)} / 経験値 +${textValue(payload.experience_gained, 0)} / 問題の残りHP ${textValue(payload.enemy_remaining_hit_points, "-")}`;
+        const damage = textValue(payload.damage, 0);
+        const hpChange = damage === "0" ? "問題HP 変化なし" : `問題HP -${damage}`;
+        stateChange.textContent = `${hpChange} / 残りHP ${textValue(payload.enemy_remaining_hit_points, "-")} / 経験値 +${textValue(payload.experience_gained, 0)}`;
     };
 
     const handleAgentEvent = (event) => {

@@ -100,6 +100,7 @@ class ToolExecutionRecord:
     input_summary: str
     success: bool
     result_summary: str
+    power: int
     damage: int
     experience_gained: int
     remaining_hit_points: int
@@ -116,6 +117,7 @@ class ToolExecutionRecord:
             input_summary=str(value.get("input_summary", "")),
             success=bool(value.get("success", False)),
             result_summary=str(value.get("result_summary", "")),
+            power=int(value.get("power", value.get("damage", 0))),
             damage=int(value.get("damage", 0)),
             experience_gained=int(value.get("experience_gained", 0)),
             remaining_hit_points=int(value.get("remaining_hit_points", 0)),
