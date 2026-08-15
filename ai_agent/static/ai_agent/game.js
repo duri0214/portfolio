@@ -132,7 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } else if (event.type === "tool.completed" || event.type === "tool.failed") {
             updateLiveTool(event);
             setCurrentTool(event.type === "tool.completed" ? "完了" : "失敗", event);
-            setProgress(75, "Skillの結果をゲーム状態へ反映しています。");
+            setProgress(75, "Skillの結果を反映しています。");
         } else if (event.type === "report.completed") {
             setProgress(90, "実行結果を保存しています。");
             return event.state_token;
