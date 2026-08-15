@@ -77,7 +77,6 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.callId = event.call_id;
         const heading = document.createElement("div");
         heading.className = "d-flex flex-wrap align-items-center gap-2";
-        appendText(heading, "strong", "", textValue(event.display_name, event.tool_name));
         const skillBadge = appendText(heading, "span", "badge text-bg-warning", textValue(event.tool_name));
         skillBadge.title = `${textValue(event.display_name, event.tool_name)}: ${textValue(event.operation, "Skillの処理内容")}`;
         const statusBadge = appendText(heading, "span", "badge text-bg-warning", "選択済み");
