@@ -5,7 +5,7 @@
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
         <div>
             <h1 class="h2 mb-1">Skill Chain Game</h1>
-            <p class="text-muted mb-0">敵とセリフを選び、Skillを実行して敵を倒します。</p>
+            <p class="text-muted mb-0">盤面から問題を選び、セリフをAgentへ渡して解答します。</p>
         </div>
         <form method="post">
             {% csrf_token %}
@@ -23,25 +23,46 @@
     <section class="alert alert-info" aria-label="遊び方">
         <h2 class="h6">この画面で起こること</h2>
         <ol class="mb-0 ps-3">
-            <li>敵を選ぶと、以降のSkillの攻撃対象が決まります。</li>
+            <li>盤面の問題を選ぶと、Agentが解く対象が決まります。</li>
             <li>セリフの「このセリフでAgentに任せる」を押すと、セリフを最終決定します。</li>
             <li>最終決定後、Agentが6つのSkillから必要なものを選びます。</li>
-            <li>AgentのTool結果に応じて、敵HP、経験値、実行履歴が変わります。</li>
+            <li>AgentのTool結果に応じて、問題の残りHP、経験値、実行履歴が変わります。</li>
         </ol>
     </section>
 
     <section class="row g-4" aria-label="ゲーム状態">
         <div class="col-lg-5">
-            <h2 class="h5">1. 敵を選ぶ</h2>
+            <h2 class="h5">1. 盤面から問題を選ぶ</h2>
             <div class="border p-3">
                 <p class="mb-2">経験値: <strong>{{ game.experience }}</strong></p>
+                <div class="game-board mb-3" data-game-board data-board-size="{{ game.board_size }}" aria-label="問題盤面">
+                    {% for cell in board_cells %}
+                    <div class="game-cell" data-row="{{ cell.row }}" data-column="{{ cell.column }}">
+                        {% if cell.problem %}
+                        <form method="post" class="board-piece-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="select_enemy">
+                            <input type="hidden" name="enemy_id" value="{{ cell.problem.enemy_id }}">
+                            <button class="board-piece problem-piece {% if cell.problem.enemy_id == game.selected_enemy_id %}is-selected{% endif %}" type="submit" data-board-problem="{{ cell.problem.enemy_id }}" aria-label="{{ cell.problem.name }}を選ぶ">
+                                <span class="problem-piece-name">{{ cell.problem.name }}</span>
+                                <span class="problem-piece-hp">残りHP {{ cell.problem.hit_points }}</span>
+                            </button>
+                        </form>
+                        {% elif cell.is_player %}
+                        <span class="player-piece" aria-label="プレイヤー">P</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <p class="small text-muted mb-3">Pがプレイヤー、色付きの駒が解く問題です。駒を押すと対象が切り替わります。</p>
+                <h3 class="h6">問題一覧</h3>
                 <div class="list-group">
                     {% for enemy in game.enemies %}
                     <form method="post" class="list-group-item d-flex justify-content-between align-items-center gap-2">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="select_enemy">
                         <input type="hidden" name="enemy_id" value="{{ enemy.enemy_id }}">
-                        <span>{{ enemy.name }} / マス ({{ enemy.position.row }}, {{ enemy.position.column }}) / HP {{ enemy.hit_points }}</span>
+                        <span>{{ enemy.name }} / マス ({{ enemy.position.row }}, {{ enemy.position.column }}) / 残りHP {{ enemy.hit_points }}</span>
                         <button class="btn btn-sm {% if enemy.enemy_id == game.selected_enemy_id %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit">
                             {% if enemy.enemy_id == game.selected_enemy_id %}選択中{% else %}選ぶ{% endif %}
                         </button>
@@ -65,9 +86,9 @@
                 </form>
                 {% endfor %}
             </div>
-            <p class="small text-muted">対象: {% if selected_enemy %}{{ selected_enemy.name }}{% else %}未選択。先に敵を選んでください{% endif %}</p>
+            <p class="small text-muted">対象: {% if selected_enemy %}{{ selected_enemy.name }}{% else %}未選択。先に問題を選んでください{% endif %}</p>
             <h3 class="h6">Agentが利用できる6つのSkill</h3>
-            <p class="small text-muted">ここに表示されるSkillからAgentが選びます。敵の教科と異なるSkillも選択できます。</p>
+            <p class="small text-muted">ここに表示されるSkillからAgentが選びます。問題の教科と異なるSkillも選択できます。</p>
             <div class="list-group">
                 {% for tool in skill_tools %}
                 <div class="list-group-item d-flex justify-content-between gap-2">

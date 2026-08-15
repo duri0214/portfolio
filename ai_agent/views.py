@@ -8,6 +8,7 @@ from ai_agent.domain.service.game import GameService
 from ai_agent.domain.service.game_agent import GameAgentService
 from ai_agent.domain.service.skill_tools import GameToolSet, SkillToolCatalog
 from ai_agent.domain.valueobject.agent_execution import AgentRunStatus
+from ai_agent.domain.valueobject.game import Position
 
 
 class IndexView(TemplateView):
@@ -25,6 +26,7 @@ class IndexView(TemplateView):
         context["selected_enemy"] = (
             game.enemy(game.selected_enemy_id) if game.selected_enemy_id else None
         )
+        context["board_cells"] = self._board_cells(game)
         return context
 
     def post(self, request, *args, **kwargs):
@@ -35,11 +37,11 @@ class IndexView(TemplateView):
             if action == "select_enemy":
                 game = GameService.select_enemy(game, request.POST["enemy_id"])
                 messages.success(
-                    request, "対象の敵を選択しました。次にセリフを選んでください。"
+                    request, "対象の問題を選択しました。次にセリフを選んでください。"
                 )
             elif action == "select_line":
                 if not game.selected_enemy_id:
-                    raise ValueError("先に対象の敵を選択してください")
+                    raise ValueError("先に対象の問題を選択してください")
                 game = GameService.select_line(game, request.POST["line_id"])
                 game, run = self._run_agent(game)
                 self._add_agent_message(request, game, run)
@@ -69,6 +71,24 @@ class IndexView(TemplateView):
             return GameService.create_game().from_json(raw_state)
         except (TypeError, ValueError, json.JSONDecodeError):
             return GameService.create_game()
+
+    @staticmethod
+    def _board_cells(game):
+        """CSS Gridへ渡す盤面の各マスと駒の情報を作る。"""
+        problems_by_position = {
+            (problem.position.row, problem.position.column): problem
+            for problem in game.enemies
+        }
+        return [
+            {
+                "row": row,
+                "column": column,
+                "is_player": game.player_position == Position(row, column),
+                "problem": problems_by_position.get((row, column)),
+            }
+            for row in range(game.board_size)
+            for column in range(game.board_size)
+        ]
 
     @staticmethod
     def _run_agent(game):

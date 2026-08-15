@@ -114,16 +114,19 @@ class GameState:
             experience=0,
             enemies=(
                 EnemyState(
-                    "enemy-language", "国語の敵", SkillCategory.LANGUAGE, Position(0, 0)
+                    "enemy-language",
+                    "国語の問題",
+                    SkillCategory.LANGUAGE,
+                    Position(0, 0),
                 ),
                 EnemyState(
                     "enemy-mathematics",
-                    "算数の敵",
+                    "算数の問題",
                     SkillCategory.MATHEMATICS,
                     Position(0, 2),
                 ),
                 EnemyState(
-                    "enemy-science", "理科の敵", SkillCategory.SCIENCE, Position(2, 2)
+                    "enemy-science", "理科の問題", SkillCategory.SCIENCE, Position(2, 2)
                 ),
             ),
             preset_lines=(
