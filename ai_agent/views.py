@@ -15,7 +15,7 @@ from ai_agent.domain.valueobject.game import Position
 
 
 class IndexView(TemplateView):
-    """敵選択、セリフ決定、Agent実行を扱うゲーム画面アダプター。"""
+    """問題選択、セリフ決定、Agent実行を扱うゲーム画面アダプター。"""
 
     template_name = "ai_agent/index.html"
     state_cookie_name = "ai_agent_game_state"
@@ -26,8 +26,8 @@ class IndexView(TemplateView):
         context = super().get_context_data(**kwargs)
         game = self._load_state()
         context["game"] = game
-        context["selected_enemy"] = (
-            game.enemy(game.selected_enemy_id) if game.selected_enemy_id else None
+        context["selected_issue"] = (
+            game.issue(game.selected_issue_id) if game.selected_issue_id else None
         )
         context["board_cells"] = self._board_cells(game)
         return context
@@ -37,13 +37,13 @@ class IndexView(TemplateView):
         game = self._load_state()
         action = request.POST.get("action")
         try:
-            if action == "select_enemy":
-                game = GameService.select_enemy(game, request.POST["enemy_id"])
+            if action == "select_issue":
+                game = GameService.select_issue(game, request.POST["issue_id"])
                 messages.success(
                     request, "対象の問題を選択しました。次にセリフを選んでください。"
                 )
             elif action == "stream_agent":
-                if not game.selected_enemy_id:
+                if not game.selected_issue_id:
                     raise ValueError("先に対象の問題を選択してください")
                 game = GameService.select_line(game, request.POST["line_id"])
                 return self._stream_agent_response(game)
@@ -56,7 +56,7 @@ class IndexView(TemplateView):
                 self._set_game_cookie(response, game)
                 return response
             elif action == "select_line":
-                if not game.selected_enemy_id:
+                if not game.selected_issue_id:
                     raise ValueError("先に対象の問題を選択してください")
                 game = GameService.select_line(game, request.POST["line_id"])
                 game, run = self._run_agent(game)
@@ -153,7 +153,7 @@ class IndexView(TemplateView):
         """CSS Gridへ渡す盤面の各マスと駒の情報を作る。"""
         problems_by_position = {
             (problem.position.row, problem.position.column): problem
-            for problem in game.enemies
+            for problem in game.issues
         }
         return [
             {

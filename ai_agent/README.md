@@ -26,7 +26,7 @@ Agentには、以下の6個のFunction Toolを登録します。UI表示名と�
 | 理科 | 原因推論 | `infer_cause` |
 | 理科 | 観察分析 | `analyze_observation` |
 
-各Toolは `target_enemy_id` と `score` を構造化された入力として受け取り、成功・失敗、ダメージ、獲得経験値、問題の残りHPを構造化された辞書で返します。Toolの呼び出し順は画面側で固定せず、Agentが結果を見て次のToolを選択します。
+各Toolは `target_issue_id` を構造化された入力として受け取り、成功・失敗、ダメージ、獲得経験値、問題の残りHPを構造化された辞書で返します。Toolの呼び出し順は画面側で固定せず、Agentが結果を見て次のToolを選択します。
 
 ## 主なクラス
 

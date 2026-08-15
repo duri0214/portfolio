@@ -15,7 +15,7 @@ from ai_agent.domain.valueobject.agent_execution import (
 
 
 async def fake_stream_selected(self, *, max_turns=10):
-    target_id = self.tools.state.selected_enemy_id
+    target_id = self.tools.state.selected_issue_id
     now = datetime.now(timezone.utc)
     run = AgentRun(
         run_id="stream-run-1",
@@ -28,7 +28,7 @@ async def fake_stream_selected(self, *, max_turns=10):
             ToolCall(
                 call_id="stream-call-1",
                 name="calculate",
-                arguments={"target_enemy_id": target_id},
+                arguments={"target_issue_id": target_id},
                 sequence=1,
             ),
         ),
@@ -39,10 +39,10 @@ async def fake_stream_selected(self, *, max_turns=10):
                 output={
                     "display_name": "計算",
                     "success": True,
-                    "target_enemy_id": target_id,
+                    "target_issue_id": target_id,
                     "damage": 1,
                     "experience_gained": 10,
-                    "enemy_remaining_hit_points": 2,
+                    "issue_remaining_hit_points": 2,
                     "message": "計算が成功しました。",
                 },
                 succeeded=True,
@@ -62,14 +62,14 @@ async def fake_stream_selected(self, *, max_turns=10):
         "type": "tool.selected",
         "call_id": "stream-call-1",
         "tool_name": "calculate",
-        "arguments": {"target_enemy_id": target_id},
+        "arguments": {"target_issue_id": target_id},
         "sequence": 1,
     }
     yield {
         "type": "tool.started",
         "call_id": "stream-call-1",
         "tool_name": "calculate",
-        "arguments": {"target_enemy_id": target_id},
+        "arguments": {"target_issue_id": target_id},
         "sequence": 1,
     }
     yield {
@@ -108,7 +108,7 @@ class AgentStreamingViewTest(TestCase):
     def test_streaming_endpoint_persists_completed_tool_history(self):
         self.client.post(
             "/ai_agent/",
-            {"action": "select_enemy", "enemy_id": "enemy-language"},
+            {"action": "select_issue", "issue_id": "issue-language"},
         )
 
         with patch.object(GameAgentService, "stream_selected", fake_stream_selected):

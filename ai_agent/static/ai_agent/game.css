@@ -49,15 +49,15 @@
     background: #f6c85f;
 }
 
-.board-piece.problem-piece.is-defeated {
+.board-piece.problem-piece.is-solved {
     background: #adb5bd;
     color: #495057;
     cursor: not-allowed;
 }
 
-.board-piece.problem-piece:not(.is-defeated):hover,
-.board-piece.problem-piece:not(.is-defeated):focus-visible,
-.board-piece.problem-piece:not(.is-defeated).is-selected {
+.board-piece.problem-piece:not(.is-solved):hover,
+.board-piece.problem-piece:not(.is-solved):focus-visible,
+.board-piece.problem-piece:not(.is-solved).is-selected {
     background: #e76f51;
     color: #fff;
 }

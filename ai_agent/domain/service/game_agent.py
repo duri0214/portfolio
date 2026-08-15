@@ -77,24 +77,24 @@ class GameAgentService:
     def _selected_input(self) -> str:
         """選択中の問題とセリフからAgent入力を組み立てる。"""
         state = self.tools.state
-        if not state.selected_enemy_id or not state.selected_line_id:
+        if not state.selected_issue_id or not state.selected_line_id:
             raise ValueError("問題とセリフを選択してから実行してください")
-        enemy = state.enemy(state.selected_enemy_id)
+        issue = state.issue(state.selected_issue_id)
         line = next(
             line
             for line in state.preset_lines
             if line.line_id == state.selected_line_id
         )
         input_text = (
-            f"対象の問題: {enemy.enemy_id} ({enemy.name})。"
-            f"対象の教科: {enemy.category_display_name}。"
+            f"対象の問題: {issue.issue_id} ({issue.name})。"
+            f"対象の教科: {issue.category_display_name}。"
             f"プレイヤーの選択意図: {line.label}。"
             f"プレイヤーのセリフ: {line.text}。"
             f"選択意図の説明: {line.description}"
             "利用可能な6つのSkill Toolから必要なものを選び、"
             "必要なら複数Toolを順番に実行してください。"
             "問題の教科とSkillの教科は一致しなくても構いません。"
-            f"Toolのtarget_enemy_idには{enemy.enemy_id}を使ってください。"
+            f"Toolのtarget_issue_idには{issue.issue_id}を使ってください。"
         )
         return input_text
 
@@ -103,9 +103,9 @@ class GameAgentService:
         state: GameState, run: AgentRun
     ) -> AgentExecutionRecord:
         """AgentRunを画面表示用のゲーム実行記録へ変換する。"""
-        if not state.selected_enemy_id or not state.selected_line_id:
+        if not state.selected_issue_id or not state.selected_line_id:
             raise ValueError("問題とセリフを選択してから実行してください")
-        problem = state.enemy(state.selected_enemy_id)
+        problem = state.issue(state.selected_issue_id)
         line = next(
             line
             for line in state.preset_lines
@@ -118,7 +118,7 @@ class GameAgentService:
         )
         return AgentExecutionRecord(
             run_id=run.run_id,
-            problem_id=problem.enemy_id,
+            problem_id=problem.issue_id,
             problem_name=problem.name,
             problem_subjects=problem.category_display_name,
             line_label=line.label,
@@ -142,14 +142,14 @@ class GameAgentService:
         if not isinstance(payload, dict):
             payload = {"message": str(payload)}
         target_id = str(
-            payload.get("target_enemy_id")
-            or arguments.get("target_enemy_id")
-            or state.selected_enemy_id
+            payload.get("target_issue_id")
+            or arguments.get("target_issue_id")
+            or state.selected_issue_id
         )
         try:
-            target = state.enemy(target_id)
+            target = state.issue(target_id)
         except StopIteration:
-            target = state.enemy(state.selected_enemy_id)
+            target = state.issue(state.selected_issue_id)
         try:
             definition = SkillToolCatalog.get(result.name)
             display_name = definition.display_name
@@ -172,7 +172,7 @@ class GameAgentService:
             damage=int(payload.get("damage", 0)),
             experience_gained=int(payload.get("experience_gained", 0)),
             remaining_hit_points=int(
-                payload.get("enemy_remaining_hit_points", target.hit_points)
+                payload.get("issue_remaining_hit_points", target.hit_points)
             ),
         )
 

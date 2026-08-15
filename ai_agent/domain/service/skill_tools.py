@@ -93,49 +93,49 @@ class GameToolSet:
     def __init__(self, state: GameState | None = None) -> None:
         self.state = state or GameService.create_game()
 
-    def select_enemy(self, enemy_id: str) -> dict[str, Any]:
-        """Agentから敵選択を受け取り、選択後の状態を返す。"""
-        self.state = GameService.select_enemy(self.state, enemy_id)
-        return {"selected_enemy_id": enemy_id}
+    def select_issue(self, issue_id: str) -> dict[str, Any]:
+        """Agentから問題選択を受け取り、選択後の状態を返す。"""
+        self.state = GameService.select_issue(self.state, issue_id)
+        return {"selected_issue_id": issue_id}
 
     def select_line(self, line_id: str) -> dict[str, Any]:
         """Agentからプリセットセリフ選択を受け取り、選択後の状態を返す。"""
         self.state = GameService.select_line(self.state, line_id)
         return {"selected_line_id": line_id}
 
-    def execute(self, tool_name: str, target_enemy_id: str) -> dict[str, Any]:
+    def execute(self, tool_name: str, target_issue_id: str) -> dict[str, Any]:
         """指定されたToolだけを実行し、状態と結果を更新する。"""
         definition = SkillToolCatalog.get(tool_name)
         self.state, result = GameService.execute_skill(
             self.state,
             definition,
-            target_enemy_id=target_enemy_id,
+            target_issue_id=target_issue_id,
         )
         return result.to_dict()
 
-    def analyze_reading(self, target_enemy_id: str) -> dict[str, Any]:
+    def analyze_reading(self, target_issue_id: str) -> dict[str, Any]:
         """国語の読解分析Tool。"""
-        return self.execute("analyze_reading", target_enemy_id)
+        return self.execute("analyze_reading", target_issue_id)
 
-    def analyze_expression(self, target_enemy_id: str) -> dict[str, Any]:
+    def analyze_expression(self, target_issue_id: str) -> dict[str, Any]:
         """国語の表現分析Tool。"""
-        return self.execute("analyze_expression", target_enemy_id)
+        return self.execute("analyze_expression", target_issue_id)
 
-    def calculate(self, target_enemy_id: str) -> dict[str, Any]:
+    def calculate(self, target_issue_id: str) -> dict[str, Any]:
         """算数の計算Tool。"""
-        return self.execute("calculate", target_enemy_id)
+        return self.execute("calculate", target_issue_id)
 
-    def compare_quantities(self, target_enemy_id: str) -> dict[str, Any]:
+    def compare_quantities(self, target_issue_id: str) -> dict[str, Any]:
         """算数の数量比較Tool。"""
-        return self.execute("compare_quantities", target_enemy_id)
+        return self.execute("compare_quantities", target_issue_id)
 
-    def infer_cause(self, target_enemy_id: str) -> dict[str, Any]:
+    def infer_cause(self, target_issue_id: str) -> dict[str, Any]:
         """理科の原因推論Tool。"""
-        return self.execute("infer_cause", target_enemy_id)
+        return self.execute("infer_cause", target_issue_id)
 
-    def analyze_observation(self, target_enemy_id: str) -> dict[str, Any]:
+    def analyze_observation(self, target_issue_id: str) -> dict[str, Any]:
         """理科の観察分析Tool。"""
-        return self.execute("analyze_observation", target_enemy_id)
+        return self.execute("analyze_observation", target_issue_id)
 
     def function_tools(self) -> list[Any]:
         """Agentに登録できる6つのFunction Toolを返す。"""
