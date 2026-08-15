@@ -15,7 +15,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    const progress = document.querySelector("[data-agent-progress]");
+    const progressTitle = document.querySelector("[data-agent-progress-title]");
+    const progressSpinner = document.querySelector("[data-agent-spinner]");
     const agentForms = document.querySelectorAll("[data-agent-form]");
     const progressBar = document.querySelector("[data-agent-progress-bar]");
     const progressText = document.querySelector("[data-agent-progress-text]");
@@ -28,7 +29,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const csrfToken = (form) => form.querySelector("[name=csrfmiddlewaretoken]").value;
 
     const setProgress = (value, text) => {
-        progress.classList.remove("d-none");
+        progressTitle.textContent = value >= 100 ? "Agentの処理が完了しました" : "Agentが処理しています";
+        progressSpinner.classList.toggle("d-none", value >= 100);
+        progressBar.classList.remove("bg-secondary", "bg-success");
+        progressBar.classList.add(value >= 100 ? "bg-success" : "bg-primary");
         progressBar.style.width = `${value}%`;
         progressBar.parentElement.setAttribute("aria-valuenow", value);
         progressText.textContent = text;
@@ -219,6 +223,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 liveSpinner.classList.add("d-none");
                 liveSummary.textContent = `Agent実行に失敗しました: ${reason}`;
                 setProgress(100, `Agent実行に失敗しました: ${reason}`);
+                progressTitle.textContent = "Agent実行に失敗しました";
+                progressBar.classList.remove("bg-success");
+                progressBar.classList.add("bg-danger");
             }
         });
     });

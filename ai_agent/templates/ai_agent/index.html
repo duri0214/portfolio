@@ -76,24 +76,26 @@
             </section>
         </div>
         <div class="col-lg-6">
-            <div class="alert alert-primary d-none" data-agent-progress aria-live="polite">
+            <section class="border p-3" data-agent-status aria-label="Agent実行状況">
+                <div data-agent-progress aria-live="polite">
                 <div class="d-flex align-items-center gap-2 mb-2">
-                    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-                    <strong>Agentが処理しています</strong>
+                    <span class="spinner-border spinner-border-sm d-none" data-agent-spinner aria-hidden="true"></span>
+                    <strong data-agent-progress-title>{% if game.execution_history %}前回のAgent実行は終了しました{% else %}Agentは未実行です{% endif %}</strong>
                 </div>
-                <div class="progress mb-2" role="progressbar" aria-label="Agentの進行状況" aria-valuemin="0" aria-valuemax="100" aria-valuenow="25">
-                    <div class="progress-bar" data-agent-progress-bar style="width: 25%"></div>
+                <div class="progress mb-2" role="progressbar" aria-label="Agentの進行状況" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{% if game.execution_history %}100{% else %}0{% endif %}">
+                    <div class="progress-bar {% if game.execution_history %}bg-success{% else %}bg-secondary{% endif %}" data-agent-progress-bar style="width: {% if game.execution_history %}100{% else %}0{% endif %}%"></div>
                 </div>
                 <p class="fw-semibold small mb-1" data-agent-current-tool aria-live="polite"></p>
-                <p class="small mb-0" data-agent-progress-text>セリフを確認しています。</p>
-            </div>
-            <section class="mt-4 border p-3 d-none" data-live-execution aria-live="polite" aria-label="今回のAgent実行">
+                <p class="small mb-0" data-agent-progress-text>{% if game.execution_history %}処理結果を下の実行履歴で確認できます。{% else %}問題とセリフを選ぶとAgentが処理を開始します。{% endif %}</p>
+                </div>
+                <div class="d-none mt-4" data-live-execution aria-live="polite" aria-label="今回のAgent実行">
                 <div class="d-flex align-items-center gap-2 mb-2">
                     <span class="spinner-border spinner-border-sm" data-live-spinner aria-hidden="true"></span>
                     <h2 class="h5 mb-0">今回のAgent実行</h2>
                 </div>
                 <p class="small mb-2" data-live-summary>Agentが処理を開始しました。</p>
                 <div class="list-group" data-live-steps></div>
+                </div>
             </section>
         </div>
     </section>
