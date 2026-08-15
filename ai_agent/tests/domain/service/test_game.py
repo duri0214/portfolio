@@ -44,10 +44,12 @@ class GameServiceTest(SimpleTestCase):
         - 期待値: プレイヤーが国語の問題と同じマスへ移動する。
         """
         state = GameService.create_game()
+        state = state.with_selection(line_id="line-observe")
 
         next_state = GameService.select_enemy(state, "enemy-language")
 
         self.assertEqual(next_state.selected_enemy_id, "enemy-language")
+        self.assertIsNone(next_state.selected_line_id)
         self.assertEqual(
             next_state.player_position,
             next_state.enemy("enemy-language").position,

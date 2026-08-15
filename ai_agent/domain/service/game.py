@@ -38,6 +38,7 @@ class GameService:
             state,
             player_position=target.position,
             selected_enemy_id=enemy_id,
+            selected_line_id=None,
         )
 
     @staticmethod
