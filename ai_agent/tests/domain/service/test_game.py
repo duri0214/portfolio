@@ -32,7 +32,7 @@ class GameServiceTest(SimpleTestCase):
         self.assertEqual(len(state.preset_lines), 3)
         self.assertEqual(
             {line.label for line in state.preset_lines},
-            {"正面から解く", "観察して解く", "複数Skillで解く"},
+            {"直接解決を試す", "条件を整理して解く", "別の観点で検証する"},
         )
         self.assertEqual(state.experience, 0)
 

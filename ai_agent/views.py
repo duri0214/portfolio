@@ -9,7 +9,7 @@ from django.views.generic import TemplateView
 
 from ai_agent.domain.service.game import GameService
 from ai_agent.domain.service.game_agent import GameAgentService
-from ai_agent.domain.service.skill_tools import GameToolSet, SkillToolCatalog
+from ai_agent.domain.service.skill_tools import GameToolSet
 from ai_agent.domain.valueobject.agent_execution import AgentRunStatus
 from ai_agent.domain.valueobject.game import Position
 
@@ -26,7 +26,6 @@ class IndexView(TemplateView):
         context = super().get_context_data(**kwargs)
         game = self._load_state()
         context["game"] = game
-        context["skill_tools"] = SkillToolCatalog.definitions()
         context["selected_enemy"] = (
             game.enemy(game.selected_enemy_id) if game.selected_enemy_id else None
         )
