@@ -97,6 +97,9 @@ class SkillToolCatalogTest(SimpleTestCase):
             "line-observe",
         )
         now = datetime.now(timezone.utc)
+        agent_output = "観察して条件を整理したため、計算Toolを選びました。" + (
+            "詳細。" * 300
+        )
         run = AgentRun(
             run_id="run-1",
             input_text="横断問題を観察して解く",
@@ -133,7 +136,7 @@ class SkillToolCatalogTest(SimpleTestCase):
                 ),
             ),
             report=Report(
-                output="観察して条件を整理したため、計算Toolを選びました。",
+                output=agent_output,
                 status=AgentRunStatus.COMPLETED,
                 tool_calls=(),
                 tool_results=(),
@@ -146,6 +149,7 @@ class SkillToolCatalogTest(SimpleTestCase):
         restored = type(state).from_json(state_with_record.to_json())
 
         self.assertEqual(record.problem_subjects, "国語 × 算数")
+        self.assertEqual(record.explanation, agent_output)
         self.assertEqual(record.steps[0].operation, "数値や式を計算して答えを確かめる")
         self.assertEqual(
             record.steps[0].input_summary,

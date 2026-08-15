@@ -121,10 +121,9 @@ class GameAgentService:
             line_label=line.label,
             line_text=line.text,
             status=run.status.value,
-            explanation=GameAgentService._compact_text(run.report.output)
-            or "Agentから最終説明は返りませんでした。",
+            explanation=run.report.output,
             steps=steps,
-            error=GameAgentService._compact_text(run.report.error) or None,
+            error=run.report.error or None,
         )
 
     @staticmethod
