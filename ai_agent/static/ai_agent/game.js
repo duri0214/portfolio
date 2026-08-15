@@ -17,6 +17,12 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     setupBoard();
 
+    const setBoardDisabled = (disabled) => {
+        document.querySelectorAll(".board-piece-form button").forEach((button) => {
+            button.disabled = disabled;
+        });
+    };
+
     const progressTitle = document.querySelector("[data-agent-progress-title]");
     const progressSpinner = document.querySelector("[data-agent-spinner]");
     const agentForms = document.querySelectorAll("[data-agent-form]");
@@ -244,6 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
             liveSkillCount = 0;
             liveCombo.classList.add("d-none");
             liveSteps.replaceChildren();
+            setBoardDisabled(true);
             agentForms.forEach((agentForm) => {
                 const button = agentForm.querySelector("[data-agent-submit]");
                 if (button) {
@@ -269,6 +276,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 const savedPage = await saveStreamState(form, stateToken);
                 refreshPersistedState(savedPage);
+                setBoardDisabled(false);
                 setProgress(100, "実行結果を表示しています。");
             } catch (error) {
                 const reason = error instanceof Error ? error.message : String(error);
@@ -279,6 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         button.disabled = false;
                     }
                 });
+                setBoardDisabled(false);
                 setProgress(100, `Agent実行に失敗しました: ${reason}`);
                 progressTitle.textContent = "Agent実行に失敗しました";
                 progressBar.classList.remove("bg-success");
