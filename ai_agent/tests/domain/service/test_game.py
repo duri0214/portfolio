@@ -6,19 +6,28 @@ from ai_agent.domain.valueobject.game import SkillCategory
 
 
 class GameServiceTest(SimpleTestCase):
-    def test_create_game_has_three_enemies_and_preset_lines(self):
+    def test_create_game_has_six_problems_and_preset_lines(self):
         """
         シナリオ:
         - 入力: 新規ゲーム作成の依頼。
         - 処理: GameService.create_gameを呼び出す。
-        - 期待値: 3x3盤面に国語・算数・理科の敵とプリセットセリフが作られる。
+        - 期待値: 3x3盤面に単一教科と科目横断の6つの問題、プリセットセリフが作られる。
         """
         state = GameService.create_game()
 
         self.assertEqual(state.board_size, 3)
+        self.assertEqual(len(state.enemies), 6)
         self.assertEqual(
             {enemy.category for enemy in state.enemies},
             {SkillCategory.LANGUAGE, SkillCategory.MATHEMATICS, SkillCategory.SCIENCE},
+        )
+        self.assertEqual(
+            {
+                enemy.category_display_name
+                for enemy in state.enemies
+                if len(enemy.categories) == 2
+            },
+            {"国語 × 算数", "国語 × 理科", "算数 × 理科"},
         )
         self.assertEqual(len(state.preset_lines), 3)
         self.assertEqual(

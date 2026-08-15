@@ -85,7 +85,7 @@ class GameService:
         message = (
             f"{definition.display_name}が成功し、{target.name}に{damage}ダメージ。"
             if succeeded
-            else f"{definition.display_name}は失敗した。敵への効果はない。"
+            else f"{definition.display_name}は失敗した。問題への効果はない。"
         )
         result = SkillToolResult(
             tool_name=definition.name,

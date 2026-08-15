@@ -41,6 +41,7 @@ class GameAgentService:
         )
         input_text = (
             f"対象の問題: {enemy.enemy_id} ({enemy.name})。"
+            f"対象の教科: {enemy.category_display_name}。"
             f"プレイヤーの選択意図: {line.label}。"
             f"プレイヤーのセリフ: {line.text}。"
             f"選択意図の説明: {line.description}"

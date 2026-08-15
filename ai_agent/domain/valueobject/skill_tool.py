@@ -6,7 +6,7 @@ from typing import Any
 
 
 class SkillCategory(StrEnum):
-    """ゲーム内で敵に対応する教科。
+    """ゲーム内で問題やSkillに対応する教科。
 
     Attributes:
         LANGUAGE: 国語のSkill。
@@ -17,6 +17,15 @@ class SkillCategory(StrEnum):
     LANGUAGE = "language"
     MATHEMATICS = "mathematics"
     SCIENCE = "science"
+
+    @property
+    def display_name(self) -> str:
+        """画面やAgent入力に表示する教科名を返す。"""
+        return {
+            SkillCategory.LANGUAGE: "国語",
+            SkillCategory.MATHEMATICS: "算数",
+            SkillCategory.SCIENCE: "理科",
+        }[self]
 
 
 @dataclass(frozen=True)
@@ -40,11 +49,7 @@ class SkillToolDefinition:
     @property
     def category_display_name(self) -> str:
         """画面に表示する教科名を返す。"""
-        return {
-            SkillCategory.LANGUAGE: "国語",
-            SkillCategory.MATHEMATICS: "算数",
-            SkillCategory.SCIENCE: "理科",
-        }[self.category]
+        return self.category.display_name
 
 
 @dataclass(frozen=True)
