@@ -60,11 +60,15 @@ class PresetLine:
 
     Attributes:
         line_id: セリフの識別子。
+        label: 選択肢として表示する意図の名前。
         text: 画面に表示するセリフ本文。
+        description: Agentに伝える意図の説明。
     """
 
     line_id: str
+    label: str
     text: str
+    description: str
 
 
 @dataclass(frozen=True)
@@ -130,9 +134,24 @@ class GameState:
                 ),
             ),
             preset_lines=(
-                PresetLine("line-challenge", "この問題を解いてみせる！"),
-                PresetLine("line-observe", "よく観察して答えを導く。"),
-                PresetLine("line-chain", "別のSkillも組み合わせて突破する！"),
+                PresetLine(
+                    "line-challenge",
+                    "正面から解く",
+                    "この問題を解いてみせる！",
+                    "まず最も直接的なSkillで問題の解決を試みる。",
+                ),
+                PresetLine(
+                    "line-observe",
+                    "観察して解く",
+                    "よく観察して答えを導く。",
+                    "問題文や対象の特徴を分析してからSkillを選ぶ。",
+                ),
+                PresetLine(
+                    "line-chain",
+                    "複数Skillで解く",
+                    "別のSkillも組み合わせて突破する！",
+                    "1つのToolで終わらず、結果に応じて追加Toolを検討する。",
+                ),
             ),
         )
 

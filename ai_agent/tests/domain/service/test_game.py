@@ -21,6 +21,10 @@ class GameServiceTest(SimpleTestCase):
             {SkillCategory.LANGUAGE, SkillCategory.MATHEMATICS, SkillCategory.SCIENCE},
         )
         self.assertEqual(len(state.preset_lines), 3)
+        self.assertEqual(
+            {line.label for line in state.preset_lines},
+            {"正面から解く", "観察して解く", "複数Skillで解く"},
+        )
         self.assertEqual(state.experience, 0)
 
     def test_successful_skill_returns_new_state_and_effect(self):

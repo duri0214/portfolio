@@ -65,9 +65,13 @@
                     {% csrf_token %}
                     <input type="hidden" name="action" value="select_line">
                     <input type="hidden" name="line_id" value="{{ line.line_id }}">
-                    <span>{{ line.text }}</span>
+                    <span>
+                        <strong>{{ line.label }}</strong><br>
+                        <span>{{ line.text }}</span><br>
+                        <small class="text-muted">{{ line.description }}</small>
+                    </span>
                     <button class="btn btn-sm {% if line.line_id == game.selected_line_id %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit" {% if not selected_enemy %}disabled{% endif %}>
-                        このセリフでAgentに任せる
+                        {{ line.label }}でAgentに任せる
                     </button>
                 </form>
                 {% endfor %}

@@ -41,7 +41,9 @@ class GameAgentService:
         )
         input_text = (
             f"対象の問題: {enemy.enemy_id} ({enemy.name})。"
+            f"プレイヤーの選択意図: {line.label}。"
             f"プレイヤーのセリフ: {line.text}。"
+            f"選択意図の説明: {line.description}"
             "利用可能な6つのSkill Toolから必要なものを選び、"
             "必要なら複数Toolを順番に実行してください。"
             "問題の教科とSkillの教科は一致しなくても構いません。"
