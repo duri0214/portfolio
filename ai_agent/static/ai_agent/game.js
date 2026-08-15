@@ -124,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } else if (event.type === "tool.started") {
             const item = findLiveTool(event.call_id);
             if (item) {
-                item.querySelector(".badge").textContent = "実行中";
+                item.querySelector("[data-live-status]").textContent = "実行中";
             }
             setCurrentTool("実行中", event);
             setProgress(65, `${textValue(event.display_name, event.tool_name)}を処理しています。`);
