@@ -1,129 +1,36 @@
 {% extends "ai_agent/base.html" %}
-{% load static %}
 
 {% block content %}
-    <div class="container mt-4">
-        <!-- Breadcrumb -->
-        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
-            <ol class="breadcrumb mb-0 small">
-                <li class="breadcrumb-item active" aria-current="page">AI Agent</li>
-            </ol>
-        </nav>
+<main class="container mt-4">
+    <h1 class="h2">Skill Chain Game</h1>
+    <p class="text-muted">AgentがToolを選び、結果に応じてSkill Chainを進めます。</p>
 
-        <div class="row g-4">
-            <!-- Hero -->
-            <div class="col-12">
-                <div class="bg-light p-5 rounded shadow-sm">
-                    <h1 class="display-4">Hello, AI Agent!</h1>
-                    <p class="lead">Interact with the AI Agent below.</p>
-                    <hr class="my-4">
-                    <div class="d-flex flex-wrap gap-2">
-                        <form method="POST" action="{% url 'agt:reset_turn' %}" class="d-inline">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-outline-danger">会話をリセット</button>
-                        </form>
-                        <form method="POST" action="{% url 'agt:next_turn' %}" class="d-inline">
-                            {% csrf_token %}
-                            {% if user.is_superuser %}
-                                <button type="submit" class="btn btn-outline-primary">1単位時間進める</button>
-                            {% else %}
-                                <button type="submit" class="btn btn-outline-secondary" disabled>1単位時間進める</button>
-                            {% endif %}
-                        </form>
-                    </div>
-                    {% if not user.is_superuser %}
-                        <p class="small text-muted mt-2 mb-0">「1単位時間進める」ボタンは管理者権限が必要です</p>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Chat + Timeline -->
-            <div class="col-lg-8">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-white pt-3 pb-2">
-                        <h2 class="h5 mb-0"><i class="bi bi-chat-dots me-2"></i>AI Agent Simulation</h2>
-                    </div>
-                    <div class="card-body">
-                        {% if messages %}
-                            <div class="alert alert-light border mb-3">
-                                <h6 class="mb-2"><i class="bi bi-info-circle me-1"></i>システム通知</h6>
-                                <ul class="list-unstyled mb-0 small">
-                                    {% for message in messages %}
-                                        <li class="mb-1">{{ message }}</li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        {% endif %}
-
-                        <div class="mb-4">
-                            {% for chat_message in chat_messages %}
-                                {% if '[ERROR]' in chat_message.message_content %}
-                                    <div class="alert alert-danger small" role="alert">{{ chat_message.message_content }}</div>
-                                {% else %}
-                                    <div class="alert alert-light border small" role="alert">{{ chat_message.message_content }}</div>
-                                {% endif %}
-                            {% empty %}
-                                <div class="alert alert-warning small" role="alert">メッセージ履歴がありません。</div>
-                            {% endfor %}
-                        </div>
-
-                        {% with next_entity=future_actions.first.entity %}
-                            <form method="POST" action="{% url 'agt:index' %}">
-                                {% csrf_token %}
-                                {{ form.as_p }}
-                                <button type="submit" class="btn btn-primary mt-2"
-                                        {% if next_entity.name != 'User' %}disabled{% endif %}>送信</button>
-                            </form>
-                        {% endwith %}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Timeline Sidebar -->
-            <div class="col-lg-4">
-                <div class="card shadow-sm border-0 mb-3">
-                    <div class="card-header bg-white pt-3 pb-2">
-                        <h3 class="h6 mb-0">現在のターン</h3>
-                    </div>
-                    <div class="card-body py-2">
-                        <p class="small mb-0">
-                            {% with latest_completed_turn|default:0 as current_turn %}
-                                ターン: {{ current_turn }}
-                            {% endwith %}
-                        </p>
-                    </div>
-                </div>
-
-                <div class="card shadow-sm border-0 mb-3">
-                    <div class="card-header bg-white pt-3 pb-2">
-                        <h3 class="h6 mb-0">予定される順番</h3>
-                    </div>
-                    <div class="card-body py-2">
-                        <ul class="list-unstyled small mb-0">
-                            {% for future_action in future_actions %}
-                                <li class="mb-1">{{ future_action.entity.name }} <span class="text-muted">(次: {{ future_action.acted_at_turn }})</span></li>
-                            {% empty %}
-                                <li class="text-muted">（なし）</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-white pt-3 pb-2">
-                        <h3 class="h6 mb-0">終了したターンのログ</h3>
-                    </div>
-                    <div class="card-body py-2">
-                        <ul class="list-unstyled small mb-0">
-                            {% for completed_action in completed_actions %}
-                                <li class="mb-1">{{ completed_action.entity.name }} <span class="text-muted">(完了: {{ completed_action.acted_at_turn }})</span></li>
-                            {% empty %}
-                                <li class="text-muted">（なし）</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
+    <section class="row g-4" aria-label="ゲーム状態">
+        <div class="col-lg-5">
+            <h2 class="h5">盤面</h2>
+            <div class="border p-3">
+                <p class="mb-2">経験値: {{ game.experience }}</p>
+                <ul class="list-group">
+                    {% for enemy in game.enemies %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>{{ enemy.name }} ({{ enemy.position.row }}, {{ enemy.position.column }})</span>
+                        <span>HP {{ enemy.hit_points }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
-    </div>
+        <div class="col-lg-7">
+            <h2 class="h5">Skill Tool</h2>
+            <div class="list-group">
+                {% for tool in skill_tools %}
+                <div class="list-group-item d-flex justify-content-between">
+                    <span>{{ tool.display_name }}</span>
+                    <code>{{ tool.name }}</code>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+</main>
 {% endblock %}

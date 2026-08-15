@@ -1,1 +1,1 @@
-# Register your models here.
+"""ai_agentにDjango管理モデルは存在しない。"""
