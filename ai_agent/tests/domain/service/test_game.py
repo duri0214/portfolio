@@ -82,6 +82,33 @@ class GameServiceTest(SimpleTestCase):
         self.assertEqual(next_state.tool_history, ("analyze_reading",))
         self.assertEqual(state.enemy("enemy-language").hit_points, 3)
 
+    def test_skill_targets_selected_cross_subject_problem(self):
+        """
+        シナリオ:
+        - 入力: 国語×算数または国語×理科の問題を選択し、別問題のIDを持つSkill入力。
+        - 処理: GameServiceが選択中の問題へSkillを適用する。
+        - 期待値: 選択中の科目横断問題のHPだけが減少し、入力された別問題は変化しない。
+        """
+        for selected_enemy_id in (
+            "problem-language-mathematics",
+            "problem-language-science",
+        ):
+            with self.subTest(selected_enemy_id=selected_enemy_id):
+                state = GameService.select_enemy(
+                    GameService.create_game(), selected_enemy_id
+                )
+
+                next_state, result = GameService.execute_skill(
+                    state,
+                    SkillToolCatalog.get("analyze_reading"),
+                    target_enemy_id="enemy-language",
+                )
+
+                self.assertTrue(result.success)
+                self.assertEqual(result.target_enemy_id, selected_enemy_id)
+                self.assertEqual(next_state.enemy(selected_enemy_id).hit_points, 2)
+                self.assertEqual(next_state.enemy("enemy-language").hit_points, 3)
+
     def test_skill_damage_does_not_exceed_remaining_hit_points(self):
         state = GameService.create_game()
         state, _ = GameService.execute_skill(

@@ -60,8 +60,10 @@ class GameService:
         """1つのSkillを適用し、更新後の状態と構造化結果を返す。
 
         生存中の問題にSkillを実行した場合だけ、敵の体力と経験値を更新する。
+        選択中の問題がある場合は、Tool入力の対象IDより選択中の問題を優先する。
         撃破済み問題への実行は失敗として状態を変更しない。
         """
+        target_enemy_id = state.selected_enemy_id or target_enemy_id
         try:
             target = state.enemy(target_enemy_id)
         except StopIteration as error:
