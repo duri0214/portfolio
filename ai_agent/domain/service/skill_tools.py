@@ -18,16 +18,52 @@ class SkillToolCatalog:
 
     _DEFINITIONS = (
         SkillToolDefinition(
-            "analyze_reading", "読解分析", SkillCategory.LANGUAGE, 1, 10
+            "analyze_reading",
+            "読解分析",
+            SkillCategory.LANGUAGE,
+            1,
+            10,
+            "問題文の要点と条件を整理する",
         ),
         SkillToolDefinition(
-            "analyze_expression", "表現分析", SkillCategory.LANGUAGE, 2, 15
+            "analyze_expression",
+            "表現分析",
+            SkillCategory.LANGUAGE,
+            2,
+            15,
+            "言葉や表現の関係を読み解く",
         ),
-        SkillToolDefinition("calculate", "計算", SkillCategory.MATHEMATICS, 1, 10),
-        SkillToolDefinition("mental_math", "暗算", SkillCategory.MATHEMATICS, 2, 15),
-        SkillToolDefinition("infer_cause", "原因推論", SkillCategory.SCIENCE, 1, 10),
         SkillToolDefinition(
-            "analyze_observation", "観察分析", SkillCategory.SCIENCE, 2, 15
+            "calculate",
+            "計算",
+            SkillCategory.MATHEMATICS,
+            1,
+            10,
+            "数値や式を計算して答えを確かめる",
+        ),
+        SkillToolDefinition(
+            "mental_math",
+            "暗算",
+            SkillCategory.MATHEMATICS,
+            2,
+            15,
+            "数量関係を素早く見積もる",
+        ),
+        SkillToolDefinition(
+            "infer_cause",
+            "原因推論",
+            SkillCategory.SCIENCE,
+            1,
+            10,
+            "現象から原因と結果の関係を推論する",
+        ),
+        SkillToolDefinition(
+            "analyze_observation",
+            "観察分析",
+            SkillCategory.SCIENCE,
+            2,
+            15,
+            "観察結果から特徴や規則性を整理する",
         ),
     )
 

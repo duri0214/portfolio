@@ -44,6 +44,9 @@ class IndexView(TemplateView):
                     raise ValueError("先に対象の問題を選択してください")
                 game = GameService.select_line(game, request.POST["line_id"])
                 game, run = self._run_agent(game)
+                game = game.with_execution_record(
+                    GameAgentService.create_execution_record(game, run)
+                )
                 self._add_agent_message(request, game, run)
             elif action == "reset":
                 game = GameService.create_game()
@@ -102,12 +105,10 @@ class IndexView(TemplateView):
     def _add_agent_message(request, game, run):
         """AgentのTool選択結果または実行失敗を画面通知へ変換する。"""
         if run.status is AgentRunStatus.COMPLETED:
-            tool_names = [tool.name for tool in run.tool_calls]
-            tool_summary = "、".join(tool_names) if tool_names else "Toolなし"
             messages.success(
                 request,
-                f"Agentが {tool_summary} を選択・実行しました。"
-                f"経験値は {game.experience} です。",
+                f"Agentが処理を完了しました。経験値は {game.experience} です。"
+                "下の実行履歴で判断と結果を確認できます。",
             )
         else:
             messages.error(request, f"Agent実行に失敗しました: {run.report.error}")

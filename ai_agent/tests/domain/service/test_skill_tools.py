@@ -1,7 +1,17 @@
+from datetime import datetime, timezone
+
 from django.test import SimpleTestCase
 
+from ai_agent.domain.service.game import GameService
 from ai_agent.domain.service.game_agent import GameAgentService
 from ai_agent.domain.service.skill_tools import GameToolSet, SkillToolCatalog
+from ai_agent.domain.valueobject.agent_execution import (
+    AgentRun,
+    AgentRunStatus,
+    Report,
+    ToolCall,
+    ToolResult,
+)
 
 
 class SkillToolCatalogTest(SimpleTestCase):
@@ -72,3 +82,77 @@ class SkillToolCatalogTest(SimpleTestCase):
             {tool.name for tool in service.execution.agent.tools},
             {definition.name for definition in SkillToolCatalog.definitions()},
         )
+
+    def test_agent_run_becomes_explainable_execution_history(self):
+        """
+        シナリオ:
+        - 入力: 横断問題に対するAgentのTool Call/Resultと最終説明。
+        - 処理: AgentRunを画面用の実行記録へ変換し、Cookie形式で復元する。
+        - 期待値: 選択理由、加工内容、入力、結果、状態変化が保持される。
+        """
+        state = GameService.select_line(
+            GameService.select_enemy(
+                GameService.create_game(), "problem-language-mathematics"
+            ),
+            "line-observe",
+        )
+        now = datetime.now(timezone.utc)
+        run = AgentRun(
+            run_id="run-1",
+            input_text="横断問題を観察して解く",
+            max_turns=10,
+            status=AgentRunStatus.COMPLETED,
+            started_at=now,
+            completed_at=now,
+            tool_calls=(
+                ToolCall(
+                    call_id="call-1",
+                    name="calculate",
+                    arguments={
+                        "target_enemy_id": "problem-language-mathematics",
+                        "score": 80,
+                    },
+                    sequence=1,
+                ),
+            ),
+            tool_results=(
+                ToolResult(
+                    call_id="call-1",
+                    name="calculate",
+                    output={
+                        "display_name": "計算",
+                        "success": True,
+                        "target_enemy_id": "problem-language-mathematics",
+                        "damage": 1,
+                        "experience_gained": 10,
+                        "enemy_remaining_hit_points": 2,
+                        "message": "計算が成功し、国語×算数の問題に1ダメージ。",
+                    },
+                    succeeded=True,
+                    sequence=1,
+                ),
+            ),
+            report=Report(
+                output="観察して条件を整理したため、計算Toolを選びました。",
+                status=AgentRunStatus.COMPLETED,
+                tool_calls=(),
+                tool_results=(),
+                turns=1,
+            ),
+        )
+
+        record = GameAgentService.create_execution_record(state, run)
+        state_with_record = state.with_execution_record(record)
+        restored = type(state).from_json(state_with_record.to_json())
+
+        self.assertEqual(record.problem_subjects, "国語 × 算数")
+        self.assertEqual(record.steps[0].operation, "数値や式を計算して答えを確かめる")
+        self.assertEqual(
+            record.steps[0].input_summary,
+            "対象: 国語×算数の問題 / 判定スコア: 80",
+        )
+        self.assertEqual(
+            record.steps[0].result_summary,
+            "計算が成功し、国語×算数の問題に1ダメージ。",
+        )
+        self.assertEqual(restored.execution_history[0], record)

@@ -9,6 +9,7 @@
 - プレイヤーは問題駒とプリセットセリフを選択する
 - 成功した Skill は問題にダメージを与え、経験値を加算する
 - 失敗した Skill は結果を残すが、問題と経験値は変更しない
+- Agentの説明、選んだSkill、加工内容、結果、状態変化を実行履歴に残す
 
 ゲーム状態は `GameState` の不変スナップショットで表し、`GameService` が選択とSkill適用を担当します。DBモデルや固定ターン制の履歴は使用しません。
 
@@ -29,7 +30,7 @@ Agentには、以下の6個のFunction Toolを登録します。UI表示名と�
 
 ## 主なクラス
 
-- `GameState`: 盤面、問題、経験値、選択状態、Tool履歴のスナップショット
+- `GameState`: 盤面、問題、経験値、選択状態、Tool履歴、Agent実行履歴のスナップショット
 - `GameService`: ゲーム状態の生成、問題・セリフ選択、Skill適用
 - `SkillToolCatalog`: Toolの実装名、表示名、教科、効果の定義
 - `GameToolSet`: ドメインサービスを SDK Function Tool に変換するアダプター

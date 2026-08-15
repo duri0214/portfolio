@@ -38,6 +38,7 @@ class SkillToolDefinition:
         category: 対応する教科。
         power: 成功時に敵へ与えるダメージ。
         experience: 成功時に加算する経験値。
+        description: Skillが行う加工の説明。
     """
 
     name: str
@@ -45,6 +46,7 @@ class SkillToolDefinition:
     category: SkillCategory
     power: int
     experience: int
+    description: str = ""
 
     @property
     def category_display_name(self) -> str:

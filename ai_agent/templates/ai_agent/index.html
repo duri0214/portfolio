@@ -101,12 +101,55 @@
         </div>
     </section>
 
-    <section class="mt-4 border p-3" aria-label="実行履歴">
-        <h2 class="h5">実行履歴</h2>
-        {% if game.tool_history %}
-            <p class="mb-0"><code>{{ game.tool_history|join:', ' }}</code></p>
+    <section class="mt-4 border p-3" aria-label="Agent実行履歴">
+        <h2 class="h5">Agent実行履歴</h2>
+        {% if game.execution_history %}
+            <div class="list-group">
+            {% for execution in game.execution_history %}
+                <article class="list-group-item">
+                    <div class="d-flex flex-wrap justify-content-between gap-2">
+                        <div>
+                            <strong>Agent実行 #{{ forloop.counter }}</strong>
+                            <span class="badge text-bg-secondary">
+                                {% if execution.status == 'completed' %}完了{% elif execution.status == 'failed' %}失敗{% elif execution.status == 'timed_out' %}タイムアウト{% else %}遮断{% endif %}
+                            </span>
+                        </div>
+                        <span class="text-muted small">{{ execution.problem_name }}（{{ execution.problem_subjects }}）</span>
+                    </div>
+                    <p class="small mb-2"><strong>受け取ったセリフ:</strong> {{ execution.line_label }}「{{ execution.line_text }}」</p>
+                    <div class="alert alert-light border mb-3">
+                        <strong>Agentの説明</strong>
+                        <p class="mb-0 mt-1">{{ execution.explanation }}</p>
+                    </div>
+                    {% if execution.steps %}
+                        <h3 class="h6">選ばれたSkillと処理結果</h3>
+                        <ol class="list-group list-group-numbered mb-0">
+                        {% for step in execution.steps %}
+                            <li class="list-group-item">
+                                <div class="d-flex flex-wrap justify-content-between gap-2">
+                                    <strong>{{ step.display_name }}</strong>
+                                    <code>{{ step.tool_name }}</code>
+                                </div>
+                                <p class="small mb-1">処理: {{ step.operation }}</p>
+                                <p class="small mb-1">入力: {{ step.input_summary }}</p>
+                                <p class="small mb-1 {% if step.success %}text-success{% else %}text-danger{% endif %}">
+                                    結果: {{ step.result_summary }}
+                                </p>
+                                <p class="small text-muted mb-0">状態変化: ダメージ {{ step.damage }} / 経験値 +{{ step.experience_gained }} / 問題の残りHP {{ step.remaining_hit_points }}</p>
+                            </li>
+                        {% endfor %}
+                        </ol>
+                    {% else %}
+                        <p class="text-muted small mb-0">Skill Toolは実行されませんでした。</p>
+                    {% endif %}
+                    {% if execution.error %}
+                        <p class="text-danger small mt-2 mb-0">エラー: {{ execution.error }}</p>
+                    {% endif %}
+                </article>
+            {% endfor %}
+            </div>
         {% else %}
-            <p class="text-muted mb-0">まだSkillを実行していません。</p>
+            <p class="text-muted mb-0">まだAgentを実行していません。問題を選び、セリフでAgentに任せると、ここに判断・処理・結果が表示されます。</p>
         {% endif %}
     </section>
 </main>

@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict
 from dataclasses import dataclass, replace
 import json
+from typing import Any
 
 from ai_agent.domain.valueobject.skill_tool import SkillCategory
 
@@ -86,6 +87,76 @@ class PresetLine:
 
 
 @dataclass(frozen=True)
+class ToolExecutionRecord:
+    """画面に表示するSkill 1回分の実行記録。"""
+
+    sequence: int
+    tool_name: str
+    display_name: str
+    operation: str
+    target_problem_name: str
+    input_summary: str
+    success: bool
+    result_summary: str
+    damage: int
+    experience_gained: int
+    remaining_hit_points: int
+
+    @classmethod
+    def from_dict(cls, value: dict[str, Any]) -> ToolExecutionRecord:
+        """署名付きCookieの辞書から実行記録を復元する。"""
+        return cls(
+            sequence=int(value.get("sequence", 0)),
+            tool_name=str(value.get("tool_name", "")),
+            display_name=str(value.get("display_name", "")),
+            operation=str(value.get("operation", "")),
+            target_problem_name=str(value.get("target_problem_name", "")),
+            input_summary=str(value.get("input_summary", "")),
+            success=bool(value.get("success", False)),
+            result_summary=str(value.get("result_summary", "")),
+            damage=int(value.get("damage", 0)),
+            experience_gained=int(value.get("experience_gained", 0)),
+            remaining_hit_points=int(value.get("remaining_hit_points", 0)),
+        )
+
+
+@dataclass(frozen=True)
+class AgentExecutionRecord:
+    """画面に表示するAgent 1回分の実行記録。"""
+
+    run_id: str
+    problem_id: str
+    problem_name: str
+    problem_subjects: str
+    line_label: str
+    line_text: str
+    status: str
+    explanation: str
+    steps: tuple[ToolExecutionRecord, ...]
+    error: str | None = None
+
+    @classmethod
+    def from_dict(cls, value: dict[str, Any]) -> AgentExecutionRecord:
+        """署名付きCookieの辞書からAgent実行記録を復元する。"""
+        return cls(
+            run_id=str(value.get("run_id", "")),
+            problem_id=str(value.get("problem_id", "")),
+            problem_name=str(value.get("problem_name", "")),
+            problem_subjects=str(value.get("problem_subjects", "")),
+            line_label=str(value.get("line_label", "")),
+            line_text=str(value.get("line_text", "")),
+            status=str(value.get("status", "")),
+            explanation=str(value.get("explanation", "")),
+            steps=tuple(
+                ToolExecutionRecord.from_dict(step)
+                for step in value.get("steps", ())
+                if isinstance(step, dict)
+            ),
+            error=(str(value["error"]) if value.get("error") else None),
+        )
+
+
+@dataclass(frozen=True)
 class GameState:
     """プレイヤー、敵駒、選択状態をまとめたゲームスナップショット。
 
@@ -98,6 +169,7 @@ class GameState:
         selected_enemy_id: 現在選択中の敵識別子。
         selected_line_id: 現在選択中のセリフ識別子。
         tool_history: Agentが実行したTool名の履歴。
+        execution_history: Agentの判断とSkill結果を含む実行履歴。
     """
 
     board_size: int
@@ -108,6 +180,7 @@ class GameState:
     selected_enemy_id: str | None = None
     selected_line_id: str | None = None
     tool_history: tuple[str, ...] = ()
+    execution_history: tuple[AgentExecutionRecord, ...] = ()
 
     def __post_init__(self) -> None:
         if self.board_size < 1:
@@ -209,6 +282,10 @@ class GameState:
         """指定した敵駒を返す。"""
         return next(enemy for enemy in self.enemies if enemy.enemy_id == enemy_id)
 
+    def with_execution_record(self, record: AgentExecutionRecord) -> GameState:
+        """Agent実行記録を最新順で追加した状態を返す。"""
+        return replace(self, execution_history=(record,) + self.execution_history)
+
     def to_json(self) -> str:
         """ブラウザへ署名付きCookieとして保存できるJSONを返す。"""
         return json.dumps(asdict(self), ensure_ascii=True)
@@ -241,4 +318,9 @@ class GameState:
             selected_enemy_id=payload.get("selected_enemy_id"),
             selected_line_id=payload.get("selected_line_id"),
             tool_history=tuple(payload.get("tool_history", ())),
+            execution_history=tuple(
+                AgentExecutionRecord.from_dict(record)
+                for record in payload.get("execution_history", ())
+                if isinstance(record, dict)
+            ),
         )
