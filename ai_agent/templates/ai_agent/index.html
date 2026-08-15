@@ -13,14 +13,6 @@
         </form>
     </div>
 
-    <div data-agent-messages>
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %}" role="alert">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    </div>
-
     <section class="row g-4" aria-label="ゲーム状態">
         <div class="col-lg-6">
             <h2 class="h5">1. 盤面から問題を選ぶ</h2>
@@ -91,6 +83,13 @@
                 <span class="badge rounded-pill text-bg-dark d-none mt-4 mb-2" data-live-combo aria-live="polite"></span>
                 <div class="mt-4 list-group" data-live-steps aria-live="polite"></div>
             </section>
+            <div class="mt-4" data-agent-messages>
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %}" role="alert">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
         </div>
     </section>
 
