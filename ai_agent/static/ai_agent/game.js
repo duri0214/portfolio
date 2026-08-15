@@ -79,7 +79,7 @@ document.addEventListener("DOMContentLoaded", () => {
         heading.className = "d-flex flex-wrap justify-content-between gap-2";
         appendText(heading, "strong", "", textValue(event.display_name, event.tool_name));
         const skillBadge = appendText(heading, "span", "badge text-bg-warning", textValue(event.tool_name));
-        skillBadge.title = textValue(event.operation, "Skillの処理内容");
+        skillBadge.title = `${textValue(event.display_name, event.tool_name)}: ${textValue(event.operation, "Skillの処理内容")}`;
         const statusBadge = appendText(heading, "span", "badge text-bg-warning", "選択済み");
         statusBadge.dataset.liveStatus = "true";
         item.appendChild(heading);

@@ -127,7 +127,7 @@
                             <li class="list-group-item">
                                 <div class="d-flex flex-wrap justify-content-between gap-2">
                                     <strong>{{ step.display_name }}</strong>
-                                    <span class="badge {% if step.success %}text-bg-success{% else %}text-bg-danger{% endif %}" title="{{ step.operation }}">{{ step.tool_name }}</span>
+                                    <span class="badge {% if step.success %}text-bg-success{% else %}text-bg-danger{% endif %}" title="{{ step.display_name }}: {{ step.operation }}">{{ step.tool_name }}</span>
                                 </div>
                                 <p class="small text-muted mb-0">状態変化: ダメージ {{ step.damage }} / 経験値 +{{ step.experience_gained }} / 問題の残りHP {{ step.remaining_hit_points }}</p>
                             </li>
