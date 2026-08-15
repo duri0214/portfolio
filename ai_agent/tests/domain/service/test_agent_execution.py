@@ -49,17 +49,15 @@ class FakeStreamingResult:
         self.new_items = [
             SimpleNamespace(
                 type="tool_call_item",
-                raw_item=SimpleNamespace(
-                    call_id="call-stream-1",
-                    name="lookup_skill",
-                    arguments='{"topic": "science"}',
-                ),
+                raw_item={
+                    "call_id": "call-stream-1",
+                    "name": "lookup_skill",
+                    "arguments": '{"topic": "science"}',
+                },
             ),
             SimpleNamespace(
                 type="tool_call_output_item",
-                raw_item=SimpleNamespace(
-                    call_id="call-stream-1", output="result:science"
-                ),
+                raw_item={"call_id": "call-stream-1", "output": "result:science"},
             ),
         ]
         self.raw_responses = [object()]

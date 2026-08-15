@@ -268,10 +268,14 @@ class AgentExecutionService:
         item = getattr(stream_event, "item", None)
         raw_item = getattr(item, "raw_item", None)
         if getattr(stream_event, "name", "") == "tool_called":
-            call_id = getattr(raw_item, "call_id", None) or getattr(raw_item, "id", "")
-            name = getattr(raw_item, "name", "")
+            call_id = cls._raw_value(raw_item, "call_id") or cls._raw_value(
+                raw_item, "id", ""
+            )
+            name = cls._raw_value(raw_item, "name", "")
             names_by_call_id[call_id] = name
-            arguments = cls._parse_arguments(getattr(raw_item, "arguments", "{}"))
+            arguments = cls._parse_arguments(
+                cls._raw_value(raw_item, "arguments", "{}")
+            )
             sequence += 1
             return {
                 "type": "tool.selected",
@@ -282,11 +286,13 @@ class AgentExecutionService:
             }
         if getattr(stream_event, "name", "") != "tool_output":
             return None
-        call_id = getattr(raw_item, "call_id", "")
-        tool_error = getattr(raw_item, "error", None)
+        call_id = cls._raw_value(raw_item, "call_id") or cls._raw_value(
+            raw_item, "id", ""
+        )
+        tool_error = cls._raw_value(raw_item, "error", None)
         output = getattr(item, "output", None)
         if output is None:
-            output = getattr(raw_item, "output", None)
+            output = cls._raw_value(raw_item, "output", None)
         return {
             "type": "tool.failed" if tool_error is not None else "tool.completed",
             "call_id": call_id,
@@ -306,6 +312,13 @@ class AgentExecutionService:
         if timeout_seconds is not None and timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be greater than zero")
 
+    @staticmethod
+    def _raw_value(raw_item: Any, name: str, default: Any = None) -> Any:
+        """SDKの辞書形式とオブジェクト形式のraw itemから値を読む。"""
+        if isinstance(raw_item, dict):
+            return raw_item.get(name, default)
+        return getattr(raw_item, name, default)
+
     @classmethod
     def _extract_tool_trace(
         cls, result: Any
@@ -318,29 +331,34 @@ class AgentExecutionService:
             raw_item = getattr(item, "raw_item", None)
             item_type = getattr(item, "type", "")
             if item_type == "tool_call_item":
-                call_id = getattr(raw_item, "call_id", None) or getattr(
+                call_id = cls._raw_value(raw_item, "call_id") or cls._raw_value(
                     raw_item, "id", ""
                 )
-                name = getattr(raw_item, "name", "")
+                name = cls._raw_value(raw_item, "name", "")
                 names_by_call_id[call_id] = name
                 calls.append(
                     ToolCall(
                         call_id=call_id,
                         name=name,
                         arguments=cls._parse_arguments(
-                            getattr(raw_item, "arguments", "{}")
+                            cls._raw_value(raw_item, "arguments", "{}")
                         ),
                         sequence=len(calls) + 1,
                     )
                 )
             elif item_type == "tool_call_output_item":
-                call_id = getattr(raw_item, "call_id", "")
-                tool_error = getattr(raw_item, "error", None)
+                call_id = cls._raw_value(raw_item, "call_id") or cls._raw_value(
+                    raw_item, "id", ""
+                )
+                tool_error = cls._raw_value(raw_item, "error", None)
+                output = getattr(item, "output", None)
+                if output is None:
+                    output = cls._raw_value(raw_item, "output", None)
                 results.append(
                     ToolResult(
                         call_id=call_id,
                         name=names_by_call_id.get(call_id, ""),
-                        output=cls._serialize_output(getattr(raw_item, "output", None)),
+                        output=cls._serialize_output(output),
                         succeeded=tool_error is None,
                         sequence=len(results) + 1,
                         error=(str(tool_error) if tool_error is not None else None),

@@ -219,9 +219,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 setProgress(100, "実行結果を表示しています。");
                 window.location.reload();
             } catch (error) {
+                const reason = error instanceof Error ? error.message : String(error);
+                console.error("Agent streaming failed", error);
                 liveSpinner.classList.add("d-none");
-                liveSummary.textContent = error.message;
-                setProgress(100, "Agent実行に失敗しました。");
+                liveSummary.textContent = `Agent実行に失敗しました: ${reason}`;
+                setProgress(100, `Agent実行に失敗しました: ${reason}`);
             }
         });
     });
