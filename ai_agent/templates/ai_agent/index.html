@@ -16,7 +16,7 @@
 
     {% if messages %}
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags|default:'info' }}" role="alert">{{ message }}</div>
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %}" role="alert">{{ message }}</div>
         {% endfor %}
     {% endif %}
 
@@ -24,7 +24,7 @@
         <h2 class="h6">この画面で起こること</h2>
         <ol class="mb-0 ps-3">
             <li>敵を選ぶと、以降のSkillの攻撃対象が決まります。</li>
-            <li>セリフを選ぶと、Agentへ渡すプレイヤーの意図を決められます。</li>
+            <li>セリフを選ぶと、プレイヤーの意図としてゲーム状態に記録されます。</li>
             <li>Skillの達成度を入力して実行します。60以上なら成功し、敵HPと経験値が変わります。</li>
             <li>60未満なら失敗し、敵HPと経験値は変わりません。実行履歴には残ります。</li>
         </ol>
@@ -68,6 +68,7 @@
 
             <h2 class="h5">3. Skillを実行する</h2>
             <p class="small text-muted">対象: {% if selected_enemy %}{{ selected_enemy.name }}{% else %}未選択。先に敵を選んでください{% endif %}</p>
+            <p class="small text-muted">敵と同じ教科のSkillだけが有効です。達成度60以上で成功します。</p>
             <div class="list-group">
                 {% for tool in skill_tools %}
                 <form method="post" class="list-group-item d-flex flex-wrap align-items-center justify-content-between gap-2">
@@ -78,7 +79,7 @@
                     <label class="small">達成度
                         <input class="form-control form-control-sm d-inline-block" style="width: 5rem;" type="number" name="score" min="0" max="100" value="80" required>
                     </label>
-                    <button class="btn btn-sm btn-success" type="submit" {% if not selected_enemy %}disabled{% endif %}>実行</button>
+                    <button class="btn btn-sm btn-success" type="submit" {% if not selected_enemy or selected_enemy.category != tool.category %}disabled{% endif %}>実行</button>
                 </form>
                 {% endfor %}
             </div>
