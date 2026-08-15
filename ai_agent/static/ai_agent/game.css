@@ -2,6 +2,7 @@
     --board-size: 3;
     display: grid;
     grid-template-columns: repeat(var(--board-size), minmax(0, 1fr));
+    grid-template-rows: repeat(var(--board-size), minmax(0, 1fr));
     width: min(100%, 420px);
     aspect-ratio: 1;
     border: 2px solid #243447;
@@ -86,13 +87,13 @@
 
 .player-piece {
     display: grid;
-    width: 70%;
+    width: 2.75rem;
     aspect-ratio: 1;
     place-items: center;
     border-radius: 50%;
     background: #2a9d8f;
     color: #fff;
-    font-size: clamp(1rem, 5vw, 1.8rem);
+    font-size: 1.25rem;
 }
 
 @media (max-width: 575.98px) {
