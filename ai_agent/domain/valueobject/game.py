@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import asdict
 from dataclasses import dataclass, replace
+import json
 
 from ai_agent.domain.valueobject.skill_tool import SkillCategory
 
@@ -146,3 +148,31 @@ class GameState:
     def enemy(self, enemy_id: str) -> EnemyState:
         """指定した敵駒を返す。"""
         return next(enemy for enemy in self.enemies if enemy.enemy_id == enemy_id)
+
+    def to_json(self) -> str:
+        """ブラウザへ署名付きCookieとして保存できるJSONを返す。"""
+        return json.dumps(asdict(self), ensure_ascii=True)
+
+    @classmethod
+    def from_json(cls, value: str) -> GameState:
+        """署名付きCookieのJSONからゲーム状態を復元する。"""
+        payload = json.loads(value)
+        initial = cls.initial()
+        health_by_enemy = {
+            enemy["enemy_id"]: int(enemy["hit_points"])
+            for enemy in payload.get("enemies", [])
+        }
+        enemies = tuple(
+            replace(
+                enemy, hit_points=health_by_enemy.get(enemy.enemy_id, enemy.hit_points)
+            )
+            for enemy in initial.enemies
+        )
+        return replace(
+            initial,
+            experience=int(payload.get("experience", 0)),
+            enemies=enemies,
+            selected_enemy_id=payload.get("selected_enemy_id"),
+            selected_line_id=payload.get("selected_line_id"),
+            tool_history=tuple(payload.get("tool_history", ())),
+        )

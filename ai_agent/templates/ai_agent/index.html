@@ -2,35 +2,96 @@
 
 {% block content %}
 <main class="container mt-4">
-    <h1 class="h2">Skill Chain Game</h1>
-    <p class="text-muted">AgentがToolを選び、結果に応じてSkill Chainを進めます。</p>
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+        <div>
+            <h1 class="h2 mb-1">Skill Chain Game</h1>
+            <p class="text-muted mb-0">敵とセリフを選び、Skillを実行して敵を倒します。</p>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reset">
+            <button class="btn btn-outline-secondary" type="submit">最初からやり直す</button>
+        </form>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }}" role="alert">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <section class="alert alert-info" aria-label="遊び方">
+        <h2 class="h6">この画面で起こること</h2>
+        <ol class="mb-0 ps-3">
+            <li>敵を選ぶと、以降のSkillの攻撃対象が決まります。</li>
+            <li>セリフを選ぶと、Agentへ渡すプレイヤーの意図を決められます。</li>
+            <li>Skillの達成度を入力して実行します。60以上なら成功し、敵HPと経験値が変わります。</li>
+            <li>60未満なら失敗し、敵HPと経験値は変わりません。実行履歴には残ります。</li>
+        </ol>
+    </section>
 
     <section class="row g-4" aria-label="ゲーム状態">
         <div class="col-lg-5">
-            <h2 class="h5">盤面</h2>
+            <h2 class="h5">1. 敵を選ぶ</h2>
             <div class="border p-3">
-                <p class="mb-2">経験値: {{ game.experience }}</p>
-                <ul class="list-group">
+                <p class="mb-2">経験値: <strong>{{ game.experience }}</strong></p>
+                <div class="list-group">
                     {% for enemy in game.enemies %}
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span>{{ enemy.name }} ({{ enemy.position.row }}, {{ enemy.position.column }})</span>
-                        <span>HP {{ enemy.hit_points }}</span>
-                    </li>
+                    <form method="post" class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="select_enemy">
+                        <input type="hidden" name="enemy_id" value="{{ enemy.enemy_id }}">
+                        <span>{{ enemy.name }} / マス ({{ enemy.position.row }}, {{ enemy.position.column }}) / HP {{ enemy.hit_points }}</span>
+                        <button class="btn btn-sm {% if enemy.enemy_id == game.selected_enemy_id %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit">
+                            {% if enemy.enemy_id == game.selected_enemy_id %}選択中{% else %}選ぶ{% endif %}
+                        </button>
+                    </form>
                     {% endfor %}
-                </ul>
+                </div>
             </div>
         </div>
         <div class="col-lg-7">
-            <h2 class="h5">Skill Tool</h2>
+            <h2 class="h5">2. セリフを選ぶ</h2>
+            <div class="list-group mb-4">
+                {% for line in game.preset_lines %}
+                <form method="post" class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="select_line">
+                    <input type="hidden" name="line_id" value="{{ line.line_id }}">
+                    <span>{{ line.text }}</span>
+                    <button class="btn btn-sm {% if line.line_id == game.selected_line_id %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit">
+                        {% if line.line_id == game.selected_line_id %}選択中{% else %}選ぶ{% endif %}
+                    </button>
+                </form>
+                {% endfor %}
+            </div>
+
+            <h2 class="h5">3. Skillを実行する</h2>
+            <p class="small text-muted">対象: {% if selected_enemy %}{{ selected_enemy.name }}{% else %}未選択。先に敵を選んでください{% endif %}</p>
             <div class="list-group">
                 {% for tool in skill_tools %}
-                <div class="list-group-item d-flex justify-content-between">
-                    <span>{{ tool.display_name }}</span>
-                    <code>{{ tool.name }}</code>
-                </div>
+                <form method="post" class="list-group-item d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="use_tool">
+                    <input type="hidden" name="tool_name" value="{{ tool.name }}">
+                    <span><strong>{{ tool.display_name }}</strong> <span class="text-muted small">({{ tool.category_display_name }})</span><br><code>{{ tool.name }}</code></span>
+                    <label class="small">達成度
+                        <input class="form-control form-control-sm d-inline-block" style="width: 5rem;" type="number" name="score" min="0" max="100" value="80" required>
+                    </label>
+                    <button class="btn btn-sm btn-success" type="submit" {% if not selected_enemy %}disabled{% endif %}>実行</button>
+                </form>
                 {% endfor %}
             </div>
         </div>
+    </section>
+
+    <section class="mt-4 border p-3" aria-label="実行履歴">
+        <h2 class="h5">実行履歴</h2>
+        {% if game.tool_history %}
+            <p class="mb-0"><code>{{ game.tool_history|join:', ' }}</code></p>
+        {% else %}
+            <p class="text-muted mb-0">まだSkillを実行していません。</p>
+        {% endif %}
     </section>
 </main>
 {% endblock %}

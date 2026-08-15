@@ -37,6 +37,15 @@ class SkillToolDefinition:
     power: int
     experience: int
 
+    @property
+    def category_display_name(self) -> str:
+        """画面に表示する教科名を返す。"""
+        return {
+            SkillCategory.LANGUAGE: "国語",
+            SkillCategory.MATHEMATICS: "算数",
+            SkillCategory.SCIENCE: "理科",
+        }[self.category]
+
 
 @dataclass(frozen=True)
 class SkillToolResult:
