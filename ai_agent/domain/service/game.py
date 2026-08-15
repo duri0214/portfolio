@@ -58,10 +58,6 @@ class GameService:
             target = state.enemy(target_enemy_id)
         except StopIteration as error:
             raise GameDomainError(f"unknown enemy: {target_enemy_id}") from error
-        if target.category is not definition.category:
-            raise GameDomainError(
-                f"{definition.name} cannot target {target.category.value} enemy"
-            )
 
         succeeded = score >= 60 and not target.defeated
         damage = definition.power if succeeded else 0

@@ -24,9 +24,9 @@
         <h2 class="h6">この画面で起こること</h2>
         <ol class="mb-0 ps-3">
             <li>敵を選ぶと、以降のSkillの攻撃対象が決まります。</li>
-            <li>セリフを選ぶと、プレイヤーの意図としてゲーム状態に記録されます。</li>
-            <li>Skillの達成度を入力して実行します。60以上なら成功し、敵HPと経験値が変わります。</li>
-            <li>60未満なら失敗し、敵HPと経験値は変わりません。実行履歴には残ります。</li>
+            <li>セリフの「このセリフでAgentに任せる」を押すと、セリフを最終決定します。</li>
+            <li>最終決定後、Agentが6つのSkillから必要なものを選びます。</li>
+            <li>AgentのTool結果に応じて、敵HP、経験値、実行履歴が変わります。</li>
         </ol>
     </section>
 
@@ -51,7 +51,7 @@
             </div>
         </div>
         <div class="col-lg-7">
-            <h2 class="h5">2. セリフを選ぶ</h2>
+            <h2 class="h5">2. セリフを選んでAgentへ最終決定</h2>
             <div class="list-group mb-4">
                 {% for line in game.preset_lines %}
                 <form method="post" class="list-group-item d-flex justify-content-between align-items-center gap-2">
@@ -59,28 +59,21 @@
                     <input type="hidden" name="action" value="select_line">
                     <input type="hidden" name="line_id" value="{{ line.line_id }}">
                     <span>{{ line.text }}</span>
-                    <button class="btn btn-sm {% if line.line_id == game.selected_line_id %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit">
-                        {% if line.line_id == game.selected_line_id %}選択中{% else %}選ぶ{% endif %}
+                    <button class="btn btn-sm {% if line.line_id == game.selected_line_id %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit" {% if not selected_enemy %}disabled{% endif %}>
+                        このセリフでAgentに任せる
                     </button>
                 </form>
                 {% endfor %}
             </div>
-
-            <h2 class="h5">3. Skillを実行する</h2>
             <p class="small text-muted">対象: {% if selected_enemy %}{{ selected_enemy.name }}{% else %}未選択。先に敵を選んでください{% endif %}</p>
-            <p class="small text-muted">敵と同じ教科のSkillだけが有効です。達成度60以上で成功します。</p>
+            <h3 class="h6">Agentが利用できる6つのSkill</h3>
+            <p class="small text-muted">ここに表示されるSkillからAgentが選びます。敵の教科と異なるSkillも選択できます。</p>
             <div class="list-group">
                 {% for tool in skill_tools %}
-                <form method="post" class="list-group-item d-flex flex-wrap align-items-center justify-content-between gap-2">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="use_tool">
-                    <input type="hidden" name="tool_name" value="{{ tool.name }}">
-                    <span><strong>{{ tool.display_name }}</strong> <span class="text-muted small">({{ tool.category_display_name }})</span><br><code>{{ tool.name }}</code></span>
-                    <label class="small">達成度
-                        <input class="form-control form-control-sm d-inline-block" style="width: 5rem;" type="number" name="score" min="0" max="100" value="80" required>
-                    </label>
-                    <button class="btn btn-sm btn-success" type="submit" {% if not selected_enemy or selected_enemy.category != tool.category %}disabled{% endif %}>実行</button>
-                </form>
+                <div class="list-group-item d-flex justify-content-between gap-2">
+                    <span><strong>{{ tool.display_name }}</strong> <span class="text-muted small">({{ tool.category_display_name }})</span></span>
+                    <code>{{ tool.name }}</code>
+                </div>
                 {% endfor %}
             </div>
         </div>

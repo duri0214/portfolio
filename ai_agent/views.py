@@ -5,11 +5,13 @@ from django.shortcuts import redirect
 from django.views.generic import TemplateView
 
 from ai_agent.domain.service.game import GameService
-from ai_agent.domain.service.skill_tools import SkillToolCatalog
+from ai_agent.domain.service.game_agent import GameAgentService
+from ai_agent.domain.service.skill_tools import GameToolSet, SkillToolCatalog
+from ai_agent.domain.valueobject.agent_execution import AgentRunStatus
 
 
 class IndexView(TemplateView):
-    """敵選択、セリフ選択、Skill実行を扱うゲーム画面アダプター。"""
+    """敵選択、セリフ決定、Agent実行を扱うゲーム画面アダプター。"""
 
     template_name = "ai_agent/index.html"
     state_cookie_name = "ai_agent_game_state"
@@ -36,13 +38,11 @@ class IndexView(TemplateView):
                     request, "対象の敵を選択しました。次にセリフを選んでください。"
                 )
             elif action == "select_line":
+                if not game.selected_enemy_id:
+                    raise ValueError("先に対象の敵を選択してください")
                 game = GameService.select_line(game, request.POST["line_id"])
-                messages.success(
-                    request, "セリフを選択しました。相性のよいSkillを実行できます。"
-                )
-            elif action == "use_tool":
-                game, result = self._execute_tool(game, request)
-                messages.success(request, result.message)
+                game, run = self._run_agent(game)
+                self._add_agent_message(request, game, run)
             elif action == "reset":
                 game = GameService.create_game()
                 messages.success(request, "ゲームを初期状態へ戻しました。")
@@ -71,15 +71,23 @@ class IndexView(TemplateView):
             return GameService.create_game()
 
     @staticmethod
-    def _execute_tool(game, request):
-        """選択済みの敵へ、指定されたSkillを1回適用する。"""
-        if not game.selected_enemy_id:
-            raise ValueError("先に対象の敵を選択してください")
-        score = int(request.POST.get("score", "0"))
-        definition = SkillToolCatalog.get(request.POST["tool_name"])
-        return GameService.execute_skill(
-            game,
-            definition,
-            target_enemy_id=game.selected_enemy_id,
-            score=score,
-        )
+    def _run_agent(game):
+        """選択状態をAgentへ渡し、Agent実行後のTool状態を返す。"""
+        tools = GameToolSet(game)
+        agent = GameAgentService(tools=tools)
+        run = agent.run_selected()
+        return tools.state, run
+
+    @staticmethod
+    def _add_agent_message(request, game, run):
+        """AgentのTool選択結果または実行失敗を画面通知へ変換する。"""
+        if run.status is AgentRunStatus.COMPLETED:
+            tool_names = [tool.name for tool in run.tool_calls]
+            tool_summary = "、".join(tool_names) if tool_names else "Toolなし"
+            messages.success(
+                request,
+                f"Agentが {tool_summary} を選択・実行しました。"
+                f"経験値は {game.experience} です。",
+            )
+        else:
+            messages.error(request, f"Agent実行に失敗しました: {run.report.error}")

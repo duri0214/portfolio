@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 
-from ai_agent.domain.service.game import GameDomainError, GameService
+from ai_agent.domain.service.game import GameService
 from ai_agent.domain.service.skill_tools import SkillToolCatalog
 from ai_agent.domain.valueobject.game import SkillCategory
 
@@ -92,17 +92,20 @@ class GameServiceTest(SimpleTestCase):
         self.assertEqual(state.experience, 25)
         self.assertTrue(state.enemy("enemy-language").defeated)
 
-    def test_skill_cannot_target_another_category(self):
+    def test_skill_can_target_another_category(self):
         """
         シナリオ:
-        - 入力: 国語の読解分析を理科の敵へ向ける。
-        - 処理: GameServiceが教科と敵の不一致を検証する。
-        - 期待値: ドメインエラーが発生し、誤った効果が適用されない。
+        - 入力: 国語の敵を対象に算数の計算Toolをscore 80で実行する。
+        - 処理: Agentが選んだ教科の異なるSkillを適用する。
+        - 期待値: Skillが成功し、対象敵のHPと経験値が更新される。
         """
-        with self.assertRaises(GameDomainError):
-            GameService.execute_skill(
-                GameService.create_game(),
-                SkillToolCatalog.get("analyze_reading"),
-                target_enemy_id="enemy-science",
-                score=100,
-            )
+        state, result = GameService.execute_skill(
+            GameService.create_game(),
+            SkillToolCatalog.get("calculate"),
+            target_enemy_id="enemy-language",
+            score=80,
+        )
+
+        self.assertTrue(result.success)
+        self.assertEqual(state.enemy("enemy-language").hit_points, 2)
+        self.assertEqual(state.experience, 10)
