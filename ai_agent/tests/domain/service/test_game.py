@@ -27,6 +27,26 @@ class GameServiceTest(SimpleTestCase):
         )
         self.assertEqual(state.experience, 0)
 
+    def test_selecting_problem_moves_player_to_problem_position(self):
+        """
+        シナリオ:
+        - 入力: 初期盤面で国語の問題駒を選択する。
+        - 処理: GameServiceが対象問題を選び、プレイヤー位置を更新する。
+        - 期待値: プレイヤーが国語の問題と同じマスへ移動する。
+        """
+        state = GameService.create_game()
+
+        next_state = GameService.select_enemy(state, "enemy-language")
+
+        self.assertEqual(next_state.selected_enemy_id, "enemy-language")
+        self.assertEqual(
+            next_state.player_position,
+            next_state.enemy("enemy-language").position,
+        )
+        self.assertNotEqual(state.player_position, next_state.player_position)
+        restored_state = type(next_state).from_json(next_state.to_json())
+        self.assertEqual(restored_state.player_position, next_state.player_position)
+
     def test_successful_skill_returns_new_state_and_effect(self):
         """
         シナリオ:

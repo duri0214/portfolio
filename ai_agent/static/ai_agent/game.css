@@ -44,6 +44,7 @@
 }
 
 .board-piece.problem-piece {
+    position: relative;
     background: #f6c85f;
 }
 
@@ -61,6 +62,20 @@
 .problem-piece-hp {
     font-size: 0.7rem;
     font-weight: 400;
+}
+
+.player-piece-marker {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.35rem;
+    display: grid;
+    width: 1.35rem;
+    height: 1.35rem;
+    place-items: center;
+    border-radius: 50%;
+    background: #2a9d8f;
+    color: #fff;
+    font-size: 0.75rem;
 }
 
 .player-piece {

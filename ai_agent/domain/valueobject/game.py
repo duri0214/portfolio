@@ -190,8 +190,14 @@ class GameState:
             )
             for enemy in initial.enemies
         )
+        player_position_payload = payload.get("player_position", {})
+        player_position = Position(
+            int(player_position_payload.get("row", initial.player_position.row)),
+            int(player_position_payload.get("column", initial.player_position.column)),
+        )
         return replace(
             initial,
+            player_position=player_position,
             experience=int(payload.get("experience", 0)),
             enemies=enemies,
             selected_enemy_id=payload.get("selected_enemy_id"),

@@ -27,10 +27,18 @@ class GameService:
 
     @staticmethod
     def select_enemy(state: GameState, enemy_id: str) -> GameState:
-        """対象敵を選択した状態を返す。"""
-        if not any(enemy.enemy_id == enemy_id for enemy in state.enemies):
-            raise GameDomainError(f"unknown enemy: {enemy_id}")
-        return state.with_selection(enemy_id=enemy_id)
+        """対象問題を選択し、プレイヤー駒をそのマスへ移動した状態を返す。"""
+        try:
+            target = state.enemy(enemy_id)
+        except StopIteration as error:
+            raise GameDomainError(f"unknown enemy: {enemy_id}") from error
+        if target.defeated:
+            raise GameDomainError(f"problem is already solved: {enemy_id}")
+        return replace(
+            state,
+            player_position=target.position,
+            selected_enemy_id=enemy_id,
+        )
 
     @staticmethod
     def select_line(state: GameState, line_id: str) -> GameState:

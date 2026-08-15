@@ -44,6 +44,7 @@
                             <input type="hidden" name="action" value="select_enemy">
                             <input type="hidden" name="enemy_id" value="{{ cell.problem.enemy_id }}">
                             <button class="board-piece problem-piece {% if cell.problem.enemy_id == game.selected_enemy_id %}is-selected{% endif %}" type="submit" data-board-problem="{{ cell.problem.enemy_id }}" aria-label="{{ cell.problem.name }}を選ぶ">
+                                {% if cell.is_player %}<span class="player-piece-marker" aria-hidden="true">P</span>{% endif %}
                                 <span class="problem-piece-name">{{ cell.problem.name }}</span>
                                 <span class="problem-piece-hp">残りHP {{ cell.problem.hit_points }}</span>
                             </button>
@@ -54,7 +55,7 @@
                     </div>
                     {% endfor %}
                 </div>
-                <p class="small text-muted mb-0">Pがプレイヤー、色付きの駒が問題です。3つの問題から今回解きたい科目を1つ選んでください。正しいSkillを自分で探す必要はありません。</p>
+                <p class="small text-muted mb-0">Pがプレイヤー、色付きの駒が問題です。問題駒をクリックするとPがそのマスへ移動します。3つの問題から今回解きたい科目を1つ選んでください。</p>
             </div>
         </div>
         <div class="col-lg-7">
