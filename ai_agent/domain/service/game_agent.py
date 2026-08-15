@@ -22,6 +22,7 @@ class GameAgentService:
             instructions=(
                 "プレイヤーのセリフを解釈し、利用可能なSkill Toolから必要なものを選ぶ。"
                 "Toolの呼び出し順は固定せず、結果に応じて追加Toolを選択する。"
+                "Tool結果で問題の残りHPが0になったら、追加Toolを呼ばずに終了する。"
                 "実行後は、選択理由、行った処理、得られた結果を日本語で簡潔に説明する。"
             ),
             tools=self.tools.function_tools(),
