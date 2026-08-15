@@ -174,10 +174,7 @@ class GameAgentService:
 
     @staticmethod
     def _format_input(target_name: str, arguments: dict) -> str:
-        score = arguments.get("score")
-        if score is None:
-            return f"対象: {target_name}"
-        return f"対象: {target_name} / 判定スコア: {score}"
+        return f"対象: {target_name}"
 
     @staticmethod
     def _compact_text(value, limit: int = 800) -> str:

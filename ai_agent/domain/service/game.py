@@ -55,21 +55,18 @@ class GameService:
         definition: SkillToolDefinition,
         *,
         target_enemy_id: str,
-        score: int,
     ) -> tuple[GameState, SkillToolResult]:
         """1つのSkillを適用し、更新後の状態と構造化結果を返す。
 
-        scoreが60未満なら失敗として状態を変更しない。成功時だけ敵の体力と経験値を
-        更新するため、失敗Toolを含むChainでも結果を明確に追跡できる。
+        生存中の問題にSkillを実行した場合だけ、敵の体力と経験値を更新する。
+        撃破済み問題への実行は失敗として状態を変更しない。
         """
-        if not 0 <= score <= 100:
-            raise GameDomainError("score must be between 0 and 100")
         try:
             target = state.enemy(target_enemy_id)
         except StopIteration as error:
             raise GameDomainError(f"unknown enemy: {target_enemy_id}") from error
 
-        succeeded = score >= 60 and not target.defeated
+        succeeded = not target.defeated
         damage = min(definition.power, target.hit_points) if succeeded else 0
         experience = definition.experience if succeeded else 0
         remaining = target.hit_points - damage

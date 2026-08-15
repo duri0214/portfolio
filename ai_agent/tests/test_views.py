@@ -28,7 +28,7 @@ async def fake_stream_selected(self, *, max_turns=10):
             ToolCall(
                 call_id="stream-call-1",
                 name="calculate",
-                arguments={"target_enemy_id": target_id, "score": 80},
+                arguments={"target_enemy_id": target_id},
                 sequence=1,
             ),
         ),
@@ -62,14 +62,14 @@ async def fake_stream_selected(self, *, max_turns=10):
         "type": "tool.selected",
         "call_id": "stream-call-1",
         "tool_name": "calculate",
-        "arguments": {"target_enemy_id": target_id, "score": 80},
+        "arguments": {"target_enemy_id": target_id},
         "sequence": 1,
     }
     yield {
         "type": "tool.started",
         "call_id": "stream-call-1",
         "tool_name": "calculate",
-        "arguments": {"target_enemy_id": target_id, "score": 80},
+        "arguments": {"target_enemy_id": target_id},
         "sequence": 1,
     }
     yield {

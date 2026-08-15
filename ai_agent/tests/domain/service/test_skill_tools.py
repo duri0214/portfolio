@@ -41,13 +41,13 @@ class SkillToolCatalogTest(SimpleTestCase):
     def test_game_tool_set_updates_state_for_direct_tool_calls(self):
         """
         シナリオ:
-        - 入力: GameToolSetの計算Toolをscore 80で呼び出す。
+        - 入力: GameToolSetの計算Toolを呼び出す。
         - 処理: ToolアダプターがGameServiceへ構造化引数を渡す。
         - 期待値: 構造化結果が返り、GameToolSetの状態に効果が反映される。
         """
         tool_set = GameToolSet()
 
-        result = tool_set.calculate("enemy-mathematics", 80)
+        result = tool_set.calculate("enemy-mathematics")
 
         self.assertTrue(result["success"])
         self.assertEqual(result["tool_name"], "calculate")
@@ -113,7 +113,6 @@ class SkillToolCatalogTest(SimpleTestCase):
                     name="calculate",
                     arguments={
                         "target_enemy_id": "problem-language-mathematics",
-                        "score": 80,
                     },
                     sequence=1,
                 ),
@@ -153,7 +152,7 @@ class SkillToolCatalogTest(SimpleTestCase):
         self.assertEqual(record.steps[0].operation, "数値や式を計算して答えを確かめる")
         self.assertEqual(
             record.steps[0].input_summary,
-            "対象: 国語×算数の問題 / 判定スコア: 80",
+            "対象: 国語×算数の問題",
         )
         self.assertEqual(
             record.steps[0].result_summary,

@@ -103,42 +103,39 @@ class GameToolSet:
         self.state = GameService.select_line(self.state, line_id)
         return {"selected_line_id": line_id}
 
-    def execute(
-        self, tool_name: str, target_enemy_id: str, score: int
-    ) -> dict[str, Any]:
+    def execute(self, tool_name: str, target_enemy_id: str) -> dict[str, Any]:
         """指定されたToolだけを実行し、状態と結果を更新する。"""
         definition = SkillToolCatalog.get(tool_name)
         self.state, result = GameService.execute_skill(
             self.state,
             definition,
             target_enemy_id=target_enemy_id,
-            score=score,
         )
         return result.to_dict()
 
-    def analyze_reading(self, target_enemy_id: str, score: int) -> dict[str, Any]:
+    def analyze_reading(self, target_enemy_id: str) -> dict[str, Any]:
         """国語の読解分析Tool。"""
-        return self.execute("analyze_reading", target_enemy_id, score)
+        return self.execute("analyze_reading", target_enemy_id)
 
-    def analyze_expression(self, target_enemy_id: str, score: int) -> dict[str, Any]:
+    def analyze_expression(self, target_enemy_id: str) -> dict[str, Any]:
         """国語の表現分析Tool。"""
-        return self.execute("analyze_expression", target_enemy_id, score)
+        return self.execute("analyze_expression", target_enemy_id)
 
-    def calculate(self, target_enemy_id: str, score: int) -> dict[str, Any]:
+    def calculate(self, target_enemy_id: str) -> dict[str, Any]:
         """算数の計算Tool。"""
-        return self.execute("calculate", target_enemy_id, score)
+        return self.execute("calculate", target_enemy_id)
 
-    def compare_quantities(self, target_enemy_id: str, score: int) -> dict[str, Any]:
+    def compare_quantities(self, target_enemy_id: str) -> dict[str, Any]:
         """算数の数量比較Tool。"""
-        return self.execute("compare_quantities", target_enemy_id, score)
+        return self.execute("compare_quantities", target_enemy_id)
 
-    def infer_cause(self, target_enemy_id: str, score: int) -> dict[str, Any]:
+    def infer_cause(self, target_enemy_id: str) -> dict[str, Any]:
         """理科の原因推論Tool。"""
-        return self.execute("infer_cause", target_enemy_id, score)
+        return self.execute("infer_cause", target_enemy_id)
 
-    def analyze_observation(self, target_enemy_id: str, score: int) -> dict[str, Any]:
+    def analyze_observation(self, target_enemy_id: str) -> dict[str, Any]:
         """理科の観察分析Tool。"""
-        return self.execute("analyze_observation", target_enemy_id, score)
+        return self.execute("analyze_observation", target_enemy_id)
 
     def function_tools(self) -> list[Any]:
         """Agentに登録できる6つのFunction Toolを返す。"""
