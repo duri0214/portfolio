@@ -83,11 +83,11 @@ document.addEventListener("DOMContentLoaded", () => {
         item.dataset.callId = event.call_id;
         const heading = document.createElement("div");
         heading.className = "d-flex flex-wrap align-items-center gap-2";
+        const statusBadge = appendText(heading, "span", "badge text-bg-warning", "選択済み");
+        statusBadge.dataset.liveStatus = "true";
         const skillBadge = appendText(heading, "span", "badge text-bg-warning", textValue(event.tool_name));
         const power = event.power === undefined ? "" : ` / 効果: 問題HPを${event.power}減らす`;
         skillBadge.title = `${textValue(event.display_name, event.tool_name)}: ${textValue(event.operation, "Skillの処理内容")}${power}`;
-        const statusBadge = appendText(heading, "span", "badge text-bg-warning", "選択済み");
-        statusBadge.dataset.liveStatus = "true";
         item.appendChild(heading);
         const stateChange = appendText(item, "span", "small text-muted", "状態変化: 実行完了を待っています。");
         stateChange.dataset.liveState = "true";
