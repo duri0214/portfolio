@@ -1,19 +1,21 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const board = document.querySelector("[data-game-board]");
-    if (!board) {
-        return;
-    }
-
-    board.style.setProperty("--board-size", board.dataset.boardSize || "3");
-    board.querySelectorAll(".board-piece-form").forEach((form) => {
-        form.addEventListener("submit", () => {
-            const button = form.querySelector("button");
-            if (button) {
-                button.classList.add("is-selected");
-                button.disabled = true;
-            }
+    const setupBoard = () => {
+        const board = document.querySelector("[data-game-board]");
+        if (!board) {
+            return;
+        }
+        board.style.setProperty("--board-size", board.dataset.boardSize || "3");
+        board.querySelectorAll(".board-piece-form").forEach((form) => {
+            form.addEventListener("submit", () => {
+                const button = form.querySelector("button");
+                if (button) {
+                    button.classList.add("is-selected");
+                    button.disabled = true;
+                }
+            });
         });
-    });
+    };
+    setupBoard();
 
     const progressTitle = document.querySelector("[data-agent-progress-title]");
     const progressSpinner = document.querySelector("[data-agent-spinner]");
@@ -187,6 +189,19 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!response.ok) {
             throw new Error("実行結果を保存できませんでした。");
         }
+        return response.text();
+    };
+
+    const refreshPersistedState = (html) => {
+        const nextDocument = new DOMParser().parseFromString(html, "text/html");
+        ["[data-game-board]", "[data-game-experience]", "[data-execution-history]"].forEach((selector) => {
+            const current = document.querySelector(selector);
+            const next = nextDocument.querySelector(selector);
+            if (current && next) {
+                current.replaceWith(next);
+            }
+        });
+        setupBoard();
     };
 
     agentForms.forEach((form) => {
@@ -217,9 +232,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (!stateToken) {
                     throw new Error("Agent実行の完了状態を受け取れませんでした。");
                 }
-                await saveStreamState(form, stateToken);
+                const savedPage = await saveStreamState(form, stateToken);
+                refreshPersistedState(savedPage);
                 setProgress(100, "実行結果を表示しています。");
-                window.location.reload();
+                liveSpinner.classList.add("d-none");
+                liveSummary.textContent = "Agentの処理が完了しました。";
             } catch (error) {
                 const reason = error instanceof Error ? error.message : String(error);
                 console.error("Agent streaming failed", error);

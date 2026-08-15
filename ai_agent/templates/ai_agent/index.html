@@ -24,7 +24,7 @@
         <div class="col-lg-6">
             <h2 class="h5">1. 盤面から問題を選ぶ</h2>
             <div class="p-3">
-                <p class="mb-2">経験値: <strong>{{ game.experience }}</strong></p>
+                <p class="mb-2">経験値: <strong data-game-experience>{{ game.experience }}</strong></p>
                 <div class="game-board mb-3" data-game-board data-board-size="{{ game.board_size }}" aria-label="問題盤面">
                     {% for cell in board_cells %}
                     <div class="game-cell" data-row="{{ cell.row }}" data-column="{{ cell.column }}">
@@ -80,7 +80,7 @@
                 <div data-agent-progress aria-live="polite">
                 <div class="d-flex align-items-center gap-2 mb-2">
                     <span class="spinner-border spinner-border-sm d-none" data-agent-spinner aria-hidden="true"></span>
-                    <strong data-agent-progress-title>{% if game.execution_history %}前回のAgent実行は終了しました{% else %}Agentは未実行です{% endif %}</strong>
+                    <strong data-agent-progress-title>{% if game.execution_history %}Agentの処理が完了しました{% else %}Agentは未実行です{% endif %}</strong>
                 </div>
                 <div class="progress mb-2" role="progressbar" aria-label="Agentの進行状況" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{% if game.execution_history %}100{% else %}0{% endif %}">
                     <div class="progress-bar {% if game.execution_history %}bg-success{% else %}bg-secondary{% endif %}" data-agent-progress-bar style="width: {% if game.execution_history %}100{% else %}0{% endif %}%"></div>
@@ -100,7 +100,7 @@
         </div>
     </section>
 
-    <section class="mt-4 border p-3" aria-label="Agent実行履歴">
+    <section class="mt-4 border p-3" data-execution-history aria-label="Agent実行履歴">
         <h2 class="h5">Agent実行履歴</h2>
         {% if game.execution_history %}
             <div class="list-group">
