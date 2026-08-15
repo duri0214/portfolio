@@ -119,7 +119,7 @@
                 <article class="list-group-item">
                     <div class="d-flex flex-wrap justify-content-between gap-2">
                         <div>
-                            <strong>Agent実行 #{{ forloop.counter }}</strong>
+                            <strong>Agent実行 #{{ forloop.revcounter }}</strong>
                             <span class="badge text-bg-secondary">
                                 {% if execution.status == 'completed' %}完了{% elif execution.status == 'failed' %}失敗{% elif execution.status == 'timed_out' %}タイムアウト{% else %}遮断{% endif %}
                             </span>
