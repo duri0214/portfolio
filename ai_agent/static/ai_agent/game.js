@@ -205,7 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
     agentForms.forEach((form) => {
         form.addEventListener("submit", async (event) => {
             event.preventDefault();
-            agentMessages.classList.add("d-none");
+            agentMessages.replaceChildren();
             liveSkillCount = 0;
             liveCombo.classList.add("d-none");
             liveSteps.replaceChildren();
