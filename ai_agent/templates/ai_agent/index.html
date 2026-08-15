@@ -58,21 +58,20 @@
             <section class="mt-4" aria-label="セリフ選択">
                 <h2 class="h5">2. セリフを選んでAgentへ最終決定</h2>
                 <p class="small text-muted">3つともAgentへの解き方の方針です。どのセリフでも、結果に応じて複数のSkillを使います。</p>
-                <div class="list-group mb-4">
+                <div class="row g-2 mb-4">
                 {% for line in game.preset_lines %}
-                <form method="post" action="{% url 'agt:index' %}" class="list-group-item d-flex justify-content-between align-items-center gap-2" data-agent-form>
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="stream_agent">
-                    <input type="hidden" name="line_id" value="{{ line.line_id }}">
-                    <span>
-                        <strong>{{ line.label }}</strong><br>
-                        <span>{{ line.text }}</span><br>
-                        <small class="text-muted">{{ line.description }}</small>
-                    </span>
-                    <button class="btn btn-sm {% if line.line_id == game.selected_line_id %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit" data-agent-submit {% if not selected_enemy or selected_enemy.defeated %}disabled{% endif %}>
-                        {{ line.label }}でAgentに任せる
-                    </button>
-                </form>
+                <div class="col-md-4 d-flex">
+                    <form method="post" action="{% url 'agt:index' %}" class="w-100" data-agent-form>
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="stream_agent">
+                        <input type="hidden" name="line_id" value="{{ line.line_id }}">
+                        <button class="btn w-100 h-100 text-start {% if line.line_id == game.selected_line_id %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit" data-agent-submit {% if not selected_enemy or selected_enemy.defeated %}disabled{% endif %}>
+                            <strong class="d-block">{{ line.label }}</strong>
+                            <span class="d-block mt-1">{{ line.text }}</span>
+                            <small class="d-block mt-2">{{ line.description }}</small>
+                        </button>
+                    </form>
+                </div>
                 {% endfor %}
                 </div>
                 <p class="small text-muted">対象: {% if selected_enemy %}{{ selected_enemy.name }}{% if selected_enemy.defeated %}（解決済み。盤面から別の問題を選んでください）{% endif %}{% else %}未選択。先に問題を選んでください{% endif %}</p>
