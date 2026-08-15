@@ -176,12 +176,13 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const saveStreamState = async (form, stateToken) => {
+        const endpoint = form.getAttribute("action") || window.location.href;
         const body = new URLSearchParams({
             action: "save_stream_state",
             state_token: stateToken,
             csrfmiddlewaretoken: csrfToken(form),
         });
-        const response = await fetch(form.action || window.location.href, {
+        const response = await fetch(endpoint, {
             method: "POST",
             headers: { "X-CSRFToken": csrfToken(form) },
             body,
@@ -203,7 +204,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
             try {
-                const response = await fetch(form.action || window.location.href, {
+                const endpoint = form.getAttribute("action") || window.location.href;
+                const response = await fetch(endpoint, {
                     method: "POST",
                     headers: { Accept: "text/event-stream" },
                     body: new FormData(form),
