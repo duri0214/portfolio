@@ -89,14 +89,6 @@
                 <p class="fw-semibold small mb-1" data-agent-current-tool aria-live="polite"></p>
                 <p class="small mb-0" data-agent-progress-text>{% if game.execution_history %}処理結果を下の実行履歴で確認できます。{% else %}問題とセリフを選ぶとAgentが処理を開始します。{% endif %}</p>
                 </div>
-                <div class="d-none mt-4" data-live-execution aria-live="polite" aria-label="今回のAgent実行">
-                <div class="d-flex align-items-center gap-2 mb-2">
-                    <span class="spinner-border spinner-border-sm" data-live-spinner aria-hidden="true"></span>
-                    <h2 class="h5 mb-0">今回のAgent実行</h2>
-                </div>
-                <p class="small mb-2" data-live-summary>Agentが処理を開始しました。</p>
-                <div class="list-group" data-live-steps></div>
-                </div>
             </section>
         </div>
     </section>

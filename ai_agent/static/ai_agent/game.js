@@ -23,12 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const progressBar = document.querySelector("[data-agent-progress-bar]");
     const progressText = document.querySelector("[data-agent-progress-text]");
     const currentTool = document.querySelector("[data-agent-current-tool]");
-    const liveExecution = document.querySelector("[data-live-execution]");
-    const liveSummary = document.querySelector("[data-live-summary]");
-    const liveSteps = document.querySelector("[data-live-steps]");
-    const liveSpinner = document.querySelector("[data-live-spinner]");
-    let chainedSkillCount = 0;
-
     const csrfToken = (form) => form.querySelector("[name=csrfmiddlewaretoken]").value;
 
     const setProgress = (value, text) => {
@@ -46,20 +40,6 @@ document.addEventListener("DOMContentLoaded", () => {
         currentTool.textContent = `${status}: ${name}`;
     };
 
-    const outputPayload = (event) => {
-        if (event.output && typeof event.output === "object") {
-            return event.output;
-        }
-        if (typeof event.output === "string") {
-            try {
-                return JSON.parse(event.output);
-            } catch (error) {
-                return { message: event.output };
-            }
-        }
-        return {};
-    };
-
     const textValue = (value, fallback = "") => {
         if (value === null || value === undefined) {
             return fallback;
@@ -70,75 +50,19 @@ document.addEventListener("DOMContentLoaded", () => {
         return String(value);
     };
 
-    const appendText = (parent, tagName, className, text) => {
-        const element = document.createElement(tagName);
-        element.className = className;
-        element.textContent = text;
-        parent.appendChild(element);
-        return element;
-    };
-
-    const addLiveTool = (event) => {
-        const item = document.createElement("div");
-        item.className = "list-group-item list-group-item-warning d-flex flex-wrap align-items-center justify-content-between gap-2";
-        item.dataset.callId = event.call_id;
-        const heading = document.createElement("div");
-        heading.className = "d-flex flex-wrap align-items-center gap-2";
-        const statusBadge = appendText(heading, "span", "badge text-bg-warning", "選択済み");
-        statusBadge.dataset.liveStatus = "true";
-        const skillBadge = appendText(heading, "span", "badge text-bg-warning", textValue(event.tool_name));
-        const power = event.power === undefined ? "" : ` / 効果: 問題HPを${event.power}減らす`;
-        skillBadge.title = `${textValue(event.display_name, event.tool_name)}: ${textValue(event.operation, "Skillの処理内容")}${power}`;
-        item.appendChild(heading);
-        const stateChange = appendText(item, "span", "small text-muted", "状態変化: 実行完了を待っています。");
-        stateChange.dataset.liveState = "true";
-        liveSteps.appendChild(item);
-    };
-
-    const findLiveTool = (callId) => liveSteps.querySelector(`[data-call-id="${CSS.escape(callId)}"]`);
-
-    const updateLiveTool = (event) => {
-        const item = findLiveTool(event.call_id);
-        if (!item) {
-            return;
-        }
-        const payload = outputPayload(event);
-        const status = item.querySelector("[data-live-status]");
-        const stateChange = item.querySelector("[data-live-state]");
-        const succeeded = event.type === "tool.completed" && payload.success !== false;
-        status.textContent = succeeded ? "完了" : "失敗";
-        status.className = `badge ${succeeded ? "text-bg-success" : "text-bg-danger"}`;
-        item.classList.remove("list-group-item-warning");
-        item.classList.add(succeeded ? "list-group-item-success" : "list-group-item-danger");
-        const damage = textValue(payload.damage, 0);
-        const hpChange = damage === "0" ? "問題HP 変化なし" : `問題HP -${damage}`;
-        stateChange.textContent = `${hpChange} / 残りHP ${textValue(payload.enemy_remaining_hit_points, "-")} / 経験値 +${textValue(payload.experience_gained, 0)}`;
-    };
-
     const handleAgentEvent = (event) => {
         if (event.type === "run.started") {
-            liveSummary.textContent = "AgentがToolの選択を開始しました。";
             setProgress(35, "Agentが利用するToolを選んでいます。");
         } else if (event.type === "tool.selected") {
-            chainedSkillCount += 1;
-            addLiveTool(event);
-            liveSummary.textContent = `${event.sequence}番目のSkillを選択しました。`;
             setCurrentTool("発生", event);
             setProgress(50, `${textValue(event.display_name, event.tool_name)}を実行します。`);
         } else if (event.type === "tool.started") {
-            const item = findLiveTool(event.call_id);
-            if (item) {
-                item.querySelector("[data-live-status]").textContent = "実行中";
-            }
             setCurrentTool("実行中", event);
             setProgress(65, `${textValue(event.display_name, event.tool_name)}を処理しています。`);
         } else if (event.type === "tool.completed" || event.type === "tool.failed") {
-            updateLiveTool(event);
             setCurrentTool(event.type === "tool.completed" ? "完了" : "失敗", event);
-            liveSummary.textContent = "Skillの結果を受け取りました。次のSkillを確認しています。";
             setProgress(75, "Skillの結果をゲーム状態へ反映しています。");
         } else if (event.type === "report.completed") {
-            liveSummary.textContent = textValue(event.output, "Agentの処理が完了しました。");
             setProgress(90, "実行結果を保存しています。");
             return event.state_token;
         }
@@ -209,9 +133,6 @@ document.addEventListener("DOMContentLoaded", () => {
     agentForms.forEach((form) => {
         form.addEventListener("submit", async (event) => {
             event.preventDefault();
-            liveExecution.classList.remove("d-none");
-            liveSteps.replaceChildren();
-            chainedSkillCount = 0;
             agentForms.forEach((agentForm) => {
                 const button = agentForm.querySelector("[data-agent-submit]");
                 if (button) {
@@ -238,13 +159,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 const savedPage = await saveStreamState(form, stateToken);
                 refreshPersistedState(savedPage);
                 setProgress(100, "実行結果を表示しています。");
-                liveSpinner.classList.add("d-none");
-                liveSummary.textContent = `Agentが${chainedSkillCount}つのSkillをチェーンしました。`;
             } catch (error) {
                 const reason = error instanceof Error ? error.message : String(error);
                 console.error("Agent streaming failed", error);
-                liveSpinner.classList.add("d-none");
-                liveSummary.textContent = `Agent実行に失敗しました: ${reason}`;
                 setProgress(100, `Agent実行に失敗しました: ${reason}`);
                 progressTitle.textContent = "Agent実行に失敗しました";
                 progressBar.classList.remove("bg-success");
