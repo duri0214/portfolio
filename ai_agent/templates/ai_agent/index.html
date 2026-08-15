@@ -97,7 +97,7 @@
             <h2 class="h5 mb-0">今回のAgent実行</h2>
         </div>
         <p class="small mb-2" data-live-summary>Agentが処理を開始しました。</p>
-        <ol class="list-group list-group-numbered" data-live-steps></ol>
+        <div class="list-group" data-live-steps></div>
     </section>
 
     <section class="mt-4 border p-3" aria-label="Agent実行履歴">
@@ -122,17 +122,27 @@
                     </div>
                     {% if execution.steps %}
                         <h3 class="h6">選ばれたSkillと状態変化</h3>
-                        <ol class="list-group list-group-numbered mb-0">
-                        {% for step in execution.steps %}
-                            <li class="list-group-item">
-                                <div class="d-flex flex-wrap justify-content-between gap-2">
-                                    <strong>{{ step.display_name }}</strong>
-                                    <span class="badge {% if step.success %}text-bg-success{% else %}text-bg-danger{% endif %}" title="{{ step.display_name }}: {{ step.operation }}">{{ step.tool_name }}</span>
-                                </div>
-                                <p class="small text-muted mb-0">状態変化: ダメージ {{ step.damage }} / 経験値 +{{ step.experience_gained }} / 問題の残りHP {{ step.remaining_hit_points }}</p>
-                            </li>
-                        {% endfor %}
-                        </ol>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Skill</th>
+                                        <th scope="col">状態変化</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {% for step in execution.steps %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ step.display_name }}</strong>
+                                            <span class="badge {% if step.success %}text-bg-success{% else %}text-bg-danger{% endif %}" title="{{ step.display_name }}: {{ step.operation }}">{{ step.tool_name }}</span>
+                                        </td>
+                                        <td class="small text-muted">ダメージ {{ step.damage }} / 経験値 +{{ step.experience_gained }} / 問題の残りHP {{ step.remaining_hit_points }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     {% else %}
                         <p class="text-muted small mb-0">Skill Toolは実行されませんでした。</p>
                     {% endif %}

@@ -72,18 +72,19 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const addLiveTool = (event) => {
-        const item = document.createElement("li");
-        item.className = "list-group-item list-group-item-warning";
+        const item = document.createElement("div");
+        item.className = "list-group-item list-group-item-warning d-flex flex-wrap align-items-center justify-content-between gap-2";
         item.dataset.callId = event.call_id;
         const heading = document.createElement("div");
-        heading.className = "d-flex flex-wrap justify-content-between gap-2";
+        heading.className = "d-flex flex-wrap align-items-center gap-2";
         appendText(heading, "strong", "", textValue(event.display_name, event.tool_name));
         const skillBadge = appendText(heading, "span", "badge text-bg-warning", textValue(event.tool_name));
         skillBadge.title = `${textValue(event.display_name, event.tool_name)}: ${textValue(event.operation, "Skillの処理内容")}`;
         const statusBadge = appendText(heading, "span", "badge text-bg-warning", "選択済み");
         statusBadge.dataset.liveStatus = "true";
         item.appendChild(heading);
-        appendText(item, "p", "small text-muted mb-0", "状態変化: 実行完了を待っています。");
+        const stateChange = appendText(item, "span", "small text-muted", "状態変化: 実行完了を待っています。");
+        stateChange.dataset.liveState = "true";
         liveSteps.appendChild(item);
     };
 
@@ -96,7 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         const payload = outputPayload(event);
         const status = item.querySelector("[data-live-status]");
-        const stateChange = item.querySelector("p");
+        const stateChange = item.querySelector("[data-live-state]");
         const succeeded = event.type === "tool.completed" && payload.success !== false;
         status.textContent = succeeded ? "完了" : "失敗";
         status.className = `badge ${succeeded ? "text-bg-success" : "text-bg-danger"}`;

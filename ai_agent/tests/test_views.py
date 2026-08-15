@@ -123,7 +123,7 @@ class AgentStreamingViewTest(TestCase):
         self.assertContains(page, "Agent実行 #1")
         self.assertContains(page, "calculate")
         self.assertContains(page, 'title="計算: 数値や式を計算して答えを確かめる"')
-        self.assertContains(page, "状態変化: ダメージ 1")
+        self.assertContains(page, "ダメージ 1 / 経験値 +10 / 問題の残りHP 2")
         self.assertContains(page, "数値や式を計算して答えを確かめる")
         self.assertNotContains(page, "入力:")
         self.assertNotContains(page, "判定スコア")
