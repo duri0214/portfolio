@@ -23,6 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const progressBar = document.querySelector("[data-agent-progress-bar]");
     const progressText = document.querySelector("[data-agent-progress-text]");
     const currentTool = document.querySelector("[data-agent-current-tool]");
+    const agentMessages = document.querySelector("[data-agent-messages]");
     const liveCombo = document.querySelector("[data-live-combo]");
     const liveSteps = document.querySelector("[data-live-steps]");
     let liveSkillCount = 0;
@@ -204,6 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
     agentForms.forEach((form) => {
         form.addEventListener("submit", async (event) => {
             event.preventDefault();
+            agentMessages.classList.add("d-none");
             liveSkillCount = 0;
             liveCombo.classList.add("d-none");
             liveSteps.replaceChildren();
