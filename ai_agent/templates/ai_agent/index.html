@@ -111,7 +111,7 @@
                     <div class="d-flex flex-wrap justify-content-between gap-2">
                         <div>
                             <strong>Agent実行 #{{ forloop.revcounter }}</strong>
-                            <span class="badge text-bg-secondary">
+                            <span class="badge {% if execution.status == 'completed' %}text-bg-success{% elif execution.status == 'failed' %}text-bg-danger{% elif execution.status == 'timed_out' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">
                                 {% if execution.status == 'completed' %}完了{% elif execution.status == 'failed' %}失敗{% elif execution.status == 'timed_out' %}タイムアウト{% else %}遮断{% endif %}
                             </span>
                         </div>
