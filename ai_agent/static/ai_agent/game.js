@@ -23,7 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const progressBar = document.querySelector("[data-agent-progress-bar]");
     const progressText = document.querySelector("[data-agent-progress-text]");
     const currentTool = document.querySelector("[data-agent-current-tool]");
-    const agentMessages = document.querySelector("[data-agent-messages]");
     const liveCombo = document.querySelector("[data-live-combo]");
     const liveSteps = document.querySelector("[data-live-steps]");
     let liveSkillCount = 0;
@@ -213,6 +212,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 current.replaceWith(next);
             }
         });
+        const nextAgentForms = nextDocument.querySelectorAll("[data-agent-form]");
+        agentForms.forEach((form, index) => {
+            const currentButton = form.querySelector("[data-agent-submit]");
+            const nextButton = nextAgentForms[index]?.querySelector("[data-agent-submit]");
+            if (!currentButton || !nextButton) {
+                return;
+            }
+            currentButton.disabled = nextButton.disabled;
+            currentButton.classList.toggle("btn-primary", nextButton.classList.contains("btn-primary"));
+            currentButton.classList.toggle("btn-outline-primary", nextButton.classList.contains("btn-outline-primary"));
+        });
         setupBoard();
     };
 
@@ -220,7 +230,7 @@ document.addEventListener("DOMContentLoaded", () => {
         form.addEventListener("submit", async (event) => {
             event.preventDefault();
             selectLineButton(form);
-            agentMessages.replaceChildren();
+            document.querySelector("[data-agent-messages]").replaceChildren();
             liveSkillCount = 0;
             liveCombo.classList.add("d-none");
             liveSteps.replaceChildren();
@@ -253,6 +263,12 @@ document.addEventListener("DOMContentLoaded", () => {
             } catch (error) {
                 const reason = error instanceof Error ? error.message : String(error);
                 console.error("Agent streaming failed", error);
+                agentForms.forEach((agentForm) => {
+                    const button = agentForm.querySelector("[data-agent-submit]");
+                    if (button) {
+                        button.disabled = false;
+                    }
+                });
                 setProgress(100, `Agent実行に失敗しました: ${reason}`);
                 progressTitle.textContent = "Agent実行に失敗しました";
                 progressBar.classList.remove("bg-success");

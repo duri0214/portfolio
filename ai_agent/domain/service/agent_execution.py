@@ -174,6 +174,7 @@ class AgentExecutionService:
         tool_results: tuple[ToolResult, ...] = ()
         yield {"type": "run.started", "run_id": run_id}
 
+        result = None
         try:
             result = self.runner.run_streamed(
                 self.agent,
@@ -213,11 +214,15 @@ class AgentExecutionService:
             ToolInputGuardrailTripwireTriggered,
             ToolOutputGuardrailTripwireTriggered,
         ) as exception:
+            if result is not None:
+                tool_calls, tool_results = self._extract_tool_trace(result)
             status = AgentRunStatus.BLOCKED
             error = self._exception_message(exception)
             output = None
             turns = 0
         except TimeoutError as exception:
+            if result is not None:
+                tool_calls, tool_results = self._extract_tool_trace(result)
             status = AgentRunStatus.TIMED_OUT
             error = self._exception_message(
                 exception, "Agent実行がタイムアウトしました"
@@ -225,6 +230,8 @@ class AgentExecutionService:
             output = None
             turns = 0
         except Exception as exception:
+            if result is not None:
+                tool_calls, tool_results = self._extract_tool_trace(result)
             status = AgentRunStatus.FAILED
             error = self._exception_message(exception)
             output = None

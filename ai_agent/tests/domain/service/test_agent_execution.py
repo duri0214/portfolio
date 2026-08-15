@@ -87,6 +87,22 @@ class StreamingRunner:
         return FakeStreamingResult()
 
 
+class FailingStreamingResult(FakeStreamingResult):
+    async def stream_events(self):
+        yield SimpleNamespace(
+            type="run_item_stream_event",
+            name="tool_called",
+            item=SimpleNamespace(raw_item=self.new_items[0].raw_item),
+        )
+        raise RuntimeError("stream interrupted")
+
+
+class FailingStreamingRunner:
+    @classmethod
+    def run_streamed(cls, agent, input_text, *, max_turns):
+        return FailingStreamingResult()
+
+
 class FailingRunner:
     @staticmethod
     async def run(agent, input_text, *, max_turns):
@@ -189,6 +205,28 @@ class AgentExecutionServiceTest(SimpleTestCase):
 
         self.assertIs(run.status, AgentRunStatus.TIMED_OUT)
         self.assertEqual(run.report.error, "Agent実行がタイムアウトしました")
+
+    def test_preserves_partial_tool_trace_when_stream_fails(self):
+        """
+        シナリオ:
+        - 入力: Tool選択イベントの後でストリームが失敗するRunner。
+        - 処理: 失敗したストリームから実行済みToolの履歴を復元する。
+        - 期待値: FAILEDでも、途中までのTool CallがAgentRunに残る。
+        """
+        service = AgentExecutionService(
+            name="Streaming Agent",
+            instructions="Use the available tools.",
+            tools=[lookup_skill],
+            runner=FailingStreamingRunner,
+        )
+
+        async def collect_events():
+            return [event async for event in service.stream("実行")]
+
+        events = asyncio.run(collect_events())
+
+        self.assertIs(events[-1]["run"].status, AgentRunStatus.FAILED)
+        self.assertEqual(events[-1]["run"].tool_calls[0].name, "lookup_skill")
 
     def test_rejects_invalid_execution_limits(self):
         """
