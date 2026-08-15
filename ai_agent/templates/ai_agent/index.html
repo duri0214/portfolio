@@ -23,7 +23,7 @@
     <section class="row g-4" aria-label="ゲーム状態">
         <div class="col-lg-6">
             <h2 class="h5">1. 盤面から問題を選ぶ</h2>
-            <div class="border p-3">
+            <div class="p-3">
                 <p class="mb-2">経験値: <strong>{{ game.experience }}</strong></p>
                 <div class="game-board mb-3" data-game-board data-board-size="{{ game.board_size }}" aria-label="問題盤面">
                     {% for cell in board_cells %}
@@ -66,9 +66,7 @@
                         <input type="hidden" name="action" value="stream_agent">
                         <input type="hidden" name="line_id" value="{{ line.line_id }}">
                         <button class="btn w-100 h-100 text-start {% if line.line_id == game.selected_line_id %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit" data-agent-submit {% if not selected_enemy or selected_enemy.defeated %}disabled{% endif %}>
-                            <strong class="d-block">{{ line.label }}</strong>
-                            <span class="d-block mt-1">{{ line.text }}</span>
-                            <small class="d-block mt-2">{{ line.description }}</small>
+                            {{ line.label }}
                         </button>
                     </form>
                 </div>
