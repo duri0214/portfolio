@@ -51,6 +51,7 @@ class IndexView(TemplateView):
                 game = GameService.create_game().from_json(
                     self._unsign_stream_state(request.POST["state_token"])
                 )
+                self._add_saved_agent_message(request, game)
                 response = redirect("agt:index")
                 self._set_game_cookie(response, game)
                 return response
@@ -178,3 +179,20 @@ class IndexView(TemplateView):
             )
         else:
             messages.error(request, f"Agent実行に失敗しました: {run.report.error}")
+
+    @staticmethod
+    def _add_saved_agent_message(request, game):
+        """保存済みのストリーミング実行結果を画面通知へ変換する。"""
+        if not game.execution_history:
+            return
+        record = game.execution_history[0]
+        if record.status == AgentRunStatus.COMPLETED.value:
+            messages.success(
+                request,
+                f"Agentが{len(record.steps)}つのSkillをチェーンしました。結果を反映しました。",
+            )
+        else:
+            messages.error(
+                request,
+                f"Agent実行に失敗しました: {record.error or '実行結果を確認できませんでした。'}",
+            )

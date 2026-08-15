@@ -117,10 +117,12 @@ class AgentStreamingViewTest(TestCase):
                 "state_token": report_data["state_token"],
             },
         )
-        self.assertRedirects(saved, "/ai_agent/")
+        self.assertEqual(saved.status_code, 302)
+        self.assertEqual(saved["Location"], "/ai_agent/")
         page = self.client.get("/ai_agent/")
 
         self.assertContains(page, "Agent実行 #1")
+        self.assertContains(page, "Agentが1つのSkillをチェーンしました。結果を反映しました。")
         self.assertContains(page, "calculate")
         self.assertContains(
             page,

@@ -196,7 +196,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const refreshPersistedState = (html) => {
         const nextDocument = new DOMParser().parseFromString(html, "text/html");
-        ["[data-game-board]", "[data-game-experience]", "[data-execution-history]"].forEach((selector) => {
+        ["[data-agent-messages]", "[data-game-board]", "[data-game-experience]", "[data-execution-history]"].forEach((selector) => {
             const current = document.querySelector(selector);
             const next = nextDocument.querySelector(selector);
             if (current && next) {
