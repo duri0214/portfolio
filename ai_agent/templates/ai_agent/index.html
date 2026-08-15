@@ -54,21 +54,7 @@
                     </div>
                     {% endfor %}
                 </div>
-                <p class="small text-muted mb-3">Pがプレイヤー、色付きの駒が解く問題です。駒を押すと対象が切り替わります。</p>
-                <h3 class="h6">問題一覧</h3>
-                <div class="list-group">
-                    {% for enemy in game.enemies %}
-                    <form method="post" class="list-group-item d-flex justify-content-between align-items-center gap-2">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="select_enemy">
-                        <input type="hidden" name="enemy_id" value="{{ enemy.enemy_id }}">
-                        <span>{{ enemy.name }} / マス ({{ enemy.position.row }}, {{ enemy.position.column }}) / 残りHP {{ enemy.hit_points }}</span>
-                        <button class="btn btn-sm {% if enemy.enemy_id == game.selected_enemy_id %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit">
-                            {% if enemy.enemy_id == game.selected_enemy_id %}選択中{% else %}選ぶ{% endif %}
-                        </button>
-                    </form>
-                    {% endfor %}
-                </div>
+                <p class="small text-muted mb-0">Pがプレイヤー、色付きの駒が問題です。3つの問題から今回解きたい科目を1つ選んでください。正しいSkillを自分で探す必要はありません。</p>
             </div>
         </div>
         <div class="col-lg-7">
