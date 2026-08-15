@@ -47,12 +47,12 @@ class SkillToolCatalogTest(SimpleTestCase):
         """
         tool_set = GameToolSet()
 
-        result = tool_set.calculate("issue-mathematics")
+        result = tool_set.calculate("mondai-mathematics")
 
         self.assertTrue(result["success"])
         self.assertEqual(result["tool_name"], "calculate")
         self.assertEqual(tool_set.state.experience, 10)
-        self.assertEqual(tool_set.state.issue("issue-mathematics").hit_points, 2)
+        self.assertEqual(tool_set.state.mondai("mondai-mathematics").hit_points, 2)
 
     def test_function_tools_are_registered_without_fixed_chain_order(self):
         """
@@ -91,8 +91,8 @@ class SkillToolCatalogTest(SimpleTestCase):
         - 期待値: 選択理由、加工内容、入力、結果、状態変化が保持される。
         """
         state = GameService.select_line(
-            GameService.select_issue(
-                GameService.create_game(), "issue-language-mathematics"
+            GameService.select_mondai(
+                GameService.create_game(), "mondai-language-mathematics"
             ),
             "line-observe",
         )
@@ -112,7 +112,7 @@ class SkillToolCatalogTest(SimpleTestCase):
                     call_id="call-1",
                     name="calculate",
                     arguments={
-                        "target_issue_id": "issue-language-mathematics",
+                        "target_mondai_id": "mondai-language-mathematics",
                     },
                     sequence=1,
                 ),
@@ -124,10 +124,10 @@ class SkillToolCatalogTest(SimpleTestCase):
                     output={
                         "display_name": "計算",
                         "success": True,
-                        "target_issue_id": "issue-language-mathematics",
+                        "target_mondai_id": "mondai-language-mathematics",
                         "damage": 1,
                         "experience_gained": 10,
-                        "issue_remaining_hit_points": 2,
+                        "mondai_remaining_hit_points": 2,
                         "message": "計算が成功し、国語×算数の問題に1ダメージ。",
                     },
                     succeeded=True,

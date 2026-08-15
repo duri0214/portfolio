@@ -62,20 +62,20 @@ class SkillToolResult:
         tool_name: 実行したFunction Tool名。
         display_name: UI表示用のSkill名。
         success: Skillが成功したかどうか。
-        target_issue_id: 効果対象の問題識別子。
+        target_mondai_id: 効果対象の問題識別子。
         damage: 今回与えたダメージ。
         experience_gained: 今回獲得した経験値。
-        issue_remaining_hit_points: 実行後の問題の残りHP。
+        mondai_remaining_hit_points: 実行後の問題の残りHP。
         message: UIやAgentが利用する結果メッセージ。
     """
 
     tool_name: str
     display_name: str
     success: bool
-    target_issue_id: str
+    target_mondai_id: str
     damage: int
     experience_gained: int
-    issue_remaining_hit_points: int
+    mondai_remaining_hit_points: int
     message: str
 
     def to_dict(self) -> dict[str, Any]:
@@ -84,9 +84,9 @@ class SkillToolResult:
             "tool_name": self.tool_name,
             "display_name": self.display_name,
             "success": self.success,
-            "target_issue_id": self.target_issue_id,
+            "target_mondai_id": self.target_mondai_id,
             "damage": self.damage,
             "experience_gained": self.experience_gained,
-            "issue_remaining_hit_points": self.issue_remaining_hit_points,
+            "mondai_remaining_hit_points": self.mondai_remaining_hit_points,
             "message": self.message,
         }

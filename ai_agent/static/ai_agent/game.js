@@ -128,7 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.classList.add(succeeded ? "list-group-item-success" : "list-group-item-danger");
         const damage = textValue(payload.damage, 0);
         const hpChange = damage === "0" ? "問題HP 変化なし" : `問題HP -${damage}`;
-        stateChange.textContent = `${hpChange} / 残りHP ${textValue(payload.issue_remaining_hit_points, "-")} / 経験値 +${textValue(payload.experience_gained, 0)}`;
+        stateChange.textContent = `${hpChange} / 残りHP ${textValue(payload.mondai_remaining_hit_points, "-")} / 経験値 +${textValue(payload.experience_gained, 0)}`;
     };
 
     const handleAgentEvent = (event) => {

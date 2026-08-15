@@ -31,9 +31,9 @@
                         {% else %}
                         <form method="post" action="{% url 'agt:index' %}" class="board-piece-form">
                             {% csrf_token %}
-                            <input type="hidden" name="action" value="select_issue">
-                            <input type="hidden" name="issue_id" value="{{ cell.problem.issue_id }}">
-                            <button class="board-piece problem-piece {% if cell.problem.issue_id == game.selected_issue_id %}is-selected{% endif %}" type="submit" data-board-problem="{{ cell.problem.issue_id }}" aria-label="{{ cell.problem.name }}を選ぶ">
+                            <input type="hidden" name="action" value="select_mondai">
+                            <input type="hidden" name="mondai_id" value="{{ cell.problem.mondai_id }}">
+                            <button class="board-piece problem-piece {% if cell.problem.mondai_id == game.selected_mondai_id %}is-selected{% endif %}" type="submit" data-board-problem="{{ cell.problem.mondai_id }}" aria-label="{{ cell.problem.name }}を選ぶ">
                                 {% if cell.is_player %}<span class="player-piece-marker" aria-hidden="true">P</span>{% endif %}
                                 <span class="problem-piece-name">{{ cell.problem.name }}</span>
                                 <span class="problem-piece-hp">残りHP {{ cell.problem.hit_points }}</span>
@@ -56,14 +56,14 @@
                         {% csrf_token %}
                         <input type="hidden" name="action" value="stream_agent">
                         <input type="hidden" name="line_id" value="{{ line.line_id }}">
-                        <button class="btn w-100 h-100 text-start {% if line.line_id == game.selected_line_id %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit" data-agent-submit {% if not selected_issue or selected_issue.solved %}disabled{% endif %}>
+                        <button class="btn w-100 h-100 text-start {% if line.line_id == game.selected_line_id %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit" data-agent-submit {% if not selected_mondai or selected_mondai.solved %}disabled{% endif %}>
                             {{ line.label }}
                         </button>
                     </form>
                 </div>
                 {% endfor %}
                 </div>
-                <p class="small text-muted">対象: {% if selected_issue %}{{ selected_issue.name }}{% if selected_issue.solved %}（解決済み。盤面から別の問題を選んでください）{% endif %}{% else %}未選択。先に問題を選んでください{% endif %}</p>
+                <p class="small text-muted">対象: {% if selected_mondai %}{{ selected_mondai.name }}{% if selected_mondai.solved %}（解決済み。盤面から別の問題を選んでください）{% endif %}{% else %}未選択。先に問題を選んでください{% endif %}</p>
             </section>
         </div>
         <div class="col-lg-6">

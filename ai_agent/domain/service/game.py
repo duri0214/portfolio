@@ -26,18 +26,18 @@ class GameService:
         return GameState.initial()
 
     @staticmethod
-    def select_issue(state: GameState, issue_id: str) -> GameState:
+    def select_mondai(state: GameState, mondai_id: str) -> GameState:
         """対象問題を選択し、プレイヤー駒をそのマスへ移動した状態を返す。"""
         try:
-            target = state.issue(issue_id)
+            target = state.mondai(mondai_id)
         except StopIteration as error:
-            raise GameDomainError(f"unknown issue: {issue_id}") from error
+            raise GameDomainError(f"unknown mondai: {mondai_id}") from error
         if target.solved:
-            raise GameDomainError(f"problem is already solved: {issue_id}")
+            raise GameDomainError(f"problem is already solved: {mondai_id}")
         return replace(
             state,
             player_position=target.position,
-            selected_issue_id=issue_id,
+            selected_mondai_id=mondai_id,
             selected_line_id=None,
         )
 
@@ -46,7 +46,7 @@ class GameService:
         """プリセットセリフを選択した状態を返す。"""
         if not any(line.line_id == line_id for line in state.preset_lines):
             raise GameDomainError(f"unknown preset line: {line_id}")
-        if state.selected_issue_id and state.issue(state.selected_issue_id).solved:
+        if state.selected_mondai_id and state.mondai(state.selected_mondai_id).solved:
             raise GameDomainError("problem is already solved")
         return state.with_selection(line_id=line_id)
 
@@ -55,7 +55,7 @@ class GameService:
         state: GameState,
         definition: SkillToolDefinition,
         *,
-        target_issue_id: str,
+        target_mondai_id: str,
     ) -> tuple[GameState, SkillToolResult]:
         """1つのSkillを適用し、更新後の状態と構造化結果を返す。
 
@@ -63,24 +63,24 @@ class GameService:
         選択中の問題がある場合は、Tool入力の対象IDより選択中の問題を優先する。
         解決済み問題への実行は失敗として状態を変更しない。
         """
-        target_issue_id = state.selected_issue_id or target_issue_id
+        target_mondai_id = state.selected_mondai_id or target_mondai_id
         try:
-            target = state.issue(target_issue_id)
+            target = state.mondai(target_mondai_id)
         except StopIteration as error:
-            raise GameDomainError(f"unknown issue: {target_issue_id}") from error
+            raise GameDomainError(f"unknown mondai: {target_mondai_id}") from error
 
         succeeded = not target.solved
         damage = min(definition.power, target.hit_points) if succeeded else 0
         experience = definition.experience if succeeded else 0
         remaining = target.hit_points - damage
         updated_target = replace(target, hit_points=remaining)
-        updated_issues = tuple(
-            updated_target if issue.issue_id == target_issue_id else issue
-            for issue in state.issues
+        updated_mondais = tuple(
+            updated_target if mondai.mondai_id == target_mondai_id else mondai
+            for mondai in state.mondais
         )
         next_state = replace(
             state,
-            issues=updated_issues if succeeded else state.issues,
+            mondais=updated_mondais if succeeded else state.mondais,
             experience=state.experience + experience,
             tool_history=state.tool_history + (definition.name,),
         )
@@ -93,10 +93,10 @@ class GameService:
             tool_name=definition.name,
             display_name=definition.display_name,
             success=succeeded,
-            target_issue_id=target_issue_id,
+            target_mondai_id=target_mondai_id,
             damage=damage,
             experience_gained=experience,
-            issue_remaining_hit_points=remaining if succeeded else target.hit_points,
+            mondai_remaining_hit_points=remaining if succeeded else target.hit_points,
             message=message,
         )
         return next_state, result

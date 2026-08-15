@@ -16,16 +16,16 @@ class GameServiceTest(SimpleTestCase):
         state = GameService.create_game()
 
         self.assertEqual(state.board_size, 3)
-        self.assertEqual(len(state.issues), 6)
+        self.assertEqual(len(state.mondais), 6)
         self.assertEqual(
-            {issue.category for issue in state.issues},
+            {mondai.category for mondai in state.mondais},
             {SkillCategory.LANGUAGE, SkillCategory.MATHEMATICS, SkillCategory.SCIENCE},
         )
         self.assertEqual(
             {
-                issue.category_display_name
-                for issue in state.issues
-                if len(issue.categories) == 2
+                mondai.category_display_name
+                for mondai in state.mondais
+                if len(mondai.categories) == 2
             },
             {"国語 × 算数", "国語 × 理科", "算数 × 理科"},
         )
@@ -46,13 +46,13 @@ class GameServiceTest(SimpleTestCase):
         state = GameService.create_game()
         state = state.with_selection(line_id="line-observe")
 
-        next_state = GameService.select_issue(state, "issue-language")
+        next_state = GameService.select_mondai(state, "mondai-language")
 
-        self.assertEqual(next_state.selected_issue_id, "issue-language")
+        self.assertEqual(next_state.selected_mondai_id, "mondai-language")
         self.assertIsNone(next_state.selected_line_id)
         self.assertEqual(
             next_state.player_position,
-            next_state.issue("issue-language").position,
+            next_state.mondai("mondai-language").position,
         )
         self.assertNotEqual(state.player_position, next_state.player_position)
         restored_state = type(next_state).from_json(next_state.to_json())
@@ -65,22 +65,22 @@ class GameServiceTest(SimpleTestCase):
         - 処理: GameServiceがSkill結果を適用する。
         - 期待値: 問題HP、経験値、Tool履歴が更新され、元の状態は変わらない。
         """
-        state = GameService.select_issue(GameService.create_game(), "issue-language")
+        state = GameService.select_mondai(GameService.create_game(), "mondai-language")
         definition = SkillToolCatalog.get("analyze_reading")
 
         next_state, result = GameService.execute_skill(
             state,
             definition,
-            target_issue_id="issue-language",
+            target_mondai_id="mondai-language",
         )
 
         self.assertTrue(result.success)
         self.assertEqual(result.damage, 1)
         self.assertEqual(result.experience_gained, 10)
-        self.assertEqual(next_state.issue("issue-language").hit_points, 2)
+        self.assertEqual(next_state.mondai("mondai-language").hit_points, 2)
         self.assertEqual(next_state.experience, 10)
         self.assertEqual(next_state.tool_history, ("analyze_reading",))
-        self.assertEqual(state.issue("issue-language").hit_points, 3)
+        self.assertEqual(state.mondai("mondai-language").hit_points, 3)
 
     def test_skill_targets_selected_cross_subject_problem(self):
         """
@@ -89,46 +89,46 @@ class GameServiceTest(SimpleTestCase):
         - 処理: GameServiceが選択中の問題へSkillを適用する。
         - 期待値: 選択中の科目横断問題のHPだけが減少し、入力された別問題は変化しない。
         """
-        for selected_issue_id in (
-            "issue-language-mathematics",
-            "issue-language-science",
+        for selected_mondai_id in (
+            "mondai-language-mathematics",
+            "mondai-language-science",
         ):
-            with self.subTest(selected_issue_id=selected_issue_id):
-                state = GameService.select_issue(
-                    GameService.create_game(), selected_issue_id
+            with self.subTest(selected_mondai_id=selected_mondai_id):
+                state = GameService.select_mondai(
+                    GameService.create_game(), selected_mondai_id
                 )
 
                 next_state, result = GameService.execute_skill(
                     state,
                     SkillToolCatalog.get("analyze_reading"),
-                    target_issue_id="issue-language",
+                    target_mondai_id="mondai-language",
                 )
 
                 self.assertTrue(result.success)
-                self.assertEqual(result.target_issue_id, selected_issue_id)
-                self.assertEqual(next_state.issue(selected_issue_id).hit_points, 2)
-                self.assertEqual(next_state.issue("issue-language").hit_points, 3)
+                self.assertEqual(result.target_mondai_id, selected_mondai_id)
+                self.assertEqual(next_state.mondai(selected_mondai_id).hit_points, 2)
+                self.assertEqual(next_state.mondai("mondai-language").hit_points, 3)
 
     def test_skill_damage_does_not_exceed_remaining_hit_points(self):
         state = GameService.create_game()
         state, _ = GameService.execute_skill(
             state,
             SkillToolCatalog.get("analyze_expression"),
-            target_issue_id="issue-language",
+            target_mondai_id="mondai-language",
         )
-        state = state.with_selection(issue_id="issue-language")
+        state = state.with_selection(mondai_id="mondai-language")
 
         state, result = GameService.execute_skill(
             state,
             SkillToolCatalog.get("analyze_expression"),
-            target_issue_id="issue-language",
+            target_mondai_id="mondai-language",
         )
 
         self.assertEqual(result.damage, 1)
-        self.assertEqual(result.issue_remaining_hit_points, 0)
-        self.assertTrue(state.issue("issue-language").solved)
+        self.assertEqual(result.mondai_remaining_hit_points, 0)
+        self.assertTrue(state.mondai("mondai-language").solved)
 
-    def test_failed_skill_has_no_issue_effect(self):
+    def test_failed_skill_has_no_mondai_effect(self):
         """
         シナリオ:
         - 入力: 解決済みの算数の問題を対象に計算を実行する。
@@ -141,28 +141,28 @@ class GameServiceTest(SimpleTestCase):
             state, _ = GameService.execute_skill(
                 state,
                 definition,
-                target_issue_id="issue-mathematics",
+                target_mondai_id="mondai-mathematics",
             )
 
         next_state, result = GameService.execute_skill(
             state,
             definition,
-            target_issue_id="issue-mathematics",
+            target_mondai_id="mondai-mathematics",
         )
 
         self.assertFalse(result.success)
         self.assertEqual(result.damage, 0)
-        self.assertEqual(next_state.issue("issue-mathematics").hit_points, 0)
+        self.assertEqual(next_state.mondai("mondai-mathematics").hit_points, 0)
         self.assertEqual(next_state.experience, 30)
         self.assertEqual(next_state.tool_history, ("calculate",) * 4)
 
     def test_solved_problem_cannot_be_selected_for_a_line(self):
-        state = GameService.create_game().with_selection(issue_id="issue-language")
+        state = GameService.create_game().with_selection(mondai_id="mondai-language")
         for _ in range(2):
             state, _ = GameService.execute_skill(
                 state,
                 SkillToolCatalog.get("analyze_expression"),
-                target_issue_id="issue-language",
+                target_mondai_id="mondai-language",
             )
 
         with self.assertRaisesRegex(ValueError, "already solved"):
@@ -180,13 +180,13 @@ class GameServiceTest(SimpleTestCase):
             state, result = GameService.execute_skill(
                 state,
                 SkillToolCatalog.get(tool_name),
-                target_issue_id="issue-language",
+                target_mondai_id="mondai-language",
             )
             self.assertTrue(result.success)
 
         self.assertEqual(state.tool_history, ("analyze_expression", "analyze_reading"))
         self.assertEqual(state.experience, 25)
-        self.assertTrue(state.issue("issue-language").solved)
+        self.assertTrue(state.mondai("mondai-language").solved)
 
     def test_skill_can_target_another_category(self):
         """
@@ -198,9 +198,9 @@ class GameServiceTest(SimpleTestCase):
         state, result = GameService.execute_skill(
             GameService.create_game(),
             SkillToolCatalog.get("calculate"),
-            target_issue_id="issue-language",
+            target_mondai_id="mondai-language",
         )
 
         self.assertTrue(result.success)
-        self.assertEqual(state.issue("issue-language").hit_points, 2)
+        self.assertEqual(state.mondai("mondai-language").hit_points, 2)
         self.assertEqual(state.experience, 10)

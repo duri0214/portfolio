@@ -28,11 +28,11 @@ class Position:
 
 
 @dataclass(frozen=True)
-class IssueState:
+class MondaiState:
     """盤面上の問題駒と解答状態を表す値オブジェクト。
 
     Attributes:
-        issue_id: AgentやUIが参照する安定した問題識別子。
+        mondai_id: AgentやUIが参照する安定した問題識別子。
         name: 画面に表示する問題名。
         category: 問題の主教科。
         position: 盤面上の位置。
@@ -40,7 +40,7 @@ class IssueState:
         related_category: 科目横断問題の関連教科。
     """
 
-    issue_id: str
+    mondai_id: str
     name: str
     category: SkillCategory
     position: Position
@@ -48,8 +48,8 @@ class IssueState:
     related_category: SkillCategory | None = None
 
     def __post_init__(self) -> None:
-        if not self.issue_id or not self.name:
-            raise ValueError("issue_id and name must not be empty")
+        if not self.mondai_id or not self.name:
+            raise ValueError("mondai_id and name must not be empty")
         if self.hit_points < 0:
             raise ValueError("hit_points must not be negative")
 
@@ -168,9 +168,9 @@ class GameState:
         board_size: 正方形盤面の一辺のマス数。
         player_position: プレイヤー駒の位置。
         experience: プレイヤーが獲得した経験値。
-        issues: 単一教科または科目横断の6つの問題駒。
+        mondais: 単一教科または科目横断の6つの問題駒。
         preset_lines: プレイヤーが選択できるプリセットセリフ。
-        selected_issue_id: 現在選択中の問題識別子。
+        selected_mondai_id: 現在選択中の問題識別子。
         selected_line_id: 現在選択中のセリフ識別子。
         tool_history: Agentが実行したTool名の履歴。
         execution_history: Agentの判断とSkill結果を含む実行履歴。
@@ -179,28 +179,28 @@ class GameState:
     board_size: int
     player_position: Position
     experience: int
-    issues: tuple[IssueState, ...]
+    mondais: tuple[MondaiState, ...]
     preset_lines: tuple[PresetLine, ...]
-    selected_issue_id: str | None = None
+    selected_mondai_id: str | None = None
     selected_line_id: str | None = None
     tool_history: tuple[str, ...] = ()
     execution_history: tuple[AgentExecutionRecord, ...] = ()
 
-    _COOKIE_PREFIX = "z2:"
+    _COOKIE_PREFIX = "z3:"
 
     def __post_init__(self) -> None:
         if self.board_size < 1:
             raise ValueError("board_size must be greater than zero")
         if self.experience < 0:
             raise ValueError("experience must not be negative")
-        if len(self.issues) != 6:
+        if len(self.mondais) != 6:
             raise ValueError("a game must contain exactly six problems")
         if any(
-            issue.position.row >= self.board_size
-            or issue.position.column >= self.board_size
-            for issue in self.issues
+            mondai.position.row >= self.board_size
+            or mondai.position.column >= self.board_size
+            for mondai in self.mondais
         ):
-            raise ValueError("issue position must be inside the board")
+            raise ValueError("mondai position must be inside the board")
 
     @classmethod
     def initial(cls) -> GameState:
@@ -209,42 +209,42 @@ class GameState:
             board_size=3,
             player_position=Position(1, 1),
             experience=0,
-            issues=(
-                IssueState(
-                    "issue-language",
+            mondais=(
+                MondaiState(
+                    "mondai-language",
                     "国語の問題",
                     SkillCategory.LANGUAGE,
                     Position(0, 0),
                 ),
-                IssueState(
-                    "issue-language-mathematics",
+                MondaiState(
+                    "mondai-language-mathematics",
                     "国語×算数の問題",
                     SkillCategory.LANGUAGE,
                     Position(0, 1),
                     related_category=SkillCategory.MATHEMATICS,
                 ),
-                IssueState(
-                    "issue-mathematics",
+                MondaiState(
+                    "mondai-mathematics",
                     "算数の問題",
                     SkillCategory.MATHEMATICS,
                     Position(0, 2),
                 ),
-                IssueState(
-                    "issue-language-science",
+                MondaiState(
+                    "mondai-language-science",
                     "国語×理科の問題",
                     SkillCategory.LANGUAGE,
                     Position(1, 0),
                     related_category=SkillCategory.SCIENCE,
                 ),
-                IssueState(
-                    "issue-mathematics-science",
+                MondaiState(
+                    "mondai-mathematics-science",
                     "算数×理科の問題",
                     SkillCategory.MATHEMATICS,
                     Position(2, 1),
                     related_category=SkillCategory.SCIENCE,
                 ),
-                IssueState(
-                    "issue-science",
+                MondaiState(
+                    "mondai-science",
                     "理科の問題",
                     SkillCategory.SCIENCE,
                     Position(2, 2),
@@ -273,20 +273,20 @@ class GameState:
         )
 
     def with_selection(
-        self, *, issue_id: str | None = None, line_id: str | None = None
+        self, *, mondai_id: str | None = None, line_id: str | None = None
     ) -> GameState:
         """選択状態だけを更新した新しいスナップショットを返す。"""
         return replace(
             self,
-            selected_issue_id=(
-                issue_id if issue_id is not None else self.selected_issue_id
+            selected_mondai_id=(
+                mondai_id if mondai_id is not None else self.selected_mondai_id
             ),
             selected_line_id=line_id if line_id is not None else self.selected_line_id,
         )
 
-    def issue(self, issue_id: str) -> IssueState:
+    def mondai(self, mondai_id: str) -> MondaiState:
         """指定した問題駒を返す。"""
-        return next(issue for issue in self.issues if issue.issue_id == issue_id)
+        return next(mondai for mondai in self.mondais if mondai.mondai_id == mondai_id)
 
     def with_execution_record(self, record: AgentExecutionRecord) -> GameState:
         """Agent実行記録を最新順で追加した状態を返す。"""
@@ -312,15 +312,16 @@ class GameState:
             value = zlib.decompress(compressed).decode("utf-8")
         payload = json.loads(value)
         initial = cls.initial()
-        health_by_issue = {
-            issue["issue_id"]: int(issue["hit_points"])
-            for issue in payload.get("issues", [])
+        health_by_mondai = {
+            mondai["mondai_id"]: int(mondai["hit_points"])
+            for mondai in payload.get("mondais", [])
         }
-        issues = tuple(
+        mondais = tuple(
             replace(
-                issue, hit_points=health_by_issue.get(issue.issue_id, issue.hit_points)
+                mondai,
+                hit_points=health_by_mondai.get(mondai.mondai_id, mondai.hit_points),
             )
-            for issue in initial.issues
+            for mondai in initial.mondais
         )
         player_position_payload = payload.get("player_position", {})
         player_position = Position(
@@ -331,8 +332,8 @@ class GameState:
             initial,
             player_position=player_position,
             experience=int(payload.get("experience", 0)),
-            issues=issues,
-            selected_issue_id=payload.get("selected_issue_id"),
+            mondais=mondais,
+            selected_mondai_id=payload.get("selected_mondai_id"),
             selected_line_id=payload.get("selected_line_id"),
             tool_history=tuple(payload.get("tool_history", ())),
             execution_history=tuple(

@@ -26,8 +26,8 @@ class IndexView(TemplateView):
         context = super().get_context_data(**kwargs)
         game = self._load_state()
         context["game"] = game
-        context["selected_issue"] = (
-            game.issue(game.selected_issue_id) if game.selected_issue_id else None
+        context["selected_mondai"] = (
+            game.mondai(game.selected_mondai_id) if game.selected_mondai_id else None
         )
         context["board_cells"] = self._board_cells(game)
         return context
@@ -37,13 +37,13 @@ class IndexView(TemplateView):
         game = self._load_state()
         action = request.POST.get("action")
         try:
-            if action == "select_issue":
-                game = GameService.select_issue(game, request.POST["issue_id"])
+            if action == "select_mondai":
+                game = GameService.select_mondai(game, request.POST["mondai_id"])
                 messages.success(
                     request, "対象の問題を選択しました。次にセリフを選んでください。"
                 )
             elif action == "stream_agent":
-                if not game.selected_issue_id:
+                if not game.selected_mondai_id:
                     raise ValueError("先に対象の問題を選択してください")
                 game = GameService.select_line(game, request.POST["line_id"])
                 return self._stream_agent_response(game)
@@ -56,7 +56,7 @@ class IndexView(TemplateView):
                 self._set_game_cookie(response, game)
                 return response
             elif action == "select_line":
-                if not game.selected_issue_id:
+                if not game.selected_mondai_id:
                     raise ValueError("先に対象の問題を選択してください")
                 game = GameService.select_line(game, request.POST["line_id"])
                 game, run = self._run_agent(game)
@@ -153,7 +153,7 @@ class IndexView(TemplateView):
         """CSS Gridへ渡す盤面の各マスと駒の情報を作る。"""
         problems_by_position = {
             (problem.position.row, problem.position.column): problem
-            for problem in game.issues
+            for problem in game.mondais
         }
         return [
             {
