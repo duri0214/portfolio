@@ -78,19 +78,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const heading = document.createElement("div");
         heading.className = "d-flex flex-wrap justify-content-between gap-2";
         appendText(heading, "strong", "", textValue(event.display_name, event.tool_name));
-        appendText(heading, "span", "badge text-bg-warning", "選択済み");
+        const skillBadge = appendText(heading, "span", "badge text-bg-warning", textValue(event.tool_name));
+        skillBadge.title = textValue(event.operation, "Skillの処理内容");
+        const statusBadge = appendText(heading, "span", "badge text-bg-warning", "選択済み");
+        statusBadge.dataset.liveStatus = "true";
         item.appendChild(heading);
-        appendText(item, "p", "small mb-1", `処理: ${textValue(event.operation)}`);
-        const argumentsValue = event.arguments || {};
-        const target = argumentsValue.target_enemy_id || "選択中の問題";
-        const score = argumentsValue.score;
-        appendText(
-            item,
-            "p",
-            "small mb-1",
-            `入力: 対象 ${target}${score === undefined ? "" : ` / 判定スコア ${score}`}`,
-        );
-        appendText(item, "p", "small mb-1", "結果: 実行しています。");
         appendText(item, "p", "small text-muted mb-0", "状態変化: 実行完了を待っています。");
         liveSteps.appendChild(item);
     };
@@ -103,15 +95,13 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
         const payload = outputPayload(event);
-        const status = item.querySelector(".badge");
-        const result = item.querySelectorAll("p")[2];
-        const stateChange = item.querySelectorAll("p")[3];
+        const status = item.querySelector("[data-live-status]");
+        const stateChange = item.querySelector("p");
         const succeeded = event.type === "tool.completed" && payload.success !== false;
         status.textContent = succeeded ? "完了" : "失敗";
         status.className = `badge ${succeeded ? "text-bg-success" : "text-bg-danger"}`;
         item.classList.remove("list-group-item-warning");
         item.classList.add(succeeded ? "list-group-item-success" : "list-group-item-danger");
-        result.textContent = `結果: ${textValue(payload.message || event.error, succeeded ? "処理が完了しました。" : "処理に失敗しました。")}`;
         stateChange.textContent = `状態変化: ダメージ ${textValue(payload.damage, 0)} / 経験値 +${textValue(payload.experience_gained, 0)} / 問題の残りHP ${textValue(payload.enemy_remaining_hit_points, "-")}`;
     };
 

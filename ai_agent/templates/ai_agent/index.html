@@ -140,19 +140,14 @@
                         <p class="mb-0 mt-1">{{ execution.explanation }}</p>
                     </div>
                     {% if execution.steps %}
-                        <h3 class="h6">選ばれたSkillと処理結果</h3>
+                        <h3 class="h6">選ばれたSkillと状態変化</h3>
                         <ol class="list-group list-group-numbered mb-0">
                         {% for step in execution.steps %}
                             <li class="list-group-item">
                                 <div class="d-flex flex-wrap justify-content-between gap-2">
                                     <strong>{{ step.display_name }}</strong>
-                                    <code>{{ step.tool_name }}</code>
+                                    <span class="badge {% if step.success %}text-bg-success{% else %}text-bg-danger{% endif %}" title="{{ step.operation }}">{{ step.tool_name }}</span>
                                 </div>
-                                <p class="small mb-1">処理: {{ step.operation }}</p>
-                                <p class="small mb-1">入力: {{ step.input_summary }}</p>
-                                <p class="small mb-1 {% if step.success %}text-success{% else %}text-danger{% endif %}">
-                                    結果: {{ step.result_summary }}
-                                </p>
                                 <p class="small text-muted mb-0">状態変化: ダメージ {{ step.damage }} / 経験値 +{{ step.experience_gained }} / 問題の残りHP {{ step.remaining_hit_points }}</p>
                             </li>
                         {% endfor %}

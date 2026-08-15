@@ -121,5 +121,9 @@ class AgentStreamingViewTest(TestCase):
         page = self.client.get("/ai_agent/")
 
         self.assertContains(page, "Agent実行 #1")
-        self.assertContains(page, "計算が成功しました。")
+        self.assertContains(page, "calculate")
+        self.assertContains(page, "状態変化: ダメージ 1")
         self.assertContains(page, "数値や式を計算して答えを確かめる")
+        self.assertNotContains(page, "入力:")
+        self.assertNotContains(page, "判定スコア")
+        self.assertNotContains(page, "結果:")
