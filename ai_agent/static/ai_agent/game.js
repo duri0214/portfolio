@@ -44,6 +44,20 @@ document.addEventListener("DOMContentLoaded", () => {
         currentTool.textContent = `${status}: ${name}`;
     };
 
+    const selectLineButton = (form) => {
+        agentForms.forEach((agentForm) => {
+            const button = agentForm.querySelector("[data-agent-submit]");
+            if (!button) {
+                return;
+            }
+            button.classList.remove("btn-primary");
+            button.classList.add("btn-outline-primary");
+        });
+        const selectedButton = form.querySelector("[data-agent-submit]");
+        selectedButton.classList.remove("btn-outline-primary");
+        selectedButton.classList.add("btn-primary");
+    };
+
     const updateLiveCombo = () => {
         liveCombo.textContent = `${liveSkillCount} Skill Combo`;
         liveCombo.classList.remove("d-none");
@@ -205,6 +219,7 @@ document.addEventListener("DOMContentLoaded", () => {
     agentForms.forEach((form) => {
         form.addEventListener("submit", async (event) => {
             event.preventDefault();
+            selectLineButton(form);
             agentMessages.replaceChildren();
             liveSkillCount = 0;
             liveCombo.classList.add("d-none");
