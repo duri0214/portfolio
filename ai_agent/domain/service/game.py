@@ -45,6 +45,8 @@ class GameService:
         """プリセットセリフを選択した状態を返す。"""
         if not any(line.line_id == line_id for line in state.preset_lines):
             raise GameDomainError(f"unknown preset line: {line_id}")
+        if state.selected_enemy_id and state.enemy(state.selected_enemy_id).defeated:
+            raise GameDomainError("problem is already solved")
         return state.with_selection(line_id=line_id)
 
     @staticmethod
@@ -68,9 +70,9 @@ class GameService:
             raise GameDomainError(f"unknown enemy: {target_enemy_id}") from error
 
         succeeded = score >= 60 and not target.defeated
-        damage = definition.power if succeeded else 0
+        damage = min(definition.power, target.hit_points) if succeeded else 0
         experience = definition.experience if succeeded else 0
-        remaining = max(target.hit_points - damage, 0)
+        remaining = target.hit_points - damage
         updated_target = replace(target, hit_points=remaining)
         updated_enemies = tuple(
             updated_target if enemy.enemy_id == target_enemy_id else enemy

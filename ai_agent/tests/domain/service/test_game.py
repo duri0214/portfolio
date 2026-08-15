@@ -81,6 +81,27 @@ class GameServiceTest(SimpleTestCase):
         self.assertEqual(next_state.tool_history, ("analyze_reading",))
         self.assertEqual(state.enemy("enemy-language").hit_points, 3)
 
+    def test_skill_damage_does_not_exceed_remaining_hit_points(self):
+        state = GameService.create_game()
+        state, _ = GameService.execute_skill(
+            state,
+            SkillToolCatalog.get("analyze_expression"),
+            target_enemy_id="enemy-language",
+            score=80,
+        )
+        state = state.with_selection(enemy_id="enemy-language")
+
+        state, result = GameService.execute_skill(
+            state,
+            SkillToolCatalog.get("analyze_expression"),
+            target_enemy_id="enemy-language",
+            score=80,
+        )
+
+        self.assertEqual(result.damage, 1)
+        self.assertEqual(result.enemy_remaining_hit_points, 0)
+        self.assertTrue(state.enemy("enemy-language").defeated)
+
     def test_failed_skill_has_no_enemy_effect(self):
         """
         シナリオ:
@@ -103,6 +124,19 @@ class GameServiceTest(SimpleTestCase):
         self.assertEqual(next_state.enemy("enemy-mathematics").hit_points, 3)
         self.assertEqual(next_state.experience, 0)
         self.assertEqual(next_state.tool_history, ("calculate",))
+
+    def test_solved_problem_cannot_be_selected_for_a_line(self):
+        state = GameService.create_game().with_selection(enemy_id="enemy-language")
+        for _ in range(2):
+            state, _ = GameService.execute_skill(
+                state,
+                SkillToolCatalog.get("analyze_expression"),
+                target_enemy_id="enemy-language",
+                score=80,
+            )
+
+        with self.assertRaisesRegex(ValueError, "already solved"):
+            GameService.select_line(state, "line-challenge")
 
     def test_skill_chain_can_choose_two_tools_without_fixed_order(self):
         """

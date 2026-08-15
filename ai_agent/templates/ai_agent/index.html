@@ -39,6 +39,13 @@
                     {% for cell in board_cells %}
                     <div class="game-cell" data-row="{{ cell.row }}" data-column="{{ cell.column }}">
                         {% if cell.problem %}
+                        {% if cell.problem.defeated %}
+                        <div class="board-piece problem-piece is-defeated" aria-label="{{ cell.problem.name }}（解決済み）">
+                            {% if cell.is_player %}<span class="player-piece-marker" aria-hidden="true">P</span>{% endif %}
+                            <span class="problem-piece-name">{{ cell.problem.name }}</span>
+                            <span class="problem-piece-hp">解決済み / 残りHP 0</span>
+                        </div>
+                        {% else %}
                         <form method="post" action="{% url 'agt:index' %}" class="board-piece-form">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="select_enemy">
@@ -49,6 +56,7 @@
                                 <span class="problem-piece-hp">残りHP {{ cell.problem.hit_points }}</span>
                             </button>
                         </form>
+                        {% endif %}
                         {% elif cell.is_player %}
                         <span class="player-piece" aria-label="プレイヤー">P</span>
                         {% endif %}
@@ -82,13 +90,13 @@
                         <span>{{ line.text }}</span><br>
                         <small class="text-muted">{{ line.description }}</small>
                     </span>
-                    <button class="btn btn-sm {% if line.line_id == game.selected_line_id %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit" data-agent-submit {% if not selected_enemy %}disabled{% endif %}>
+                    <button class="btn btn-sm {% if line.line_id == game.selected_line_id %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit" data-agent-submit {% if not selected_enemy or selected_enemy.defeated %}disabled{% endif %}>
                         {{ line.label }}でAgentに任せる
                     </button>
                 </form>
                 {% endfor %}
             </div>
-            <p class="small text-muted">対象: {% if selected_enemy %}{{ selected_enemy.name }}{% else %}未選択。先に問題を選んでください{% endif %}</p>
+            <p class="small text-muted">対象: {% if selected_enemy %}{{ selected_enemy.name }}{% if selected_enemy.defeated %}（解決済み。盤面から別の問題を選んでください）{% endif %}{% else %}未選択。先に問題を選んでください{% endif %}</p>
             <h3 class="h6">Agentが利用できる6つのSkill</h3>
             <p class="small text-muted">ここに表示されるSkillからAgentが選びます。問題の教科と異なるSkillも選択できます。</p>
             <div class="list-group">

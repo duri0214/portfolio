@@ -48,9 +48,15 @@
     background: #f6c85f;
 }
 
-.board-piece.problem-piece:hover,
-.board-piece.problem-piece:focus-visible,
-.board-piece.problem-piece.is-selected {
+.board-piece.problem-piece.is-defeated {
+    background: #adb5bd;
+    color: #495057;
+    cursor: not-allowed;
+}
+
+.board-piece.problem-piece:not(.is-defeated):hover,
+.board-piece.problem-piece:not(.is-defeated):focus-visible,
+.board-piece.problem-piece:not(.is-defeated).is-selected {
     background: #e76f51;
     color: #fff;
 }
