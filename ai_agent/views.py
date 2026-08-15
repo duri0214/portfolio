@@ -19,6 +19,7 @@ class IndexView(TemplateView):
 
     template_name = "ai_agent/index.html"
     state_cookie_name = "ai_agent_game_state"
+    stream_state_salt = "ai_agent.stream_state"
 
     def get_context_data(self, **kwargs):
         """現在のゲーム状態と画面操作に必要なSkill定義を渡す。"""
@@ -118,16 +119,10 @@ class IndexView(TemplateView):
         return f"event: {payload['type']}\ndata: {json.dumps(payload, ensure_ascii=False, default=str)}\n\n"
 
     def _sign_stream_state(self, game):
-        signer = signing.get_cookie_signer(
-            salt=signing._cookie_signer_salt(self.state_cookie_name, "")
-        )
-        return signer.sign(game.to_json())
+        return signing.Signer(salt=self.stream_state_salt).sign(game.to_json())
 
     def _unsign_stream_state(self, value):
-        signer = signing.get_cookie_signer(
-            salt=signing._cookie_signer_salt(self.state_cookie_name, "")
-        )
-        return signer.unsign(value)
+        return signing.Signer(salt=self.stream_state_salt).unsign(value)
 
     def _set_game_cookie(self, response, game):
         response.set_signed_cookie(
