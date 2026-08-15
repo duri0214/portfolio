@@ -60,9 +60,19 @@
         </div>
         <div class="col-lg-7">
             <h2 class="h5">2. セリフを選んでAgentへ最終決定</h2>
+            <div class="alert alert-primary d-none" data-agent-progress aria-live="polite">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                    <strong>Agentが処理しています</strong>
+                </div>
+                <div class="progress mb-2" role="progressbar" aria-label="Agentの進行状況" aria-valuemin="0" aria-valuemax="100" aria-valuenow="25">
+                    <div class="progress-bar" data-agent-progress-bar style="width: 25%"></div>
+                </div>
+                <p class="small mb-0" data-agent-progress-text>セリフを確認しています。</p>
+            </div>
             <div class="list-group mb-4">
                 {% for line in game.preset_lines %}
-                <form method="post" class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                <form method="post" class="list-group-item d-flex justify-content-between align-items-center gap-2" data-agent-form>
                     {% csrf_token %}
                     <input type="hidden" name="action" value="select_line">
                     <input type="hidden" name="line_id" value="{{ line.line_id }}">
@@ -71,7 +81,7 @@
                         <span>{{ line.text }}</span><br>
                         <small class="text-muted">{{ line.description }}</small>
                     </span>
-                    <button class="btn btn-sm {% if line.line_id == game.selected_line_id %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit" {% if not selected_enemy %}disabled{% endif %}>
+                    <button class="btn btn-sm {% if line.line_id == game.selected_line_id %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit" data-agent-submit {% if not selected_enemy %}disabled{% endif %}>
                         {{ line.label }}でAgentに任せる
                     </button>
                 </form>
