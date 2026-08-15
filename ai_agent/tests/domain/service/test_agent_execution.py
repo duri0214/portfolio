@@ -44,6 +44,51 @@ class FakeRunner:
         )
 
 
+class FakeStreamingResult:
+    def __init__(self):
+        self.new_items = [
+            SimpleNamespace(
+                type="tool_call_item",
+                raw_item=SimpleNamespace(
+                    call_id="call-stream-1",
+                    name="lookup_skill",
+                    arguments='{"topic": "science"}',
+                ),
+            ),
+            SimpleNamespace(
+                type="tool_call_output_item",
+                raw_item=SimpleNamespace(
+                    call_id="call-stream-1", output="result:science"
+                ),
+            ),
+        ]
+        self.raw_responses = [object()]
+        self.final_output = "ストリーミング最終レポート"
+
+    async def stream_events(self):
+        yield SimpleNamespace(
+            type="run_item_stream_event",
+            name="tool_called",
+            item=SimpleNamespace(
+                raw_item=self.new_items[0].raw_item,
+            ),
+        )
+        yield SimpleNamespace(
+            type="run_item_stream_event",
+            name="tool_output",
+            item=SimpleNamespace(
+                raw_item=self.new_items[1].raw_item,
+                output="result:science",
+            ),
+        )
+
+
+class StreamingRunner:
+    @classmethod
+    def run_streamed(cls, agent, input_text, *, max_turns):
+        return FakeStreamingResult()
+
+
 class FailingRunner:
     @staticmethod
     async def run(agent, input_text, *, max_turns):
@@ -101,6 +146,33 @@ class AgentExecutionServiceTest(SimpleTestCase):
         self.assertIs(run.status, AgentRunStatus.FAILED)
         self.assertEqual(run.report.error, "provider unavailable")
         self.assertIsNone(run.report.output)
+
+    def test_streams_tool_selected_and_completed_before_final_report(self):
+        """
+        シナリオ:
+        - 入力: ストリーミング対応RunnerへAgentを実行する。
+        - 処理: Tool選択、Tool結果、最終レポートの順に意味イベントを返す。
+        - 期待値: 最終レポートを待たずTool完了イベントを受信できる。
+        """
+        service = AgentExecutionService(
+            name="Streaming Agent",
+            instructions="Use the available tools.",
+            tools=[lookup_skill],
+            runner=StreamingRunner,
+        )
+
+        async def collect_events():
+            return [event async for event in service.stream("実行")]
+
+        events = asyncio.run(collect_events())
+
+        self.assertEqual(
+            [event["type"] for event in events],
+            ["run.started", "tool.selected", "tool.completed", "report.completed"],
+        )
+        self.assertEqual(events[1]["arguments"], {"topic": "science"})
+        self.assertEqual(events[2]["output"], "result:science")
+        self.assertEqual(events[-1]["run"].report.output, "ストリーミング最終レポート")
 
     def test_returns_timed_out_run_when_runner_exceeds_limit(self):
         """

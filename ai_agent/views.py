@@ -1,6 +1,9 @@
+import asyncio
 import json
 
 from django.contrib import messages
+from django.core import signing
+from django.http import StreamingHttpResponse
 from django.shortcuts import redirect
 from django.views.generic import TemplateView
 
@@ -39,6 +42,18 @@ class IndexView(TemplateView):
                 messages.success(
                     request, "対象の問題を選択しました。次にセリフを選んでください。"
                 )
+            elif action == "stream_agent":
+                if not game.selected_enemy_id:
+                    raise ValueError("先に対象の問題を選択してください")
+                game = GameService.select_line(game, request.POST["line_id"])
+                return self._stream_agent_response(game)
+            elif action == "save_stream_state":
+                game = GameService.create_game().from_json(
+                    self._unsign_stream_state(request.POST["state_token"])
+                )
+                response = redirect("agt:index")
+                self._set_game_cookie(response, game)
+                return response
             elif action == "select_line":
                 if not game.selected_enemy_id:
                     raise ValueError("先に対象の問題を選択してください")
@@ -57,13 +72,70 @@ class IndexView(TemplateView):
             messages.error(request, f"操作できません: {error}")
 
         response = redirect("agt:index")
+        self._set_game_cookie(response, game)
+        return response
+
+    def _stream_agent_response(self, game):
+        """AgentのToolイベントをSSEで逐次配信する。"""
+        tools = GameToolSet(game)
+        agent = GameAgentService(tools=tools)
+
+        def event_stream():
+            loop = asyncio.new_event_loop()
+            iterator = agent.stream_selected()
+            try:
+                while True:
+                    try:
+                        event = loop.run_until_complete(anext(iterator))
+                    except StopAsyncIteration:
+                        break
+                    payload = {
+                        key: value for key, value in event.items() if key != "run"
+                    }
+                    if event["type"] == "report.completed":
+                        final_state = tools.state.with_execution_record(
+                            GameAgentService.create_execution_record(
+                                tools.state, event["run"]
+                            )
+                        )
+                        payload["state_token"] = self._sign_stream_state(final_state)
+                    yield self._sse(payload)
+            finally:
+                try:
+                    loop.run_until_complete(iterator.aclose())
+                finally:
+                    loop.close()
+
+        response = StreamingHttpResponse(
+            event_stream(), content_type="text/event-stream; charset=utf-8"
+        )
+        response["Cache-Control"] = "no-cache"
+        response["X-Accel-Buffering"] = "no"
+        return response
+
+    @staticmethod
+    def _sse(payload):
+        return f"event: {payload['type']}\ndata: {json.dumps(payload, ensure_ascii=False, default=str)}\n\n"
+
+    def _sign_stream_state(self, game):
+        signer = signing.get_cookie_signer(
+            salt=signing._cookie_signer_salt(self.state_cookie_name, "")
+        )
+        return signer.sign(game.to_json())
+
+    def _unsign_stream_state(self, value):
+        signer = signing.get_cookie_signer(
+            salt=signing._cookie_signer_salt(self.state_cookie_name, "")
+        )
+        return signer.unsign(value)
+
+    def _set_game_cookie(self, response, game):
         response.set_signed_cookie(
             self.state_cookie_name,
             game.to_json(),
             httponly=True,
             samesite="Lax",
         )
-        return response
 
     def _load_state(self):
         """署名付きCookieから状態を読み、壊れていれば初期状態へ戻す。"""

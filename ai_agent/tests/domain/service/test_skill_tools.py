@@ -31,7 +31,7 @@ class SkillToolCatalogTest(SimpleTestCase):
                 "analyze_reading",
                 "analyze_expression",
                 "calculate",
-                "mental_math",
+                "compare_quantities",
                 "infer_cause",
                 "analyze_observation",
             },

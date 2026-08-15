@@ -22,7 +22,7 @@ Agentには、以下の6個のFunction Toolを登録します。UI表示名と�
 | 国語 | 読解分析 | `analyze_reading` |
 | 国語 | 表現分析 | `analyze_expression` |
 | 算数 | 計算 | `calculate` |
-| 算数 | 暗算 | `mental_math` |
+| 算数 | 数量比較 | `compare_quantities` |
 | 理科 | 原因推論 | `infer_cause` |
 | 理科 | 観察分析 | `analyze_observation` |
 

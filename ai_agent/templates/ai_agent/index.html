@@ -74,7 +74,7 @@
                 {% for line in game.preset_lines %}
                 <form method="post" class="list-group-item d-flex justify-content-between align-items-center gap-2" data-agent-form>
                     {% csrf_token %}
-                    <input type="hidden" name="action" value="select_line">
+                    <input type="hidden" name="action" value="stream_agent">
                     <input type="hidden" name="line_id" value="{{ line.line_id }}">
                     <span>
                         <strong>{{ line.label }}</strong><br>
@@ -99,6 +99,15 @@
                 {% endfor %}
             </div>
         </div>
+    </section>
+
+    <section class="mt-4 border p-3 d-none" data-live-execution aria-live="polite" aria-label="今回のAgent実行">
+        <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="spinner-border spinner-border-sm" data-live-spinner aria-hidden="true"></span>
+            <h2 class="h5 mb-0">今回のAgent実行</h2>
+        </div>
+        <p class="small mb-2" data-live-summary>Agentが処理を開始しました。</p>
+        <ol class="list-group list-group-numbered" data-live-steps></ol>
     </section>
 
     <section class="mt-4 border p-3" aria-label="Agent実行履歴">

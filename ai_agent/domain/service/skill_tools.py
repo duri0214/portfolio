@@ -42,12 +42,12 @@ class SkillToolCatalog:
             "数値や式を計算して答えを確かめる",
         ),
         SkillToolDefinition(
-            "mental_math",
-            "暗算",
+            "compare_quantities",
+            "数量比較",
             SkillCategory.MATHEMATICS,
             2,
             15,
-            "数量関係を素早く見積もる",
+            "数量や条件を比べて大小・差・割合の関係を整理する",
         ),
         SkillToolDefinition(
             "infer_cause",
@@ -128,9 +128,9 @@ class GameToolSet:
         """算数の計算Tool。"""
         return self.execute("calculate", target_enemy_id, score)
 
-    def mental_math(self, target_enemy_id: str, score: int) -> dict[str, Any]:
-        """算数の暗算Tool。"""
-        return self.execute("mental_math", target_enemy_id, score)
+    def compare_quantities(self, target_enemy_id: str, score: int) -> dict[str, Any]:
+        """算数の数量比較Tool。"""
+        return self.execute("compare_quantities", target_enemy_id, score)
 
     def infer_cause(self, target_enemy_id: str, score: int) -> dict[str, Any]:
         """理科の原因推論Tool。"""
@@ -146,7 +146,7 @@ class GameToolSet:
             function_tool(self.analyze_reading),
             function_tool(self.analyze_expression),
             function_tool(self.calculate),
-            function_tool(self.mental_math),
+            function_tool(self.compare_quantities),
             function_tool(self.infer_cause),
             function_tool(self.analyze_observation),
         ]

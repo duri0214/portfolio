@@ -159,6 +159,142 @@ class AgentExecutionService:
             )
         raise RuntimeError("イベントループ実行中はrun()をawaitしてください")
 
+    async def stream(
+        self,
+        input_text: str,
+        *,
+        max_turns: int = 10,
+        timeout_seconds: float | None = 30.0,
+    ):
+        """Agentの意味イベントをTool単位で逐次返します。"""
+        self._validate_input(input_text, max_turns, timeout_seconds)
+        run_id = str(uuid4())
+        started_at = datetime.now(timezone.utc)
+        tool_calls: tuple[ToolCall, ...] = ()
+        tool_results: tuple[ToolResult, ...] = ()
+        yield {"type": "run.started", "run_id": run_id}
+
+        try:
+            result = self.runner.run_streamed(
+                self.agent,
+                input_text,
+                max_turns=max_turns,
+            )
+            if inspect.isawaitable(result):
+                result = await result
+            names_by_call_id: dict[str, str] = {}
+            sequence = 0
+
+            async def consume_events():
+                nonlocal sequence
+                async for stream_event in result.stream_events():
+                    event = self._stream_event(stream_event, names_by_call_id, sequence)
+                    if event is not None:
+                        if event["type"] == "tool.selected":
+                            sequence = event["sequence"]
+                        yield event
+
+            if timeout_seconds is None:
+                async for event in consume_events():
+                    yield event
+            else:
+                async with asyncio.timeout(timeout_seconds):
+                    async for event in consume_events():
+                        yield event
+
+            tool_calls, tool_results = self._extract_tool_trace(result)
+            status = AgentRunStatus.COMPLETED
+            error = None
+            output = self._serialize_output(result.final_output)
+            turns = len(getattr(result, "raw_responses", ()))
+        except (
+            InputGuardrailTripwireTriggered,
+            OutputGuardrailTripwireTriggered,
+            ToolInputGuardrailTripwireTriggered,
+            ToolOutputGuardrailTripwireTriggered,
+        ) as exception:
+            status = AgentRunStatus.BLOCKED
+            error = self._exception_message(exception)
+            output = None
+            turns = 0
+        except TimeoutError as exception:
+            status = AgentRunStatus.TIMED_OUT
+            error = self._exception_message(
+                exception, "Agent実行がタイムアウトしました"
+            )
+            output = None
+            turns = 0
+        except Exception as exception:
+            status = AgentRunStatus.FAILED
+            error = self._exception_message(exception)
+            output = None
+            turns = 0
+
+        completed_at = datetime.now(timezone.utc)
+        report = Report(
+            output=output,
+            status=status,
+            tool_calls=tool_calls,
+            tool_results=tool_results,
+            turns=turns,
+            error=error,
+        )
+        run = AgentRun(
+            run_id=run_id,
+            input_text=input_text,
+            max_turns=max_turns,
+            status=status,
+            started_at=started_at,
+            completed_at=completed_at,
+            tool_calls=tool_calls,
+            tool_results=tool_results,
+            report=report,
+        )
+        yield {
+            "type": "report.completed",
+            "run_id": run_id,
+            "status": status.value,
+            "output": output,
+            "error": error,
+            "run": run,
+        }
+
+    @classmethod
+    def _stream_event(
+        cls, stream_event: Any, names_by_call_id: dict[str, str], sequence: int
+    ) -> dict[str, Any] | None:
+        if getattr(stream_event, "type", "") != "run_item_stream_event":
+            return None
+        item = getattr(stream_event, "item", None)
+        raw_item = getattr(item, "raw_item", None)
+        if getattr(stream_event, "name", "") == "tool_called":
+            call_id = getattr(raw_item, "call_id", None) or getattr(raw_item, "id", "")
+            name = getattr(raw_item, "name", "")
+            names_by_call_id[call_id] = name
+            arguments = cls._parse_arguments(getattr(raw_item, "arguments", "{}"))
+            sequence += 1
+            return {
+                "type": "tool.selected",
+                "call_id": call_id,
+                "tool_name": name,
+                "arguments": arguments,
+                "sequence": sequence,
+            }
+        if getattr(stream_event, "name", "") != "tool_output":
+            return None
+        call_id = getattr(raw_item, "call_id", "")
+        tool_error = getattr(raw_item, "error", None)
+        output = getattr(item, "output", None)
+        if output is None:
+            output = getattr(raw_item, "output", None)
+        return {
+            "type": "tool.failed" if tool_error is not None else "tool.completed",
+            "call_id": call_id,
+            "tool_name": names_by_call_id.get(call_id, ""),
+            "output": cls._serialize_output(output),
+            "error": str(tool_error) if tool_error is not None else None,
+        }
+
     @staticmethod
     def _validate_input(
         input_text: str, max_turns: int, timeout_seconds: float | None

@@ -19,35 +19,201 @@ document.addEventListener("DOMContentLoaded", () => {
     const agentForms = document.querySelectorAll("[data-agent-form]");
     const progressBar = document.querySelector("[data-agent-progress-bar]");
     const progressText = document.querySelector("[data-agent-progress-text]");
-    const progressSteps = [
-        { value: 25, text: "セリフを確認しています。" },
-        { value: 50, text: "利用するToolを選んでいます。" },
-        { value: 75, text: "Toolを実行しています。" },
-        { value: 90, text: "結果をゲーム状態へ反映しています。" },
-    ];
+    const liveExecution = document.querySelector("[data-live-execution]");
+    const liveSummary = document.querySelector("[data-live-summary]");
+    const liveSteps = document.querySelector("[data-live-steps]");
+    const liveSpinner = document.querySelector("[data-live-spinner]");
 
-    agentForms.forEach((form) => {
-        form.addEventListener("submit", () => {
-            if (!progress) {
+    const csrfToken = (form) => form.querySelector("[name=csrfmiddlewaretoken]").value;
+
+    const setProgress = (value, text) => {
+        progress.classList.remove("d-none");
+        progressBar.style.width = `${value}%`;
+        progressBar.parentElement.setAttribute("aria-valuenow", value);
+        progressText.textContent = text;
+    };
+
+    const outputPayload = (event) => {
+        if (event.output && typeof event.output === "object") {
+            return event.output;
+        }
+        if (typeof event.output === "string") {
+            try {
+                return JSON.parse(event.output);
+            } catch (error) {
+                return { message: event.output };
+            }
+        }
+        return {};
+    };
+
+    const textValue = (value, fallback = "") => {
+        if (value === null || value === undefined) {
+            return fallback;
+        }
+        if (typeof value === "object") {
+            return JSON.stringify(value);
+        }
+        return String(value);
+    };
+
+    const appendText = (parent, tagName, className, text) => {
+        const element = document.createElement(tagName);
+        element.className = className;
+        element.textContent = text;
+        parent.appendChild(element);
+        return element;
+    };
+
+    const addLiveTool = (event) => {
+        const item = document.createElement("li");
+        item.className = "list-group-item list-group-item-warning";
+        item.dataset.callId = event.call_id;
+        const heading = document.createElement("div");
+        heading.className = "d-flex flex-wrap justify-content-between gap-2";
+        appendText(heading, "strong", "", textValue(event.display_name, event.tool_name));
+        appendText(heading, "span", "badge text-bg-warning", "選択済み");
+        item.appendChild(heading);
+        appendText(item, "p", "small mb-1", `処理: ${textValue(event.operation)}`);
+        const argumentsValue = event.arguments || {};
+        const target = argumentsValue.target_enemy_id || "選択中の問題";
+        const score = argumentsValue.score;
+        appendText(
+            item,
+            "p",
+            "small mb-1",
+            `入力: 対象 ${target}${score === undefined ? "" : ` / 判定スコア ${score}`}`,
+        );
+        appendText(item, "p", "small mb-1", "結果: 実行しています。");
+        appendText(item, "p", "small text-muted mb-0", "状態変化: 実行完了を待っています。");
+        liveSteps.appendChild(item);
+    };
+
+    const findLiveTool = (callId) => liveSteps.querySelector(`[data-call-id="${CSS.escape(callId)}"]`);
+
+    const updateLiveTool = (event) => {
+        const item = findLiveTool(event.call_id);
+        if (!item) {
+            return;
+        }
+        const payload = outputPayload(event);
+        const status = item.querySelector(".badge");
+        const result = item.querySelectorAll("p")[2];
+        const stateChange = item.querySelectorAll("p")[3];
+        const succeeded = event.type === "tool.completed" && payload.success !== false;
+        status.textContent = succeeded ? "完了" : "失敗";
+        status.className = `badge ${succeeded ? "text-bg-success" : "text-bg-danger"}`;
+        item.classList.remove("list-group-item-warning");
+        item.classList.add(succeeded ? "list-group-item-success" : "list-group-item-danger");
+        result.textContent = `結果: ${textValue(payload.message || event.error, succeeded ? "処理が完了しました。" : "処理に失敗しました。")}`;
+        stateChange.textContent = `状態変化: ダメージ ${textValue(payload.damage, 0)} / 経験値 +${textValue(payload.experience_gained, 0)} / 問題の残りHP ${textValue(payload.enemy_remaining_hit_points, "-")}`;
+    };
+
+    const handleAgentEvent = (event) => {
+        if (event.type === "run.started") {
+            liveSummary.textContent = "AgentがToolの選択を開始しました。";
+            setProgress(35, "Agentが利用するToolを選んでいます。");
+        } else if (event.type === "tool.selected") {
+            addLiveTool(event);
+            liveSummary.textContent = `${event.sequence}番目のSkillを選択しました。`;
+            setProgress(50, `${textValue(event.display_name, event.tool_name)}を実行します。`);
+        } else if (event.type === "tool.started") {
+            const item = findLiveTool(event.call_id);
+            if (item) {
+                item.querySelector(".badge").textContent = "実行中";
+            }
+            setProgress(65, `${textValue(event.display_name, event.tool_name)}を処理しています。`);
+        } else if (event.type === "tool.completed" || event.type === "tool.failed") {
+            updateLiveTool(event);
+            liveSummary.textContent = "Skillの結果を受け取りました。次のSkillを確認しています。";
+            setProgress(75, "Skillの結果をゲーム状態へ反映しています。");
+        } else if (event.type === "report.completed") {
+            liveSummary.textContent = textValue(event.output, "Agentの処理が完了しました。");
+            setProgress(90, "実行結果を保存しています。");
+            return event.state_token;
+        }
+        return null;
+    };
+
+    const readSse = async (response, onEvent) => {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let stateToken = null;
+        const consume = (block) => {
+            const dataLine = block.split("\n").find((line) => line.startsWith("data: "));
+            if (!dataLine) {
                 return;
             }
-            progress.classList.remove("d-none");
+            const token = onEvent(JSON.parse(dataLine.slice(6)));
+            if (token) {
+                stateToken = token;
+            }
+        };
+        while (true) {
+            const { value, done } = await reader.read();
+            buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+            const blocks = buffer.split("\n\n");
+            buffer = blocks.pop();
+            blocks.filter(Boolean).forEach(consume);
+            if (done) {
+                if (buffer.trim()) {
+                    consume(buffer);
+                }
+                break;
+            }
+        }
+        return stateToken;
+    };
+
+    const saveStreamState = async (form, stateToken) => {
+        const body = new URLSearchParams({
+            action: "save_stream_state",
+            state_token: stateToken,
+            csrfmiddlewaretoken: csrfToken(form),
+        });
+        const response = await fetch(form.action || window.location.href, {
+            method: "POST",
+            headers: { "X-CSRFToken": csrfToken(form) },
+            body,
+        });
+        if (!response.ok) {
+            throw new Error("実行結果を保存できませんでした。");
+        }
+    };
+
+    agentForms.forEach((form) => {
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            liveExecution.classList.remove("d-none");
+            liveSteps.replaceChildren();
             agentForms.forEach((agentForm) => {
                 const button = agentForm.querySelector("[data-agent-submit]");
                 if (button) {
                     button.disabled = true;
                 }
             });
-            let stepIndex = 0;
-            const updateProgress = () => {
-                const step = progressSteps[stepIndex];
-                progressBar.style.width = `${step.value}%`;
-                progressBar.parentElement.setAttribute("aria-valuenow", step.value);
-                progressText.textContent = step.text;
-                stepIndex = Math.min(stepIndex + 1, progressSteps.length - 1);
-            };
-            updateProgress();
-            window.setInterval(updateProgress, 700);
+            try {
+                const response = await fetch(form.action || window.location.href, {
+                    method: "POST",
+                    headers: { Accept: "text/event-stream" },
+                    body: new FormData(form),
+                });
+                if (!response.ok || !response.body) {
+                    throw new Error("Agent実行を開始できませんでした。");
+                }
+                const stateToken = await readSse(response, handleAgentEvent);
+                if (!stateToken) {
+                    throw new Error("Agent実行の完了状態を受け取れませんでした。");
+                }
+                await saveStreamState(form, stateToken);
+                setProgress(100, "実行結果を表示しています。");
+                window.location.reload();
+            } catch (error) {
+                liveSpinner.classList.add("d-none");
+                liveSummary.textContent = error.message;
+                setProgress(100, "Agent実行に失敗しました。");
+            }
         });
     });
 });

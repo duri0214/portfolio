@@ -38,6 +38,41 @@ class GameAgentService:
 
     def run_selected(self, *, max_turns: int = 10) -> AgentRun:
         """選択済みの問題とセリフをAgentへ渡し、Tool選択を委ねる。"""
+        return self.run_sync(self._selected_input(), max_turns=max_turns)
+
+    async def stream_selected(self, *, max_turns: int = 10):
+        """選択済みの問題をTool単位の意味イベントとして返す。"""
+        state = self.tools.state
+        async for event in self.execution.stream(
+            self._selected_input(), max_turns=max_turns
+        ):
+            if event["type"] not in {"tool.selected", "tool.completed", "tool.failed"}:
+                yield event
+                continue
+            tool_name = event.get("tool_name", "")
+            try:
+                definition = SkillToolCatalog.get(tool_name)
+                event = {
+                    **event,
+                    "display_name": definition.display_name,
+                    "operation": definition.description,
+                }
+            except ValueError:
+                pass
+            yield event
+            if event["type"] == "tool.selected":
+                yield {
+                    "type": "tool.started",
+                    "call_id": event["call_id"],
+                    "tool_name": tool_name,
+                    "display_name": event.get("display_name", tool_name),
+                    "operation": event.get("operation", ""),
+                    "arguments": event.get("arguments", {}),
+                    "sequence": event.get("sequence", 0),
+                }
+
+    def _selected_input(self) -> str:
+        """選択中の問題とセリフからAgent入力を組み立てる。"""
         state = self.tools.state
         if not state.selected_enemy_id or not state.selected_line_id:
             raise ValueError("問題とセリフを選択してから実行してください")
@@ -58,7 +93,7 @@ class GameAgentService:
             "問題の教科とSkillの教科は一致しなくても構いません。"
             f"Toolのtarget_enemy_idには{enemy.enemy_id}を使ってください。"
         )
-        return self.run_sync(input_text, max_turns=max_turns)
+        return input_text
 
     @staticmethod
     def create_execution_record(
