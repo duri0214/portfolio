@@ -32,6 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const liveCombo = document.querySelector("[data-live-combo]");
     const liveSteps = document.querySelector("[data-live-steps]");
     let liveSkillCount = 0;
+    let agentStatus = null;
     const csrfToken = (form) => form.querySelector("[name=csrfmiddlewaretoken]").value;
 
     const setProgress = (value, text) => {
@@ -154,6 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
             setCurrentTool(event.type === "tool.completed" ? "完了" : "失敗", event);
             setProgress(75, "Skillの結果を反映しています。");
         } else if (event.type === "report.completed") {
+            agentStatus = event.status;
             setProgress(90, "実行結果を保存しています。");
             return event.state_token;
         }
@@ -248,6 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
             selectLineButton(form);
             document.querySelector("[data-agent-messages]").replaceChildren();
             liveSkillCount = 0;
+            agentStatus = null;
             liveCombo.classList.add("d-none");
             liveSteps.replaceChildren();
             setBoardDisabled(true);
@@ -277,7 +280,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 const savedPage = await saveStreamState(form, stateToken);
                 refreshPersistedState(savedPage);
                 setBoardDisabled(false);
-                setProgress(100, "実行結果を表示しています。");
+                if (agentStatus === "completed") {
+                    setProgress(100, "実行結果を表示しています。");
+                } else {
+                    progressTitle.textContent = "Agent実行に失敗しました";
+                    progressSpinner.classList.add("d-none");
+                    progressBar.classList.remove("bg-secondary", "bg-success");
+                    progressBar.classList.add("bg-danger");
+                    progressBar.style.width = "100%";
+                    progressBar.parentElement.setAttribute("aria-valuenow", "100");
+                    progressText.textContent = "実行履歴で失敗理由を確認できます。";
+                }
             } catch (error) {
                 const reason = error instanceof Error ? error.message : String(error);
                 console.error("Agent streaming failed", error);
