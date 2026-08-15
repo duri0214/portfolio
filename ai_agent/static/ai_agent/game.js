@@ -27,6 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const liveSummary = document.querySelector("[data-live-summary]");
     const liveSteps = document.querySelector("[data-live-steps]");
     const liveSpinner = document.querySelector("[data-live-spinner]");
+    let chainedSkillCount = 0;
 
     const csrfToken = (form) => form.querySelector("[name=csrfmiddlewaretoken]").value;
 
@@ -119,6 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
             liveSummary.textContent = "AgentがToolの選択を開始しました。";
             setProgress(35, "Agentが利用するToolを選んでいます。");
         } else if (event.type === "tool.selected") {
+            chainedSkillCount += 1;
             addLiveTool(event);
             liveSummary.textContent = `${event.sequence}番目のSkillを選択しました。`;
             setCurrentTool("発生", event);
@@ -209,6 +211,7 @@ document.addEventListener("DOMContentLoaded", () => {
             event.preventDefault();
             liveExecution.classList.remove("d-none");
             liveSteps.replaceChildren();
+            chainedSkillCount = 0;
             agentForms.forEach((agentForm) => {
                 const button = agentForm.querySelector("[data-agent-submit]");
                 if (button) {
@@ -236,7 +239,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 refreshPersistedState(savedPage);
                 setProgress(100, "実行結果を表示しています。");
                 liveSpinner.classList.add("d-none");
-                liveSummary.textContent = "Agentの処理が完了しました。";
+                liveSummary.textContent = `Agentが${chainedSkillCount}つのSkillをチェーンしました。`;
             } catch (error) {
                 const reason = error instanceof Error ? error.message : String(error);
                 console.error("Agent streaming failed", error);
