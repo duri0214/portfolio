@@ -202,18 +202,8 @@ LOGGING = {
         "level": "INFO",
     },
     "loggers": {
-        # APIの通常リクエストと自動リトライは開発サーバーの標準ログを汚さない。
-        # 警告・エラーは引き続き表示する。
-        "httpx": {
-            "handlers": ["console"],
-            "level": "WARNING",
-            "propagate": False,
-        },
-        "openai": {
-            "handlers": ["console"],
-            "level": "WARNING",
-            "propagate": False,
-        },
+        "httpx": {"level": "WARNING"},
+        "openai": {"level": "WARNING"},
     },
 }
 
