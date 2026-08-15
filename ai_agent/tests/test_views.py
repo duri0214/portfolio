@@ -89,6 +89,22 @@ async def fake_stream_selected(self, *, max_turns=10):
 
 
 class AgentStreamingViewTest(TestCase):
+    def test_invalid_stream_state_token_returns_an_error_redirect(self):
+        """
+        シナリオ:
+        - 入力: 署名検証に失敗するストリーム状態Token。
+        - 処理: 保存endpointへTokenを送信する。
+        - 期待値: HTTP 500ではなくトップ画面へ戻り、操作エラーが表示される。
+        """
+        response = self.client.post(
+            "/ai_agent/",
+            {"action": "save_stream_state", "state_token": "invalid-token"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        page = self.client.get(response["Location"])
+        self.assertContains(page, "操作できません")
+
     def test_streaming_endpoint_persists_completed_tool_history(self):
         self.client.post(
             "/ai_agent/",
@@ -122,7 +138,9 @@ class AgentStreamingViewTest(TestCase):
         page = self.client.get("/ai_agent/")
 
         self.assertContains(page, "Agent実行 #1")
-        self.assertContains(page, "Agentが1つのSkillをチェーンしました。結果を反映しました。")
+        self.assertContains(
+            page, "Agentが1つのSkillをチェーンしました。結果を反映しました。"
+        )
         self.assertContains(page, "calculate")
         self.assertContains(
             page,

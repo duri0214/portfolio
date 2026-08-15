@@ -69,7 +69,13 @@ class IndexView(TemplateView):
                 messages.success(request, "ゲームを初期状態へ戻しました。")
             else:
                 raise ValueError("unknown game action")
-        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
+        except (
+            KeyError,
+            TypeError,
+            ValueError,
+            json.JSONDecodeError,
+            signing.BadSignature,
+        ) as error:
             messages.error(request, f"操作できません: {error}")
 
         response = redirect("agt:index")
