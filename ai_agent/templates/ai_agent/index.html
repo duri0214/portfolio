@@ -7,7 +7,7 @@
             <h1 class="h2 mb-1">Skill Chain Game</h1>
             <p class="text-muted mb-0">盤面から問題を選び、セリフをAgentへ渡して解答します。</p>
         </div>
-        <form method="post">
+        <form method="post" action="{% url 'agt:index' %}">
             {% csrf_token %}
             <input type="hidden" name="action" value="reset">
             <button class="btn btn-outline-secondary" type="submit">最初からやり直す</button>
@@ -39,7 +39,7 @@
                     {% for cell in board_cells %}
                     <div class="game-cell" data-row="{{ cell.row }}" data-column="{{ cell.column }}">
                         {% if cell.problem %}
-                        <form method="post" class="board-piece-form">
+                        <form method="post" action="{% url 'agt:index' %}" class="board-piece-form">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="select_enemy">
                             <input type="hidden" name="enemy_id" value="{{ cell.problem.enemy_id }}">
@@ -73,7 +73,7 @@
             </div>
             <div class="list-group mb-4">
                 {% for line in game.preset_lines %}
-                <form method="post" class="list-group-item d-flex justify-content-between align-items-center gap-2" data-agent-form>
+                <form method="post" action="{% url 'agt:index' %}" class="list-group-item d-flex justify-content-between align-items-center gap-2" data-agent-form>
                     {% csrf_token %}
                     <input type="hidden" name="action" value="stream_agent">
                     <input type="hidden" name="line_id" value="{{ line.line_id }}">
