@@ -1,129 +1,156 @@
 {% extends "ai_agent/base.html" %}
-{% load static %}
 
 {% block content %}
-    <div class="container mt-4">
-        <!-- Breadcrumb -->
-        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
-            <ol class="breadcrumb mb-0 small">
-                <li class="breadcrumb-item active" aria-current="page">AI Agent</li>
-            </ol>
-        </nav>
+<main class="container mt-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+        <div>
+            <h1 class="h2 mb-1">Skill Chain Game</h1>
+            <p class="text-muted mb-0">盤面から問題を選び、セリフをAgentへ渡して解答します。</p>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reset">
+            <button class="btn btn-outline-secondary" type="submit">最初からやり直す</button>
+        </form>
+    </div>
 
-        <div class="row g-4">
-            <!-- Hero -->
-            <div class="col-12">
-                <div class="bg-light p-5 rounded shadow-sm">
-                    <h1 class="display-4">Hello, AI Agent!</h1>
-                    <p class="lead">Interact with the AI Agent below.</p>
-                    <hr class="my-4">
-                    <div class="d-flex flex-wrap gap-2">
-                        <form method="POST" action="{% url 'agt:reset_turn' %}" class="d-inline">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-outline-danger">会話をリセット</button>
-                        </form>
-                        <form method="POST" action="{% url 'agt:next_turn' %}" class="d-inline">
-                            {% csrf_token %}
-                            {% if user.is_superuser %}
-                                <button type="submit" class="btn btn-outline-primary">1単位時間進める</button>
-                            {% else %}
-                                <button type="submit" class="btn btn-outline-secondary" disabled>1単位時間進める</button>
-                            {% endif %}
-                        </form>
-                    </div>
-                    {% if not user.is_superuser %}
-                        <p class="small text-muted mt-2 mb-0">「1単位時間進める」ボタンは管理者権限が必要です</p>
-                    {% endif %}
-                </div>
-            </div>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %}" role="alert">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
 
-            <!-- Chat + Timeline -->
-            <div class="col-lg-8">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-white pt-3 pb-2">
-                        <h2 class="h5 mb-0"><i class="bi bi-chat-dots me-2"></i>AI Agent Simulation</h2>
-                    </div>
-                    <div class="card-body">
-                        {% if messages %}
-                            <div class="alert alert-light border mb-3">
-                                <h6 class="mb-2"><i class="bi bi-info-circle me-1"></i>システム通知</h6>
-                                <ul class="list-unstyled mb-0 small">
-                                    {% for message in messages %}
-                                        <li class="mb-1">{{ message }}</li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
+    <section class="alert alert-info" aria-label="遊び方">
+        <h2 class="h6">この画面で起こること</h2>
+        <ol class="mb-0 ps-3">
+            <li>盤面の問題を選ぶと、Agentが解く対象が決まります。</li>
+            <li>セリフの「このセリフでAgentに任せる」を押すと、セリフを最終決定します。</li>
+            <li>最終決定後、Agentが6つのSkillから必要なものを選びます。</li>
+            <li>AgentのTool結果に応じて、問題の残りHP、経験値、実行履歴が変わります。</li>
+        </ol>
+    </section>
+
+    <section class="row g-4" aria-label="ゲーム状態">
+        <div class="col-lg-5">
+            <h2 class="h5">1. 盤面から問題を選ぶ</h2>
+            <div class="border p-3">
+                <p class="mb-2">経験値: <strong>{{ game.experience }}</strong></p>
+                <div class="game-board mb-3" data-game-board data-board-size="{{ game.board_size }}" aria-label="問題盤面">
+                    {% for cell in board_cells %}
+                    <div class="game-cell" data-row="{{ cell.row }}" data-column="{{ cell.column }}">
+                        {% if cell.problem %}
+                        <form method="post" class="board-piece-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="select_enemy">
+                            <input type="hidden" name="enemy_id" value="{{ cell.problem.enemy_id }}">
+                            <button class="board-piece problem-piece {% if cell.problem.enemy_id == game.selected_enemy_id %}is-selected{% endif %}" type="submit" data-board-problem="{{ cell.problem.enemy_id }}" aria-label="{{ cell.problem.name }}を選ぶ">
+                                {% if cell.is_player %}<span class="player-piece-marker" aria-hidden="true">P</span>{% endif %}
+                                <span class="problem-piece-name">{{ cell.problem.name }}</span>
+                                <span class="problem-piece-hp">残りHP {{ cell.problem.hit_points }}</span>
+                            </button>
+                        </form>
+                        {% elif cell.is_player %}
+                        <span class="player-piece" aria-label="プレイヤー">P</span>
                         {% endif %}
-
-                        <div class="mb-4">
-                            {% for chat_message in chat_messages %}
-                                {% if '[ERROR]' in chat_message.message_content %}
-                                    <div class="alert alert-danger small" role="alert">{{ chat_message.message_content }}</div>
-                                {% else %}
-                                    <div class="alert alert-light border small" role="alert">{{ chat_message.message_content }}</div>
-                                {% endif %}
-                            {% empty %}
-                                <div class="alert alert-warning small" role="alert">メッセージ履歴がありません。</div>
-                            {% endfor %}
-                        </div>
-
-                        {% with next_entity=future_actions.first.entity %}
-                            <form method="POST" action="{% url 'agt:index' %}">
-                                {% csrf_token %}
-                                {{ form.as_p }}
-                                <button type="submit" class="btn btn-primary mt-2"
-                                        {% if next_entity.name != 'User' %}disabled{% endif %}>送信</button>
-                            </form>
-                        {% endwith %}
                     </div>
+                    {% endfor %}
                 </div>
-            </div>
-
-            <!-- Timeline Sidebar -->
-            <div class="col-lg-4">
-                <div class="card shadow-sm border-0 mb-3">
-                    <div class="card-header bg-white pt-3 pb-2">
-                        <h3 class="h6 mb-0">現在のターン</h3>
-                    </div>
-                    <div class="card-body py-2">
-                        <p class="small mb-0">
-                            {% with latest_completed_turn|default:0 as current_turn %}
-                                ターン: {{ current_turn }}
-                            {% endwith %}
-                        </p>
-                    </div>
-                </div>
-
-                <div class="card shadow-sm border-0 mb-3">
-                    <div class="card-header bg-white pt-3 pb-2">
-                        <h3 class="h6 mb-0">予定される順番</h3>
-                    </div>
-                    <div class="card-body py-2">
-                        <ul class="list-unstyled small mb-0">
-                            {% for future_action in future_actions %}
-                                <li class="mb-1">{{ future_action.entity.name }} <span class="text-muted">(次: {{ future_action.acted_at_turn }})</span></li>
-                            {% empty %}
-                                <li class="text-muted">（なし）</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-white pt-3 pb-2">
-                        <h3 class="h6 mb-0">終了したターンのログ</h3>
-                    </div>
-                    <div class="card-body py-2">
-                        <ul class="list-unstyled small mb-0">
-                            {% for completed_action in completed_actions %}
-                                <li class="mb-1">{{ completed_action.entity.name }} <span class="text-muted">(完了: {{ completed_action.acted_at_turn }})</span></li>
-                            {% empty %}
-                                <li class="text-muted">（なし）</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
+                <p class="small text-muted mb-0">Pがプレイヤー、色付きの駒が問題です。問題駒をクリックするとPがそのマスへ移動します。単一教科と科目横断の6つの問題から、今回解きたい問題を1つ選んでください。</p>
             </div>
         </div>
-    </div>
+        <div class="col-lg-7">
+            <h2 class="h5">2. セリフを選んでAgentへ最終決定</h2>
+            <div class="alert alert-primary d-none" data-agent-progress aria-live="polite">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                    <strong>Agentが処理しています</strong>
+                </div>
+                <div class="progress mb-2" role="progressbar" aria-label="Agentの進行状況" aria-valuemin="0" aria-valuemax="100" aria-valuenow="25">
+                    <div class="progress-bar" data-agent-progress-bar style="width: 25%"></div>
+                </div>
+                <p class="small mb-0" data-agent-progress-text>セリフを確認しています。</p>
+            </div>
+            <div class="list-group mb-4">
+                {% for line in game.preset_lines %}
+                <form method="post" class="list-group-item d-flex justify-content-between align-items-center gap-2" data-agent-form>
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="select_line">
+                    <input type="hidden" name="line_id" value="{{ line.line_id }}">
+                    <span>
+                        <strong>{{ line.label }}</strong><br>
+                        <span>{{ line.text }}</span><br>
+                        <small class="text-muted">{{ line.description }}</small>
+                    </span>
+                    <button class="btn btn-sm {% if line.line_id == game.selected_line_id %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit" data-agent-submit {% if not selected_enemy %}disabled{% endif %}>
+                        {{ line.label }}でAgentに任せる
+                    </button>
+                </form>
+                {% endfor %}
+            </div>
+            <p class="small text-muted">対象: {% if selected_enemy %}{{ selected_enemy.name }}{% else %}未選択。先に問題を選んでください{% endif %}</p>
+            <h3 class="h6">Agentが利用できる6つのSkill</h3>
+            <p class="small text-muted">ここに表示されるSkillからAgentが選びます。問題の教科と異なるSkillも選択できます。</p>
+            <div class="list-group">
+                {% for tool in skill_tools %}
+                <div class="list-group-item d-flex justify-content-between gap-2">
+                    <span><strong>{{ tool.display_name }}</strong> <span class="text-muted small">({{ tool.category_display_name }})</span></span>
+                    <code>{{ tool.name }}</code>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="mt-4 border p-3" aria-label="Agent実行履歴">
+        <h2 class="h5">Agent実行履歴</h2>
+        {% if game.execution_history %}
+            <div class="list-group">
+            {% for execution in game.execution_history %}
+                <article class="list-group-item">
+                    <div class="d-flex flex-wrap justify-content-between gap-2">
+                        <div>
+                            <strong>Agent実行 #{{ forloop.counter }}</strong>
+                            <span class="badge text-bg-secondary">
+                                {% if execution.status == 'completed' %}完了{% elif execution.status == 'failed' %}失敗{% elif execution.status == 'timed_out' %}タイムアウト{% else %}遮断{% endif %}
+                            </span>
+                        </div>
+                        <span class="text-muted small">{{ execution.problem_name }}（{{ execution.problem_subjects }}）</span>
+                    </div>
+                    <p class="small mb-2"><strong>受け取ったセリフ:</strong> {{ execution.line_label }}「{{ execution.line_text }}」</p>
+                    <div class="alert alert-light border mb-3">
+                        <strong>Agentの説明</strong>
+                        <p class="mb-0 mt-1">{{ execution.explanation }}</p>
+                    </div>
+                    {% if execution.steps %}
+                        <h3 class="h6">選ばれたSkillと処理結果</h3>
+                        <ol class="list-group list-group-numbered mb-0">
+                        {% for step in execution.steps %}
+                            <li class="list-group-item">
+                                <div class="d-flex flex-wrap justify-content-between gap-2">
+                                    <strong>{{ step.display_name }}</strong>
+                                    <code>{{ step.tool_name }}</code>
+                                </div>
+                                <p class="small mb-1">処理: {{ step.operation }}</p>
+                                <p class="small mb-1">入力: {{ step.input_summary }}</p>
+                                <p class="small mb-1 {% if step.success %}text-success{% else %}text-danger{% endif %}">
+                                    結果: {{ step.result_summary }}
+                                </p>
+                                <p class="small text-muted mb-0">状態変化: ダメージ {{ step.damage }} / 経験値 +{{ step.experience_gained }} / 問題の残りHP {{ step.remaining_hit_points }}</p>
+                            </li>
+                        {% endfor %}
+                        </ol>
+                    {% else %}
+                        <p class="text-muted small mb-0">Skill Toolは実行されませんでした。</p>
+                    {% endif %}
+                    {% if execution.error %}
+                        <p class="text-danger small mt-2 mb-0">エラー: {{ execution.error }}</p>
+                    {% endif %}
+                </article>
+            {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted mb-0">まだAgentを実行していません。問題を選び、セリフでAgentに任せると、ここに判断・処理・結果が表示されます。</p>
+        {% endif %}
+    </section>
+</main>
 {% endblock %}

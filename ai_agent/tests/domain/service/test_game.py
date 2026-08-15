@@ -1,0 +1,144 @@
+from django.test import SimpleTestCase
+
+from ai_agent.domain.service.game import GameService
+from ai_agent.domain.service.skill_tools import SkillToolCatalog
+from ai_agent.domain.valueobject.game import SkillCategory
+
+
+class GameServiceTest(SimpleTestCase):
+    def test_create_game_has_six_problems_and_preset_lines(self):
+        """
+        シナリオ:
+        - 入力: 新規ゲーム作成の依頼。
+        - 処理: GameService.create_gameを呼び出す。
+        - 期待値: 3x3盤面に単一教科と科目横断の6つの問題、プリセットセリフが作られる。
+        """
+        state = GameService.create_game()
+
+        self.assertEqual(state.board_size, 3)
+        self.assertEqual(len(state.enemies), 6)
+        self.assertEqual(
+            {enemy.category for enemy in state.enemies},
+            {SkillCategory.LANGUAGE, SkillCategory.MATHEMATICS, SkillCategory.SCIENCE},
+        )
+        self.assertEqual(
+            {
+                enemy.category_display_name
+                for enemy in state.enemies
+                if len(enemy.categories) == 2
+            },
+            {"国語 × 算数", "国語 × 理科", "算数 × 理科"},
+        )
+        self.assertEqual(len(state.preset_lines), 3)
+        self.assertEqual(
+            {line.label for line in state.preset_lines},
+            {"正面から解く", "観察して解く", "複数Skillで解く"},
+        )
+        self.assertEqual(state.experience, 0)
+
+    def test_selecting_problem_moves_player_to_problem_position(self):
+        """
+        シナリオ:
+        - 入力: 初期盤面で国語の問題駒を選択する。
+        - 処理: GameServiceが対象問題を選び、プレイヤー位置を更新する。
+        - 期待値: プレイヤーが国語の問題と同じマスへ移動する。
+        """
+        state = GameService.create_game()
+
+        next_state = GameService.select_enemy(state, "enemy-language")
+
+        self.assertEqual(next_state.selected_enemy_id, "enemy-language")
+        self.assertEqual(
+            next_state.player_position,
+            next_state.enemy("enemy-language").position,
+        )
+        self.assertNotEqual(state.player_position, next_state.player_position)
+        restored_state = type(next_state).from_json(next_state.to_json())
+        self.assertEqual(restored_state.player_position, next_state.player_position)
+
+    def test_successful_skill_returns_new_state_and_effect(self):
+        """
+        シナリオ:
+        - 入力: 国語の敵を対象に読解分析をscore 80で実行する。
+        - 処理: GameServiceがSkill結果を適用する。
+        - 期待値: 敵HP、経験値、Tool履歴が更新され、元の状態は変わらない。
+        """
+        state = GameService.select_enemy(GameService.create_game(), "enemy-language")
+        definition = SkillToolCatalog.get("analyze_reading")
+
+        next_state, result = GameService.execute_skill(
+            state,
+            definition,
+            target_enemy_id="enemy-language",
+            score=80,
+        )
+
+        self.assertTrue(result.success)
+        self.assertEqual(result.damage, 1)
+        self.assertEqual(result.experience_gained, 10)
+        self.assertEqual(next_state.enemy("enemy-language").hit_points, 2)
+        self.assertEqual(next_state.experience, 10)
+        self.assertEqual(next_state.tool_history, ("analyze_reading",))
+        self.assertEqual(state.enemy("enemy-language").hit_points, 3)
+
+    def test_failed_skill_has_no_enemy_effect(self):
+        """
+        シナリオ:
+        - 入力: 算数の敵を対象に計算をscore 40で実行する。
+        - 処理: 成功基準未達のSkillを適用する。
+        - 期待値: 失敗結果になり、敵HPと経験値は変わらない。
+        """
+        state = GameService.create_game()
+        definition = SkillToolCatalog.get("calculate")
+
+        next_state, result = GameService.execute_skill(
+            state,
+            definition,
+            target_enemy_id="enemy-mathematics",
+            score=40,
+        )
+
+        self.assertFalse(result.success)
+        self.assertEqual(result.damage, 0)
+        self.assertEqual(next_state.enemy("enemy-mathematics").hit_points, 3)
+        self.assertEqual(next_state.experience, 0)
+        self.assertEqual(next_state.tool_history, ("calculate",))
+
+    def test_skill_chain_can_choose_two_tools_without_fixed_order(self):
+        """
+        シナリオ:
+        - 入力: 国語の敵へ表現分析、続けて読解分析をscore 80で実行する。
+        - 処理: Agentが選択した順で2つのSkill結果を状態へ適用する。
+        - 期待値: 2つのTool履歴、合計経験値25、敵HP0が得られる。
+        """
+        state = GameService.create_game()
+        for tool_name in ("analyze_expression", "analyze_reading"):
+            state, result = GameService.execute_skill(
+                state,
+                SkillToolCatalog.get(tool_name),
+                target_enemy_id="enemy-language",
+                score=80,
+            )
+            self.assertTrue(result.success)
+
+        self.assertEqual(state.tool_history, ("analyze_expression", "analyze_reading"))
+        self.assertEqual(state.experience, 25)
+        self.assertTrue(state.enemy("enemy-language").defeated)
+
+    def test_skill_can_target_another_category(self):
+        """
+        シナリオ:
+        - 入力: 国語の敵を対象に算数の計算Toolをscore 80で実行する。
+        - 処理: Agentが選んだ教科の異なるSkillを適用する。
+        - 期待値: Skillが成功し、対象敵のHPと経験値が更新される。
+        """
+        state, result = GameService.execute_skill(
+            GameService.create_game(),
+            SkillToolCatalog.get("calculate"),
+            target_enemy_id="enemy-language",
+            score=80,
+        )
+
+        self.assertTrue(result.success)
+        self.assertEqual(state.enemy("enemy-language").hit_points, 2)
+        self.assertEqual(state.experience, 10)

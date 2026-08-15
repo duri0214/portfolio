@@ -1,0 +1,341 @@
+from __future__ import annotations
+
+import base64
+from dataclasses import asdict
+from dataclasses import dataclass, replace
+import json
+from typing import Any
+import zlib
+
+from ai_agent.domain.valueobject.skill_tool import SkillCategory
+
+
+@dataclass(frozen=True)
+class Position:
+    """盤面上のマスを表す値オブジェクト。
+
+    Attributes:
+        row: 0以上の行番号。
+        column: 0以上の列番号。
+    """
+
+    row: int
+    column: int
+
+    def __post_init__(self) -> None:
+        if self.row < 0 or self.column < 0:
+            raise ValueError("position coordinates must be non-negative")
+
+
+@dataclass(frozen=True)
+class EnemyState:
+    """盤面上の問題駒と解答状態を表す値オブジェクト。
+
+    Attributes:
+        enemy_id: AgentやUIが参照する安定した問題識別子。
+        name: 画面に表示する問題名。
+        category: 問題の主教科。
+        position: 盤面上の位置。
+        hit_points: 残り体力。0なら撃破済み。
+        related_category: 科目横断問題の関連教科。
+    """
+
+    enemy_id: str
+    name: str
+    category: SkillCategory
+    position: Position
+    hit_points: int = 3
+    related_category: SkillCategory | None = None
+
+    def __post_init__(self) -> None:
+        if not self.enemy_id or not self.name:
+            raise ValueError("enemy_id and name must not be empty")
+        if self.hit_points < 0:
+            raise ValueError("hit_points must not be negative")
+
+    @property
+    def defeated(self) -> bool:
+        """問題が解決済みかどうかを返す。"""
+        return self.hit_points == 0
+
+    @property
+    def categories(self) -> tuple[SkillCategory, ...]:
+        """問題に関連する教科を重複なく返す。"""
+        if self.related_category is None or self.related_category == self.category:
+            return (self.category,)
+        return (self.category, self.related_category)
+
+    @property
+    def category_display_name(self) -> str:
+        """問題の教科を画面表示用の名前で返す。"""
+        return " × ".join(category.display_name for category in self.categories)
+
+
+@dataclass(frozen=True)
+class PresetLine:
+    """プレイヤーがAgentへ渡せるプリセットセリフ。
+
+    Attributes:
+        line_id: セリフの識別子。
+        label: 選択肢として表示する意図の名前。
+        text: 画面に表示するセリフ本文。
+        description: Agentに伝える意図の説明。
+    """
+
+    line_id: str
+    label: str
+    text: str
+    description: str
+
+
+@dataclass(frozen=True)
+class ToolExecutionRecord:
+    """画面に表示するSkill 1回分の実行記録。"""
+
+    sequence: int
+    tool_name: str
+    display_name: str
+    operation: str
+    target_problem_name: str
+    input_summary: str
+    success: bool
+    result_summary: str
+    damage: int
+    experience_gained: int
+    remaining_hit_points: int
+
+    @classmethod
+    def from_dict(cls, value: dict[str, Any]) -> ToolExecutionRecord:
+        """署名付きCookieの辞書から実行記録を復元する。"""
+        return cls(
+            sequence=int(value.get("sequence", 0)),
+            tool_name=str(value.get("tool_name", "")),
+            display_name=str(value.get("display_name", "")),
+            operation=str(value.get("operation", "")),
+            target_problem_name=str(value.get("target_problem_name", "")),
+            input_summary=str(value.get("input_summary", "")),
+            success=bool(value.get("success", False)),
+            result_summary=str(value.get("result_summary", "")),
+            damage=int(value.get("damage", 0)),
+            experience_gained=int(value.get("experience_gained", 0)),
+            remaining_hit_points=int(value.get("remaining_hit_points", 0)),
+        )
+
+
+@dataclass(frozen=True)
+class AgentExecutionRecord:
+    """画面に表示するAgent 1回分の実行記録。"""
+
+    run_id: str
+    problem_id: str
+    problem_name: str
+    problem_subjects: str
+    line_label: str
+    line_text: str
+    status: str
+    explanation: str
+    steps: tuple[ToolExecutionRecord, ...]
+    error: str | None = None
+
+    @classmethod
+    def from_dict(cls, value: dict[str, Any]) -> AgentExecutionRecord:
+        """署名付きCookieの辞書からAgent実行記録を復元する。"""
+        return cls(
+            run_id=str(value.get("run_id", "")),
+            problem_id=str(value.get("problem_id", "")),
+            problem_name=str(value.get("problem_name", "")),
+            problem_subjects=str(value.get("problem_subjects", "")),
+            line_label=str(value.get("line_label", "")),
+            line_text=str(value.get("line_text", "")),
+            status=str(value.get("status", "")),
+            explanation=str(value.get("explanation", "")),
+            steps=tuple(
+                ToolExecutionRecord.from_dict(step)
+                for step in value.get("steps", ())
+                if isinstance(step, dict)
+            ),
+            error=(str(value["error"]) if value.get("error") else None),
+        )
+
+
+@dataclass(frozen=True)
+class GameState:
+    """プレイヤー、敵駒、選択状態をまとめたゲームスナップショット。
+
+    Attributes:
+        board_size: 正方形盤面の一辺のマス数。
+        player_position: プレイヤー駒の位置。
+        experience: プレイヤーが獲得した経験値。
+        enemies: 単一教科または科目横断の6つの問題駒。
+        preset_lines: プレイヤーが選択できるプリセットセリフ。
+        selected_enemy_id: 現在選択中の敵識別子。
+        selected_line_id: 現在選択中のセリフ識別子。
+        tool_history: Agentが実行したTool名の履歴。
+        execution_history: Agentの判断とSkill結果を含む実行履歴。
+    """
+
+    board_size: int
+    player_position: Position
+    experience: int
+    enemies: tuple[EnemyState, ...]
+    preset_lines: tuple[PresetLine, ...]
+    selected_enemy_id: str | None = None
+    selected_line_id: str | None = None
+    tool_history: tuple[str, ...] = ()
+    execution_history: tuple[AgentExecutionRecord, ...] = ()
+
+    _COOKIE_PREFIX = "z1:"
+
+    def __post_init__(self) -> None:
+        if self.board_size < 1:
+            raise ValueError("board_size must be greater than zero")
+        if self.experience < 0:
+            raise ValueError("experience must not be negative")
+        if len(self.enemies) != 6:
+            raise ValueError("a game must contain exactly six problems")
+        if any(
+            enemy.position.row >= self.board_size
+            or enemy.position.column >= self.board_size
+            for enemy in self.enemies
+        ):
+            raise ValueError("enemy position must be inside the board")
+
+    @classmethod
+    def initial(cls) -> GameState:
+        """3x3盤面と単一教科・科目横断の問題駒を作成する。"""
+        return cls(
+            board_size=3,
+            player_position=Position(1, 1),
+            experience=0,
+            enemies=(
+                EnemyState(
+                    "enemy-language",
+                    "国語の問題",
+                    SkillCategory.LANGUAGE,
+                    Position(0, 0),
+                ),
+                EnemyState(
+                    "problem-language-mathematics",
+                    "国語×算数の問題",
+                    SkillCategory.LANGUAGE,
+                    Position(0, 1),
+                    related_category=SkillCategory.MATHEMATICS,
+                ),
+                EnemyState(
+                    "enemy-mathematics",
+                    "算数の問題",
+                    SkillCategory.MATHEMATICS,
+                    Position(0, 2),
+                ),
+                EnemyState(
+                    "problem-language-science",
+                    "国語×理科の問題",
+                    SkillCategory.LANGUAGE,
+                    Position(1, 0),
+                    related_category=SkillCategory.SCIENCE,
+                ),
+                EnemyState(
+                    "problem-mathematics-science",
+                    "算数×理科の問題",
+                    SkillCategory.MATHEMATICS,
+                    Position(2, 1),
+                    related_category=SkillCategory.SCIENCE,
+                ),
+                EnemyState(
+                    "enemy-science",
+                    "理科の問題",
+                    SkillCategory.SCIENCE,
+                    Position(2, 2),
+                ),
+            ),
+            preset_lines=(
+                PresetLine(
+                    "line-challenge",
+                    "正面から解く",
+                    "この問題を解いてみせる！",
+                    "まず最も直接的なSkillで問題の解決を試みる。",
+                ),
+                PresetLine(
+                    "line-observe",
+                    "観察して解く",
+                    "よく観察して答えを導く。",
+                    "問題文や対象の特徴を分析してからSkillを選ぶ。",
+                ),
+                PresetLine(
+                    "line-chain",
+                    "複数Skillで解く",
+                    "別のSkillも組み合わせて突破する！",
+                    "1つのToolで終わらず、結果に応じて追加Toolを検討する。",
+                ),
+            ),
+        )
+
+    def with_selection(
+        self, *, enemy_id: str | None = None, line_id: str | None = None
+    ) -> GameState:
+        """選択状態だけを更新した新しいスナップショットを返す。"""
+        return replace(
+            self,
+            selected_enemy_id=(
+                enemy_id if enemy_id is not None else self.selected_enemy_id
+            ),
+            selected_line_id=line_id if line_id is not None else self.selected_line_id,
+        )
+
+    def enemy(self, enemy_id: str) -> EnemyState:
+        """指定した敵駒を返す。"""
+        return next(enemy for enemy in self.enemies if enemy.enemy_id == enemy_id)
+
+    def with_execution_record(self, record: AgentExecutionRecord) -> GameState:
+        """Agent実行記録を最新順で追加した状態を返す。"""
+        return replace(self, execution_history=(record,) + self.execution_history)
+
+    def to_json(self) -> str:
+        """圧縮してブラウザへ署名付きCookieとして保存できる文字列を返す。"""
+        payload = json.dumps(
+            asdict(self), ensure_ascii=False, separators=(",", ":")
+        ).encode("utf-8")
+        compressed = zlib.compress(payload, level=9)
+        return self._COOKIE_PREFIX + base64.urlsafe_b64encode(compressed).decode(
+            "ascii"
+        )
+
+    @classmethod
+    def from_json(cls, value: str) -> GameState:
+        """署名付きCookieのJSONからゲーム状態を復元する。"""
+        if value.startswith(cls._COOKIE_PREFIX):
+            compressed = base64.urlsafe_b64decode(
+                value[len(cls._COOKIE_PREFIX) :].encode("ascii")
+            )
+            value = zlib.decompress(compressed).decode("utf-8")
+        payload = json.loads(value)
+        initial = cls.initial()
+        health_by_enemy = {
+            enemy["enemy_id"]: int(enemy["hit_points"])
+            for enemy in payload.get("enemies", [])
+        }
+        enemies = tuple(
+            replace(
+                enemy, hit_points=health_by_enemy.get(enemy.enemy_id, enemy.hit_points)
+            )
+            for enemy in initial.enemies
+        )
+        player_position_payload = payload.get("player_position", {})
+        player_position = Position(
+            int(player_position_payload.get("row", initial.player_position.row)),
+            int(player_position_payload.get("column", initial.player_position.column)),
+        )
+        return replace(
+            initial,
+            player_position=player_position,
+            experience=int(payload.get("experience", 0)),
+            enemies=enemies,
+            selected_enemy_id=payload.get("selected_enemy_id"),
+            selected_line_id=payload.get("selected_line_id"),
+            tool_history=tuple(payload.get("tool_history", ())),
+            execution_history=tuple(
+                AgentExecutionRecord.from_dict(record)
+                for record in payload.get("execution_history", ())
+                if isinstance(record, dict)
+            ),
+        )
