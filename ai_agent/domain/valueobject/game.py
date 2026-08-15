@@ -186,6 +186,8 @@ class GameState:
     tool_history: tuple[str, ...] = ()
     execution_history: tuple[AgentExecutionRecord, ...] = ()
 
+    # Cookie値が圧縮・Base64エンコード済みのゲーム状態であることを識別する。
+    # 形式を変更して旧値を読めなくする必要がある場合だけ世代を更新する。
     _COOKIE_PREFIX = "z2:"
 
     def __post_init__(self) -> None:
