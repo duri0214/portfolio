@@ -107,6 +107,12 @@ notepad "$sshDir\config"
 以下を追記します。`Host github.com` など既存の設定がある場合は削除せず、別のブロックとして追加してください。
 
 ```text:~/.ssh/config
+Host github.com
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519_portfolio_vps
+    IdentitiesOnly yes
+
 Host henojiya
     HostName 153.126.200.229
     User ubuntu
