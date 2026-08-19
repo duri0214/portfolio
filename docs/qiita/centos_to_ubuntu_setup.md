@@ -96,8 +96,13 @@ ubuntu@153.126.200.229's password:  # さくらVPSの初期設定で指定した
 初回ログイン後は、Windows側の `~/.ssh/config` にエイリアスを設定し、以後のSSH接続で `ssh henojiya` を使います。新PCへ移行した場合は、このファイルも再作成が必要です。
 
 ```powershell:console
-notepad "$env:USERPROFILE\.ssh\config"
+$sshDir = "$env:USERPROFILE\.ssh"
+New-Item -ItemType Directory -Force $sshDir | Out-Null
+New-Item -ItemType File -Force "$sshDir\config" | Out-Null
+notepad "$sshDir\config"
 ```
+
+先に拡張子なしの `config` ファイルを作成しているため、メモ帳で保存しても `config.txt` にはなりません。
 
 以下を追記します。`Host github.com` など既存の設定がある場合は削除せず、別のブロックとして追加してください。
 
