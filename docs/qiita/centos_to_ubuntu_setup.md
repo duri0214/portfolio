@@ -91,6 +91,24 @@ ubuntu@153.126.200.229's password:  # さくらVPSの初期設定で指定した
 
 初回接続では `~/.ssh/config` が未設定のため、IPアドレスを直接指定します。公開鍵の登録とエイリアス設定が完了した後の接続は `ssh henojiya` に統一します。
 
+### 初回接続後の `ssh henojiya` エイリアス設定
+
+初回ログイン後は、Windows側の `~/.ssh/config` にエイリアスを設定し、以後のSSH接続で `ssh henojiya` を使います。新PCへ移行した場合は、このファイルも再作成が必要です。
+
+```powershell:console
+notepad "$env:USERPROFILE\.ssh\config"
+```
+
+以下を追記します。`Host github.com` など既存の設定がある場合は削除せず、別のブロックとして追加してください。
+
+```text:~/.ssh/config
+Host henojiya
+    HostName 153.126.200.229
+    User ubuntu
+    IdentityFile ~/.ssh/id_ed25519_portfolio_vps
+    IdentitiesOnly yes
+```
+
 ### 既知鍵の衝突（known_hosts）
 
 OS を入れ直した直後など、サーバのホスト鍵が変わると次のような強烈な警告が出ます。これは“以前と異なるサーバ鍵になった”ことを示す安全装置です。
@@ -170,14 +188,14 @@ Get-Content "$sshDir\id_ed25519_portfolio_vps.pub"
 
 #### パターン1：パスワード認証でSSHできる場合（初期構築）
 
-サーバー初期状態など、パスワードでSSHログインできる場合は、PowerShellから公開鍵を転送します。この段階ではSSH config未設定のため、接続先にIPアドレスを直接指定します。`scp` 実行時にサーバーのパスワードを入力してください。
+サーバー初期状態など、パスワードでSSHログインできる場合は、PowerShellから公開鍵を転送します。初回ログイン後に設定した `henojiya` を使い、`scp` 実行時にサーバーのパスワードを入力してください。
 
 ```powershell:console
 # Windows（PowerShell）から公開鍵だけを転送
-scp "$env:USERPROFILE\.ssh\id_ed25519_portfolio_vps.pub" ubuntu@153.126.200.229:/home/ubuntu/
+scp "$env:USERPROFILE\.ssh\id_ed25519_portfolio_vps.pub" henojiya:/home/ubuntu/
 
 # パスワードでサーバーへログイン
-ssh ubuntu@153.126.200.229
+ssh henojiya
 ```
 
 サーバー側で `authorized_keys` に追記します。
@@ -213,7 +231,7 @@ printf '%s\n' '<公開鍵1行>' >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
 ```
 
-いずれのパターンでも、以後は `ssh ubuntu@<IP>` でパスワードなし接続（鍵パスフレーズがあればその入力のみ）になります。
+いずれのパターンでも、以後は `ssh henojiya` でパスワードなし接続（鍵パスフレーズがあればその入力のみ）になります。
 
 ターミナルからログインできました！
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/314f4e41-58fc-87b9-de2d-5eb5ab362b47.png)
@@ -225,28 +243,6 @@ chmod 600 ~/.ssh/authorized_keys
 - 接続がタイムアウト: UFW やVPS側パケットフィルタで 22/TCP が閉じていないかを確認（`sudo ufw status`）。
 - ホスト鍵警告（REMOTE HOST IDENTIFICATION HAS CHANGED!）: OS入れ直し等で鍵が変わった。`ssh-keygen -R <IP>`
   で該当エントリを削除して再接続。
-
-### 鍵登録後の `ssh henojiya` エイリアス設定
-
-`ssh henojiya` のような短い名前は、Windows側の `~/.ssh/config` に定義します。新PCへ移行した場合は、このファイルも再作成が必要です。
-
-```powershell:console
-notepad "$env:USERPROFILE\.ssh\config"
-```
-
-以下を追記します。`Host github.com` など既存の設定がある場合は削除せず、別のブロックとして追加してください。
-
-```text:~/.ssh/config
-Host henojiya
-    HostName 153.126.200.229
-    User ubuntu
-    IdentityFile ~/.ssh/id_ed25519_portfolio_vps
-    IdentitiesOnly yes
-```
-
-```powershell:console
-ssh henojiya
-```
 
 ## Swap 増設
 
