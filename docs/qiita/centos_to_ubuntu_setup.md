@@ -1757,7 +1757,20 @@ $ sudo -u www-data test -w /var/www/html/portfolio/media && echo OK_media_w || e
 
 ## FTP
 
-いったんパス [もとの記事](https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#ftp)
+`.env` などGit管理外のファイルを手動で転送する場合は、FileZillaのSFTPを使います。ここでいうFTPは、SSH（22番ポート）を使うSFTPです。
+
+FileZillaのサイトマネージャーに次の内容を設定します。
+
+| 項目 | 設定値 |
+|:--|:--|
+| ホスト | `153.126.200.229` |
+| プロトコル | `SFTP - SSH File Transfer Protocol` |
+| ログオンタイプ | `鍵ファイル` |
+| ユーザー | `ubuntu` |
+| ポート | `22` |
+| 鍵ファイル | `C:\Users\yoshi\.ssh\id_ed25519_portfolio_vps` |
+
+接続後、リモート側の `/var/www/html/portfolio/` 配下に、対応する `.env` を配置します。`.env` には秘密情報が含まれるため、Gitへコミットしたり公開したりしません。
 
 ## 代替ルート: Django プロジェクトを新規作成する場合（クローンしない運用）
 
