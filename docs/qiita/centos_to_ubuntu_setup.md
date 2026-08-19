@@ -213,7 +213,9 @@ ssh henojiya
 
 ```bash:console
 # VPS側（ubuntuユーザー）
-ls ~
+# 転送された公開鍵がホームディレクトリにあることを確認
+$ ls ~
+id_ed25519_portfolio_vps.pub
 install -d -m 700 ~/.ssh
 cat ~/id_ed25519_portfolio_vps.pub >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
