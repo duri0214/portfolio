@@ -211,7 +211,8 @@ ssh henojiya
 # 転送された公開鍵がホームディレクトリにあることを確認
 $ ls ~
   id_ed25519_portfolio_vps.pub
-install -d -m 700 ~/.ssh
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
 cat ~/id_ed25519_portfolio_vps.pub >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
 ```
@@ -232,7 +233,8 @@ Get-Content "$sshDir\id_ed25519_portfolio_vps.pub"
 
 ```bash:console
 # VPSのWebコンソール（ubuntuユーザー）で実行
-install -d -m 700 ~/.ssh
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
 curl -fsSL https://github.com/<github-user>.keys >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
 ```
