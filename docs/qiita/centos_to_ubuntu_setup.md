@@ -102,7 +102,7 @@ New-Item -ItemType File -Force "$sshDir\config" | Out-Null
 notepad "$sshDir\config"
 ```
 
-先に拡張子なしの `config` ファイルを作成しているため、メモ帳で保存しても `config.txt` にはなりません。
+拡張子 `.txt` などがついていないことを確認してください。
 
 以下を追記します。`Host github.com` など既存の設定がある場合は削除せず、別のブロックとして追加してください。
 
