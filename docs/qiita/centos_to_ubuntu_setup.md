@@ -79,7 +79,7 @@ Linux初心者は、コンソール上の「$」とか「\#」がよくわかん
 
 ```bash:console
 # （Windows）PowerShell から実行
-# 初回接続（既定ポート22でSSH）
+# 初回接続（SSH config未設定、既定ポート22でSSH）
 # ホスト名またはIPを指定（例ではさくらVPSのグローバルIP）
 PS C:\Users\yoshi> ssh ubuntu@153.126.200.229
 The authenticity of host '153.126.200.229 (153.126.200.229)' can't be established.
@@ -89,12 +89,14 @@ Warning: Permanently added '153.126.200.229' (ED25519) to the list of known host
 ubuntu@153.126.200.229's password:  # さくらVPSの初期設定で指定した ubuntu のパスワードを入力
 ```
 
+初回接続では `~/.ssh/config` が未設定のため、IPアドレスを直接指定します。公開鍵の登録とエイリアス設定が完了した後の接続は `ssh henojiya` に統一します。
+
 ### 既知鍵の衝突（known_hosts）
 
 OS を入れ直した直後など、サーバのホスト鍵が変わると次のような強烈な警告が出ます。これは“以前と異なるサーバ鍵になった”ことを示す安全装置です。
 
 ```bash:console
-(venv) PS C:\Users\yoshi\OneDrive\dev\portfolio> ssh henojiya
+(venv) PS C:\Users\yoshi\OneDrive\dev\portfolio> ssh ubuntu@153.126.200.229
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -224,7 +226,7 @@ chmod 600 ~/.ssh/authorized_keys
 - ホスト鍵警告（REMOTE HOST IDENTIFICATION HAS CHANGED!）: OS入れ直し等で鍵が変わった。`ssh-keygen -R <IP>`
   で該当エントリを削除して再接続。
 
-### `ssh henojiya` のエイリアス設定
+### 鍵登録後の `ssh henojiya` エイリアス設定
 
 `ssh henojiya` のような短い名前は、Windows側の `~/.ssh/config` に定義します。新PCへ移行した場合は、このファイルも再作成が必要です。
 
