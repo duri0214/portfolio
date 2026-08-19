@@ -1,10 +1,10 @@
-# CentOSが終わるのでUbuntu24.04に移行する。Python3.12とDjango4とMySQL8のセットアップメモ2026
+# CentOSが終わるのでUbuntu24.04に移行する。Python3.12とDjango6とMySQL8のセットアップメモ2026
 
 ## はじめに
 
 この記事は、CentOSのサポート終了（EOL）に伴い、OSをUbuntu 24.04 LTSへ移行した際のセットアップ手順をまとめたものです。
 2021年の初出から更新を重ねていますが、ここで紹介している構成は現在も本番サーバーで安定稼働しており、実用的なオペレーションマニュアルとして活用しています。
-かつてのCentOS環境からのスムーズな移行と、現代的なPython 3.12 + Django 4環境の構築を目指しています。
+かつてのCentOS環境からのスムーズな移行と、現行のPython 3.12 + Django 6環境の構築を目指しています。
 
 2026年版からは、この記事を Git
 で管理し、AIアシスタントをベースに執筆する運用に切り替えました。誤字脱字はもちろん、これまでの勘違いの是正や重複箇所のMECE化にも大いに助けられています。今後の細かな修正も容易になるため、おすすめです。
@@ -81,12 +81,12 @@ Linux初心者は、コンソール上の「$」とか「\#」がよくわかん
 # （Windows）PowerShell から実行
 # 初回接続（既定ポート22でSSH）
 # ホスト名またはIPを指定（例ではさくらVPSのグローバルIP）
-PS C:\Users\yoshi> ssh ubuntu@153.127.13.226
-The authenticity of host '153.127.13.226 (153.127.13.226)' can't be established.
+PS C:\Users\yoshi> ssh ubuntu@153.126.200.229
+The authenticity of host '153.126.200.229 (153.126.200.229)' can't be established.
 ED25519 key fingerprint is SHA256:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.
 Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
-Warning: Permanently added '153.127.13.226' (ED25519) to the list of known hosts.
-ubuntu@153.127.13.226's password:  # さくらVPSの初期設定で指定した ubuntu のパスワードを入力
+Warning: Permanently added '153.126.200.229' (ED25519) to the list of known hosts.
+ubuntu@153.126.200.229's password:  # さくらVPSの初期設定で指定した ubuntu のパスワードを入力
 ```
 
 ### 既知鍵の衝突（known_hosts）
@@ -128,7 +128,7 @@ PS C:\Users\yoshi> notepad $env:USERPROFILE\.ssh\known_hosts
 $ whoami
 ubuntu
 $ hostname -I
-153.127.13.226
+153.126.200.229
 $ pwd
 /home/ubuntu
 ```
@@ -151,21 +151,37 @@ $ sudo -s
 
 ### 公開鍵でログインできるようにする
 
-PCにある公開鍵（例：`id_rsa_henojiya.pub`
-）をサーバーにアップロードし、以下のコマンドで登録します（まずはパスワード認証で一度ログイン→公開鍵方式へ切り替える流れ）。さくらのVPSのWebインターフェースで鍵を事前登録する運用が基本ですが、手動で設定する場合の“要点だけ”を以下にまとめます。
+新しいPCからVPSへ接続する場合は、PC側で作成した公開鍵をVPSの
+`/home/ubuntu/.ssh/authorized_keys` に追記します。VPSのWebコンソールを使える場合は、パスワード認証が無効でもこの作業を行えます。
+
+```powershell:console
+# 新PC側（PowerShell）で、VPSログイン用の鍵を作成
+$sshDir = "$env:USERPROFILE\.ssh"
+New-Item -ItemType Directory -Force $sshDir | Out-Null
+ssh-keygen -t ed25519 -f "$sshDir\id_ed25519_portfolio_vps" -C "portfolio-vps-new-pc"
+
+# GitHubまたはVPSへ登録する公開鍵を表示
+Get-Content "$sshDir\id_ed25519_portfolio_vps.pub"
+```
+
+公開鍵をVPSへ転送できる場合は、VPS側で次のように追記します。
 
 ```bash:console
-# 最初の配置（例：Tera Term で /home/ubuntu にドラッグ＆ドロップでも可）
-$ pwd
-/home/ubuntu
-$ ls
-id_rsa_henojiya.pub
+# VPS側（ubuntuユーザー）
+install -d -m 700 ~/.ssh
+cat id_ed25519_portfolio_vps.pub >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+```
 
-# 許可鍵の登録（.ssh は700、authorized_keys は600 必須）
-$ mkdir ~/.ssh
-$ chmod 700 ~/.ssh
-$ mv id_rsa_henojiya.pub ~/.ssh/authorized_keys
-$ chmod 600 ~/.ssh/authorized_keys
+`authorized_keys` は既存の鍵を残すため、`mv` や `>` で上書きせず `>>` で追記します。
+
+GitHubに登録済みの公開鍵をVPSから取得する方法もあります。同一GitHubアカウントに登録された公開鍵をすべて追記するため、用途を確認したうえで使用してください。
+
+```bash:console
+# VPS側（GitHubユーザー名を置き換える）
+install -d -m 700 ~/.ssh
+curl -fsSL https://github.com/<github-user>.keys >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
 ```
 
 > Note:
@@ -184,10 +200,10 @@ $ chmod 600 ~/.ssh/authorized_keys
 - CUI（最短手）：PowerShell の `scp`
   ```bash:console
   # Windows（PowerShell）から実行（鍵ファイル指定の例）
-  PS C:\Users\yoshi> scp -i ~/.ssh/<your_private_key> C:\path\to\localfile ubuntu@153.127.13.226:/home/ubuntu/
+  PS C:\Users\yoshi> scp -i ~/.ssh/<your_private_key> C:\path\to\localfile ubuntu@153.126.200.229:/home/ubuntu/
 
   # ディレクトリごと転送する場合（-r）
-  PS C:\Users\yoshi> scp -r -i ~/.ssh/<your_private_key> C:\path\to\localdir\ ubuntu@153.127.13.226:/home/ubuntu/localdir/
+  PS C:\Users\yoshi> scp -r -i ~/.ssh/<your_private_key> C:\path\to\localdir\ ubuntu@153.126.200.229:/home/ubuntu/localdir/
   ```
 
 - GUI：FileZilla（SFTP）
@@ -211,6 +227,28 @@ $ chmod 600 ~/.ssh/authorized_keys
 - 接続がタイムアウト: UFW やVPS側パケットフィルタで 22/TCP が閉じていないかを確認（`sudo ufw status`）。
 - ホスト鍵警告（REMOTE HOST IDENTIFICATION HAS CHANGED!）: OS入れ直し等で鍵が変わった。`ssh-keygen -R <IP>`
   で該当エントリを削除して再接続。
+
+### `ssh henojiya` のエイリアス設定
+
+`ssh henojiya` のような短い名前は、Windows側の `~/.ssh/config` に定義します。新PCへ移行した場合は、このファイルも再作成が必要です。
+
+```powershell:console
+notepad "$env:USERPROFILE\.ssh\config"
+```
+
+以下を追記します。`Host github.com` など既存の設定がある場合は削除せず、別のブロックとして追加してください。
+
+```text:~/.ssh/config
+Host henojiya
+    HostName 153.126.200.229
+    User ubuntu
+    IdentityFile ~/.ssh/id_ed25519_portfolio_vps
+    IdentitiesOnly yes
+```
+
+```powershell:console
+ssh henojiya
+```
 
 ## Swap 増設
 
@@ -1138,6 +1176,8 @@ GitHub に登録する必要があります。すると、VPS（me）は自分�
 は事前登録された「公開鍵」で検証して、なりすましでないことを確認できます。これにより、パスワードを都度送らずに `git clone`/
 `git pull` が行えるようになります。
 
+> この節は **VPSからGitHubへ接続する鍵** の説明です。新PCからGitHubへ接続する鍵や、新PCからVPSへ接続する鍵とは別の認証経路です。
+
 ```bash:console
 # ユーザー情報を設定（初回のみ）
 $ git config --global user.name "<your-name>"
@@ -1184,6 +1224,28 @@ $ sudo chown -R ubuntu:ubuntu /var/www/html
 $ cd /var/www/html
 $ git clone git@github.com:<your-username>/portfolio.git
 ```
+
+## 既存プロジェクトの更新（本番サーバー）
+
+すでに `/var/www/html/portfolio` をクローン済みの場合は、初回の `git clone` ではなく、次の手順でリモートの `master` に同期します。
+
+```bash:console
+$ cd /var/www/html/portfolio
+$ git fetch --prune origin
+
+# 削除対象を確認（dry-run）
+$ git clean -nd
+
+# trackedファイルをリモートへ戻し、未追跡の生成物を削除
+$ git reset --hard origin/master
+$ git clean -fd
+$ git status --short --branch
+```
+
+> Warning:
+> - `git reset --hard` はtrackedファイルのサーバー上の変更を破棄します。
+> - `git clean -fd` は未追跡ファイル・ディレクトリを削除します。実行前に `git clean -nd` の結果を確認してください。
+> - `.env` はGit管理外にする運用ですが、重要なファイルは事前に存在を確認してください。
 
 ## venv（仮想環境）の準備
 
@@ -1239,6 +1301,30 @@ $ find . -type f -name "*.env.example" | sort
 
 > **Note:**
 > `.env` などの環境設定ファイルは Git 管理外にしている場合が多いため、FTP 等で個別にアップロードするのを忘れないようにしてください。
+
+## 本番更新後のDjango・Apache確認
+
+コードを同期した後は、環境ファイルと仮想環境を確認してから、Django・静的ファイル・データベース・Apacheの順に確認します。
+
+```bash:console
+$ cd /var/www/html/portfolio
+$ test -f .env && echo ".env exists" || echo ".env MISSING"
+$ test -x venv/bin/python && echo "venv exists" || echo "venv MISSING"
+$ source /var/www/html/portfolio/venv/bin/activate
+
+(venv) $ python manage.py check
+(venv) $ python manage.py collectstatic --noinput
+(venv) $ python manage.py migrate
+(venv) $ python manage.py clearsessions
+
+(venv) $ sudo apache2ctl configtest
+# Syntax OK を確認してから反映
+(venv) $ sudo systemctl reload apache2
+(venv) $ sudo systemctl is-active apache2
+$ curl -I https://www.henojiya.net
+```
+
+`curl -I` で `HTTP/1.1 200 OK` を確認できれば、外部からのHTTPS応答まで確認できます。`apache2ctl configtest` が失敗した場合は、reloadせずエラーログを確認してください。
 
 ## mod_wsgi
 
@@ -1682,7 +1768,7 @@ $ cd /var/www/html/portfolio
 $ source venv/bin/activate
 (venv) $ pip install --upgrade pip
 (venv) $ pip install django
-(venv) $ django-admin --version   # 例: 4.x
+(venv) $ django-admin --version   # 例: 6.x
 ```
 
 ### 2) 雛形を作成（config を設定ディレクトリに）
