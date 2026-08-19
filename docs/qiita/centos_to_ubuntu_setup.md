@@ -1227,28 +1227,6 @@ $ cd /var/www/html
 $ git clone git@github.com:<your-username>/portfolio.git
 ```
 
-## 既存プロジェクトの更新（本番サーバー）
-
-すでに `/var/www/html/portfolio` をクローン済みの場合は、初回の `git clone` ではなく、次の手順でリモートの `master` に同期します。
-
-```bash:console
-$ cd /var/www/html/portfolio
-$ git fetch --prune origin
-
-# 削除対象を確認（dry-run）
-$ git clean -nd
-
-# trackedファイルをリモートへ戻し、未追跡の生成物を削除
-$ git reset --hard origin/master
-$ git clean -fd
-$ git status --short --branch
-```
-
-> Warning:
-> - `git reset --hard` はtrackedファイルのサーバー上の変更を破棄します。
-> - `git clean -fd` は未追跡ファイル・ディレクトリを削除します。実行前に `git clean -nd` の結果を確認してください。
-> - `.env` はGit管理外にする運用ですが、重要なファイルは事前に存在を確認してください。
-
 ## venv（仮想環境）の準備
 
 ```bash:console
