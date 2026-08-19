@@ -160,9 +160,11 @@ $sshDir = "$env:USERPROFILE\.ssh"
 New-Item -ItemType Directory -Force $sshDir | Out-Null
 ssh-keygen -t ed25519 -f "$sshDir\id_ed25519_portfolio_vps" -C "portfolio-vps"
 
-# GitHubまたはVPSへ登録する公開鍵を表示
+# GitHubまたはVPSへ登録する公開鍵を表示する
 Get-Content "$sshDir\id_ed25519_portfolio_vps.pub"
 ```
+
+表示された `ssh-ed25519` から始まる公開鍵1行全体を手動でコピーします。`Get-Content` は表示するだけで、自動コピーはしません。
 
 #### パターン1：パスワード認証でSSHできる場合（初期構築）
 
