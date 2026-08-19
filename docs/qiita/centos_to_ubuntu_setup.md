@@ -1282,30 +1282,6 @@ $ find . -type f -name "*.env.example" | sort
 > **Note:**
 > `.env` などの環境設定ファイルは Git 管理外にしている場合が多いため、FTP 等で個別にアップロードするのを忘れないようにしてください。
 
-## 本番更新後のDjango・Apache確認
-
-コードを同期した後は、環境ファイルと仮想環境を確認してから、Django・静的ファイル・データベース・Apacheの順に確認します。
-
-```bash:console
-$ cd /var/www/html/portfolio
-$ test -f .env && echo ".env exists" || echo ".env MISSING"
-$ test -x venv/bin/python && echo "venv exists" || echo "venv MISSING"
-$ source /var/www/html/portfolio/venv/bin/activate
-
-(venv) $ python manage.py check
-(venv) $ python manage.py collectstatic --noinput
-(venv) $ python manage.py migrate
-(venv) $ python manage.py clearsessions
-
-(venv) $ sudo apache2ctl configtest
-# Syntax OK を確認してから反映
-(venv) $ sudo systemctl reload apache2
-(venv) $ sudo systemctl is-active apache2
-$ curl -I https://www.henojiya.net
-```
-
-`curl -I` で `HTTP/1.1 200 OK` を確認できれば、外部からのHTTPS応答まで確認できます。`apache2ctl configtest` が失敗した場合は、reloadせずエラーログを確認してください。
-
 ## mod_wsgi
 
 Apache と Python を連携させるためのモジュール `mod_wsgi` を設定します。
