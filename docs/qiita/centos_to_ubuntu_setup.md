@@ -158,7 +158,7 @@ PCからVPSへ公開鍵で接続する場合は、接続元で作成した公開
 # 接続元PC側（PowerShell）で、VPSログイン用の鍵を作成
 $sshDir = "$env:USERPROFILE\.ssh"
 New-Item -ItemType Directory -Force $sshDir | Out-Null
-ssh-keygen -t ed25519 -f "$sshDir\id_ed25519_portfolio_vps" -C "portfolio-vps-new-pc"
+ssh-keygen -t ed25519 -f "$sshDir\id_ed25519_portfolio_vps" -C "portfolio-vps"
 
 # GitHubまたはVPSへ登録する公開鍵を表示
 Get-Content "$sshDir\id_ed25519_portfolio_vps.pub"
