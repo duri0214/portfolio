@@ -152,7 +152,7 @@ $ sudo -s
 ### 公開鍵でログインできるようにする
 
 新しいPCからVPSへ接続する場合は、PC側で作成した公開鍵をVPSの
-`/home/ubuntu/.ssh/authorized_keys` に追記します。VPSのWebコンソールを使える場合は、パスワード認証が無効でもこの作業を行えます。
+`/home/ubuntu/.ssh/authorized_keys` に追記します。サーバーの状態によって、次の2パターンがあります。
 
 ```powershell:console
 # 新PC側（PowerShell）で、VPSログイン用の鍵を作成
@@ -164,61 +164,54 @@ ssh-keygen -t ed25519 -f "$sshDir\id_ed25519_portfolio_vps" -C "portfolio-vps-ne
 Get-Content "$sshDir\id_ed25519_portfolio_vps.pub"
 ```
 
-公開鍵をVPSへ転送できる場合は、VPS側で次のように追記します。
+#### パターン1：パスワード認証でSSHできる場合（初期構築）
+
+サーバー初期状態など、パスワードでSSHログインできる場合は、PowerShellから公開鍵を転送します。`scp` 実行時にサーバーのパスワードを入力してください。
+
+```powershell:console
+# Windows（PowerShell）から公開鍵だけを転送
+scp "$env:USERPROFILE\.ssh\id_ed25519_portfolio_vps.pub" ubuntu@153.126.200.229:/home/ubuntu/
+
+# パスワードでサーバーへログイン
+ssh ubuntu@153.126.200.229
+```
+
+サーバー側で `authorized_keys` に追記します。
 
 ```bash:console
 # VPS側（ubuntuユーザー）
 install -d -m 700 ~/.ssh
-cat id_ed25519_portfolio_vps.pub >> ~/.ssh/authorized_keys
+cat ~/id_ed25519_portfolio_vps.pub >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
 ```
 
-`authorized_keys` は既存の鍵を残すため、`mv` や `>` で上書きせず `>>` で追記します。
+秘密鍵は転送せず、公開鍵だけを転送します。`authorized_keys` は既存の鍵を残すため、`mv` や `>` で上書きせず `>>` で追記します。
 
-GitHubに登録済みの公開鍵をVPSから取得する方法もあります。同一GitHubアカウントに登録された公開鍵をすべて追記するため、用途を確認したうえで使用してください。
+#### パターン2：パスワード認証が使えない場合（既存サーバーの復旧）
+
+旧PCの秘密鍵が失われ、新PCで作成した鍵がまだVPSに登録されておらず、サーバー側のパスワードSSH認証も無効な場合は、通常の `ssh` や `scp` では鍵を登録できません。さくらのVPSのWebコンソールでサーバーにログインし、そこで登録します。
+
+新PCの公開鍵を先にGitHubへ登録しておけば、WebコンソールからGitHub経由で取得できます。同一GitHubアカウントに登録された公開鍵をすべて追記するため、用途を確認したうえで使用してください。
 
 ```bash:console
-# VPS側（GitHubユーザー名を置き換える）
+# VPSのWebコンソール（ubuntuユーザー）で実行
 install -d -m 700 ~/.ssh
 curl -fsSL https://github.com/<github-user>.keys >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
 ```
 
-> Note:
-> - Windows からの単発転送は PowerShell の `scp`（OpenSSH）でも可。
-> - 以後は `ssh ubuntu@<IP>` でパスワードなし接続（鍵パスフレーズがあればその入力のみ）。
+GitHubに公開鍵を登録していない場合は、公開鍵1行をWebコンソールで `authorized_keys` に追記します。
+
+```bash:console
+# <公開鍵1行> を ssh-ed25519 から始まる実際の公開鍵に置き換える
+printf '%s\n' '<公開鍵1行>' >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+```
+
+いずれのパターンでも、以後は `ssh ubuntu@<IP>` でパスワードなし接続（鍵パスフレーズがあればその入力のみ）になります。
 
 ターミナルからログインできました！
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/314f4e41-58fc-87b9-de2d-5eb5ab362b47.png)
-
-#### ファイル転送の選択肢（Windows）
-
-> Note: 単発・少量の転送なら `scp` が最短です。GUIでまとめて行う場合は FileZilla（SFTP）が便利です。
-> また、さくらのVPSの初期セットアップで「追加済みの公開鍵を使ってインストール」を選択している場合、すでに公開鍵認証でログインできるため、ここでの鍵ファイル転送（.pub
-> のアップロード）は不要なことが多いです（そのままSSH接続へ進んで問題ありません）。
-
-- CUI（最短手）：PowerShell の `scp`
-  ```bash:console
-  # Windows（PowerShell）から実行（鍵ファイル指定の例）
-  PS C:\Users\yoshi> scp -i ~/.ssh/<your_private_key> C:\path\to\localfile ubuntu@153.126.200.229:/home/ubuntu/
-
-  # ディレクトリごと転送する場合（-r）
-  PS C:\Users\yoshi> scp -r -i ~/.ssh/<your_private_key> C:\path\to\localdir\ ubuntu@153.126.200.229:/home/ubuntu/localdir/
-  ```
-
-- GUI：FileZilla（SFTP）
-    - 設定例（サイトマネージャー）
-        - ホスト: `153.126.200.229`（例）
-        - プロトコル: SFTP – SSH File Transfer Protocol
-        - ログオンの種類: 鍵ファイル
-        - ユーザー: `ubuntu`
-        - ポート: `22`
-    - 鍵の登録（初回のみ）
-        1. メニューバー: 編集 → 設定 → SFTP を開く
-        2. 「鍵ファイルの追加(A)」をクリックし、秘密鍵（例: `C:\Users\yoshi\.ssh\id_rsa` など）を選択
-        3. 「FileZilla用に変換して ppk にしますか？」と聞かれたら OK を選択し、例: `id_rsa_filezilla.ppk` のように保存
-    - サイトマネージャーで上記 ppk を指定して接続し、`/home/ubuntu` など転送先へドラッグ＆ドロップで配置
-    - 参考: もとの記事の FileZilla 手順（鍵の変換含む）: https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#ftp
 
 ### よくあるエラーと対処（SSH）
 
