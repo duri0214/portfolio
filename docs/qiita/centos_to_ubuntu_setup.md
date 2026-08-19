@@ -164,7 +164,7 @@ ssh-keygen -t ed25519 -f "$sshDir\id_ed25519_portfolio_vps" -C "portfolio-vps"
 Get-Content "$sshDir\id_ed25519_portfolio_vps.pub"
 ```
 
-表示された `ssh-ed25519` から始まる公開鍵1行全体を手動でコピーします。`Get-Content` は表示するだけで、自動コピーはしません。
+表示された `ssh-ed25519` から始まる公開鍵1行全体を手動でコピーします。`Get-Content` は表示するだけで、自動コピーはされません。
 
 #### パターン1：パスワード認証でSSHできる場合（初期構築）
 
