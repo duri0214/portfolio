@@ -1176,8 +1176,6 @@ GitHub に登録する必要があります。すると、VPS（me）は自分�
 は事前登録された「公開鍵」で検証して、なりすましでないことを確認できます。これにより、パスワードを都度送らずに `git clone`/
 `git pull` が行えるようになります。
 
-> この節は **VPSからGitHubへ接続する鍵** の説明です。新PCからGitHubへ接続する鍵や、新PCからVPSへ接続する鍵とは別の認証経路です。
-
 ```bash:console
 # ユーザー情報を設定（初回のみ）
 $ git config --global user.name "<your-name>"
