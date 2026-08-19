@@ -229,7 +229,7 @@ chmod 600 ~/.ssh/authorized_keys
 Get-Content "$sshDir\id_ed25519_portfolio_vps.pub"
 ```
 
-新PCの公開鍵を先にGitHubへ登録しておけば、WebコンソールからGitHub経由で取得できます。同一GitHubアカウントに登録された公開鍵をすべて追記するため、用途を確認したうえで使用してください。
+新PCの公開鍵を先にGitHubへ登録しておけば、VPSのWebコンソールで `curl` を実行し、GitHubから取得した公開鍵を `>>` で `authorized_keys` に直接追記できます。同一GitHubアカウントに登録された公開鍵をすべて追記するため、用途を確認したうえで使用してください。
 
 ```bash:console
 # VPSのWebコンソール（ubuntuユーザー）で実行
