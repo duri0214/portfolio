@@ -170,7 +170,7 @@ Get-Content "$sshDir\id_ed25519_portfolio_vps.pub"
 
 #### パターン1：パスワード認証でSSHできる場合（初期構築）
 
-サーバー初期状態など、パスワードでSSHログインできる場合は、PowerShellから公開鍵を転送します。`scp` 実行時にサーバーのパスワードを入力してください。
+サーバー初期状態など、パスワードでSSHログインできる場合は、PowerShellから公開鍵を転送します。この段階ではSSH config未設定のため、接続先にIPアドレスを直接指定します。`scp` 実行時にサーバーのパスワードを入力してください。
 
 ```powershell:console
 # Windows（PowerShell）から公開鍵だけを転送
