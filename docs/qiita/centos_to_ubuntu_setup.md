@@ -182,6 +182,7 @@ ssh ubuntu@153.126.200.229
 
 ```bash:console
 # VPS側（ubuntuユーザー）
+ls ~
 install -d -m 700 ~/.ssh
 cat ~/id_ed25519_portfolio_vps.pub >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
