@@ -239,6 +239,8 @@ curl -fsSL https://github.com/<github-user>.keys >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
 ```
 
+`-fsSL` は `curl` のオプションです。`-f` はHTTPエラー時に失敗させ、`-s` は進捗表示を抑制し、`-S` はエラーを表示し、`-L` はリダイレクトに追従します。
+
 GitHubに公開鍵を登録していない場合は、公開鍵1行をWebコンソールで `authorized_keys` に追記します。
 
 ```bash:console
