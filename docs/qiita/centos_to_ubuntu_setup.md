@@ -151,11 +151,11 @@ $ sudo -s
 
 ### 公開鍵でログインできるようにする
 
-新しいPCからVPSへ接続する場合は、PC側で作成した公開鍵をVPSの
+PCからVPSへ公開鍵で接続する場合は、接続元で作成した公開鍵をVPSの
 `/home/ubuntu/.ssh/authorized_keys` に追記します。サーバーの状態によって、次の2パターンがあります。
 
 ```powershell:console
-# 新PC側（PowerShell）で、VPSログイン用の鍵を作成
+# 接続元PC側（PowerShell）で、VPSログイン用の鍵を作成
 $sshDir = "$env:USERPROFILE\.ssh"
 New-Item -ItemType Directory -Force $sshDir | Out-Null
 ssh-keygen -t ed25519 -f "$sshDir\id_ed25519_portfolio_vps" -C "portfolio-vps-new-pc"
