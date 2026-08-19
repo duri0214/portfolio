@@ -96,7 +96,7 @@ ubuntu@153.126.200.229's password:  # さくらVPSの初期設定で指定した
 OS を入れ直した直後など、サーバのホスト鍵が変わると次のような強烈な警告が出ます。これは“以前と異なるサーバ鍵になった”ことを示す安全装置です。
 
 ```bash:console
-(venv) PS C:\Users\yoshi\OneDrive\dev\portfolio> ssh ubuntu@153.126.200.229
+(venv) PS C:\Users\yoshi\OneDrive\dev\portfolio> ssh henojiya
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
