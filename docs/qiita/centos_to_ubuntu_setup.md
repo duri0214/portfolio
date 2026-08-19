@@ -241,14 +241,6 @@ chmod 600 ~/.ssh/authorized_keys
 
 `-fsSL` は `curl` のオプションです。`-f` はHTTPエラー時に失敗させ、`-s` は進捗表示を抑制し、`-S` はエラーを表示し、`-L` はリダイレクトに追従します。
 
-GitHubに公開鍵を登録していない場合は、公開鍵1行をWebコンソールで `authorized_keys` に追記します。
-
-```bash:console
-# <公開鍵1行> を ssh-ed25519 から始まる実際の公開鍵に置き換える
-printf '%s\n' '<公開鍵1行>' >> ~/.ssh/authorized_keys
-chmod 600 ~/.ssh/authorized_keys
-```
-
 いずれのパターンでも、以後は `ssh henojiya` でパスワードなし接続（鍵パスフレーズがあればその入力のみ）になります。
 
 ターミナルからログインできました！
