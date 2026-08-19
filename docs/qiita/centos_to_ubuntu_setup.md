@@ -1,10 +1,10 @@
-# CentOSが終わるのでUbuntu24.04に移行する。Python3.12とDjango4とMySQL8のセットアップメモ2026
+# CentOSが終わるのでUbuntu24.04に移行する。Python3.12とDjango6とMySQL8のセットアップメモ2026
 
 ## はじめに
 
 この記事は、CentOSのサポート終了（EOL）に伴い、OSをUbuntu 24.04 LTSへ移行した際のセットアップ手順をまとめたものです。
 2021年の初出から更新を重ねていますが、ここで紹介している構成は現在も本番サーバーで安定稼働しており、実用的なオペレーションマニュアルとして活用しています。
-かつてのCentOS環境からのスムーズな移行と、現代的なPython 3.12 + Django 4環境の構築を目指しています。
+かつてのCentOS環境からのスムーズな移行と、現行のPython 3.12 + Django 6環境の構築を目指しています。
 
 2026年版からは、この記事を Git
 で管理し、AIアシスタントをベースに執筆する運用に切り替えました。誤字脱字はもちろん、これまでの勘違いの是正や重複箇所のMECE化にも大いに助けられています。今後の細かな修正も容易になるため、おすすめです。
@@ -79,14 +79,45 @@ Linux初心者は、コンソール上の「$」とか「\#」がよくわかん
 
 ```bash:console
 # （Windows）PowerShell から実行
-# 初回接続（既定ポート22でSSH）
+# 初回接続（SSH config未設定、既定ポート22でSSH）
 # ホスト名またはIPを指定（例ではさくらVPSのグローバルIP）
-PS C:\Users\yoshi> ssh ubuntu@153.127.13.226
-The authenticity of host '153.127.13.226 (153.127.13.226)' can't be established.
+PS C:\Users\yoshi> ssh ubuntu@153.126.200.229
+The authenticity of host '153.126.200.229 (153.126.200.229)' can't be established.
 ED25519 key fingerprint is SHA256:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.
 Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
-Warning: Permanently added '153.127.13.226' (ED25519) to the list of known hosts.
-ubuntu@153.127.13.226's password:  # さくらVPSの初期設定で指定した ubuntu のパスワードを入力
+Warning: Permanently added '153.126.200.229' (ED25519) to the list of known hosts.
+ubuntu@153.126.200.229's password:  # さくらVPSの初期設定で指定した ubuntu のパスワードを入力
+```
+
+初回接続では `~/.ssh/config` が未設定のため、IPアドレスを直接指定します。公開鍵の登録とエイリアス設定が完了した後の接続は `ssh henojiya` に統一します。
+
+### 初回接続後の `ssh henojiya` エイリアス設定
+
+初回ログイン後は、Windows側の `~/.ssh/config` にエイリアスを設定し、以後のSSH接続で `ssh henojiya` を使います。新PCへ移行した場合は、このファイルも再作成が必要です。
+
+```powershell:console
+$sshDir = "$env:USERPROFILE\.ssh"
+New-Item -ItemType Directory -Force $sshDir | Out-Null
+New-Item -ItemType File -Force "$sshDir\config" | Out-Null
+notepad "$sshDir\config"
+```
+
+拡張子 `.txt` などがついていないことを確認してください。
+
+以下を追記します。`Host github.com` など既存の設定がある場合は削除せず、別のブロックとして追加してください。
+
+```text:~/.ssh/config
+Host github.com
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519_portfolio_vps
+    IdentitiesOnly yes
+
+Host henojiya
+    HostName 153.126.200.229
+    User ubuntu
+    IdentityFile ~/.ssh/id_ed25519_portfolio_vps
+    IdentitiesOnly yes
 ```
 
 ### 既知鍵の衝突（known_hosts）
@@ -128,7 +159,7 @@ PS C:\Users\yoshi> notepad $env:USERPROFILE\.ssh\known_hosts
 $ whoami
 ubuntu
 $ hostname -I
-153.127.13.226
+153.126.200.229
 $ pwd
 /home/ubuntu
 ```
@@ -151,58 +182,69 @@ $ sudo -s
 
 ### 公開鍵でログインできるようにする
 
-PCにある公開鍵（例：`id_rsa_henojiya.pub`
-）をサーバーにアップロードし、以下のコマンドで登録します（まずはパスワード認証で一度ログイン→公開鍵方式へ切り替える流れ）。さくらのVPSのWebインターフェースで鍵を事前登録する運用が基本ですが、手動で設定する場合の“要点だけ”を以下にまとめます。
+PCからVPSへ公開鍵で接続する場合は、接続元で作成した公開鍵をVPSの
+`/home/ubuntu/.ssh/authorized_keys` に追記します。サーバーの状態によって、次の2パターンがあります。
 
-```bash:console
-# 最初の配置（例：Tera Term で /home/ubuntu にドラッグ＆ドロップでも可）
-$ pwd
-/home/ubuntu
-$ ls
-id_rsa_henojiya.pub
-
-# 許可鍵の登録（.ssh は700、authorized_keys は600 必須）
-$ mkdir ~/.ssh
-$ chmod 700 ~/.ssh
-$ mv id_rsa_henojiya.pub ~/.ssh/authorized_keys
-$ chmod 600 ~/.ssh/authorized_keys
+```powershell:console
+# 接続元PC側（PowerShell）で、VPSログイン用の鍵を作成
+$sshDir = "$env:USERPROFILE\.ssh"
+New-Item -ItemType Directory -Force $sshDir | Out-Null
+ssh-keygen -t ed25519 -f "$sshDir\id_ed25519_portfolio_vps" -C "portfolio-vps"
 ```
 
-> Note:
-> - Windows からの単発転送は PowerShell の `scp`（OpenSSH）でも可。
-> - 以後は `ssh ubuntu@<IP>` でパスワードなし接続（鍵パスフレーズがあればその入力のみ）。
+#### パターン1：パスワード認証でSSHできる場合（初期構築）
+
+サーバー初期状態など、パスワードでSSHログインできる場合は、PowerShellから公開鍵を転送します。初回ログイン後に設定した `henojiya` を使い、`scp` 実行時にサーバーのパスワードを入力してください。
+
+```powershell:console
+# Windows（PowerShell）から公開鍵だけを転送
+scp "$env:USERPROFILE\.ssh\id_ed25519_portfolio_vps.pub" henojiya:/home/ubuntu/
+
+# パスワードでサーバーへログイン
+ssh henojiya
+```
+
+サーバー側で `authorized_keys` に追記します。
+
+```bash:console
+# VPS側（ubuntuユーザー）
+# 転送された公開鍵がホームディレクトリにあることを確認
+$ ls ~
+  id_ed25519_portfolio_vps.pub
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+cat ~/id_ed25519_portfolio_vps.pub >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+```
+
+秘密鍵は転送せず、公開鍵だけを転送します。`authorized_keys` は既存の鍵を残すため、`mv` や `>` で上書きせず `>>` で追記します。
+
+#### パターン2：パスワード認証が使えない場合（PC側の復旧）
+
+旧PCの故障などで秘密鍵が失われ、新PCで作成した鍵がまだVPSに登録されておらず、サーバー自体は稼働していてもSSHのパスワード認証が無効な場合は、通常の `ssh` や `scp` では鍵を登録できません。さくらのVPSのWebコンソールでサーバーにログインし、そこで登録します。
+
+新PCの公開鍵をGitHubへ登録する場合は、公開鍵の内容を表示して手動でコピーします。`Get-Content` は表示するだけで、自動コピーはされません。
+
+```powershell:console
+Get-Content "$sshDir\id_ed25519_portfolio_vps.pub"
+```
+
+新PCの公開鍵を先に [GitHubのSettings > SSH and GPG keys](https://github.com/settings/keys) へ登録しておけば、VPSのWebコンソールで `curl` を実行し、GitHubから取得した公開鍵を `>>` で `authorized_keys` に直接追記できます。同一GitHubアカウントに登録された公開鍵をすべて追記するため、用途を確認したうえで使用してください。
+
+```bash:console
+# VPSのWebコンソール（ubuntuユーザー）で実行
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+curl -fsSL https://github.com/<github-user>.keys >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+```
+
+`-fsSL` は `curl` のオプションです。`-f` はHTTPエラー時に失敗させ、`-s` は進捗表示を抑制し、`-S` はエラーを表示し、`-L` はリダイレクトに追従します。
+
+いずれのパターンでも、以後は `ssh henojiya` でパスワードなし接続（鍵パスフレーズがあればその入力のみ）になります。
 
 ターミナルからログインできました！
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/314f4e41-58fc-87b9-de2d-5eb5ab362b47.png)
-
-#### ファイル転送の選択肢（Windows）
-
-> Note: 単発・少量の転送なら `scp` が最短です。GUIでまとめて行う場合は FileZilla（SFTP）が便利です。
-> また、さくらのVPSの初期セットアップで「追加済みの公開鍵を使ってインストール」を選択している場合、すでに公開鍵認証でログインできるため、ここでの鍵ファイル転送（.pub
-> のアップロード）は不要なことが多いです（そのままSSH接続へ進んで問題ありません）。
-
-- CUI（最短手）：PowerShell の `scp`
-  ```bash:console
-  # Windows（PowerShell）から実行（鍵ファイル指定の例）
-  PS C:\Users\yoshi> scp -i ~/.ssh/<your_private_key> C:\path\to\localfile ubuntu@153.127.13.226:/home/ubuntu/
-
-  # ディレクトリごと転送する場合（-r）
-  PS C:\Users\yoshi> scp -r -i ~/.ssh/<your_private_key> C:\path\to\localdir\ ubuntu@153.127.13.226:/home/ubuntu/localdir/
-  ```
-
-- GUI：FileZilla（SFTP）
-    - 設定例（サイトマネージャー）
-        - ホスト: `153.126.200.229`（例）
-        - プロトコル: SFTP – SSH File Transfer Protocol
-        - ログオンの種類: 鍵ファイル
-        - ユーザー: `ubuntu`
-        - ポート: `22`
-    - 鍵の登録（初回のみ）
-        1. メニューバー: 編集 → 設定 → SFTP を開く
-        2. 「鍵ファイルの追加(A)」をクリックし、秘密鍵（例: `C:\Users\yoshi\.ssh\id_rsa` など）を選択
-        3. 「FileZilla用に変換して ppk にしますか？」と聞かれたら OK を選択し、例: `id_rsa_filezilla.ppk` のように保存
-    - サイトマネージャーで上記 ppk を指定して接続し、`/home/ubuntu` など転送先へドラッグ＆ドロップで配置
-    - 参考: もとの記事の FileZilla 手順（鍵の変換含む）: https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#ftp
 
 ### よくあるエラーと対処（SSH）
 
@@ -1669,7 +1711,20 @@ $ sudo -u www-data test -w /var/www/html/portfolio/media && echo OK_media_w || e
 
 ## FTP
 
-いったんパス [もとの記事](https://qiita.com/YoshitakaOkada/items/a75f664846c8c8bbb1e1#ftp)
+`.env` などGit管理外のファイルを手動で転送する場合は、FileZillaのSFTPを使います。ここでいうFTPは、SSH（22番ポート）を使うSFTPです。
+
+FileZillaのサイトマネージャーに次の内容を設定します。
+
+| 項目 | 設定値 |
+|:--|:--|
+| ホスト | `153.126.200.229` |
+| プロトコル | `SFTP - SSH File Transfer Protocol` |
+| ログオンタイプ | `鍵ファイル` |
+| ユーザー | `ubuntu` |
+| ポート | `22` |
+| 鍵ファイル | `C:\Users\yoshi\.ssh\id_ed25519_portfolio_vps` |
+
+接続後、リモート側の `/var/www/html/portfolio/` 配下に、対応する `.env` を配置します。`.env` には秘密情報が含まれるため、Gitへコミットしたり公開したりしません。
 
 ## 代替ルート: Django プロジェクトを新規作成する場合（クローンしない運用）
 
@@ -1682,7 +1737,7 @@ $ cd /var/www/html/portfolio
 $ source venv/bin/activate
 (venv) $ pip install --upgrade pip
 (venv) $ pip install django
-(venv) $ django-admin --version   # 例: 4.x
+(venv) $ django-admin --version   # 例: 6.x
 ```
 
 ### 2) 雛形を作成（config を設定ディレクトリに）
