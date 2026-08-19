@@ -190,12 +190,7 @@ PCからVPSへ公開鍵で接続する場合は、接続元で作成した公開
 $sshDir = "$env:USERPROFILE\.ssh"
 New-Item -ItemType Directory -Force $sshDir | Out-Null
 ssh-keygen -t ed25519 -f "$sshDir\id_ed25519_portfolio_vps" -C "portfolio-vps"
-
-# GitHubまたはVPSへ登録する公開鍵を表示する
-Get-Content "$sshDir\id_ed25519_portfolio_vps.pub"
 ```
-
-表示された `ssh-ed25519` から始まる公開鍵1行全体を手動でコピーします。`Get-Content` は表示するだけで、自動コピーはされません。
 
 #### パターン1：パスワード認証でSSHできる場合（初期構築）
 
@@ -226,6 +221,12 @@ chmod 600 ~/.ssh/authorized_keys
 #### パターン2：パスワード認証が使えない場合（既存サーバーの復旧）
 
 旧PCの秘密鍵が失われ、新PCで作成した鍵がまだVPSに登録されておらず、サーバー側のパスワードSSH認証も無効な場合は、通常の `ssh` や `scp` では鍵を登録できません。さくらのVPSのWebコンソールでサーバーにログインし、そこで登録します。
+
+新PCの公開鍵をGitHubへ登録する場合は、公開鍵の内容を表示して手動でコピーします。`Get-Content` は表示するだけで、自動コピーはされません。
+
+```powershell:console
+Get-Content "$sshDir\id_ed25519_portfolio_vps.pub"
+```
 
 新PCの公開鍵を先にGitHubへ登録しておけば、WebコンソールからGitHub経由で取得できます。同一GitHubアカウントに登録された公開鍵をすべて追記するため、用途を確認したうえで使用してください。
 
