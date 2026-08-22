@@ -1,10 +1,10 @@
-# CentOSが終わるのでUbuntu24.04に移行する。Python3.12とDjango6とMySQL8のセットアップメモ2026
+# CentOSが終わるのでUbuntu24.04に移行する。Python3.12とDjango6とMySQL8.4のセットアップメモ2026
 
 ## はじめに
 
 この記事は、CentOSのサポート終了（EOL）に伴い、OSをUbuntu 24.04 LTSへ移行した際のセットアップ手順をまとめたものです。
 2021年の初出から更新を重ねていますが、ここで紹介している構成は現在も本番サーバーで安定稼働しており、実用的なオペレーションマニュアルとして活用しています。
-かつてのCentOS環境からのスムーズな移行と、現行のPython 3.12 + Django 6環境の構築を目指しています。
+かつてのCentOS環境からのスムーズな移行と、現代的なPython 3.12 + Django 6 + MySQL 8.4環境の構築を目指しています。
 
 2026年版からは、この記事を Git
 で管理し、AIアシスタントをベースに執筆する運用に切り替えました。誤字脱字はもちろん、これまでの勘違いの是正や重複箇所のMECE化にも大いに助けられています。今後の細かな修正も容易になるため、おすすめです。
@@ -1000,7 +1000,7 @@ $ curl -I --resolve www.henojiya.net:443:127.0.0.1 https://www.henojiya.net/ \
     がコメントアウト状態で存在するが、有効化されていないため診断ツールには「未設定」と判定される。本手順で
     `000-default-le-ssl.conf` に明示的に追加することで初めて有効になる。
 
-## MySQL8
+## MySQL 8.4
 
 ### 不要なパッケージの削除
 
@@ -1010,11 +1010,35 @@ MariaDBなどがインストールされている場合は、事前に削除し�
 $ sudo apt purge mariadb-* mysql-*
 ```
 
-### インストール
+### APT Repositoryの追加（MySQL 8.4 LTSを選択）
+
+APT Repositoryは、UbuntuのAPTがパッケージを取得する配布元です。ここではMySQL公式の
+[MySQL APT Repository](https://dev.mysql.com/downloads/repo/apt/)を追加し、MySQL 8.4 LTS系列を設定します。
+この設定により、後で `apt install mysql-server` を実行した際に、選択した8.4 LTS系列のパッケージがインストールされます。
 
 ```bash:console
+$ cd /tmp
+
+# APT設定パッケージをダウンロード
+$ wget https://dev.mysql.com/get/mysql-apt-config_0.8.40-1_all.deb
+
+# Repositoryの設定画面を起動
+$ sudo dpkg -i /tmp/mysql-apt-config_0.8.40-1_all.deb
+```
+
+インストール中に設定画面が表示されるので、MySQL Server & Clusterが
+`mysql-8.4-lts`（MySQL 8.4 LTS）になっていることを確認して、`Ok` を確定します。
+
+### MySQL Serverのインストール
+
+設定確認後、公式手順どおり `mysql-server` をインストールします。
+
+```bash:console
+# MySQL APT Repository設定後のパッケージ情報を更新
+$ sudo apt update
+
 # MySQLサーバーのインストール
-$ sudo apt -y install mysql-server-8.0
+$ sudo apt -y install mysql-server
 
 # バージョンの確認
 $ mysql --version
@@ -1022,6 +1046,8 @@ $ mysql --version
 # 動作ステータスの確認
 $ sudo systemctl status mysql
 ```
+
+`mysql --version` が8.4.xになっていることを確認します。
 
 ### 初期設定
 
@@ -1125,7 +1151,20 @@ Test tunnel configuration を押して、サーバにつながったことを確
 テスト接続を押して、サーバにつながったことを確認する
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/20f33c30-9288-7b7e-1663-e8e7bcd52920.png)
 
-#### ※Public Key Retrieval is not allowedのエラーが出力される
+#### `Public Key Retrieval is not allowed` のエラーが出力される場合
+
+ローカルの開発環境で接続する場合は、DBeaver の接続編集画面で「ドライバの
+プロパティ」を開き、次の値を追加・変更します。
+
+| プロパティ | 値 | 効果 |
+|:-----------|:---|:---|
+| `allowPublicKeyRetrieval` | `true` | RSA公開鍵の取得を許可 |
+| `useSSL` | `false`（ローカル開発時のみ） | SSLを使わずに接続 |
+
+この設定はローカル接続用です。本番環境では `useSSL=false` を常用せず、既存の
+SSH トンネルまたは TLS を使って接続します。また、通常のDBeaver接続では
+`root` ではなく、Django の接続設定に合わせて `python` ユーザーを使います。
+`root` のパスワードは、初期設定やデータベース・ユーザー作成時だけ使用します。
 
 [DBeaver からローカルのMySQLに接続できない問題への対処法](https://qiita.com/ymzkjpx/items/449c505c50ee17b6e8f9)
 
@@ -1253,8 +1292,10 @@ Python 3.12.3
 ## 依存パッケージのインストール
 
 ```bash:console
-# MySQLクライアントのビルドに必要なライブラリをインストール
+# パッケージ情報を更新
 $ sudo apt update
+
+# MySQLクライアントのビルドに必要なライブラリをインストール
 $ sudo apt install -y libmysqlclient-dev pkg-config python3-dev
 
 # 仮想環境の有効化とパッケージインストール
@@ -1332,8 +1373,10 @@ $ source venv/bin/activate
     を検討）。
 
 ```bash:console
-# まず APT 版 mod_wsgi を導入・有効化し、読み込みを確認する
+# パッケージ情報を更新
 $ sudo apt update
+
+# まず APT 版 mod_wsgi を導入・有効化し、読み込みを確認する
 $ sudo apt install -y libapache2-mod-wsgi-py3
 $ sudo a2enmod wsgi
 $ apache2ctl -M | grep -i wsgi   # 期待: wsgi_module (shared)
@@ -1682,8 +1725,11 @@ $ sudo find /var/www/html/portfolio -type f -exec chmod 664 {} +
 `setfacl` を使用して、今後 `media/` 以下に作られるすべてのファイルに自動的に `ubuntu` と `www-data` 両方の権限を継承させます。
 
 ```bash:console
+# パッケージ情報を更新
+$ sudo apt update
+
 # ACL ツールのインストール
-$ sudo apt update && sudo apt install acl -y
+$ sudo apt install acl -y
 
 # media/ ディレクトリに対して、新規ファイルが ubuntu と www-data 両方の読み書きを継承するように設定
 $ sudo setfacl -R -d -m u:ubuntu:rwx /var/www/html/portfolio/media
