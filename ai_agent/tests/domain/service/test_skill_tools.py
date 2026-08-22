@@ -146,7 +146,7 @@ class SkillToolCatalogTest(SimpleTestCase):
 
         record = GameAgentService.create_execution_record(state, run)
         state_with_record = state.with_execution_record(record)
-        restored = type(state).from_json(state_with_record.to_json())
+        restored = type(state).from_dict(state_with_record.to_dict())
 
         self.assertEqual(record.problem_subjects, "国語 × 算数")
         self.assertEqual(record.explanation, agent_output)

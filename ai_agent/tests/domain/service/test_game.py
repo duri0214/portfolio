@@ -55,7 +55,7 @@ class GameServiceTest(SimpleTestCase):
             next_state.mondai("mondai-language").position,
         )
         self.assertNotEqual(state.player_position, next_state.player_position)
-        restored_state = type(next_state).from_json(next_state.to_json())
+        restored_state = type(next_state).from_dict(next_state.to_dict())
         self.assertEqual(restored_state.player_position, next_state.player_position)
 
     def test_create_game_defines_bonus_and_rest_spaces_for_empty_cells(self):
@@ -103,7 +103,7 @@ class GameServiceTest(SimpleTestCase):
         self.assertIsNone(next_state.selected_line_id)
         self.assertEqual(next_state.used_board_space_ids, ("board-space-bonus",))
         self.assertEqual(next_state.board_event_history[0].experience_gained, 10)
-        restored_state = type(next_state).from_json(next_state.to_json())
+        restored_state = type(next_state).from_dict(next_state.to_dict())
         self.assertEqual(
             restored_state.used_board_space_ids,
             next_state.used_board_space_ids,

@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timezone
 from unittest.mock import patch
 
+from django.conf import settings
 from django.test import TestCase
 
 from ai_agent.domain.service.game_agent import GameAgentService
@@ -16,6 +17,7 @@ from ai_agent.domain.valueobject.agent_execution import (
 
 async def fake_stream_selected(self, *, max_turns=10):
     target_id = self.tools.state.selected_mondai_id
+    self.tools.execute("calculate", target_id)
     now = datetime.now(timezone.utc)
     run = AgentRun(
         run_id="stream-run-1",
@@ -248,7 +250,15 @@ class AgentStreamingViewTest(TestCase):
         self.assertNotContains(page, "判定スコア")
         self.assertNotContains(page, "結果:")
 
-    def test_streaming_endpoint_keeps_six_histories_without_growing_game_cookie(self):
+    def test_streaming_endpoint_keeps_six_histories_in_session_without_game_cookie(
+        self,
+    ):
+        """
+        シナリオ:
+        - 入力: 6つの問題を順番に選び、各問題でストリーミングAgentを実行する。
+        - 処理: 実行結果を保存して画面を再読み込みし、セッションとCookieを確認する。
+        - 期待値: 全状態と6件の履歴がセッションへ保持され、ゲーム状態Cookieは発行されない。
+        """
         mondai_ids = (
             "mondai-language",
             "mondai-language-mathematics",
@@ -283,10 +293,70 @@ class AgentStreamingViewTest(TestCase):
                     "state_token": state_token,
                 },
             )
-            self.assertLess(
-                len(saved.cookies["ai_agent_game_state"].value),
-                4096,
-            )
+            self.assertNotIn("ai_agent_game_state", saved.cookies)
 
         page = self.client.get("/ai_agent/")
         self.assertContains(page, "Agent実行 #6")
+        self.assertNotIn("ai_agent_game_state", self.client.cookies)
+        self.assertIn(settings.SESSION_COOKIE_NAME, self.client.cookies)
+        self.assertEqual(
+            self.client.cookies[settings.SESSION_COOKIE_NAME].value,
+            self.client.session.session_key,
+        )
+
+        state_payload = self.client.session["ai_agent_game_state"]
+        self.assertEqual(len(state_payload["execution_history"]), 6)
+        self.assertEqual(len(state_payload["tool_history"]), 6)
+        self.assertEqual(state_payload["experience"], 60)
+        self.assertEqual(
+            {mondai["hit_points"] for mondai in state_payload["mondais"]},
+            {2},
+        )
+
+    def test_legacy_game_cookie_is_ignored_and_deleted(self):
+        """
+        シナリオ:
+        - 入力: 旧形式のゲーム状態Cookieを持つゲストが画面を開く。
+        - 処理: Cookieを使わずにゲーム画面を表示する。
+        - 期待値: 初期状態が表示され、旧ゲーム状態Cookieの削除レスポンスが返る。
+        """
+        self.client.cookies["ai_agent_game_state"] = "legacy-game-state"
+
+        response = self.client.get("/ai_agent/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Agentは未実行です")
+        self.assertIn("ai_agent_game_state", response.cookies)
+        self.assertEqual(response.cookies["ai_agent_game_state"]["max-age"], 0)
+        self.assertEqual(self.client.cookies["ai_agent_game_state"].value, "")
+
+    def test_reset_replaces_the_entire_session_game_state(self):
+        """
+        シナリオ:
+        - 入力: 問題選択と盤面イベント適用後のゲーム状態。
+        - 処理: ゲームを最初からやり直し、再読み込みする。
+        - 期待値: 盤面、経験値、選択状態、履歴が初期状態としてセッションへ保存される。
+        """
+        self.client.post(
+            "/ai_agent/",
+            {"action": "select_mondai", "mondai_id": "mondai-language"},
+        )
+        self.client.post(
+            "/ai_agent/",
+            {"action": "select_board_space", "space_id": "board-space-bonus"},
+        )
+
+        response = self.client.post("/ai_agent/", {"action": "reset"})
+        page = self.client.get(response["Location"])
+
+        self.assertEqual(response.status_code, 302)
+        self.assertContains(page, "経験値: <strong data-game-experience>0</strong>")
+        self.assertContains(page, "Agentは未実行です")
+        state_payload = self.client.session["ai_agent_game_state"]
+        self.assertEqual(state_payload["experience"], 0)
+        self.assertIsNone(state_payload["selected_mondai_id"])
+        self.assertIsNone(state_payload["selected_line_id"])
+        self.assertEqual(state_payload["tool_history"], [])
+        self.assertEqual(state_payload["execution_history"], [])
+        self.assertEqual(state_payload["board_event_history"], [])
+        self.assertEqual(state_payload["used_board_space_ids"], [])
