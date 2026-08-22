@@ -1010,16 +1010,16 @@ MariaDBなどがインストールされている場合は、事前に削除し�
 $ sudo apt purge mariadb-* mysql-*
 ```
 
-### APT Repositoryの追加と系列選択
+### APT Repositoryの追加（MySQL 8.4 LTSを選択）
 
-MySQL公式の[MySQL APT Repository](https://dev.mysql.com/downloads/repo/apt/)から
+APT Repositoryは、UbuntuのAPTがパッケージを取得する配布元です。ここではMySQL公式の
+[MySQL APT Repository](https://dev.mysql.com/downloads/repo/apt/)を追加し、MySQL 8.4 LTS系列を設定します。
+この節では、MySQL Server本体はまだインストールしません。
+
 APT設定パッケージをダウンロードし、インストールします。このパッケージはMySQL本体ではなく、
 APT Repositoryの設定画面を起動するためのものです。
 
-以下はSSH接続したUbuntuサーバー上で実行します。Windows側のPowerShellでは実行しません。
-
 ```bash:console
-# Ubuntuサーバー上で実行
 $ cd /tmp
 
 # APT設定パッケージをダウンロード
@@ -1032,7 +1032,7 @@ $ sudo dpkg -i /tmp/mysql-apt-config_0.8.40-1_all.deb
 インストール中に設定画面が表示されるので、MySQL Server & Clusterが
 `mysql-8.4-lts`（MySQL 8.4 LTS）になっていることを確認して、`Ok` を確定します。
 
-### インストール
+### MySQL Serverのインストール
 
 設定確認後、公式手順どおり `mysql-server` メタパッケージをインストールします。
 
