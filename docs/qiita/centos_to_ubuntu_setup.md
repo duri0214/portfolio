@@ -1013,11 +1013,20 @@ $ sudo apt purge mariadb-* mysql-*
 ### APT Repositoryの追加と系列選択
 
 MySQL公式の[MySQL APT Repository](https://dev.mysql.com/downloads/repo/apt/)から
-`mysql-apt-config_..._all.deb` をダウンロードし、インストールします。
+APT設定パッケージをダウンロードし、インストールします。このパッケージはMySQL本体ではなく、
+APT Repositoryの設定画面を起動するためのものです。
+
+以下はSSH接続したUbuntuサーバー上で実行します。Windows側のPowerShellでは実行しません。
 
 ```bash:console
-# ダウンロードしたリリースパッケージをインストール
-$ sudo dpkg -i /path/to/mysql-apt-config_*.deb
+# Ubuntuサーバー上で実行
+$ cd /tmp
+
+# APT設定パッケージをダウンロード
+$ wget https://dev.mysql.com/get/mysql-apt-config_0.8.40-1_all.deb
+
+# Repositoryの設定画面を起動
+$ sudo dpkg -i /tmp/mysql-apt-config_0.8.40-1_all.deb
 ```
 
 インストール中に設定画面が表示されるので、MySQL Server & Clusterで
