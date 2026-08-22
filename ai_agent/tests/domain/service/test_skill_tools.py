@@ -55,6 +55,19 @@ class SkillToolCatalogTest(SimpleTestCase):
         self.assertEqual(tool_set.state.experience, 10)
         self.assertEqual(tool_set.state.mondai("mondai-mathematics").hit_points, 2)
 
+    def test_game_tool_set_rejects_a_tool_target_outside_selected_problem(self):
+        """
+        シナリオ:
+        - 入力: 国語の問題を選択した状態で、算数の問題IDをToolへ渡す。
+        - 処理: GameToolSetのTool引数ガードレールで対象を検証する。
+        - 期待値: 選択中の問題以外へのTool実行が拒否される。
+        """
+        state = GameService.select_mondai(GameService.create_game(), "mondai-language")
+        tool_set = GameToolSet(state)
+
+        with self.assertRaisesRegex(ValueError, "選択中の問題以外"):
+            tool_set.calculate("mondai-mathematics")
+
     def test_function_tools_are_registered_without_fixed_chain_order(self):
         """
         シナリオ:
@@ -83,6 +96,58 @@ class SkillToolCatalogTest(SimpleTestCase):
             {tool.name for tool in service.execution.agent.tools},
             {definition.name for definition in SkillToolCatalog.definitions()},
         )
+
+    def test_preset_lines_have_evaluable_representative_tool_chains(self):
+        """
+        シナリオ:
+        - 入力: 国語・算数・理科の問題と3種類のプリセットセリフ。
+        - 処理: セリフごとの期待Chainを作り、同じTool CallをAgentRunへ詰めて評価する。
+        - 期待値: 各代表ケースのTool順が期待値と一致すると判定できる。
+        """
+        cases = (
+            ("mondai-language", "line-challenge"),
+            ("mondai-mathematics", "line-observe"),
+            ("mondai-science", "line-chain"),
+        )
+        now = datetime.now(timezone.utc)
+
+        for mondai_id, line_id in cases:
+            with self.subTest(mondai_id=mondai_id, line_id=line_id):
+                state = GameService.select_line(
+                    GameService.select_mondai(GameService.create_game(), mondai_id),
+                    line_id,
+                )
+                expected = GameAgentService.expected_tool_chain(state)
+                run = AgentRun(
+                    run_id=f"run-{mondai_id}-{line_id}",
+                    input_text="代表シナリオ",
+                    max_turns=10,
+                    status=AgentRunStatus.COMPLETED,
+                    started_at=now,
+                    completed_at=now,
+                    tool_calls=tuple(
+                        ToolCall(
+                            call_id=f"call-{index}",
+                            name=tool_name,
+                            arguments={"target_mondai_id": mondai_id},
+                            sequence=index,
+                        )
+                        for index, tool_name in enumerate(expected, start=1)
+                    ),
+                    tool_results=(),
+                    report=Report(
+                        output="代表ケース完了",
+                        status=AgentRunStatus.COMPLETED,
+                        tool_calls=(),
+                        tool_results=(),
+                        turns=1,
+                    ),
+                )
+
+                evaluation = GameAgentService.evaluate_tool_chain(state, run)
+
+                self.assertEqual(evaluation.expected, expected)
+                self.assertTrue(evaluation.matched)
 
     def test_agent_run_becomes_explainable_execution_history(self):
         """
@@ -160,6 +225,7 @@ class SkillToolCatalogTest(SimpleTestCase):
             "計算が成功し、国語×算数の問題に1ダメージ。",
         )
         self.assertEqual(restored.execution_history[0], record)
+        self.assertEqual(restored.execution_history[0].agent_run, run)
 
     def test_stream_events_include_input_and_result_summaries(self):
         """
