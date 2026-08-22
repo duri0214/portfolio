@@ -201,6 +201,10 @@ LOGGING = {
         "handlers": ["console"],
         "level": "INFO",
     },
+    "loggers": {
+        "httpx": {"level": "WARNING"},
+        "openai": {"level": "WARNING"},
+    },
 }
 
 # メッセージ設定

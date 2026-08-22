@@ -42,12 +42,12 @@ class SkillToolCatalog:
             "数値や式を計算して答えを確かめる",
         ),
         SkillToolDefinition(
-            "mental_math",
-            "暗算",
+            "compare_quantities",
+            "数量比較",
             SkillCategory.MATHEMATICS,
             2,
             15,
-            "数量関係を素早く見積もる",
+            "数量や条件を比べて大小・差・割合の関係を整理する",
         ),
         SkillToolDefinition(
             "infer_cause",
@@ -93,52 +93,49 @@ class GameToolSet:
     def __init__(self, state: GameState | None = None) -> None:
         self.state = state or GameService.create_game()
 
-    def select_enemy(self, enemy_id: str) -> dict[str, Any]:
-        """Agentから敵選択を受け取り、選択後の状態を返す。"""
-        self.state = GameService.select_enemy(self.state, enemy_id)
-        return {"selected_enemy_id": enemy_id}
+    def select_mondai(self, mondai_id: str) -> dict[str, Any]:
+        """Agentから問題選択を受け取り、選択後の状態を返す。"""
+        self.state = GameService.select_mondai(self.state, mondai_id)
+        return {"selected_mondai_id": mondai_id}
 
     def select_line(self, line_id: str) -> dict[str, Any]:
         """Agentからプリセットセリフ選択を受け取り、選択後の状態を返す。"""
         self.state = GameService.select_line(self.state, line_id)
         return {"selected_line_id": line_id}
 
-    def execute(
-        self, tool_name: str, target_enemy_id: str, score: int
-    ) -> dict[str, Any]:
+    def execute(self, tool_name: str, target_mondai_id: str) -> dict[str, Any]:
         """指定されたToolだけを実行し、状態と結果を更新する。"""
         definition = SkillToolCatalog.get(tool_name)
         self.state, result = GameService.execute_skill(
             self.state,
             definition,
-            target_enemy_id=target_enemy_id,
-            score=score,
+            target_mondai_id=target_mondai_id,
         )
         return result.to_dict()
 
-    def analyze_reading(self, target_enemy_id: str, score: int) -> dict[str, Any]:
+    def analyze_reading(self, target_mondai_id: str) -> dict[str, Any]:
         """国語の読解分析Tool。"""
-        return self.execute("analyze_reading", target_enemy_id, score)
+        return self.execute("analyze_reading", target_mondai_id)
 
-    def analyze_expression(self, target_enemy_id: str, score: int) -> dict[str, Any]:
+    def analyze_expression(self, target_mondai_id: str) -> dict[str, Any]:
         """国語の表現分析Tool。"""
-        return self.execute("analyze_expression", target_enemy_id, score)
+        return self.execute("analyze_expression", target_mondai_id)
 
-    def calculate(self, target_enemy_id: str, score: int) -> dict[str, Any]:
+    def calculate(self, target_mondai_id: str) -> dict[str, Any]:
         """算数の計算Tool。"""
-        return self.execute("calculate", target_enemy_id, score)
+        return self.execute("calculate", target_mondai_id)
 
-    def mental_math(self, target_enemy_id: str, score: int) -> dict[str, Any]:
-        """算数の暗算Tool。"""
-        return self.execute("mental_math", target_enemy_id, score)
+    def compare_quantities(self, target_mondai_id: str) -> dict[str, Any]:
+        """算数の数量比較Tool。"""
+        return self.execute("compare_quantities", target_mondai_id)
 
-    def infer_cause(self, target_enemy_id: str, score: int) -> dict[str, Any]:
+    def infer_cause(self, target_mondai_id: str) -> dict[str, Any]:
         """理科の原因推論Tool。"""
-        return self.execute("infer_cause", target_enemy_id, score)
+        return self.execute("infer_cause", target_mondai_id)
 
-    def analyze_observation(self, target_enemy_id: str, score: int) -> dict[str, Any]:
+    def analyze_observation(self, target_mondai_id: str) -> dict[str, Any]:
         """理科の観察分析Tool。"""
-        return self.execute("analyze_observation", target_enemy_id, score)
+        return self.execute("analyze_observation", target_mondai_id)
 
     def function_tools(self) -> list[Any]:
         """Agentに登録できる6つのFunction Toolを返す。"""
@@ -146,7 +143,7 @@ class GameToolSet:
             function_tool(self.analyze_reading),
             function_tool(self.analyze_expression),
             function_tool(self.calculate),
-            function_tool(self.mental_math),
+            function_tool(self.compare_quantities),
             function_tool(self.infer_cause),
             function_tool(self.analyze_observation),
         ]

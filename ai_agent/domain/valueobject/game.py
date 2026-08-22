@@ -28,19 +28,19 @@ class Position:
 
 
 @dataclass(frozen=True)
-class EnemyState:
+class MondaiState:
     """盤面上の問題駒と解答状態を表す値オブジェクト。
 
     Attributes:
-        enemy_id: AgentやUIが参照する安定した問題識別子。
+        mondai_id: AgentやUIが参照する安定した問題識別子。
         name: 画面に表示する問題名。
         category: 問題の主教科。
         position: 盤面上の位置。
-        hit_points: 残り体力。0なら撃破済み。
+        hit_points: 問題の残りHP。0なら解決済み。
         related_category: 科目横断問題の関連教科。
     """
 
-    enemy_id: str
+    mondai_id: str
     name: str
     category: SkillCategory
     position: Position
@@ -48,13 +48,13 @@ class EnemyState:
     related_category: SkillCategory | None = None
 
     def __post_init__(self) -> None:
-        if not self.enemy_id or not self.name:
-            raise ValueError("enemy_id and name must not be empty")
+        if not self.mondai_id or not self.name:
+            raise ValueError("mondai_id and name must not be empty")
         if self.hit_points < 0:
             raise ValueError("hit_points must not be negative")
 
     @property
-    def defeated(self) -> bool:
+    def solved(self) -> bool:
         """問題が解決済みかどうかを返す。"""
         return self.hit_points == 0
 
@@ -100,6 +100,7 @@ class ToolExecutionRecord:
     input_summary: str
     success: bool
     result_summary: str
+    power: int
     damage: int
     experience_gained: int
     remaining_hit_points: int
@@ -116,6 +117,7 @@ class ToolExecutionRecord:
             input_summary=str(value.get("input_summary", "")),
             success=bool(value.get("success", False)),
             result_summary=str(value.get("result_summary", "")),
+            power=int(value.get("power", value.get("damage", 0))),
             damage=int(value.get("damage", 0)),
             experience_gained=int(value.get("experience_gained", 0)),
             remaining_hit_points=int(value.get("remaining_hit_points", 0)),
@@ -160,15 +162,15 @@ class AgentExecutionRecord:
 
 @dataclass(frozen=True)
 class GameState:
-    """プレイヤー、敵駒、選択状態をまとめたゲームスナップショット。
+    """プレイヤー、問題駒、選択状態をまとめたゲームスナップショット。
 
     Attributes:
         board_size: 正方形盤面の一辺のマス数。
         player_position: プレイヤー駒の位置。
         experience: プレイヤーが獲得した経験値。
-        enemies: 単一教科または科目横断の6つの問題駒。
+        mondais: 単一教科または科目横断の6つの問題駒。
         preset_lines: プレイヤーが選択できるプリセットセリフ。
-        selected_enemy_id: 現在選択中の敵識別子。
+        selected_mondai_id: 現在選択中の問題識別子。
         selected_line_id: 現在選択中のセリフ識別子。
         tool_history: Agentが実行したTool名の履歴。
         execution_history: Agentの判断とSkill結果を含む実行履歴。
@@ -177,28 +179,30 @@ class GameState:
     board_size: int
     player_position: Position
     experience: int
-    enemies: tuple[EnemyState, ...]
+    mondais: tuple[MondaiState, ...]
     preset_lines: tuple[PresetLine, ...]
-    selected_enemy_id: str | None = None
+    selected_mondai_id: str | None = None
     selected_line_id: str | None = None
     tool_history: tuple[str, ...] = ()
     execution_history: tuple[AgentExecutionRecord, ...] = ()
 
-    _COOKIE_PREFIX = "z1:"
+    # Cookie値が圧縮・Base64エンコード済みのゲーム状態であることを識別する。
+    # 形式を変更して旧値を読めなくする必要がある場合だけ世代を更新する。
+    _COOKIE_PREFIX = "z2:"
 
     def __post_init__(self) -> None:
         if self.board_size < 1:
             raise ValueError("board_size must be greater than zero")
         if self.experience < 0:
             raise ValueError("experience must not be negative")
-        if len(self.enemies) != 6:
+        if len(self.mondais) != 6:
             raise ValueError("a game must contain exactly six problems")
         if any(
-            enemy.position.row >= self.board_size
-            or enemy.position.column >= self.board_size
-            for enemy in self.enemies
+            mondai.position.row >= self.board_size
+            or mondai.position.column >= self.board_size
+            for mondai in self.mondais
         ):
-            raise ValueError("enemy position must be inside the board")
+            raise ValueError("mondai position must be inside the board")
 
     @classmethod
     def initial(cls) -> GameState:
@@ -207,42 +211,42 @@ class GameState:
             board_size=3,
             player_position=Position(1, 1),
             experience=0,
-            enemies=(
-                EnemyState(
-                    "enemy-language",
+            mondais=(
+                MondaiState(
+                    "mondai-language",
                     "国語の問題",
                     SkillCategory.LANGUAGE,
                     Position(0, 0),
                 ),
-                EnemyState(
-                    "problem-language-mathematics",
+                MondaiState(
+                    "mondai-language-mathematics",
                     "国語×算数の問題",
                     SkillCategory.LANGUAGE,
                     Position(0, 1),
                     related_category=SkillCategory.MATHEMATICS,
                 ),
-                EnemyState(
-                    "enemy-mathematics",
+                MondaiState(
+                    "mondai-mathematics",
                     "算数の問題",
                     SkillCategory.MATHEMATICS,
                     Position(0, 2),
                 ),
-                EnemyState(
-                    "problem-language-science",
+                MondaiState(
+                    "mondai-language-science",
                     "国語×理科の問題",
                     SkillCategory.LANGUAGE,
                     Position(1, 0),
                     related_category=SkillCategory.SCIENCE,
                 ),
-                EnemyState(
-                    "problem-mathematics-science",
+                MondaiState(
+                    "mondai-mathematics-science",
                     "算数×理科の問題",
                     SkillCategory.MATHEMATICS,
                     Position(2, 1),
                     related_category=SkillCategory.SCIENCE,
                 ),
-                EnemyState(
-                    "enemy-science",
+                MondaiState(
+                    "mondai-science",
                     "理科の問題",
                     SkillCategory.SCIENCE,
                     Position(2, 2),
@@ -251,40 +255,40 @@ class GameState:
             preset_lines=(
                 PresetLine(
                     "line-challenge",
-                    "正面から解く",
-                    "この問題を解いてみせる！",
-                    "まず最も直接的なSkillで問題の解決を試みる。",
+                    "直接解決を試す",
+                    "まず答えを出してみる。",
+                    "直接使えそうなSkillから始め、結果に応じて必要なら別のSkillも続ける。",
                 ),
                 PresetLine(
                     "line-observe",
-                    "観察して解く",
-                    "よく観察して答えを導く。",
-                    "問題文や対象の特徴を分析してからSkillを選ぶ。",
+                    "条件を整理して解く",
+                    "問題文の条件を整理してから解く。",
+                    "問題文や観察結果を分析し、足りない処理があれば次のSkillへつなげる。",
                 ),
                 PresetLine(
                     "line-chain",
-                    "複数Skillで解く",
-                    "別のSkillも組み合わせて突破する！",
-                    "1つのToolで終わらず、結果に応じて追加Toolを検討する。",
+                    "別の観点で検証する",
+                    "別の見方も使って答えを確かめる。",
+                    "複数の観点を試し、Skillの結果を次のSkill選択に活かす。",
                 ),
             ),
         )
 
     def with_selection(
-        self, *, enemy_id: str | None = None, line_id: str | None = None
+        self, *, mondai_id: str | None = None, line_id: str | None = None
     ) -> GameState:
         """選択状態だけを更新した新しいスナップショットを返す。"""
         return replace(
             self,
-            selected_enemy_id=(
-                enemy_id if enemy_id is not None else self.selected_enemy_id
+            selected_mondai_id=(
+                mondai_id if mondai_id is not None else self.selected_mondai_id
             ),
             selected_line_id=line_id if line_id is not None else self.selected_line_id,
         )
 
-    def enemy(self, enemy_id: str) -> EnemyState:
-        """指定した敵駒を返す。"""
-        return next(enemy for enemy in self.enemies if enemy.enemy_id == enemy_id)
+    def mondai(self, mondai_id: str) -> MondaiState:
+        """指定した問題駒を返す。"""
+        return next(mondai for mondai in self.mondais if mondai.mondai_id == mondai_id)
 
     def with_execution_record(self, record: AgentExecutionRecord) -> GameState:
         """Agent実行記録を最新順で追加した状態を返す。"""
@@ -310,15 +314,16 @@ class GameState:
             value = zlib.decompress(compressed).decode("utf-8")
         payload = json.loads(value)
         initial = cls.initial()
-        health_by_enemy = {
-            enemy["enemy_id"]: int(enemy["hit_points"])
-            for enemy in payload.get("enemies", [])
+        health_by_mondai = {
+            mondai["mondai_id"]: int(mondai["hit_points"])
+            for mondai in payload.get("mondais", [])
         }
-        enemies = tuple(
+        mondais = tuple(
             replace(
-                enemy, hit_points=health_by_enemy.get(enemy.enemy_id, enemy.hit_points)
+                mondai,
+                hit_points=health_by_mondai.get(mondai.mondai_id, mondai.hit_points),
             )
-            for enemy in initial.enemies
+            for mondai in initial.mondais
         )
         player_position_payload = payload.get("player_position", {})
         player_position = Position(
@@ -329,8 +334,8 @@ class GameState:
             initial,
             player_position=player_position,
             experience=int(payload.get("experience", 0)),
-            enemies=enemies,
-            selected_enemy_id=payload.get("selected_enemy_id"),
+            mondais=mondais,
+            selected_mondai_id=payload.get("selected_mondai_id"),
             selected_line_id=payload.get("selected_line_id"),
             tool_history=tuple(payload.get("tool_history", ())),
             execution_history=tuple(

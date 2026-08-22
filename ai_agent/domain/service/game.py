@@ -26,18 +26,19 @@ class GameService:
         return GameState.initial()
 
     @staticmethod
-    def select_enemy(state: GameState, enemy_id: str) -> GameState:
+    def select_mondai(state: GameState, mondai_id: str) -> GameState:
         """対象問題を選択し、プレイヤー駒をそのマスへ移動した状態を返す。"""
         try:
-            target = state.enemy(enemy_id)
+            target = state.mondai(mondai_id)
         except StopIteration as error:
-            raise GameDomainError(f"unknown enemy: {enemy_id}") from error
-        if target.defeated:
-            raise GameDomainError(f"problem is already solved: {enemy_id}")
+            raise GameDomainError(f"unknown mondai: {mondai_id}") from error
+        if target.solved:
+            raise GameDomainError(f"problem is already solved: {mondai_id}")
         return replace(
             state,
             player_position=target.position,
-            selected_enemy_id=enemy_id,
+            selected_mondai_id=mondai_id,
+            selected_line_id=None,
         )
 
     @staticmethod
@@ -45,6 +46,8 @@ class GameService:
         """プリセットセリフを選択した状態を返す。"""
         if not any(line.line_id == line_id for line in state.preset_lines):
             raise GameDomainError(f"unknown preset line: {line_id}")
+        if state.selected_mondai_id and state.mondai(state.selected_mondai_id).solved:
+            raise GameDomainError("problem is already solved")
         return state.with_selection(line_id=line_id)
 
     @staticmethod
@@ -52,33 +55,32 @@ class GameService:
         state: GameState,
         definition: SkillToolDefinition,
         *,
-        target_enemy_id: str,
-        score: int,
+        target_mondai_id: str,
     ) -> tuple[GameState, SkillToolResult]:
         """1つのSkillを適用し、更新後の状態と構造化結果を返す。
 
-        scoreが60未満なら失敗として状態を変更しない。成功時だけ敵の体力と経験値を
-        更新するため、失敗Toolを含むChainでも結果を明確に追跡できる。
+        生存中の問題にSkillを実行した場合だけ、問題のHPと経験値を更新する。
+        選択中の問題がある場合は、Tool入力の対象IDより選択中の問題を優先する。
+        解決済み問題への実行は失敗として状態を変更しない。
         """
-        if not 0 <= score <= 100:
-            raise GameDomainError("score must be between 0 and 100")
+        target_mondai_id = state.selected_mondai_id or target_mondai_id
         try:
-            target = state.enemy(target_enemy_id)
+            target = state.mondai(target_mondai_id)
         except StopIteration as error:
-            raise GameDomainError(f"unknown enemy: {target_enemy_id}") from error
+            raise GameDomainError(f"unknown mondai: {target_mondai_id}") from error
 
-        succeeded = score >= 60 and not target.defeated
-        damage = definition.power if succeeded else 0
+        succeeded = not target.solved
+        damage = min(definition.power, target.hit_points) if succeeded else 0
         experience = definition.experience if succeeded else 0
-        remaining = max(target.hit_points - damage, 0)
+        remaining = target.hit_points - damage
         updated_target = replace(target, hit_points=remaining)
-        updated_enemies = tuple(
-            updated_target if enemy.enemy_id == target_enemy_id else enemy
-            for enemy in state.enemies
+        updated_mondais = tuple(
+            updated_target if mondai.mondai_id == target_mondai_id else mondai
+            for mondai in state.mondais
         )
         next_state = replace(
             state,
-            enemies=updated_enemies if succeeded else state.enemies,
+            mondais=updated_mondais if succeeded else state.mondais,
             experience=state.experience + experience,
             tool_history=state.tool_history + (definition.name,),
         )
@@ -91,10 +93,10 @@ class GameService:
             tool_name=definition.name,
             display_name=definition.display_name,
             success=succeeded,
-            target_enemy_id=target_enemy_id,
+            target_mondai_id=target_mondai_id,
             damage=damage,
             experience_gained=experience,
-            enemy_remaining_hit_points=remaining if succeeded else target.hit_points,
+            mondai_remaining_hit_points=remaining if succeeded else target.hit_points,
             message=message,
         )
         return next_state, result

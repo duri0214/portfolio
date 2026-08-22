@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timezone
 
 from django.test import SimpleTestCase
@@ -31,7 +32,7 @@ class SkillToolCatalogTest(SimpleTestCase):
                 "analyze_reading",
                 "analyze_expression",
                 "calculate",
-                "mental_math",
+                "compare_quantities",
                 "infer_cause",
                 "analyze_observation",
             },
@@ -41,18 +42,18 @@ class SkillToolCatalogTest(SimpleTestCase):
     def test_game_tool_set_updates_state_for_direct_tool_calls(self):
         """
         シナリオ:
-        - 入力: GameToolSetの計算Toolをscore 80で呼び出す。
+        - 入力: GameToolSetの計算Toolを呼び出す。
         - 処理: ToolアダプターがGameServiceへ構造化引数を渡す。
         - 期待値: 構造化結果が返り、GameToolSetの状態に効果が反映される。
         """
         tool_set = GameToolSet()
 
-        result = tool_set.calculate("enemy-mathematics", 80)
+        result = tool_set.calculate("mondai-mathematics")
 
         self.assertTrue(result["success"])
         self.assertEqual(result["tool_name"], "calculate")
         self.assertEqual(tool_set.state.experience, 10)
-        self.assertEqual(tool_set.state.enemy("enemy-mathematics").hit_points, 2)
+        self.assertEqual(tool_set.state.mondai("mondai-mathematics").hit_points, 2)
 
     def test_function_tools_are_registered_without_fixed_chain_order(self):
         """
@@ -91,12 +92,15 @@ class SkillToolCatalogTest(SimpleTestCase):
         - 期待値: 選択理由、加工内容、入力、結果、状態変化が保持される。
         """
         state = GameService.select_line(
-            GameService.select_enemy(
-                GameService.create_game(), "problem-language-mathematics"
+            GameService.select_mondai(
+                GameService.create_game(), "mondai-language-mathematics"
             ),
             "line-observe",
         )
         now = datetime.now(timezone.utc)
+        agent_output = "観察して条件を整理したため、計算Toolを選びました。" + (
+            "詳細。" * 300
+        )
         run = AgentRun(
             run_id="run-1",
             input_text="横断問題を観察して解く",
@@ -109,8 +113,7 @@ class SkillToolCatalogTest(SimpleTestCase):
                     call_id="call-1",
                     name="calculate",
                     arguments={
-                        "target_enemy_id": "problem-language-mathematics",
-                        "score": 80,
+                        "target_mondai_id": "mondai-language-mathematics",
                     },
                     sequence=1,
                 ),
@@ -122,10 +125,10 @@ class SkillToolCatalogTest(SimpleTestCase):
                     output={
                         "display_name": "計算",
                         "success": True,
-                        "target_enemy_id": "problem-language-mathematics",
+                        "target_mondai_id": "mondai-language-mathematics",
                         "damage": 1,
                         "experience_gained": 10,
-                        "enemy_remaining_hit_points": 2,
+                        "mondai_remaining_hit_points": 2,
                         "message": "計算が成功し、国語×算数の問題に1ダメージ。",
                     },
                     succeeded=True,
@@ -133,7 +136,7 @@ class SkillToolCatalogTest(SimpleTestCase):
                 ),
             ),
             report=Report(
-                output="観察して条件を整理したため、計算Toolを選びました。",
+                output=agent_output,
                 status=AgentRunStatus.COMPLETED,
                 tool_calls=(),
                 tool_results=(),
@@ -146,13 +149,56 @@ class SkillToolCatalogTest(SimpleTestCase):
         restored = type(state).from_json(state_with_record.to_json())
 
         self.assertEqual(record.problem_subjects, "国語 × 算数")
+        self.assertEqual(record.explanation, agent_output)
         self.assertEqual(record.steps[0].operation, "数値や式を計算して答えを確かめる")
         self.assertEqual(
             record.steps[0].input_summary,
-            "対象: 国語×算数の問題 / 判定スコア: 80",
+            "対象: 国語×算数の問題",
         )
         self.assertEqual(
             record.steps[0].result_summary,
             "計算が成功し、国語×算数の問題に1ダメージ。",
         )
         self.assertEqual(restored.execution_history[0], record)
+
+    def test_stream_events_include_input_and_result_summaries(self):
+        """
+        シナリオ:
+        - 入力: 選択済みの問題へ計算Toolを実行するストリームイベント。
+        - 処理: ゲーム用Agentサービスがイベントへ画面表示用の要約を付加する。
+        - 期待値: 選択・開始・完了イベントで入力、結果、実行順を追跡できる。
+        """
+        state = GameService.select_line(
+            GameService.select_mondai(GameService.create_game(), "mondai-language"),
+            "line-observe",
+        )
+        service = GameAgentService(tools=GameToolSet(state))
+
+        async def fake_stream(_input_text, *, max_turns=10):
+            yield {"type": "run.started", "run_id": "run-1"}
+            yield {
+                "type": "tool.selected",
+                "call_id": "call-1",
+                "tool_name": "calculate",
+                "arguments": {"target_mondai_id": "mondai-language"},
+                "sequence": 1,
+            }
+            yield {
+                "type": "tool.completed",
+                "call_id": "call-1",
+                "tool_name": "calculate",
+                "sequence": 1,
+                "output": {"message": "計算が成功しました。"},
+            }
+
+        service.execution.stream = fake_stream
+
+        async def collect_events():
+            return [event async for event in service.stream_selected()]
+
+        events = asyncio.run(collect_events())
+
+        self.assertEqual(events[1]["input_summary"], "対象: 国語の問題")
+        self.assertEqual(events[2]["input_summary"], "対象: 国語の問題")
+        self.assertEqual(events[3]["result_summary"], "計算が成功しました。")
+        self.assertEqual(events[3]["sequence"], 1)
