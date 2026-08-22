@@ -62,12 +62,39 @@
     color: #fff;
 }
 
+.board-piece.special-piece {
+    background: #b8e0d2;
+    color: #1d4d4f;
+}
+
+.board-piece.special-piece:not(.is-used):hover,
+.board-piece.special-piece:not(.is-used):focus-visible {
+    background: #2a9d8f;
+    color: #fff;
+}
+
+.board-piece.special-piece.is-used {
+    background: #ced4da;
+    color: #495057;
+    cursor: not-allowed;
+}
+
 .problem-piece-name {
     font-size: clamp(0.65rem, 2vw, 0.9rem);
 }
 
 .problem-piece-hp {
     font-size: 0.7rem;
+    font-weight: 400;
+}
+
+.special-piece-name {
+    font-size: clamp(0.65rem, 2vw, 0.9rem);
+}
+
+.special-piece-effect,
+.special-piece-status {
+    font-size: 0.65rem;
     font-weight: 400;
 }
 

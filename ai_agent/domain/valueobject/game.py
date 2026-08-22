@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import base64
-from dataclasses import asdict
-from dataclasses import dataclass, replace
+from dataclasses import asdict, dataclass, replace
+from enum import StrEnum
 import json
 from typing import Any
 import zlib
@@ -25,6 +25,46 @@ class Position:
     def __post_init__(self) -> None:
         if self.row < 0 or self.column < 0:
             raise ValueError("position coordinates must be non-negative")
+
+
+class BoardSpaceType(StrEnum):
+    """問題以外の盤面マスが持つゲーム上の役割。"""
+
+    EXPERIENCE_BONUS = "experience_bonus"
+    REST = "rest"
+
+    @property
+    def display_name(self) -> str:
+        """盤面と履歴に表示する役割名を返す。"""
+        return {
+            BoardSpaceType.EXPERIENCE_BONUS: "経験値ボーナス",
+            BoardSpaceType.REST: "休憩",
+        }[self]
+
+
+@dataclass(frozen=True)
+class BoardSpace:
+    """問題マス以外の盤面マスと、その一度だけの効果を表す値。"""
+
+    space_id: str
+    name: str
+    space_type: BoardSpaceType
+    position: Position
+    effect_description: str
+
+    def __post_init__(self) -> None:
+        if not self.space_id or not self.name or not self.effect_description:
+            raise ValueError("board space metadata must not be empty")
+        try:
+            space_type = BoardSpaceType(self.space_type)
+        except (TypeError, ValueError) as error:
+            raise ValueError("unknown board space type") from error
+        object.__setattr__(self, "space_type", space_type)
+
+    @property
+    def type_display_name(self) -> str:
+        """画面表示用の盤面マスの役割名を返す。"""
+        return self.space_type.display_name
 
 
 @dataclass(frozen=True)
@@ -161,6 +201,40 @@ class AgentExecutionRecord:
 
 
 @dataclass(frozen=True)
+class BoardEventRecord:
+    """盤面イベントの移動結果を画面履歴へ保存する値。"""
+
+    space_id: str
+    space_name: str
+    space_type: str
+    summary: str
+    experience_gained: int
+    recovered_hit_points: int
+    recovered_problem_count: int
+
+    @property
+    def space_type_display_name(self) -> str:
+        """履歴に表示する盤面マスの役割名を返す。"""
+        try:
+            return BoardSpaceType(self.space_type).display_name
+        except ValueError:
+            return self.space_type
+
+    @classmethod
+    def from_dict(cls, value: dict[str, Any]) -> BoardEventRecord:
+        """署名付きCookieまたはセッションの辞書から履歴を復元する。"""
+        return cls(
+            space_id=str(value.get("space_id", "")),
+            space_name=str(value.get("space_name", "")),
+            space_type=str(value.get("space_type", "")),
+            summary=str(value.get("summary", "")),
+            experience_gained=int(value.get("experience_gained", 0)),
+            recovered_hit_points=int(value.get("recovered_hit_points", 0)),
+            recovered_problem_count=int(value.get("recovered_problem_count", 0)),
+        )
+
+
+@dataclass(frozen=True)
 class GameState:
     """プレイヤー、問題駒、選択状態をまとめたゲームスナップショット。
 
@@ -169,11 +243,14 @@ class GameState:
         player_position: プレイヤー駒の位置。
         experience: プレイヤーが獲得した経験値。
         mondais: 単一教科または科目横断の6つの問題駒。
+        board_spaces: 問題以外の2つの盤面マス。
         preset_lines: プレイヤーが選択できるプリセットセリフ。
         selected_mondai_id: 現在選択中の問題識別子。
         selected_line_id: 現在選択中のセリフ識別子。
         tool_history: Agentが実行したTool名の履歴。
         execution_history: Agentの判断とSkill結果を含む実行履歴。
+        used_board_space_ids: 効果を使い終えた盤面マスの識別子。
+        board_event_history: 盤面イベントの移動結果を新しい順で並べた履歴。
     """
 
     board_size: int
@@ -185,6 +262,9 @@ class GameState:
     selected_line_id: str | None = None
     tool_history: tuple[str, ...] = ()
     execution_history: tuple[AgentExecutionRecord, ...] = ()
+    used_board_space_ids: tuple[str, ...] = ()
+    board_event_history: tuple[BoardEventRecord, ...] = ()
+    board_spaces: tuple[BoardSpace, ...] = ()
 
     # Cookie値が圧縮・Base64エンコード済みのゲーム状態であることを識別する。
     # 形式を変更して旧値を読めなくする必要がある場合だけ世代を更新する。
@@ -203,10 +283,45 @@ class GameState:
             for mondai in self.mondais
         ):
             raise ValueError("mondai position must be inside the board")
+        if not self.board_spaces and self.board_size == 3:
+            object.__setattr__(self, "board_spaces", self._default_board_spaces())
+        if any(
+            space.position.row >= self.board_size
+            or space.position.column >= self.board_size
+            for space in self.board_spaces
+        ):
+            raise ValueError("board space position must be inside the board")
+        if len({space.space_id for space in self.board_spaces}) != len(
+            self.board_spaces
+        ):
+            raise ValueError("board space identifiers must be unique")
+        problem_positions = {mondai.position for mondai in self.mondais}
+        if any(space.position in problem_positions for space in self.board_spaces):
+            raise ValueError("board space cannot share a problem position")
+
+    @staticmethod
+    def _default_board_spaces() -> tuple[BoardSpace, ...]:
+        """3x3盤面の空き2マスに配置するイベントマスを返す。"""
+        return (
+            BoardSpace(
+                "board-space-bonus",
+                "経験値ボーナス",
+                BoardSpaceType.EXPERIENCE_BONUS,
+                Position(1, 2),
+                "初回の移動で経験値を10獲得する",
+            ),
+            BoardSpace(
+                "board-space-rest",
+                "休憩",
+                BoardSpaceType.REST,
+                Position(2, 0),
+                "初回の移動で未解決の問題を1HP回復する",
+            ),
+        )
 
     @classmethod
     def initial(cls) -> GameState:
-        """3x3盤面と単一教科・科目横断の問題駒を作成する。"""
+        """3x3盤面と問題・イベントマスを作成する。"""
         return cls(
             board_size=3,
             player_position=Position(1, 1),
@@ -252,6 +367,7 @@ class GameState:
                     Position(2, 2),
                 ),
             ),
+            board_spaces=cls._default_board_spaces(),
             preset_lines=(
                 PresetLine(
                     "line-challenge",
@@ -289,6 +405,10 @@ class GameState:
     def mondai(self, mondai_id: str) -> MondaiState:
         """指定した問題駒を返す。"""
         return next(mondai for mondai in self.mondais if mondai.mondai_id == mondai_id)
+
+    def board_space(self, space_id: str) -> BoardSpace:
+        """指定したイベントマスを返す。"""
+        return next(space for space in self.board_spaces if space.space_id == space_id)
 
     def with_execution_record(self, record: AgentExecutionRecord) -> GameState:
         """Agent実行記録を最新順で追加した状態を返す。"""
@@ -341,6 +461,14 @@ class GameState:
             execution_history=tuple(
                 AgentExecutionRecord.from_dict(record)
                 for record in payload.get("execution_history", ())
+                if isinstance(record, dict)
+            ),
+            used_board_space_ids=tuple(
+                str(space_id) for space_id in payload.get("used_board_space_ids", ())
+            ),
+            board_event_history=tuple(
+                BoardEventRecord.from_dict(record)
+                for record in payload.get("board_event_history", ())
                 if isinstance(record, dict)
             ),
         )

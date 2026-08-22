@@ -15,10 +15,10 @@
 
     <section class="row g-4" aria-label="ゲーム状態">
         <div class="col-lg-6">
-            <h2 class="h5">1. 盤面から問題を選ぶ</h2>
+            <h2 class="h5">1. 盤面から問題またはイベントを選ぶ</h2>
             <div class="p-3">
                 <p class="mb-2">経験値: <strong data-game-experience>{{ game.experience }}</strong></p>
-                <div class="game-board mb-3" data-game-board data-board-size="{{ game.board_size }}" aria-label="問題盤面">
+                <div class="game-board mb-3" data-game-board data-board-size="{{ game.board_size }}" aria-label="問題とイベントの盤面">
                     {% for cell in board_cells %}
                     <div class="game-cell" data-row="{{ cell.row }}" data-column="{{ cell.column }}">
                         {% if cell.problem %}
@@ -40,11 +40,36 @@
                             </button>
                         </form>
                         {% endif %}
+                        {% elif cell.special_space %}
+                        {% if cell.special_space_used %}
+                        <div class="board-piece special-piece is-used" aria-label="{{ cell.special_space.name }}（使用済み）">
+                            {% if cell.is_player %}<span class="player-piece-marker" aria-hidden="true">P</span>{% endif %}
+                            <span class="special-piece-name">{{ cell.special_space.name }}</span>
+                            <span class="special-piece-effect">{{ cell.special_space.effect_description }}</span>
+                            <span class="special-piece-status">使用済み</span>
+                        </div>
+                        {% else %}
+                        <form method="post" action="{% url 'agt:index' %}" class="board-piece-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="select_board_space">
+                            <input type="hidden" name="space_id" value="{{ cell.special_space.space_id }}">
+                            <button class="board-piece special-piece" type="submit" data-board-space="{{ cell.special_space.space_id }}" aria-label="{{ cell.special_space.name }}へ移動する">
+                                {% if cell.is_player %}<span class="player-piece-marker" aria-hidden="true">P</span>{% endif %}
+                                <span class="special-piece-name">{{ cell.special_space.name }}</span>
+                                <span class="special-piece-effect">{{ cell.special_space.effect_description }}</span>
+                            </button>
+                        </form>
+                        {% endif %}
                         {% elif cell.is_player %}
                         <span class="player-piece" aria-label="プレイヤー">P</span>
                         {% endif %}
                     </div>
                     {% endfor %}
+                </div>
+                <div class="small text-muted" aria-label="イベントマスのルール">
+                    <p class="mb-1"><strong>経験値ボーナス:</strong> 初回の移動で経験値+10。</p>
+                    <p class="mb-1"><strong>休憩:</strong> 初回の移動で未解決の問題を1HP回復。</p>
+                    <p class="mb-0">イベントマスの効果はそれぞれ1回だけ発生します。</p>
                 </div>
             </div>
             <section class="mt-4" aria-label="セリフ選択">
@@ -91,8 +116,24 @@
         </div>
     </section>
 
-    <section class="mt-4 border p-3" data-execution-history aria-label="Agent実行履歴">
-        <h2 class="h5">Agent実行履歴</h2>
+    <section class="mt-4 border p-3" data-execution-history aria-label="ゲーム実行履歴">
+        <h2 class="h5">ゲーム実行履歴</h2>
+        {% if game.board_event_history %}
+            <h3 class="h6">盤面イベント履歴</h3>
+            <div class="list-group mb-4">
+            {% for event in game.board_event_history %}
+                <article class="list-group-item">
+                    <div class="d-flex flex-wrap justify-content-between gap-2">
+                        <strong>盤面イベント #{{ forloop.revcounter }}</strong>
+                        <span class="text-muted small">{{ event.space_name }}（{{ event.space_type_display_name }}）</span>
+                    </div>
+                    <p class="small mb-1">{{ event.summary }}</p>
+                    <p class="small text-muted mb-0">状態変化: 経験値 +{{ event.experience_gained }} / 問題HP +{{ event.recovered_hit_points }}（{{ event.recovered_problem_count }}件）</p>
+                </article>
+            {% endfor %}
+            </div>
+        {% endif %}
+        <h3 class="h6">Agent実行履歴</h3>
         {% if game.execution_history %}
             <div class="list-group">
             {% for execution in game.execution_history %}

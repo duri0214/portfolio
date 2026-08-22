@@ -14,7 +14,11 @@ from ai_agent.domain.service.game import GameService
 from ai_agent.domain.service.game_agent import GameAgentService
 from ai_agent.domain.service.skill_tools import GameToolSet
 from ai_agent.domain.valueobject.agent_execution import AgentRunStatus
-from ai_agent.domain.valueobject.game import AgentExecutionRecord, Position
+from ai_agent.domain.valueobject.game import (
+    AgentExecutionRecord,
+    BoardEventRecord,
+    Position,
+)
 
 
 class IndexView(TemplateView):
@@ -23,6 +27,7 @@ class IndexView(TemplateView):
     template_name = "ai_agent/index.html"
     state_cookie_name = "ai_agent_game_state"
     execution_history_session_key = "ai_agent_execution_history"
+    board_event_history_session_key = "ai_agent_board_event_history"
     stream_pending_session_key = "ai_agent_pending_stream_state"
     stream_state_salt = "ai_agent.stream_state"
 
@@ -46,6 +51,13 @@ class IndexView(TemplateView):
                 game = GameService.select_mondai(game, request.POST["mondai_id"])
                 messages.success(
                     request, "対象の問題を選択しました。次にセリフを選んでください。"
+                )
+            elif action == "select_board_space":
+                game = GameService.select_board_space(game, request.POST["space_id"])
+                event = game.board_event_history[0]
+                messages.success(
+                    request,
+                    f"{event.space_name}へ移動しました。{event.summary}",
                 )
             elif action == "stream_agent":
                 if not game.selected_mondai_id:
@@ -165,7 +177,11 @@ class IndexView(TemplateView):
 
     @staticmethod
     def _state_fingerprint(game):
-        state_without_history = replace(game, execution_history=())
+        state_without_history = replace(
+            game,
+            execution_history=(),
+            board_event_history=(),
+        )
         return sha256(state_without_history.to_json().encode("utf-8")).hexdigest()
 
     def _consume_stream_state(self, payload):
@@ -184,7 +200,12 @@ class IndexView(TemplateView):
 
     def _set_game_cookie(self, response, game):
         self._save_execution_history(game)
-        cookie_game = replace(game, execution_history=())
+        self._save_board_event_history(game)
+        cookie_game = replace(
+            game,
+            execution_history=(),
+            board_event_history=(),
+        )
         response.set_signed_cookie(
             self.state_cookie_name,
             cookie_game.to_json(),
@@ -203,7 +224,13 @@ class IndexView(TemplateView):
             except (TypeError, ValueError, json.JSONDecodeError):
                 game = GameService.create_game()
         history = self._load_execution_history()
-        return replace(game, execution_history=history) if history is not None else game
+        board_event_history = self._load_board_event_history()
+        updates = {}
+        if history is not None:
+            updates["execution_history"] = history
+        if board_event_history is not None:
+            updates["board_event_history"] = board_event_history
+        return replace(game, **updates) if updates else game
 
     def _load_execution_history(self):
         """セッションに保存した実行履歴を画面表示用の値へ復元する。"""
@@ -225,6 +252,26 @@ class IndexView(TemplateView):
         else:
             self.request.session.pop(self.execution_history_session_key, None)
 
+    def _load_board_event_history(self):
+        """セッションに保存した盤面イベント履歴を復元する。"""
+        payload = self.request.session.get(self.board_event_history_session_key)
+        if payload is None:
+            return None
+        return tuple(
+            BoardEventRecord.from_dict(record)
+            for record in payload
+            if isinstance(record, dict)
+        )
+
+    def _save_board_event_history(self, game):
+        """Cookie上限を避けるため、盤面イベント履歴をセッションへ保存する。"""
+        if game.board_event_history:
+            self.request.session[self.board_event_history_session_key] = [
+                asdict(record) for record in game.board_event_history
+            ]
+        else:
+            self.request.session.pop(self.board_event_history_session_key, None)
+
     @staticmethod
     def _board_cells(game):
         """CSS Gridへ渡す盤面の各マスと駒の情報を作る。"""
@@ -232,12 +279,22 @@ class IndexView(TemplateView):
             (problem.position.row, problem.position.column): problem
             for problem in game.mondais
         }
+        spaces_by_position = {
+            (space.position.row, space.position.column): space
+            for space in game.board_spaces
+        }
         return [
             {
                 "row": row,
                 "column": column,
                 "is_player": game.player_position == Position(row, column),
                 "problem": problems_by_position.get((row, column)),
+                "special_space": spaces_by_position.get((row, column)),
+                "special_space_used": (
+                    spaces_by_position.get((row, column)) is not None
+                    and spaces_by_position[(row, column)].space_id
+                    in game.used_board_space_ids
+                ),
             }
             for row in range(game.board_size)
             for column in range(game.board_size)

@@ -89,6 +89,33 @@ async def fake_stream_selected(self, *, max_turns=10):
 
 
 class AgentStreamingViewTest(TestCase):
+    def test_board_displays_special_spaces_and_persists_bonus_event(self):
+        """
+        シナリオ:
+        - 入力: 初期状態のSkill Chain Game画面と経験値ボーナスの選択。
+        - 処理: 盤面を表示し、ボーナスマスへ移動して画面を再取得する。
+        - 期待値: 2種類のイベントマスが識別表示され、経験値と移動履歴が保存される。
+        """
+        page = self.client.get("/ai_agent/")
+
+        self.assertContains(page, "経験値ボーナス")
+        self.assertContains(page, "休憩")
+        self.assertContains(page, "初回の移動で経験値+10")
+        self.assertContains(page, 'name="space_id" value="board-space-bonus"')
+
+        response = self.client.post(
+            "/ai_agent/",
+            {"action": "select_board_space", "space_id": "board-space-bonus"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        page = self.client.get("/ai_agent/")
+        self.assertContains(page, "経験値: ")
+        self.assertContains(page, "経験値 +10")
+        self.assertContains(page, "盤面イベント #1")
+        self.assertContains(page, "使用済み")
+        self.assertNotContains(page, 'name="space_id" value="board-space-bonus"')
+
     def test_invalid_stream_state_token_returns_an_error_redirect(self):
         """
         シナリオ:
