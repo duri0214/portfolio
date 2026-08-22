@@ -1025,26 +1025,18 @@ $ sudo apt update
 # Candidate が 8.4.x になっていることを確認する
 $ apt-cache policy mysql-server
 
-# Candidate が9.xや想定外の系列なら、インストールせずにAPT設定を確認する
-$ grep -R "repo.mysql.com" /etc/apt/sources.list /etc/apt/sources.list.d 2>/dev/null
-$ sudo dpkg-reconfigure mysql-apt-config
-
 # MySQLサーバーのインストール
 $ sudo apt -y install mysql-server
 
 # バージョンの確認
 $ mysql --version
-$ sudo mysql -NBe "SELECT VERSION();"
 
 # 動作ステータスの確認
 $ sudo systemctl status mysql
 ```
 
-`apt-cache policy mysql-server` の `Candidate` と、`mysql --version` / `SELECT
-VERSION()` の結果が8.4系であることを確認します。9.xが表示された場合は、
-リポジトリ設定を8.4 LTSへ戻してから、インストールや更新を続行してください。
-すでに9.xへ更新済みの場合は、バックアップを取得し、APTの系列を戻してすぐに
-ダウングレードせず、公式のダウングレード手順を確認します。
+`Candidate` または `mysql --version` が9.xの場合は作業を止め、
+MySQL APT RepositoryのMySQL Server & Clusterが `mysql-8.4-lts` になっているかを確認します。
 
 ### 初期設定
 
