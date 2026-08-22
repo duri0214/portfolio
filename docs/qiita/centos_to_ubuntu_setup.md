@@ -1014,10 +1014,7 @@ $ sudo apt purge mariadb-* mysql-*
 
 APT Repositoryは、UbuntuのAPTがパッケージを取得する配布元です。ここではMySQL公式の
 [MySQL APT Repository](https://dev.mysql.com/downloads/repo/apt/)を追加し、MySQL 8.4 LTS系列を設定します。
-この節では、MySQL Server本体はまだインストールしません。
-
-APT設定パッケージをダウンロードし、インストールします。このパッケージはMySQL本体ではなく、
-APT Repositoryの設定画面を起動するためのものです。
+この設定により、後の `apt install mysql-server` で選択した8.4 LTS系列のパッケージがインストールされます。
 
 ```bash:console
 $ cd /tmp
