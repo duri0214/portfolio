@@ -185,6 +185,7 @@ class AgentExecutionServiceTest(SimpleTestCase):
             ["run.started", "tool.selected", "tool.completed", "report.completed"],
         )
         self.assertEqual(events[1]["arguments"], {"topic": "science"})
+        self.assertEqual(events[2]["sequence"], 1)
         self.assertEqual(events[2]["output"], "result:science")
         self.assertEqual(events[-1]["run"].report.output, "ストリーミング最終レポート")
 

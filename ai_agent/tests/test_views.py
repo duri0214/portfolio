@@ -207,6 +207,10 @@ class AgentStreamingViewTest(TestCase):
             page, "Agentが1つのSkillをチェーンしました。結果を反映しました。"
         )
         self.assertContains(page, "calculate")
+        self.assertContains(page, "順番")
+        self.assertContains(page, "#1")
+        self.assertContains(page, "対象: 国語の問題")
+        self.assertContains(page, "計算が成功しました。")
         self.assertContains(
             page,
             'title="計算: 数値や式を計算して答えを確かめる / 効果: 問題HPを1減らす"',

@@ -304,6 +304,7 @@ class AgentExecutionService:
             "type": "tool.failed" if tool_error is not None else "tool.completed",
             "call_id": call_id,
             "tool_name": names_by_call_id.get(call_id, ""),
+            "sequence": sequence,
             "output": cls._serialize_output(output),
             "error": str(tool_error) if tool_error is not None else None,
         }

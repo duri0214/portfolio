@@ -69,6 +69,18 @@ document.addEventListener("DOMContentLoaded", () => {
         liveCombo.classList.remove("d-none");
     };
 
+    const inputSummary = (event) => {
+        if (event.input_summary) {
+            return event.input_summary;
+        }
+        if (event.arguments && typeof event.arguments === "object") {
+            return Object.entries(event.arguments)
+                .map(([name, value]) => `${name}: ${textValue(value)}`)
+                .join(" / ");
+        }
+        return "入力を受け取りました。";
+    };
+
     const textValue = (value, fallback = "") => {
         if (value === null || value === undefined) {
             return fallback;
@@ -109,10 +121,14 @@ document.addEventListener("DOMContentLoaded", () => {
         heading.className = "d-flex flex-wrap align-items-center gap-2";
         const statusBadge = appendText(heading, "span", "badge text-bg-warning", "選択済み");
         statusBadge.dataset.liveStatus = "true";
+        appendText(heading, "span", "badge text-bg-light", `#${textValue(event.sequence, liveSkillCount)}`);
         const skillBadge = appendText(heading, "span", "badge text-bg-warning", textValue(event.tool_name));
         const power = event.power === undefined ? "" : ` / 効果: 問題HPを${event.power}減らす`;
         skillBadge.title = `${textValue(event.display_name, event.tool_name)}: ${textValue(event.operation, "Skillの処理内容")}${power}`;
         item.appendChild(heading);
+        appendText(item, "div", "small text-muted w-100", `入力: ${inputSummary(event)}`);
+        const resultSummary = appendText(item, "div", "small text-muted w-100", "結果: 実行完了を待っています。");
+        resultSummary.dataset.liveResult = "true";
         const stateChange = appendText(item, "span", "small text-muted", "状態変化: 実行完了を待っています。");
         stateChange.dataset.liveState = "true";
         liveSteps.appendChild(item);
@@ -127,6 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         const payload = outputPayload(event);
         const status = item.querySelector("[data-live-status]");
+        const resultSummary = item.querySelector("[data-live-result]");
         const stateChange = item.querySelector("[data-live-state]");
         const succeeded = event.type === "tool.completed" && payload.success !== false;
         status.textContent = succeeded ? "完了" : "失敗";
@@ -135,6 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
         item.classList.add(succeeded ? "list-group-item-success" : "list-group-item-danger");
         const damage = textValue(payload.damage, 0);
         const hpChange = damage === "0" ? "問題HP 変化なし" : `問題HP -${damage}`;
+        resultSummary.textContent = `結果: ${textValue(event.result_summary, textValue(payload.message, event.error || "結果を受信しました。"))}`;
         stateChange.textContent = `${hpChange} / 残りHP ${textValue(payload.mondai_remaining_hit_points, "-")} / 経験値 +${textValue(payload.experience_gained, 0)}`;
     };
 

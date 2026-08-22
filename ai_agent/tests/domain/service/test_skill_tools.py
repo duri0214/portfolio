@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timezone
 
 from django.test import SimpleTestCase
@@ -159,3 +160,45 @@ class SkillToolCatalogTest(SimpleTestCase):
             "計算が成功し、国語×算数の問題に1ダメージ。",
         )
         self.assertEqual(restored.execution_history[0], record)
+
+    def test_stream_events_include_input_and_result_summaries(self):
+        """
+        シナリオ:
+        - 入力: 選択済みの問題へ計算Toolを実行するストリームイベント。
+        - 処理: ゲーム用Agentサービスがイベントへ画面表示用の要約を付加する。
+        - 期待値: 選択・開始・完了イベントで入力、結果、実行順を追跡できる。
+        """
+        state = GameService.select_line(
+            GameService.select_mondai(GameService.create_game(), "mondai-language"),
+            "line-observe",
+        )
+        service = GameAgentService(tools=GameToolSet(state))
+
+        async def fake_stream(_input_text, *, max_turns=10):
+            yield {"type": "run.started", "run_id": "run-1"}
+            yield {
+                "type": "tool.selected",
+                "call_id": "call-1",
+                "tool_name": "calculate",
+                "arguments": {"target_mondai_id": "mondai-language"},
+                "sequence": 1,
+            }
+            yield {
+                "type": "tool.completed",
+                "call_id": "call-1",
+                "tool_name": "calculate",
+                "sequence": 1,
+                "output": {"message": "計算が成功しました。"},
+            }
+
+        service.execution.stream = fake_stream
+
+        async def collect_events():
+            return [event async for event in service.stream_selected()]
+
+        events = asyncio.run(collect_events())
+
+        self.assertEqual(events[1]["input_summary"], "対象: 国語の問題")
+        self.assertEqual(events[2]["input_summary"], "対象: 国語の問題")
+        self.assertEqual(events[3]["result_summary"], "計算が成功しました。")
+        self.assertEqual(events[3]["sequence"], 1)

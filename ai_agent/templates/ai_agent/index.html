@@ -117,16 +117,22 @@
                             <table class="table table-sm align-middle mb-0">
                                 <thead>
                                     <tr>
+                                        <th scope="col">順番</th>
                                         <th scope="col">Skill</th>
+                                        <th scope="col">入力要約</th>
+                                        <th scope="col">結果要約</th>
                                         <th scope="col">状態変化</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                 {% for step in execution.steps %}
                                     <tr>
+                                        <td class="text-nowrap">#{{ step.sequence }}</td>
                                         <td>
                                             <span class="badge {% if step.success %}text-bg-success{% else %}text-bg-danger{% endif %}" title="{{ step.display_name }}: {{ step.operation }} / 効果: 問題HPを{{ step.power }}減らす">{{ step.tool_name }}</span>
                                         </td>
+                                        <td class="small">{{ step.input_summary }}</td>
+                                        <td class="small">{{ step.result_summary }}</td>
                                         <td class="small text-muted">{% if step.damage %}問題HP -{{ step.damage }}{% else %}問題HP 変化なし{% endif %} / 残りHP {{ step.remaining_hit_points }} / 経験値 +{{ step.experience_gained }}</td>
                                     </tr>
                                 {% endfor %}

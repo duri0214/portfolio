@@ -60,7 +60,14 @@ class GameAgentService:
                     "power": definition.power,
                 }
             except ValueError:
-                pass
+                event = dict(event)
+            if event["type"] == "tool.selected":
+                event["input_summary"] = self._format_input(
+                    self._target_name(state, event.get("arguments", {})),
+                    event.get("arguments", {}),
+                )
+            elif event["type"] in {"tool.completed", "tool.failed"}:
+                event["result_summary"] = self._result_summary(event)
             yield event
             if event["type"] == "tool.selected":
                 yield {
@@ -71,6 +78,7 @@ class GameAgentService:
                     "operation": event.get("operation", ""),
                     "power": event.get("power"),
                     "arguments": event.get("arguments", {}),
+                    "input_summary": event.get("input_summary", ""),
                     "sequence": event.get("sequence", 0),
                 }
 
@@ -154,9 +162,11 @@ class GameAgentService:
             definition = SkillToolCatalog.get(result.name)
             display_name = definition.display_name
             operation = definition.description
+            power = definition.power
         except ValueError:
             display_name = result.name
             operation = "Skill Toolを実行して結果を確認する"
+            power = 0
         return ToolExecutionRecord(
             sequence=result.sequence,
             tool_name=result.name,
@@ -168,7 +178,7 @@ class GameAgentService:
             result_summary=GameAgentService._compact_text(
                 payload.get("message") or result.error or payload
             ),
-            power=definition.power,
+            power=power,
             damage=int(payload.get("damage", 0)),
             experience_gained=int(payload.get("experience_gained", 0)),
             remaining_hit_points=int(
@@ -179,6 +189,28 @@ class GameAgentService:
     @staticmethod
     def _format_input(target_name: str, arguments: dict) -> str:
         return f"対象: {target_name}"
+
+    @staticmethod
+    def _target_name(state, arguments: dict) -> str:
+        target_id = str(arguments.get("target_mondai_id", ""))
+        try:
+            return state.mondai(target_id).name
+        except StopIteration:
+            return state.mondai(state.selected_mondai_id).name
+
+    @classmethod
+    def _result_summary(cls, event: dict) -> str:
+        payload = event.get("output")
+        if isinstance(payload, str):
+            try:
+                payload = json.loads(payload)
+            except json.JSONDecodeError:
+                payload = {"message": payload}
+        if not isinstance(payload, dict):
+            payload = {"message": payload}
+        return cls._compact_text(
+            payload.get("message") or event.get("error") or payload
+        )
 
     @staticmethod
     def _compact_text(value, limit: int = 800) -> str:
