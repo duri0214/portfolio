@@ -1,10 +1,10 @@
-# CentOSが終わるのでUbuntu24.04に移行する。Python3.12とDjango6とMySQL8のセットアップメモ2026
+# CentOSが終わるのでUbuntu24.04に移行する。Python3.12とDjango6とMySQL8.4のセットアップメモ2026
 
 ## はじめに
 
 この記事は、CentOSのサポート終了（EOL）に伴い、OSをUbuntu 24.04 LTSへ移行した際のセットアップ手順をまとめたものです。
 2021年の初出から更新を重ねていますが、ここで紹介している構成は現在も本番サーバーで安定稼働しており、実用的なオペレーションマニュアルとして活用しています。
-かつてのCentOS環境からのスムーズな移行と、現行のPython 3.12 + Django 6環境の構築を目指しています。
+かつてのCentOS環境からのスムーズな移行と、現代的なPython 3.12 + Django 6 + MySQL 8.4環境の構築を目指しています。
 
 2026年版からは、この記事を Git
 で管理し、AIアシスタントをベースに執筆する運用に切り替えました。誤字脱字はもちろん、これまでの勘違いの是正や重複箇所のMECE化にも大いに助けられています。今後の細かな修正も容易になるため、おすすめです。
@@ -1000,7 +1000,7 @@ $ curl -I --resolve www.henojiya.net:443:127.0.0.1 https://www.henojiya.net/ \
     がコメントアウト状態で存在するが、有効化されていないため診断ツールには「未設定」と判定される。本手順で
     `000-default-le-ssl.conf` に明示的に追加することで初めて有効になる。
 
-## MySQL8
+## MySQL 8.4
 
 ### 不要なパッケージの削除
 
@@ -1013,8 +1013,9 @@ $ sudo apt purge mariadb-* mysql-*
 ### インストール
 
 ```bash:console
+# MySQL APT RepositoryでMySQL 8.4 LTSを選択している前提
 # MySQLサーバーのインストール
-$ sudo apt -y install mysql-server-8.0
+$ sudo apt -y install mysql-server
 
 # バージョンの確認
 $ mysql --version
@@ -1120,12 +1121,38 @@ Test tunnel configuration を押して、サーバにつながったことを確
 | Port        | 3306                   |
 | Database    | portfolio_db           |
 | ユーザー名       | python                 |
-| パスワード       | （MySQLのrootユーザーのパスワード） |
+| パスワード       | `.env` の `DJANGO_DB_PASSWORD`（`python` ユーザー用） |
 
 テスト接続を押して、サーバにつながったことを確認する
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/20f33c30-9288-7b7e-1663-e8e7bcd52920.png)
 
-#### ※Public Key Retrieval is not allowedのエラーが出力される
+#### `Public Key Retrieval is not allowed` のエラーが出力される場合
+
+これは、パスワードが間違っているという意味ではありません。MySQL 8 系の
+`caching_sha2_password` 認証では、TLS（SSL）を使わずに接続するとき、JDBC
+ドライバがパスワードを暗号化して送るために MySQL サーバーの RSA 公開鍵を
+取得する必要があります。`allowPublicKeyRetrieval` は、その公開鍵をサーバーから
+取得することを JDBC ドライバに許可する接続オプションです。MySQL サーバーの
+設定値ではありません。
+
+ローカルの開発環境で接続する場合は、DBeaver の接続編集画面で「ドライバの
+プロパティ」を開き、次の値を追加・変更します。
+
+| プロパティ | 値 |
+|:-----------|:---|
+| `allowPublicKeyRetrieval` | `true` |
+| `useSSL` | `false`（ローカル開発時のみ） |
+
+URL で指定する場合は、次の形式です。
+
+```text
+jdbc:mysql://127.0.0.1:3306/portfolio_db?allowPublicKeyRetrieval=true&useSSL=false
+```
+
+この設定はローカル接続用です。本番環境では `useSSL=false` を常用せず、既存の
+SSH トンネルまたは TLS を使って接続します。また、通常のDBeaver接続では
+`root` ではなく、Django の接続設定に合わせて `python` ユーザーを使います。
+`root` のパスワードは、初期設定やデータベース・ユーザー作成時だけ使用します。
 
 [DBeaver からローカルのMySQLに接続できない問題への対処法](https://qiita.com/ymzkjpx/items/449c505c50ee17b6e8f9)
 
