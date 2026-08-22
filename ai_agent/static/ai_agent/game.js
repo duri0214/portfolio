@@ -113,6 +113,33 @@ document.addEventListener("DOMContentLoaded", () => {
         return element;
     };
 
+    const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+    const setupReplay = () => {
+        document.querySelectorAll("[data-replay-execution]").forEach((button) => {
+            if (button.dataset.replayBound === "true") {
+                return;
+            }
+            button.dataset.replayBound = "true";
+            button.addEventListener("click", async () => {
+                const record = button.closest("[data-execution-record]");
+                const steps = Array.from(record.querySelectorAll("[data-replay-step]"));
+                const status = record.querySelector("[data-replay-status]");
+                button.disabled = true;
+                steps.forEach((step) => step.classList.remove("table-warning", "table-success"));
+                for (const [index, step] of steps.entries()) {
+                    step.classList.add("table-warning");
+                    status.textContent = `リプレイ中: ${index + 1}/${steps.length}`;
+                    await wait(450);
+                    step.classList.remove("table-warning");
+                    step.classList.add("table-success");
+                }
+                status.textContent = `${steps.length}件のTool履歴を再生しました。`;
+                button.disabled = false;
+            });
+        });
+    };
+
     const addLiveTool = (event) => {
         const item = document.createElement("div");
         item.className = "list-group-item list-group-item-warning d-flex flex-wrap align-items-center justify-content-between gap-2";
@@ -260,7 +287,10 @@ document.addEventListener("DOMContentLoaded", () => {
             currentButton.classList.toggle("btn-outline-primary", nextButton.classList.contains("btn-outline-primary"));
         });
         setupBoard();
+        setupReplay();
     };
+
+    setupReplay();
 
     agentForms.forEach((form) => {
         form.addEventListener("submit", async (event) => {

@@ -1,140 +1,98 @@
-# OpenAI Agents SDKでAI Agent実行基盤をつくる 2026
+# Skill Chain型AI Agentを小さなゲームで検証する
 
-## はじめに
-これは会話型のマルチエージェントシステムです。各エージェント（エンティティ）が専門領域を持ち、RAG やモデレーション（ガードレール）を使いながら応答を作ります。Phase 1ではターン制で順にエージェントを動かす実装を管理し、Phase 2ではAgentがToolを選択して実行する基盤へ移行しています。
+このページでは、`ai_agent` アプリで実装している Skill Chain 型AI Agentの設計と、安全性・実行履歴・テストの考え方を説明します。
 
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/f44613c5-c35e-421e-b1cd-f302baacc91a.png)
+## この記事で扱うもの
 
-## Source
-https://github.com/duri0214/portfolio/tree/master/ai_agent
+プレイヤーは盤面上の問題とプリセットセリフを選び、Agentへ依頼します。Agentは6つのFunction Toolから必要なものを選び、Toolの結果を見て次のToolを追加するか、最終レポートを返します。画面はこの過程をSSEで受け取り、Toolの選択・開始・完了・失敗と最終レポートを表示します。
 
-## TODO
-https://github.com/duri0214/portfolio/issues/310
+ソースコード:
 
-https://github.com/duri0214/portfolio/issues/324
+<https://github.com/duri0214/portfolio/tree/master/ai_agent>
 
-## アーキテクチャ概要
-- コア概念：Phase 1は複数エージェント（Entity）のターン制会話、Phase 2はAgentによるTool選択と実行
-- 検索/知識基盤：RAG 材料（fixtures/rag_material.json 等）
-- 安全性：静的ガードレール（禁止ワード等）＋動的ガードレール（OpenAI Moderation API 想定）
-- 永続化：Phase 1はActionHistory / Message、Phase 2のAgent実行履歴は現在AgentRunとして構造化し、後続Issueで保存する
+## 実行の流れ
 
-## Phase 1の処理フロー（移行前の1ターン）
-1. ユーザーがテキストを送信（`IndexView` 経由でリクエストを受ける）
-2. InputProcessor がガードレールチェックを実施
-ユーザー入力に対して安全性を審査し、問題なければ加工済みメッセージを返す（危険ならエラー応答）
-3. TurnManagement で「現在のターン」のエンティティを取得
-    - ユーザーに発言権がない場合はエラー応答
-4. ContextAnalyzer で文脈を整形し、RAGを参照してLLM応答を生成
-    - 必要に応じて外部情報や素材もRAG処理経由で参照
-5. TurnManagementRepository を通じて Message を保存し、ActionHistory を更新（done=True）
-6. 次の未処理 ActionHistory を取得し、ユーザーに次のエンティティ情報を返却
+```text
+問題・セリフの選択
+        ↓
+GameAgentService が Agent と6つのToolを構成
+        ↓
+AgentExecutionService が Runner を実行
+        ↓
+Tool Call → Tool Result → 必要なら次のTool
+        ↓
+AgentRun / Report を作成
+        ↓
+SSE表示・セッション保存・履歴リプレイ
+```
 
-## Phase 2の処理フロー（Agent実行基盤）
-Issue #904で、固定された発言順をAgent実行の中心から外す最小基盤を追加しています。
+`GameService` は問題HP、経験値、イベントマスなどゲーム固有の状態だけを担当します。Agentの判断順は `GameService` に埋め込まず、`GameToolSet` を通じてAgentのTool呼び出し結果を適用します。
 
-1. `AgentExecutionService` が入力、Function Tool、入力・出力ガードレールを設定した `Agent` を構築する
-2. `Runner` に入力と `max_turns` を渡し、Agentの判断でToolを選択・実行する
-3. Toolの結果を次のAgent判断へ渡し、必要なTool ChainをSDKのRunnerで継続する
-4. `ToolCall` と `ToolResult` を抽出し、`Report` と `AgentRun` にまとめる
-5. 成功、ガードレール遮断、失敗、タイムアウトを同じ構造で後続処理へ渡す
+## 安全性を4つの境界で確認する
 
-`AgentRun` は現時点ではDBへ保存しません。UIへのイベント配信と実行履歴の永続化は、後続のPhase 2 Issueで扱います。
+Agentの安全性を最終出力だけの問題にせず、次の境界ごとに扱います。
 
+### 1. 入力
 
-## 主要コンポーネント
-### 1. Factory層（ファクトリー層）
+入力は文字列であること、500文字以内であること、シェル実行やプロンプト操作を示す危険な命令を含まないことを確認します。違反時はRunnerを呼ばず、`AgentRunStatus.BLOCKED` を返します。
 
-#### Factory層の役割とイメージ
+### 2. Tool引数
 
-Factory層は、「入力された情報やタイプに応じて、最適な値オブジェクトやドメインオブジェクトを "工場のように自動で組み立てて返却する" 役割」を持ちます。  
-現実の「部品工場」のように、依頼内容（例: 製品の種類、スペック）に応じて、必要なパーツや工程を選び、完成品（インスタンス）として提供します。
+Tool引数はJSONオブジェクトとして解釈でき、サイズ上限内であることを確認します。ゲームではさらに、Tool名と `target_mondai_id` が許可された値であること、選択中の問題だけを対象にしていることを検証します。
 
-この層を用いることで、
+### 3. Tool結果
 
-- どの型を返すべきか、呼び出し元（サービスやユースケース）側が意識しなくてよくなる
-- 新しい型やロジックの追加・差し替えもfactoryの内部だけで完結できる
-- 同じインターフェースで多様なValue ObjectやEntityを動的に生成でき、保守性と拡張性が向上する
+Tool結果はJSONとして扱えるサイズに制限し、危険な命令を含む結果をそのままAgentや画面へ渡しません。SDKのTool Output Guardrailと、`AgentExecutionService` が履歴を構造化する時点の再検証を併用しています。
 
-たとえばRAG（検索拡張生成）素材のように、外部ソースや対象ごとに異なるメタデータ形式が存在する場合にも、「material_type」というキー情報を渡すだけで、自動的に該当するクラスのインスタンスを組み立てることができます。
+### 4. 最終出力
 
-#### Factory層利用の具体的なシナリオ例
+最終出力もサイズと危険な内容を確認します。違反時は `Report.output` を公開せず、理由だけを `Report.error` に残します。
 
-- Slack/Gmail/マニュアル/PDF/Google Map等、素材タイプごとに違うメタデータを、そのまま呼び出し元が意識せず取得したい
-- 複数の値オブジェクトがバラバラに増えても、利用側のコードを変更せずに拡張したい
-- Factoryの実装を差し替えるだけで、システム全体の動作や扱う型を容易に増やせる柔軟な構造にしたい
+この決定的なローカル検証は、外部サービスの判定に依存しません。OpenAI Moderation APIの導入は #310、資料検索を行うRAG Toolの導入は #324 の責務とし、導入する場合もAgentが必要に応じて選択するToolとして追加します。
 
-このように、「種類」や「スペック」（material_typeや各種パラメータ）を渡すだけで、最適な値オブジェクトがインスタンス化されて戻ってきます。  
-具体実装例としては、「RagMetadataFactory」などが存在し、`create(material_type, metadata_dict)` のようなシンプルなI/Fで呼び出せます。
+## Skill Chainと代表シナリオ
 
-## 2. Repository層（リポジトリ層）
-#### Repository層の役割とイメージ
-Repository層は、「ドメインオブジェクトや値オブジェクトを データストアからの入出力という観点で一元管理・取得・永続化する倉庫のような役割』」を持ちます。
-現実の「倉庫・書庫」のように、依頼内容（例: どの型や条件で情報を取り出したいか）に応じて、必要なデータを各ストレージから探索し、適切な形で提供します。
+Toolの登録順や画面のボタン順を実行順として扱わず、Agentが結果を受けて次のToolを選べるようにしています。一方、テストではプリセットセリフごとの代表Chainを期待値として宣言し、実行された `ToolCall` の順番を評価できます。
 
-この層を用いることで、
-- データベースやAPIなど物理的なデータソースアクセスを、ドメインロジックやサービス側から隠蔽できる
-- 取得条件や保存処理の共通化・再利用が可能となり、クリーンアーキテクチャやDDDの原則に沿った保守性の高いコードとなる
-- 仮にDBや外部サービス、検索エンジン（例: RAGベクトル検索）が将来変更されても、Repositoryの実装を差し替えるだけで、サービスや呼び出し側への影響が最小限となる
+例えば国語の問題では、次のような代表ケースを検証します。
 
-たとえば「RAG素材」や「アクション履歴」など異なるデータ種別が増減しても、**Repository経由で取り出すことで、上位層はデータ取得手段や保存先を意識せず利用できます**。
-#### Repository層利用の具体的なシナリオ例
-- `material_type`を指定するだけで、RagMaterialテーブルに格納されている知識ソースをまとめて取得できる
-- 会話のターン管理（発言順やアクション履歴など）のために、特定条件で履歴や進行状況を取得・追加・更新できる
-- ドメインサービスやユースケースで「どこに・どの形式・どんな条件で」保存／取得するか意識せず、RepositoryのI/F（例: `find_by_type`, `save_action_history`）経由でデータを扱いたい
-- 将来的に「全文検索」「ベクトル検索API」「データベース／NoSQL／キャッシュ」など、物理層の実装が変更・追加されても、Repositoryの差し替えだけで対応可能
+- 「直接解決を試す」: `analyze_expression`
+- 「条件を整理して解く」: `analyze_reading`
+- 「別の観点で検証する」: `analyze_reading` → `analyze_expression`
 
-このように、**「どのように保存・取得するか？」のロジックや接続先への依存コードはRepository層に集約**され、 利用側が「何を（どんな条件・型）取り扱うか」だけを意識すればよくなります。
-具体実装例としては、「ContextAnalyzerRepository」「TurnManagementRepository」などが存在し、`get_rag_source_merged(material_type)` や `find_next_turn_entity()` のようなシンプルで意図の明確なI/Fを持ちます。
+算数・理科にも同じ考え方で教科別の代表Chainを用意しています。これはテスト用の評価基準であり、Agentへ順番を強制するプロンプトや分岐ではありません。
 
-## 3. Service層（サービス層）
-#### Service層の役割とイメージ
-Service層は、複数のリポジトリやドメインオブジェクトを横断的かつ一括して扱い、
-アプリケーションにおける業務ロジックを“シナリオ単位”で記述・集約する層です。
-現実で言えば「調理場」や「指示を出して工程を束ねるマネージャー」のようなもので、
-「この操作をこういう順番・条件でやって、結果をこうまとめなさい」と全体進行を担います。
+## 実行履歴を構造化する
 
-この層を使うことで、
-- 複数のデータ取得・保存・ビジネス判定などを「1サービス＝1業務シナリオ」としてまとめられる
-- 上位のView・Controller層からは「業務目的」単位でサービスを呼び出すだけになり、コードの責務分担・再利用性・テスト容易性が高まる
-- 将来的に業務フローや外部API連携が変わっても、Serviceの修正だけでUIやRepository変更を最小限にできる
+1回の依頼を `AgentRun` としてまとめ、内部に次の履歴を持たせます。
 
-たとえば「会話のターン進行」「ユーザー入力処理」「文脈再構成」「アクション履歴まとめ表示」など複数テーブル・多段階処理・ビジネスルールが絡む単位を、Service層に集約します。
+- `ToolCall`: Tool名、構造化引数、呼び出し順
+- `ToolResult`: Tool名、結果、成功/失敗、結果順
+- `Report`: 最終出力、Tool履歴、ターン数、エラー
 
-#### Service層利用の具体的なシナリオ例
-- `InputProcessor` を通じ、入力テキストのサニタイズ・ガードレール判定・各種LLM/外部サービス連携まで一括実行
-- `TurnManagementService` で、ワークフロー内のターン数更新・シミュレーション・リセット・進行状況記録をまとめて一元管理
-- `ContextAnalyzerService` で、発話内容から文脈や思考タイプの分類、キーワード抽出、関連エンティティの再構成を一括実施
-- `AgentExecutionService` で、Agent・Runner・Function Tool・ガードレールを組み合わせ、`AgentRun` と `Report` に実行結果をまとめる
-- ViewやController層で「どの順番・どの条件で個別Repositoryを使うか」「外部API結果のサニタイズ/統合」など面倒なビジネスロジックをすべてService層で肩代わりしてもらうことで、呼び出し側をシンプルにできる
+ゲーム画面用の `AgentExecutionRecord` は、この `AgentRun` に加えて問題名、セリフ、HP変化、経験値変化を保持します。これにより、単に「成功した」という通知だけでなく、どの入力に対してどのToolが選ばれ、どんな結果を経て最終出力に至ったかを後から確認できます。
 
-このように「どのような順序・組合せで業務処理を行うか？」のロジックや外部インタフェースとの実装はService層に集約し、上位層は「何をしたいか（どのシナリオ型Serviceを使うか）」だけ意識すればよくなります。
-具体実装例としては、「InputProcessor」「TurnManagementService」「ContextAnalyzerService」「AgentExecutionService」などがあり、各サービスが担当する処理を明確なI/Fで提供します。
+保存先はDjangoセッションです。DBモデルやゲーム状態Cookieに依存せず、ページを再読み込みしても盤面と履歴を復元できます。履歴の「リプレイ」は保存済みのTool行を順番に画面上で再生するだけで、AgentやToolを再実行しません。したがって、リプレイによる経験値やHPの二重更新は起きません。
 
-## 4. ValueObject層（値オブジェクト層）
-#### ValueObject層の役割とイメージ
-ValueObject層は、**業務上の意味や制約付きの「値」を、不変（immutable）なデータ構造として厳密に表現・管理する** 層です。「単なる型付きデータ」ではなく、「このデータがこの形でまとまっていること自体が重要な意味を持つ」場面で活用します。現実で言えば、“特定のルールが課されたIDカード”や“検証・変換済みの伝票”のように、**「これさえあれば、ドメイン的に“意味”や“正しさ”が担保できる」** ものです。
+## 画面で確認できること
 
-この層を用いることで、
-- 業務で多用される「まとまった情報」や「値の集合」に、**一貫した制約・検証ロジック**を組み込める
-- たとえばレビューのメタデータや入力チェック結果など、「一度生成したら中身を書き換えない」意図が明確になる
-- 検証済み・型安全なValueObjectを受け取ることで、サービス層やビジネスロジック側の実装簡素化・品質向上が実現できる
+- 3x3盤面上のプレイヤー、6つの問題、経験値ボーナス、休憩
+- 選択した問題とプリセットセリフ
+- SSEによる `run.started`、`tool.selected`、`tool.started`、`tool.completed`、`tool.failed`、`report.completed`
+- Toolごとの入力要約、結果要約、順番、HP、経験値
+- `AgentRun`、`Tool Call`、`Tool Result`、`Report` の詳細
+- 完了履歴の再表示とリプレイ
 
-たとえば「Googleレビューメタ情報」「PDFメタデータ」「ガードレール検証結果」「エンティティの一意性情報」など、**意味付きの値集合**を毎回辞書やプリミティブ型でやり取りせず、**ValueObjectインスタンス**化して扱うことで、再利用・テスト・将来の拡張にも強くなります。
+## テスト
 
-#### ValueObject層利用の具体的なシナリオ例
-- Google Mapsレビューなどの情報を、「評価」「緯度経度」「著者名」「レビュー日時」など**業務的必要情報を1つのVOで保持・検証**
-→ `GoogleMapsMetadata(rating, latitude, longitude, author_name, review_date, location_name)`
-- PDF/RAG素材のソースについて「ファイルパス」など必須情報を、**ただのstrではなく必ず存在を検証したVOとして流通**
-- 入力ガードレール判定（禁止ワードOK/NGや違反カテゴリ等）の**チェック結果をVOで一括返却**
-→ 呼び出し側は`blocked`や`violation_categories`だけ判定すればよい
-- Entity/進行状況など、「この時点でのスナップショット」を意味する小さな値集合もVOで管理
-- Agentの依頼、Tool Call、Tool Result、最終Reportなど、1回の実行履歴を不変な構造として管理
-- VOの`from_dict()/to_dict()`でAPI⇔ドメイン変換や永続化時の変換も一元化できる
-- 上位層・サービス層は**「すでに業務意味的に正しいデータしか受け取らない」**前提で安心して処理可能
-- ValueObjectに検証や変換（例：日付のiso変換、範囲チェック）が組み込まれているため、
-**不正なデータを早期に拒否できる**し、変更・拡張もVOだけ修正すれば全体に反映できる
+```bash
+python manage.py test ai_agent
+```
 
-このように、**「複数値を束ね、意味・制約を保証するもの」はValueObjectとして実装・流通させる**ことで、
-「業務ロジックの安全性」と「保守性」、および「ドキュメント性」の向上が期待できます。
-具体例には「GoogleMapsMetadata」「PdfSourceMetadata」「EntityVO」「GuardrailResult」「InputProcessorConfig」「AgentRun」「ToolCall」「ToolResult」「Report」などがあります。Agent実行履歴は`AgentRun.to_dict()`で後続のAPI・保存処理へ渡せます。
+テストでは、代表Chain、Toolの成功・失敗、選択中の問題以外への引数、入力・Tool入出力・最終出力のガードレール、タイムアウト、ターン上限、SSEの途中失敗、セッション復元と履歴リプレイ導線を確認します。
+
+## 関連Issueの責務
+
+- #908: 現行Skill Chain型Agentの安全性、実行履歴、代表Chainテスト、記事とREADMEの整合性
+- #310: 外部Moderationを含む信号機型ガードレールの拡張
+- #324: RAG・ベクトル検索をAgentの選択可能なToolとして導入する検討

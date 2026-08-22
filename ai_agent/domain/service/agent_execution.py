@@ -11,11 +11,13 @@ from uuid import uuid4
 from agents import Agent, Runner
 from agents.exceptions import (
     InputGuardrailTripwireTriggered,
+    MaxTurnsExceeded,
     OutputGuardrailTripwireTriggered,
     ToolInputGuardrailTripwireTriggered,
     ToolOutputGuardrailTripwireTriggered,
 )
 
+from ai_agent.domain.service.safety import SafetyPolicy
 from ai_agent.domain.valueobject.agent_execution import (
     AgentRun,
     AgentRunStatus,
@@ -42,14 +44,24 @@ class AgentExecutionService:
         output_guardrails: Iterable[Any] = (),
         model: str = "gpt-5-mini",
         runner: Any = Runner,
+        safety_policy: SafetyPolicy | None = None,
     ) -> None:
+        self.safety_policy = safety_policy or SafetyPolicy()
+        tool_list = list(tools)
+        self._attach_tool_guardrails(tool_list)
         self.agent = Agent(
             name=name,
             instructions=instructions,
             model=model,
-            tools=list(tools),
-            input_guardrails=list(input_guardrails),
-            output_guardrails=list(output_guardrails),
+            tools=tool_list,
+            input_guardrails=[
+                self.safety_policy.input_guardrail(),
+                *list(input_guardrails),
+            ],
+            output_guardrails=[
+                self.safety_policy.output_guardrail(),
+                *list(output_guardrails),
+            ],
         )
         self.runner = runner
 
@@ -74,6 +86,16 @@ class AgentExecutionService:
             ValueError: 入力が空、または上限値が不正な場合。
         """
         self._validate_input(input_text, max_turns, timeout_seconds)
+        input_check = self.safety_policy.check_input(input_text)
+        if not input_check.allowed:
+            return self._build_run(
+                run_id=str(uuid4()),
+                input_text=input_text,
+                max_turns=max_turns,
+                started_at=datetime.now(timezone.utc),
+                status=AgentRunStatus.BLOCKED,
+                error=input_check.reason,
+            )
         started_at = datetime.now(timezone.utc)
         tool_calls: tuple[ToolCall, ...] = ()
         tool_results: tuple[ToolResult, ...] = ()
@@ -91,9 +113,14 @@ class AgentExecutionService:
                     result = await asyncio.wait_for(result, timeout_seconds)
 
             tool_calls, tool_results = self._extract_tool_trace(result)
-            status = AgentRunStatus.COMPLETED
-            error = None
+            error = self._trace_guardrail_error(tool_calls, tool_results)
             output = self._serialize_output(result.final_output)
+            if error is None:
+                output_check = self.safety_policy.check_output(output)
+                error = output_check.reason if not output_check.allowed else None
+            status = AgentRunStatus.BLOCKED if error else AgentRunStatus.COMPLETED
+            if status is AgentRunStatus.BLOCKED:
+                output = None
             turns = len(getattr(result, "raw_responses", ()))
         except (
             InputGuardrailTripwireTriggered,
@@ -105,6 +132,13 @@ class AgentExecutionService:
             error = self._exception_message(exception)
             output = None
             turns = 0
+        except MaxTurnsExceeded as exception:
+            status = AgentRunStatus.MAX_TURNS_EXCEEDED
+            error = self._exception_message(
+                exception, "Agentの最大ターン数に達しました"
+            )
+            output = None
+            turns = max_turns
         except TimeoutError as exception:
             status = AgentRunStatus.TIMED_OUT
             error = self._exception_message(
@@ -174,6 +208,26 @@ class AgentExecutionService:
         tool_results: tuple[ToolResult, ...] = ()
         yield {"type": "run.started", "run_id": run_id}
 
+        input_check = self.safety_policy.check_input(input_text)
+        if not input_check.allowed:
+            run = self._build_run(
+                run_id=run_id,
+                input_text=input_text,
+                max_turns=max_turns,
+                started_at=started_at,
+                status=AgentRunStatus.BLOCKED,
+                error=input_check.reason,
+            )
+            yield {
+                "type": "report.completed",
+                "run_id": run_id,
+                "status": run.status.value,
+                "output": None,
+                "error": run.report.error,
+                "run": run,
+            }
+            return
+
         result = None
         try:
             result = self.runner.run_streamed(
@@ -204,9 +258,14 @@ class AgentExecutionService:
                         yield event
 
             tool_calls, tool_results = self._extract_tool_trace(result)
-            status = AgentRunStatus.COMPLETED
-            error = None
+            error = self._trace_guardrail_error(tool_calls, tool_results)
             output = self._serialize_output(result.final_output)
+            if error is None:
+                output_check = self.safety_policy.check_output(output)
+                error = output_check.reason if not output_check.allowed else None
+            status = AgentRunStatus.BLOCKED if error else AgentRunStatus.COMPLETED
+            if status is AgentRunStatus.BLOCKED:
+                output = None
             turns = len(getattr(result, "raw_responses", ()))
         except (
             InputGuardrailTripwireTriggered,
@@ -220,6 +279,15 @@ class AgentExecutionService:
             error = self._exception_message(exception)
             output = None
             turns = 0
+        except MaxTurnsExceeded as exception:
+            if result is not None:
+                tool_calls, tool_results = self._extract_tool_trace(result)
+            status = AgentRunStatus.MAX_TURNS_EXCEEDED
+            error = self._exception_message(
+                exception, "Agentの最大ターン数に達しました"
+            )
+            output = None
+            turns = max_turns
         except TimeoutError as exception:
             if result is not None:
                 tool_calls, tool_results = self._extract_tool_trace(result)
@@ -319,6 +387,93 @@ class AgentExecutionService:
             raise ValueError("max_turns must be greater than zero")
         if timeout_seconds is not None and timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be greater than zero")
+
+    def _trace_guardrail_error(
+        self,
+        tool_calls: tuple[ToolCall, ...],
+        tool_results: tuple[ToolResult, ...],
+    ) -> str | None:
+        """抽出済みのTool履歴を再確認し、最初の違反理由を返します。"""
+        for call in tool_calls:
+            result = self.safety_policy.check_tool_arguments(call.name, call.arguments)
+            if not result.allowed:
+                return result.reason
+        for tool_result in tool_results:
+            result = self.safety_policy.check_tool_result(
+                tool_result.name, tool_result.output
+            )
+            if not result.allowed:
+                return result.reason
+            if tool_result.error:
+                error_result = self.safety_policy.check_tool_result(
+                    tool_result.name, {"error": tool_result.error}
+                )
+                if not error_result.allowed:
+                    return error_result.reason
+        return None
+
+    def _attach_tool_guardrails(self, tools: list[Any]) -> None:
+        """SDKのFunction Toolへ共通のTool入出力ガードレールを追加します。"""
+        for tool in tools:
+            if not hasattr(tool, "tool_input_guardrails"):
+                continue
+            input_guardrails = list(getattr(tool, "tool_input_guardrails", None) or [])
+            input_names = {
+                guardrail.get_name()
+                for guardrail in input_guardrails
+                if hasattr(guardrail, "get_name")
+            }
+            if "safety_tool_input" not in input_names:
+                input_guardrails.append(self.safety_policy.tool_input_guardrail())
+            tool.tool_input_guardrails = input_guardrails
+
+            output_guardrails = list(
+                getattr(tool, "tool_output_guardrails", None) or []
+            )
+            output_names = {
+                guardrail.get_name()
+                for guardrail in output_guardrails
+                if hasattr(guardrail, "get_name")
+            }
+            if "safety_tool_output" not in output_names:
+                output_guardrails.append(self.safety_policy.tool_output_guardrail())
+            tool.tool_output_guardrails = output_guardrails
+
+    @staticmethod
+    def _build_run(
+        *,
+        run_id: str,
+        input_text: str,
+        max_turns: int,
+        started_at: datetime,
+        status: AgentRunStatus,
+        error: str | None,
+        output: Any = None,
+        tool_calls: tuple[ToolCall, ...] = (),
+        tool_results: tuple[ToolResult, ...] = (),
+        turns: int = 0,
+    ) -> AgentRun:
+        """実行状態とレポートを同じ内容で組み立てます。"""
+        completed_at = datetime.now(timezone.utc)
+        report = Report(
+            output=output,
+            status=status,
+            tool_calls=tool_calls,
+            tool_results=tool_results,
+            turns=turns,
+            error=error,
+        )
+        return AgentRun(
+            run_id=run_id,
+            input_text=input_text,
+            max_turns=max_turns,
+            status=status,
+            started_at=started_at,
+            completed_at=completed_at,
+            tool_calls=tool_calls,
+            tool_results=tool_results,
+            report=report,
+        )
 
     @staticmethod
     def _raw_value(raw_item: Any, name: str, default: Any = None) -> Any:
