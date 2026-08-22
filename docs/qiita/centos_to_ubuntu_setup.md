@@ -1018,7 +1018,7 @@ MySQL APT Repositoryの設定画面では、MySQL Server & Clusterに
 パッチ更新を受け入れつつ、リポジトリの選択を変更しない限り9.x系へは移行しません。
 
 ```bash:console
-# パッケージ情報を更新
+# MySQL APT Repository設定後のパッケージ情報を更新
 $ sudo apt update
 
 # Candidate が 8.4.x になっていることを確認する
@@ -1294,7 +1294,6 @@ Python 3.12.3
 
 ```bash:console
 # MySQLクライアントのビルドに必要なライブラリをインストール
-$ sudo apt update
 $ sudo apt install -y libmysqlclient-dev pkg-config python3-dev
 
 # 仮想環境の有効化とパッケージインストール
@@ -1373,7 +1372,6 @@ $ source venv/bin/activate
 
 ```bash:console
 # まず APT 版 mod_wsgi を導入・有効化し、読み込みを確認する
-$ sudo apt update
 $ sudo apt install -y libapache2-mod-wsgi-py3
 $ sudo a2enmod wsgi
 $ apache2ctl -M | grep -i wsgi   # 期待: wsgi_module (shared)
@@ -1723,7 +1721,7 @@ $ sudo find /var/www/html/portfolio -type f -exec chmod 664 {} +
 
 ```bash:console
 # ACL ツールのインストール
-$ sudo apt update && sudo apt install acl -y
+$ sudo apt install acl -y
 
 # media/ ディレクトリに対して、新規ファイルが ubuntu と www-data 両方の読み書きを継承するように設定
 $ sudo setfacl -R -d -m u:ubuntu:rwx /var/www/html/portfolio/media
