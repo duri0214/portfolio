@@ -1012,8 +1012,12 @@ $ sudo apt purge mariadb-* mysql-*
 
 ### インストール
 
+MySQL APT Repositoryの設定画面では、MySQL Server & Clusterに
+`mysql-8.4-lts`（MySQL 8.4 LTS）を選択します。`mysql-innovation` や9.x系は
+選択しません。リポジトリのリリース系列を固定したうえで、公式手順どおり
+`mysql-server` メタパッケージをインストールします。
+
 ```bash:console
-# MySQL APT RepositoryでMySQL 8.4 LTSを選択している前提
 # MySQLサーバーのインストール
 $ sudo apt -y install mysql-server
 
@@ -1121,7 +1125,7 @@ Test tunnel configuration を押して、サーバにつながったことを確
 | Port        | 3306                   |
 | Database    | portfolio_db           |
 | ユーザー名       | python                 |
-| パスワード       | `.env` の `DJANGO_DB_PASSWORD`（`python` ユーザー用） |
+| パスワード       | （MySQLのrootユーザーのパスワード） |
 
 テスト接続を押して、サーバにつながったことを確認する
 ![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/20f33c30-9288-7b7e-1663-e8e7bcd52920.png)
