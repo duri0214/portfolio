@@ -1031,7 +1031,7 @@ $ sudo dpkg -i /tmp/mysql-apt-config_0.8.40-1_all.deb
 
 ### MySQL Serverのインストール
 
-設定確認後、公式手順どおり `mysql-server` メタパッケージをインストールします。
+設定確認後、公式手順どおり `mysql-server` をインストールします。
 
 ```bash:console
 # MySQL APT Repository設定後のパッケージ情報を更新
