@@ -1,11 +1,17 @@
 {
   "terminal": {
-    "detect_venv": {
-      "on": {
-        "directories": [".venv", "venv"],
-        "activate_script": "default"
+    "shell": {
+      "with_arguments": {
+        "program": "powershell.exe",
+        "args": [
+          "-NoLogo",
+          "-NoExit",
+          "-Command",
+          "if (Test-Path '.\\.venv\\Scripts\\Activate.ps1') { . '.\\.venv\\Scripts\\Activate.ps1' } elseif (Test-Path '.\\venv\\Scripts\\Activate.ps1') { . '.\\venv\\Scripts\\Activate.ps1' }"
+        ]
       }
-    }
+    },
+    "detect_venv": "off"
   },
   "languages": {
     "Python": {
