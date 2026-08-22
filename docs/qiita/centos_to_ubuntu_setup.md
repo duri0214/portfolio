@@ -1014,8 +1014,8 @@ $ sudo apt purge mariadb-* mysql-*
 
 MySQL APT Repositoryの設定画面では、MySQL Server & Clusterに
 `mysql-8.4-lts`（MySQL 8.4 LTS）を選択します。リポジトリのリリース系列を固定したうえで、公式手順どおり
-`mysql-server` メタパッケージをインストールします。この指定は8.4系の
-パッチ更新を受け入れつつ、リポジトリの選択を変更しない限り9.x系へは移行しません。
+`mysql-server` メタパッケージをインストールします。`mysql-server-8.4` という
+パッケージ名で固定するのではなく、8.4系列の最新パッチをインストールします。
 
 ```bash:console
 # MySQL APT Repository設定後のパッケージ情報を更新
@@ -1034,8 +1034,7 @@ $ mysql --version
 $ sudo systemctl status mysql
 ```
 
-`Candidate` または `mysql --version` が9.xの場合は作業を止め、
-MySQL APT RepositoryのMySQL Server & Clusterが `mysql-8.4-lts` になっているかを確認します。
+`Candidate` と `mysql --version` が8.4.xになっていることを確認します。
 
 ### 初期設定
 
