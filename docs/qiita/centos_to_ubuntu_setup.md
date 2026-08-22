@@ -1015,9 +1015,16 @@ $ sudo apt purge mariadb-* mysql-*
 MySQL APT Repositoryの設定画面では、MySQL Server & Clusterに
 `mysql-8.4-lts`（MySQL 8.4 LTS）を選択します。`mysql-innovation` や9.x系は
 選択しません。リポジトリのリリース系列を固定したうえで、公式手順どおり
-`mysql-server` メタパッケージをインストールします。
+`mysql-server` メタパッケージをインストールします。この指定は8.4系の
+パッチ更新を受け入れつつ、リポジトリの選択を変更しない限り9.x系へは移行しません。
 
 ```bash:console
+# パッケージ情報を更新
+$ sudo apt update
+
+# Candidate が 8.4.x になっていることを確認
+$ apt-cache policy mysql-server
+
 # MySQLサーバーのインストール
 $ sudo apt -y install mysql-server
 
