@@ -2,7 +2,7 @@ from django.test import SimpleTestCase
 
 from ai_agent.domain.service.game import GameService
 from ai_agent.domain.service.skill_tools import SkillToolCatalog
-from ai_agent.domain.valueobject.game import SkillCategory
+from ai_agent.domain.valueobject.game import BoardSpaceType, SkillCategory
 
 
 class GameServiceTest(SimpleTestCase):
@@ -57,6 +57,86 @@ class GameServiceTest(SimpleTestCase):
         self.assertNotEqual(state.player_position, next_state.player_position)
         restored_state = type(next_state).from_json(next_state.to_json())
         self.assertEqual(restored_state.player_position, next_state.player_position)
+
+    def test_create_game_defines_bonus_and_rest_spaces_for_empty_cells(self):
+        """
+        シナリオ:
+        - 入力: 新規ゲームの3x3盤面。
+        - 処理: 問題以外の盤面マス定義を確認する。
+        - 期待値: 右中央に経験値ボーナス、左下に休憩が配置される。
+        """
+        state = GameService.create_game()
+
+        self.assertEqual(len(state.board_spaces), 2)
+        self.assertEqual(
+            {space.space_type for space in state.board_spaces},
+            {BoardSpaceType.EXPERIENCE_BONUS, BoardSpaceType.REST},
+        )
+        self.assertEqual(
+            {
+                (space.position.row, space.position.column)
+                for space in state.board_spaces
+            },
+            {(1, 2), (2, 0)},
+        )
+
+    def test_selecting_bonus_space_grants_experience_and_records_event_once(self):
+        """
+        シナリオ:
+        - 入力: 問題を選択した状態で、未使用の経験値ボーナスへ移動する。
+        - 処理: GameService.select_board_spaceを呼び出し、状態を保存・復元する。
+        - 期待値: 選択が解除され、経験値+10と盤面イベント履歴が残り、再利用は拒否される。
+        """
+        state = GameService.create_game().with_selection(
+            mondai_id="mondai-language",
+            line_id="line-observe",
+        )
+
+        next_state = GameService.select_board_space(state, "board-space-bonus")
+
+        self.assertEqual(
+            next_state.player_position,
+            next_state.board_space("board-space-bonus").position,
+        )
+        self.assertEqual(next_state.experience, 10)
+        self.assertIsNone(next_state.selected_mondai_id)
+        self.assertIsNone(next_state.selected_line_id)
+        self.assertEqual(next_state.used_board_space_ids, ("board-space-bonus",))
+        self.assertEqual(next_state.board_event_history[0].experience_gained, 10)
+        restored_state = type(next_state).from_json(next_state.to_json())
+        self.assertEqual(
+            restored_state.used_board_space_ids,
+            next_state.used_board_space_ids,
+        )
+        self.assertEqual(
+            restored_state.board_event_history,
+            next_state.board_event_history,
+        )
+
+        with self.assertRaisesRegex(ValueError, "already used"):
+            GameService.select_board_space(next_state, "board-space-bonus")
+
+    def test_selecting_rest_space_recovers_damaged_unsolved_problems(self):
+        """
+        シナリオ:
+        - 入力: 読解Skillで国語の問題HPを2へ減らしたゲーム状態。
+        - 処理: 休憩マスへ移動して一度だけ回復効果を適用する。
+        - 期待値: 国語の問題だけが1HP回復し、経験値と盤面イベントに反映される。
+        """
+        state, _ = GameService.execute_skill(
+            GameService.create_game(),
+            SkillToolCatalog.get("analyze_reading"),
+            target_mondai_id="mondai-language",
+        )
+
+        next_state = GameService.select_board_space(state, "board-space-rest")
+
+        self.assertEqual(next_state.mondai("mondai-language").hit_points, 3)
+        self.assertEqual(next_state.mondai("mondai-mathematics").hit_points, 3)
+        self.assertEqual(next_state.experience, 10)
+        event = next_state.board_event_history[0]
+        self.assertEqual(event.recovered_hit_points, 1)
+        self.assertEqual(event.recovered_problem_count, 1)
 
     def test_successful_skill_returns_new_state_and_effect(self):
         """

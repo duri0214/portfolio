@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from ai_agent.domain.valueobject.game import GameState
+from ai_agent.domain.valueobject.game import BoardEventRecord, BoardSpaceType, GameState
 from ai_agent.domain.valueobject.skill_tool import (
     SkillToolDefinition,
     SkillToolResult,
@@ -39,6 +39,71 @@ class GameService:
             player_position=target.position,
             selected_mondai_id=mondai_id,
             selected_line_id=None,
+        )
+
+    @staticmethod
+    def select_board_space(state: GameState, space_id: str) -> GameState:
+        """イベントマスへ移動し、一度だけの盤面効果を適用した状態を返す。"""
+        try:
+            space = state.board_space(space_id)
+        except StopIteration as error:
+            raise GameDomainError(f"unknown board space: {space_id}") from error
+        if space_id in state.used_board_space_ids:
+            raise GameDomainError(f"board space is already used: {space_id}")
+
+        experience_gained = 0
+        recovered_hit_points = 0
+        recovered_problem_count = 0
+        updated_mondais = state.mondais
+        try:
+            space_type = BoardSpaceType(space.space_type)
+        except (TypeError, ValueError) as error:
+            raise GameDomainError(
+                f"unsupported board space type: {space.space_type}"
+            ) from error
+        if space_type is BoardSpaceType.EXPERIENCE_BONUS:
+            experience_gained = 10
+            summary = "経験値ボーナスを獲得しました。"
+        elif space_type is BoardSpaceType.REST:
+            recovered_mondais = []
+            for mondai in state.mondais:
+                if mondai.solved or mondai.hit_points >= 3:
+                    recovered_mondais.append(mondai)
+                    continue
+                recovered_mondais.append(
+                    replace(mondai, hit_points=mondai.hit_points + 1)
+                )
+                recovered_hit_points += 1
+                recovered_problem_count += 1
+            updated_mondais = tuple(recovered_mondais)
+            if recovered_problem_count:
+                summary = (
+                    f"未解決の問題{recovered_problem_count}件を"
+                    f"1HPずつ回復しました。"
+                )
+            else:
+                summary = "回復できる問題はありませんでした。"
+        else:
+            raise GameDomainError(f"unsupported board space type: {space_type}")
+
+        event = BoardEventRecord(
+            space_id=space.space_id,
+            space_name=space.name,
+            space_type=space_type.value,
+            summary=summary,
+            experience_gained=experience_gained,
+            recovered_hit_points=recovered_hit_points,
+            recovered_problem_count=recovered_problem_count,
+        )
+        return replace(
+            state,
+            player_position=space.position,
+            experience=state.experience + experience_gained,
+            mondais=updated_mondais,
+            selected_mondai_id=None,
+            selected_line_id=None,
+            used_board_space_ids=state.used_board_space_ids + (space.space_id,),
+            board_event_history=(event,) + state.board_event_history,
         )
 
     @staticmethod
