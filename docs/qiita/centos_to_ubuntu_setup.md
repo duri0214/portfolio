@@ -1010,12 +1010,36 @@ MariaDBなどがインストールされている場合は、事前に削除し�
 $ sudo apt purge mariadb-* mysql-*
 ```
 
+### APT Repositoryの追加と系列選択
+
+MySQL公式の[MySQL APT Repository](https://dev.mysql.com/downloads/repo/apt/)から
+`mysql-apt-config_..._all.deb` をダウンロードし、インストールします。
+
+```bash:console
+# ダウンロードしたリリースパッケージをインストール
+$ sudo dpkg -i /path/to/mysql-apt-config_*.deb
+```
+
+インストール中に設定画面が表示されるので、MySQL Server & Clusterで
+`mysql-8.4-lts`（MySQL 8.4 LTS）を選択して、`Ok` を確定します。
+画面の選択箇所は次のように表示されます。
+
+```text
+  MySQL Server & Cluster
+    mysql-8.4-lts
+```
+
+既に導入済みの設定画面を再表示する場合は、次を実行します。
+
+```bash:console
+$ sudo dpkg-reconfigure mysql-apt-config
+```
+
 ### インストール
 
-MySQL APT Repositoryの設定画面では、MySQL Server & Clusterに
-`mysql-8.4-lts`（MySQL 8.4 LTS）を選択します。リポジトリのリリース系列を固定したうえで、公式手順どおり
+Repositoryのリリース系列を選択したうえで、公式手順どおり
 `mysql-server` メタパッケージをインストールします。`mysql-server-8.4` という
-パッケージ名で固定するのではなく、8.4系列の最新パッチをインストールします。
+パッケージ名を指定するのではなく、選択した8.4系列の最新パッチがインストールされます。
 
 ```bash:console
 # MySQL APT Repository設定後のパッケージ情報を更新
