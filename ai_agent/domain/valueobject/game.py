@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-import base64
 from dataclasses import asdict, dataclass, replace
 from enum import StrEnum
-import json
 from typing import Any
-import zlib
 
 from ai_agent.domain.valueobject.skill_tool import SkillCategory
 
@@ -147,7 +144,7 @@ class ToolExecutionRecord:
 
     @classmethod
     def from_dict(cls, value: dict[str, Any]) -> ToolExecutionRecord:
-        """署名付きCookieの辞書から実行記録を復元する。"""
+        """保存済み状態の辞書から実行記録を復元する。"""
         return cls(
             sequence=int(value.get("sequence", 0)),
             tool_name=str(value.get("tool_name", "")),
@@ -181,7 +178,7 @@ class AgentExecutionRecord:
 
     @classmethod
     def from_dict(cls, value: dict[str, Any]) -> AgentExecutionRecord:
-        """署名付きCookieの辞書からAgent実行記録を復元する。"""
+        """保存済み状態の辞書からAgent実行記録を復元する。"""
         return cls(
             run_id=str(value.get("run_id", "")),
             problem_id=str(value.get("problem_id", "")),
@@ -265,10 +262,6 @@ class GameState:
     used_board_space_ids: tuple[str, ...] = ()
     board_event_history: tuple[BoardEventRecord, ...] = ()
     board_spaces: tuple[BoardSpace, ...] = ()
-
-    # Cookie値が圧縮・Base64エンコード済みのゲーム状態であることを識別する。
-    # 形式を変更して旧値を読めなくする必要がある場合だけ世代を更新する。
-    _COOKIE_PREFIX = "z2:"
 
     def __post_init__(self) -> None:
         if self.board_size < 1:
@@ -414,29 +407,26 @@ class GameState:
         """Agent実行記録を最新順で追加した状態を返す。"""
         return replace(self, execution_history=(record,) + self.execution_history)
 
-    def to_json(self) -> str:
-        """圧縮してブラウザへ署名付きCookieとして保存できる文字列を返す。"""
-        payload = json.dumps(
-            asdict(self), ensure_ascii=False, separators=(",", ":")
-        ).encode("utf-8")
-        compressed = zlib.compress(payload, level=9)
-        return self._COOKIE_PREFIX + base64.urlsafe_b64encode(compressed).decode(
-            "ascii"
-        )
+    def to_dict(self) -> dict[str, Any]:
+        """Djangoセッションへ保存するゲーム状態の辞書を返す。"""
+        return asdict(self)
 
     @classmethod
-    def from_json(cls, value: str) -> GameState:
-        """署名付きCookieのJSONからゲーム状態を復元する。"""
-        if value.startswith(cls._COOKIE_PREFIX):
-            compressed = base64.urlsafe_b64decode(
-                value[len(cls._COOKIE_PREFIX) :].encode("ascii")
-            )
-            value = zlib.decompress(compressed).decode("utf-8")
-        payload = json.loads(value)
+    def from_dict(cls, value: dict[str, Any]) -> GameState:
+        """Djangoセッションの辞書からゲーム状態を復元する。"""
+        if not isinstance(value, dict):
+            raise TypeError("game state must be a dictionary")
+
         initial = cls.initial()
+        mondai_payload = value.get("mondais", ())
+        if not isinstance(mondai_payload, (list, tuple)):
+            raise TypeError("mondais must be a list or tuple")
         health_by_mondai = {
             mondai["mondai_id"]: int(mondai["hit_points"])
-            for mondai in payload.get("mondais", [])
+            for mondai in mondai_payload
+            if isinstance(mondai, dict)
+            and "mondai_id" in mondai
+            and "hit_points" in mondai
         }
         mondais = tuple(
             replace(
@@ -445,30 +435,52 @@ class GameState:
             )
             for mondai in initial.mondais
         )
-        player_position_payload = payload.get("player_position", {})
+        player_position_payload = value.get("player_position", {})
+        if not isinstance(player_position_payload, dict):
+            raise TypeError("player_position must be a dictionary")
         player_position = Position(
             int(player_position_payload.get("row", initial.player_position.row)),
             int(player_position_payload.get("column", initial.player_position.column)),
         )
+        selected_mondai_id = value.get("selected_mondai_id")
+        selected_line_id = value.get("selected_line_id")
+        if selected_mondai_id is not None and not isinstance(selected_mondai_id, str):
+            raise TypeError("selected_mondai_id must be a string or None")
+        if selected_line_id is not None and not isinstance(selected_line_id, str):
+            raise TypeError("selected_line_id must be a string or None")
+
+        tool_history = value.get("tool_history", ())
+        execution_history = value.get("execution_history", ())
+        used_board_space_ids = value.get("used_board_space_ids", ())
+        board_event_history = value.get("board_event_history", ())
+        for field_name, field_value in (
+            ("tool_history", tool_history),
+            ("execution_history", execution_history),
+            ("used_board_space_ids", used_board_space_ids),
+            ("board_event_history", board_event_history),
+        ):
+            if not isinstance(field_value, (list, tuple)):
+                raise TypeError(f"{field_name} must be a list or tuple")
+
         return replace(
             initial,
             player_position=player_position,
-            experience=int(payload.get("experience", 0)),
+            experience=int(value.get("experience", 0)),
             mondais=mondais,
-            selected_mondai_id=payload.get("selected_mondai_id"),
-            selected_line_id=payload.get("selected_line_id"),
-            tool_history=tuple(payload.get("tool_history", ())),
+            selected_mondai_id=selected_mondai_id,
+            selected_line_id=selected_line_id,
+            tool_history=tuple(str(tool_name) for tool_name in tool_history),
             execution_history=tuple(
                 AgentExecutionRecord.from_dict(record)
-                for record in payload.get("execution_history", ())
+                for record in execution_history
                 if isinstance(record, dict)
             ),
             used_board_space_ids=tuple(
-                str(space_id) for space_id in payload.get("used_board_space_ids", ())
+                str(space_id) for space_id in used_board_space_ids
             ),
             board_event_history=tuple(
                 BoardEventRecord.from_dict(record)
-                for record in payload.get("board_event_history", ())
+                for record in board_event_history
                 if isinstance(record, dict)
             ),
         )
