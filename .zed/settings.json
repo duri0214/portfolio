@@ -1,4 +1,12 @@
 {
+  "terminal": {
+    "detect_venv": {
+      "on": {
+        "directories": [".venv", "venv"],
+        "activate_script": "default"
+      }
+    }
+  },
   "languages": {
     "Python": {
       "enable_language_server": false,
