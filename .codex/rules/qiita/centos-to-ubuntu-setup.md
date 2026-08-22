@@ -39,6 +39,20 @@ apply: "docs/qiita/centos_to_ubuntu_setup.md"
 5) トラブルシュートの書き方
    - 各大項目の最後に「確認コマンド → 期待値」と「失敗時の切り分け（3点程度）」を箇条書きで簡潔に記す。
 
+6) APT Repositoryとパッケージ導入の区別
+   - APT Repositoryは、APTがパッケージを取得する配布元。`mysql-apt-config` は配布元と系列を設定するパッケージで、MySQL Server本体ではない。
+   - MySQLは「APT Repositoryの追加・系列選択 → `apt update` → `apt install mysql-server` → `mysql --version`」の順に記す。
+   - `apt install mysql-server` は系列を選択しないため、選択画面で確認する値（例: `mysql-8.4-lts`）を本文に明記する。
+
+7) コピーペースト可能な手順
+   - ダウンロードとインストールのコマンドは、URLと保存先を一致させる。
+   - `/path/to/` のような置換前提のパスを、実行用コードブロックに残さない。
+   - 対話式設定がある場合は、画面で確認する項目と値を短く示す。
+
+8) セクションの独立性
+   - 手順書は途中の節から読まれることもあるため、各パッケージ導入節の `apt update` は重複だけを理由に削除しない。
+   - Ubuntu向け記事内では、実行環境がUbuntuであることを前提とし、不要なWindows向け注意書きを追加しない。
+
 ## 運用原則
 - 実サーバの現状に合わせる（例: mod_wsgi は APT 方式／サイト設定に LoadModule を書かない）。
 - 実測値・ログ・画像は当時の状態を維持（変更は注釈・表記統一のみ）。
