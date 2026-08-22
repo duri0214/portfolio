@@ -1164,26 +1164,13 @@ Test tunnel configuration を押して、サーバにつながったことを確
 
 #### `Public Key Retrieval is not allowed` のエラーが出力される場合
 
-これは、パスワードが間違っているという意味ではありません。MySQL 8 系の
-`caching_sha2_password` 認証では、TLS（SSL）を使わずに接続するとき、JDBC
-ドライバがパスワードを暗号化して送るために MySQL サーバーの RSA 公開鍵を
-取得する必要があります。`allowPublicKeyRetrieval` は、その公開鍵をサーバーから
-取得することを JDBC ドライバに許可する接続オプションです。MySQL サーバーの
-設定値ではありません。
-
 ローカルの開発環境で接続する場合は、DBeaver の接続編集画面で「ドライバの
 プロパティ」を開き、次の値を追加・変更します。
 
-| プロパティ | 値 |
-|:-----------|:---|
-| `allowPublicKeyRetrieval` | `true` |
-| `useSSL` | `false`（ローカル開発時のみ） |
-
-URL で指定する場合は、次の形式です。
-
-```text
-jdbc:mysql://127.0.0.1:3306/portfolio_db?allowPublicKeyRetrieval=true&useSSL=false
-```
+| プロパティ | 値 | 効果 |
+|:-----------|:---|:---|
+| `allowPublicKeyRetrieval` | `true` | RSA公開鍵の取得を許可 |
+| `useSSL` | `false`（ローカル開発時のみ） | SSLを使わずに接続 |
 
 この設定はローカル接続用です。本番環境では `useSSL=false` を常用せず、既存の
 SSH トンネルまたは TLS を使って接続します。また、通常のDBeaver接続では
