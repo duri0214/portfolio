@@ -1029,33 +1029,16 @@ $ wget https://dev.mysql.com/get/mysql-apt-config_0.8.40-1_all.deb
 $ sudo dpkg -i /tmp/mysql-apt-config_0.8.40-1_all.deb
 ```
 
-インストール中に設定画面が表示されるので、MySQL Server & Clusterで
-`mysql-8.4-lts`（MySQL 8.4 LTS）を選択して、`Ok` を確定します。
-画面の選択箇所は次のように表示されます。
-
-```text
-  MySQL Server & Cluster
-    mysql-8.4-lts
-```
-
-既に導入済みの設定画面を再表示する場合は、次を実行します。
-
-```bash:console
-$ sudo dpkg-reconfigure mysql-apt-config
-```
+インストール中に設定画面が表示されるので、MySQL Server & Clusterが
+`mysql-8.4-lts`（MySQL 8.4 LTS）になっていることを確認して、`Ok` を確定します。
 
 ### インストール
 
-Repositoryのリリース系列を選択したうえで、公式手順どおり
-`mysql-server` メタパッケージをインストールします。`mysql-server-8.4` という
-パッケージ名を指定するのではなく、選択した8.4系列の最新パッチがインストールされます。
+設定確認後、公式手順どおり `mysql-server` メタパッケージをインストールします。
 
 ```bash:console
 # MySQL APT Repository設定後のパッケージ情報を更新
 $ sudo apt update
-
-# Candidate が 8.4.x になっていることを確認する
-$ apt-cache policy mysql-server
 
 # MySQLサーバーのインストール
 $ sudo apt -y install mysql-server
@@ -1067,7 +1050,7 @@ $ mysql --version
 $ sudo systemctl status mysql
 ```
 
-`Candidate` と `mysql --version` が8.4.xになっていることを確認します。
+`mysql --version` が8.4.xになっていることを確認します。
 
 ### 初期設定
 
