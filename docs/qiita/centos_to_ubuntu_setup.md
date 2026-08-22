@@ -1303,6 +1303,9 @@ Python 3.12.3
 ## 依存パッケージのインストール
 
 ```bash:console
+# パッケージ情報を更新
+$ sudo apt update
+
 # MySQLクライアントのビルドに必要なライブラリをインストール
 $ sudo apt install -y libmysqlclient-dev pkg-config python3-dev
 
@@ -1381,6 +1384,9 @@ $ source venv/bin/activate
     を検討）。
 
 ```bash:console
+# パッケージ情報を更新
+$ sudo apt update
+
 # まず APT 版 mod_wsgi を導入・有効化し、読み込みを確認する
 $ sudo apt install -y libapache2-mod-wsgi-py3
 $ sudo a2enmod wsgi
@@ -1730,6 +1736,9 @@ $ sudo find /var/www/html/portfolio -type f -exec chmod 664 {} +
 `setfacl` を使用して、今後 `media/` 以下に作られるすべてのファイルに自動的に `ubuntu` と `www-data` 両方の権限を継承させます。
 
 ```bash:console
+# パッケージ情報を更新
+$ sudo apt update
+
 # ACL ツールのインストール
 $ sudo apt install acl -y
 
