@@ -88,8 +88,30 @@ class ToolResult:
         )
 
 
+class _AgentRunValueParser:
+    """Agent実行値を保存形式からドメイン型へ復元する共通基底クラス。"""
+
+    @staticmethod
+    def _status_from_value(value: Any) -> AgentRunStatus:
+        """保存値をAgent実行の終了状態へ変換する。"""
+        try:
+            return AgentRunStatus(value)
+        except (TypeError, ValueError):
+            raise ValueError(f"unknown agent run status: {value}") from None
+
+    @staticmethod
+    def _datetime_from_value(value: Any) -> datetime:
+        """保存値をタイムゾーン付き日時へ変換する。"""
+        if isinstance(value, datetime):
+            return value
+        if not isinstance(value, str) or not value:
+            raise ValueError("agent run timestamp must be an ISO datetime")
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
 @dataclass(frozen=True)
-class Report:
+class Report(_AgentRunValueParser):
     """1回のAgent実行を後続のUIや履歴保存へ渡す最終レポート。
 
     Attributes:
@@ -111,7 +133,7 @@ class Report:
     @classmethod
     def from_dict(cls, value: dict[str, Any]) -> Report:
         """保存済みの辞書から最終レポートを復元する。"""
-        status = _status_from_value(value.get("status"))
+        status = cls._status_from_value(value.get("status"))
         raw_calls = value.get("tool_calls", ())
         raw_results = value.get("tool_results", ())
         return cls(
@@ -142,7 +164,7 @@ class ToolChainEvaluation:
 
 
 @dataclass(frozen=True)
-class AgentRun:
+class AgentRun(_AgentRunValueParser):
     """1回の依頼について、入力・Tool履歴・最終レポートを保持する実行スナップショット。
 
     Attributes:
@@ -172,7 +194,7 @@ class AgentRun:
         """Djangoセッションに保存した辞書からAgentRunを復元する。"""
         if not isinstance(value, dict):
             raise TypeError("agent run must be a dictionary")
-        status = _status_from_value(value.get("status"))
+        status = cls._status_from_value(value.get("status"))
         raw_calls = value.get("tool_calls", ())
         raw_results = value.get("tool_results", ())
         tool_calls = tuple(
@@ -199,8 +221,8 @@ class AgentRun:
             input_text=str(value.get("input_text", "")),
             max_turns=int(value.get("max_turns", 0)),
             status=status,
-            started_at=_datetime_from_value(value.get("started_at")),
-            completed_at=_datetime_from_value(value.get("completed_at")),
+            started_at=cls._datetime_from_value(value.get("started_at")),
+            completed_at=cls._datetime_from_value(value.get("completed_at")),
             tool_calls=tool_calls,
             tool_results=tool_results,
             report=report,
@@ -221,19 +243,3 @@ class AgentRun:
                 ),
             )
         )
-
-
-def _status_from_value(value: Any) -> AgentRunStatus:
-    try:
-        return AgentRunStatus(value)
-    except (TypeError, ValueError):
-        raise ValueError(f"unknown agent run status: {value}") from None
-
-
-def _datetime_from_value(value: Any) -> datetime:
-    if isinstance(value, datetime):
-        return value
-    if not isinstance(value, str) or not value:
-        raise ValueError("agent run timestamp must be an ISO datetime")
-    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)

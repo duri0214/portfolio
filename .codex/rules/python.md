@@ -134,6 +134,9 @@ summary = f"土壌診断の結果、{'・'.join([res.label for res in [ph_res, e
 ## Value Object (VO) と Domain Model の責務
 
 - Value Object や Domain Model を作成・変更するときだけ、`.codex/rules/references/python-value-object.md` を読む。
+- 同じ責務を持つクラス群で共通の変換・検証処理を使う場合は、モジュール関数へ分離せず、責務を表す共通基底クラスのメソッドとして定義して継承する。
+- `classmethod` から継承した共通メソッドを呼ぶ場合は、具象クラス名を固定せず `cls` 経由で呼び出す。
+- 責務が異なるクラス間で処理を共有するためだけに継承を導入しない。
 
 ## Domain 層の配置
 
