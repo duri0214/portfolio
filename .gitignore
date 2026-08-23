@@ -6,4 +6,6 @@ db.sqlite3
 # Python virtual environments
 .venv/
 venv/
+# JetBrains IDE settings
+.idea/
 scripts/.my.cnf
