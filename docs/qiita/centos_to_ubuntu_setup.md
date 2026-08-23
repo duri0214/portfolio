@@ -1531,54 +1531,58 @@ $ crontab -e
 ここから下は、必要に応じて参照してください。
 
 
-> **Warning:**
-> 実行権限（chmod）は「シェルスクリプト（.sh）を直接実行する場合」に付与します。Django の管理コマンドは
-`.venv/bin/python manage.py ...` で呼び出す想定のため、各 `management/commands/*.py` に実行権限は不要です。
->
-> - 直接実行（本書の基本方針）: crontab では以下のように Python で呼びます（chmod 不要）
-    >   ```bash:console
-> */10 * * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/hello-cron.py
-> 0 18 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_vietkabu
-    >   ```
-> - シェル化（任意・まとめたい場合）: 複数ジョブを1つの .sh にまとめ、`.sh` にだけ実行権限を付与します
-    >   ```bash:console
-    > $ sudo mkdir -p /var/www/html/portfolio/bin
-    > $ sudo vi /var/www/html/portfolio/bin/daily_jobs.sh
-    >   ```
+**Warning:**
 
-    >   ```bash:/var/www/html/portfolio/bin/daily_jobs.sh
+- 実行権限（chmod）は「シェルスクリプト（.sh）を直接実行する場合」に付与します。Django の管理コマンドは
+  `.venv/bin/python manage.py ...` で呼び出す想定のため、各 `management/commands/*.py` に実行権限は不要です。
+- 直接実行（本書の基本方針）: crontab では以下のように Python で呼びます（chmod 不要）。
 
-> #!/bin/bash
-> /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_vietkabu
-> /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_sbi
->   # ほかのジョブもここに追記
->   ```
+    ```bash:console
+    */10 * * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/hello-cron.py
+    0 18 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_vietkabu
+    ```
 
-    >   ```bash:console
+- シェル化（任意・まとめたい場合）: 複数ジョブを1つの .sh にまとめ、`.sh` にだけ実行権限を付与します。
 
-> $ sudo chmod 755 /var/www/html/portfolio/bin/daily_jobs.sh
->   # crontab では .sh を呼ぶだけ
->   */10 * * * * /var/www/html/portfolio/bin/daily_jobs.sh
->   ```
+    ```bash:console
+    $ sudo mkdir -p /var/www/html/portfolio/bin
+    $ sudo vi /var/www/html/portfolio/bin/daily_jobs.sh
+    ```
+
+    ```bash:/var/www/html/portfolio/bin/daily_jobs.sh
+    #!/bin/bash
+    /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_vietkabu
+    /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_sbi
+    # ほかのジョブもここに追記
+    ```
+
+    ```bash:console
+    $ sudo chmod 755 /var/www/html/portfolio/bin/daily_jobs.sh
+    # crontab では .sh を呼ぶだけ
+    */10 * * * * /var/www/html/portfolio/bin/daily_jobs.sh
+    ```
 
 ```bash:console
 $ sudo chown -R ubuntu:ubuntu /var/www/html
 ```
 
-> **Warning:**
-> - cron 失敗の典型例: `collectstatic` 実行時に、出力先の所有者/権限が root のままで書き込みに失敗するケース。
-> - 対策: 所有者は運用ユーザー（例: ubuntu）に統一し、Apache 実行ユーザー（www-data）が少なくとも読み取れる権限に整える。
-> - チェック（読める/書けるか）:
-    >   ```bash:console
-    > $ sudo -u www-data test -r /var/www/html/portfolio/static || echo "www-data が static を読めません"
-    > $ sudo -u www-data test -w /var/www/html/portfolio/static || echo "www-data が static に書けません（collectstatic
-    で書込が必要）"
-    >   ```
-> - 例（所有者/権限の整備。上の `$ sudo chown -R ubuntu:ubuntu /var/www/html` でも可）:
-    >   ```bash:console
-    > $ sudo chown -R ubuntu:ubuntu /var/www/html/portfolio/static
-    > $ sudo chmod -R u+rwX,go+rX /var/www/html/portfolio/static
-    >   ```
+**Warning:**
+
+- cron 失敗の典型例: `collectstatic` 実行時に、出力先の所有者/権限が root のままで書き込みに失敗するケース。
+- 対策: 所有者は運用ユーザー（例: ubuntu）に統一し、Apache 実行ユーザー（www-data）が少なくとも読み取れる権限に整える。
+- チェック（読める/書けるか）:
+
+    ```bash:console
+    $ sudo -u www-data test -r /var/www/html/portfolio/static || echo "www-data が static を読めません"
+    $ sudo -u www-data test -w /var/www/html/portfolio/static || echo "www-data が static に書けません（collectstatic で書込が必要）"
+    ```
+
+- 例（所有者/権限の整備。上の `$ sudo chown -R ubuntu:ubuntu /var/www/html` でも可）:
+
+    ```bash:console
+    $ sudo chown -R ubuntu:ubuntu /var/www/html/portfolio/static
+    $ sudo chmod -R u+rwX,go+rX /var/www/html/portfolio/static
+    ```
 
 ## Django（DB リセットの整理）
 
