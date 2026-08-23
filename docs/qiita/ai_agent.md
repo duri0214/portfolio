@@ -1,4 +1,4 @@
-# Skill Chain型AI Agentを小さなゲームで検証する
+# OpenAI Agents SDKでSkill Chain型AI Agentを小さなゲームに実装する 2026
 
 このページでは、`ai_agent` アプリで実装している Skill Chain 型AI Agentの設計と、安全性・実行履歴・テストの考え方を説明します。
 
