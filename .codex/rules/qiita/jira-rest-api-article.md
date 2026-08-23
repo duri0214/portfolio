@@ -25,12 +25,9 @@ apply: "docs/qiita/python_jira_rest_api_2026.md"
 
 2) 認証情報の扱い
    - `.env.example` には `JIRA_YOUR_DOMAIN`, `JIRA_USER_EMAIL`, `JIRA_API_KEY` のみを載せる。
-   - 実ドメイン、実メールアドレス、APIトークン、チケット本文に含まれる機微情報は書かない。
    - APIトークンは環境変数から読む前提にし、コードブロックへ直書きしない。
 
-3) コードブロックの表記
-   - コンソール操作は `bash:console` を使う。
-   - Pythonファイルは `python:lib/jira/jira_service.py` など、コロン右側に対象ファイル名を付ける。
+3) Jira固有の表記
    - envファイルは `dotenv:lib/jira/.env.example` を使う。
    - 公式APIのエンドポイントは `text` または本文の箇条書きで示し、未検証のcurl例を増やさない。
 
@@ -44,10 +41,6 @@ apply: "docs/qiita/python_jira_rest_api_2026.md"
 5) Jira Document Format
    - description は単純な文字列ではなく Jira Document Format に変換して送ることを明記する。
    - 本文では最小の paragraph/text 構造だけを扱い、複雑なADF解説へ広げすぎない。
-
-6) 記事更新と実装の同期
-   - 記事に載せるメソッド名・環境変数名・ファイルパスは `lib/jira/` の実装と一致させる。
-   - 実装にない機能を「できる」と書かない。未実装の分析やスナップショットは今後の拡張として扱う。
 
 ## チェックリスト（レビュー用）
 - REST API v3 の CRUD エンドポイントが実装と対応しているか。
