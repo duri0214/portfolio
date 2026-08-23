@@ -8,14 +8,14 @@
                 <p class="text-muted text-center">2024年当時、"チャット履歴管理とLLM連携" をPythonで実装した</p>
                 <div class="d-flex justify-content-center gap-2 my-4">
                     <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
-                    <a href="{% url 'llm:index' %}" class="btn btn-primary">LLM CHATを開く</a>
+                    <a href="{{ catalog.app_url }}" class="btn btn-primary">{{ catalog.app_label }}を開く</a>
                 </div>
             </header>
 
             <section class="py-3">
                 <div class="text-center">
-                    <img src="{% static 'home/images/llm_chat.png' %}"
-                         alt="LLMを活用したチャットシステム"
+                    <img src="{% static catalog.thumbnail_path %}"
+                         alt="{{ catalog.alt }}"
                          class="img-fluid rounded shadow">
                 </div>
             </section>

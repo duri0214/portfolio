@@ -8,13 +8,13 @@
                 <p class="text-muted text-center">国会の議事録をRAGやLLMを用いて検索・分析するプロジェクト</p>
                 <div class="d-flex justify-content-center gap-2 my-4">
                     <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
-                    <a href="{% url 'kokkai:index' %}" class="btn btn-primary">KOKKAIを開く</a>
+                    <a href="{{ catalog.app_url }}" class="btn btn-primary">{{ catalog.app_label }}を開く</a>
                 </div>
             </header>
 
             <section class="py-3">
                 <div class="text-center">
-                    <img src="{% static 'home/images/no-image.png' %}" alt="国会議事録検索・分析システム"
+                    <img src="{% static catalog.thumbnail_path %}" alt="{{ catalog.alt }}"
                          class="img-fluid rounded shadow">
                 </div>
             </section>
