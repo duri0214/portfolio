@@ -137,16 +137,22 @@
         {% if game.execution_history %}
             <div class="list-group">
             {% for execution in game.execution_history %}
-                <article class="list-group-item">
+                <article class="list-group-item" data-execution-record="{{ execution.run_id }}">
                     <div class="d-flex flex-wrap justify-content-between gap-2">
                         <div>
                             <strong>Agent実行 #{{ forloop.revcounter }}</strong>
-                            <span class="badge {% if execution.status == 'completed' %}text-bg-success{% elif execution.status == 'failed' %}text-bg-danger{% elif execution.status == 'timed_out' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">
-                                {% if execution.status == 'completed' %}完了{% elif execution.status == 'failed' %}失敗{% elif execution.status == 'timed_out' %}タイムアウト{% else %}遮断{% endif %}
+                            <span class="badge {% if execution.status == 'completed' %}text-bg-success{% elif execution.status == 'failed' %}text-bg-danger{% elif execution.status == 'timed_out' or execution.status == 'max_turns_exceeded' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">
+                                {% if execution.status == 'completed' %}完了{% elif execution.status == 'failed' %}失敗{% elif execution.status == 'timed_out' %}タイムアウト{% elif execution.status == 'max_turns_exceeded' %}ターン上限{% else %}遮断{% endif %}
                             </span>
                         </div>
                         <span class="text-muted small">{{ execution.problem_name }}（{{ execution.problem_subjects }}）</span>
                     </div>
+                    {% if execution.steps %}
+                    <div class="d-flex align-items-center gap-2 mt-2">
+                        <button class="btn btn-sm btn-outline-secondary" type="button" data-replay-execution>履歴をリプレイ</button>
+                        <span class="small text-muted" data-replay-status aria-live="polite"></span>
+                    </div>
+                    {% endif %}
                     <p class="small mb-2"><strong>受け取ったセリフ:</strong> {{ execution.line_label }}「{{ execution.line_text }}」</p>
                     <div class="alert alert-light border mb-3">
                         <strong>Agentの説明</strong>
@@ -157,7 +163,7 @@
                         <div class="table-responsive">
                             <table class="table table-sm align-middle mb-0">
                                 <thead>
-                                    <tr>
+                                    <tr data-replay-step="{{ step.sequence }}">
                                         <th scope="col">順番</th>
                                         <th scope="col">Skill</th>
                                         <th scope="col">入力要約</th>
@@ -185,6 +191,48 @@
                     {% endif %}
                     {% if execution.error %}
                         <p class="text-danger small mt-2 mb-0">エラー: {{ execution.error }}</p>
+                    {% endif %}
+                    {% if execution.agent_run %}
+                        <details class="mt-3" data-agent-trace>
+                            <summary>AgentRun / Tool Call / Tool Result / Report を表示</summary>
+                            <dl class="row small mt-2 mb-0">
+                                <dt class="col-sm-3">run_id</dt>
+                                <dd class="col-sm-9">{{ execution.agent_run.run_id }}</dd>
+                                <dt class="col-sm-3">入力</dt>
+                                <dd class="col-sm-9">{{ execution.agent_run.input_text }}</dd>
+                                <dt class="col-sm-3">ターン</dt>
+                                <dd class="col-sm-9">{{ execution.agent_run.report.turns }} / 上限 {{ execution.agent_run.max_turns }}</dd>
+                                <dt class="col-sm-3">開始</dt>
+                                <dd class="col-sm-9">{{ execution.agent_run.started_at }}</dd>
+                                <dt class="col-sm-3">終了</dt>
+                                <dd class="col-sm-9">{{ execution.agent_run.completed_at }}</dd>
+                            </dl>
+                            <h4 class="h6 mt-3">Tool Call</h4>
+                            {% if execution.agent_run.tool_calls %}
+                            <ul class="small">
+                                {% for call in execution.agent_run.tool_calls %}
+                                <li>#{{ call.sequence }} {{ call.name }} — {{ call.arguments }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="small text-muted">Tool Callはありません。</p>
+                            {% endif %}
+                            <h4 class="h6 mt-3">Tool Result</h4>
+                            {% if execution.agent_run.tool_results %}
+                            <ul class="small">
+                                {% for result in execution.agent_run.tool_results %}
+                                <li>#{{ result.sequence }} {{ result.name }} — {% if result.succeeded %}成功{% else %}失敗{% endif %}: {{ result.output }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="small text-muted">Tool Resultはありません。</p>
+                            {% endif %}
+                            <h4 class="h6 mt-3">Report</h4>
+                            <p class="small mb-0">{{ execution.agent_run.report.output }}</p>
+                            {% if execution.agent_run.report.error %}
+                            <p class="text-danger small mb-0">{{ execution.agent_run.report.error }}</p>
+                            {% endif %}
+                        </details>
                     {% endif %}
                 </article>
             {% endfor %}
