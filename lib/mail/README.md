@@ -55,6 +55,7 @@ MAIL_USE_TLS=True
 `ACCOUNT_EMAIL_SEND_ENABLED` は `MailService` の設定ではありません。これは `accounts` が実送信を許可するか判断するためのDjango設定で、初期値は `False` です。
 `False` の場合、`accounts` は `MailService` を呼び出さず、SMTPにも接続しません。
 この場合は仮登録ユーザーを `is_active=False` で保持し、画面にも本登録URLを表示しないため、本登録前のログインはできません。
+認証URLを直接呼び出された場合も、`accounts` のサーバー側で本登録を拒否します。
 
 ## 単独利用の例
 

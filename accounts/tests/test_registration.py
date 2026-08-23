@@ -142,6 +142,28 @@ class RegistrationViewTest(TestCase):
             )
         )
 
+    @override_settings(ACCOUNT_EMAIL_SEND_ENABLED=False)
+    def test_activation_url_cannot_activate_user_when_mail_is_disabled(self):
+        """
+        シナリオ:
+        - 入力: メール送信が無効な環境で、直接認証URLへアクセスする。
+        - 処理: HTMLのリンクを使わず、認証エンドポイントを直接呼び出す。
+        - 期待値: サーバー側で拒否し、ユーザーを本登録しないこと。
+        """
+        user = get_user_model().objects.create_user(
+            username="new-user@example.com",
+            email="new-user@example.com",
+            password="Strong-password-123",
+            is_active=False,
+        )
+
+        response = self.client.get(self._activation_url(user))
+
+        user.refresh_from_db()
+        self.assertContains(response, "本登録は現在無効です")
+        self.assertFalse(user.is_active)
+
+    @override_settings(ACCOUNT_EMAIL_SEND_ENABLED=True)
     def test_activation_url_cannot_be_used_twice(self):
         """
         シナリオ:
@@ -163,7 +185,7 @@ class RegistrationViewTest(TestCase):
         self.assertContains(first_response, "本登録が完了しました")
         self.assertContains(second_response, "無効な認証リンクです")
 
-    @override_settings(ACCOUNT_ACTIVATION_TIMEOUT=60)
+    @override_settings(ACCOUNT_ACTIVATION_TIMEOUT=60, ACCOUNT_EMAIL_SEND_ENABLED=True)
     def test_expired_activation_url_is_not_accepted(self):
         """
         シナリオ:

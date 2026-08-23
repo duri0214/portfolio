@@ -4,7 +4,10 @@
     <div class="container" style="margin-top: 100px">
         <div class="card col-md-6 mx-auto shadow">
             <div class="card-body text-center">
-                {% if activation_status == "valid" %}
+                {% if activation_status == "disabled" %}
+                    <h1 class="h4">本登録は現在無効です</h1>
+                    <p>メール送信が無効のため、本登録を完了できません。</p>
+                {% elif activation_status == "valid" %}
                     <h1 class="h4">本登録が完了しました</h1>
                     <p>ログインしてサービスをご利用いただけます。</p>
                 {% elif activation_status == "expired" %}

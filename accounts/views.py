@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.encoding import force_bytes, force_str
@@ -10,6 +11,7 @@ from accounts.domain.service.registration import (
     RegistrationMailService,
     RegistrationService,
 )
+from accounts.domain.valueobject.activation import AccountActivationStatus
 from accounts.forms import RegistrationForm
 from accounts.tokens import account_activation_token
 from lib.mail.mail_service import MailSendError
@@ -63,6 +65,13 @@ class AccountActivationView(View):
 
     def get(self, request, uidb64: str, token: str):
         """UIDとトークンを検証し、成功・期限切れ・無効の結果画面を返す。"""
+        if not settings.ACCOUNT_EMAIL_SEND_ENABLED:
+            return render(
+                request,
+                self.template_name,
+                {"activation_status": AccountActivationStatus.DISABLED},
+            )
+
         user = self._get_user(uidb64)
         activation_status = RegistrationService.activate_user(user, token)
         return render(

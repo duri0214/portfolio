@@ -17,6 +17,9 @@ class RegistrationService:
     @staticmethod
     def activate_user(user, token: str) -> AccountActivationStatus:
         """有効な認証トークンに対応する仮登録ユーザーを本登録へ切り替える。"""
+        if not settings.ACCOUNT_EMAIL_SEND_ENABLED:
+            return AccountActivationStatus.DISABLED
+
         status = account_activation_token.validate_token(user, token)
         if status == AccountActivationStatus.VALID:
             UserRepository.activate(user)
