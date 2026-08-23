@@ -1,69 +1,55 @@
+from django.urls import reverse
 from django.views.generic import TemplateView
+
+from home.catalogs import CATALOGS, get_catalog
+
+
+def build_catalog_context(slug):
+    """
+    カタログ定義に表示用のサムネイルパスと各リンクを追加する。
+
+    Args:
+        slug: 表示対象のカタログを識別する slug。
+
+    Returns:
+        HOME と詳細ページのテンプレートが利用する表示用のカタログ情報。
+    """
+    catalog = get_catalog(slug)
+    catalog["thumbnail_path"] = f"home/images/{catalog['thumbnail']}"
+    catalog["detail_url"] = reverse(f"home:{catalog['detail_url_name']}")
+
+    if catalog["app_url_name"]:
+        catalog["app_url"] = reverse(catalog["app_url_name"])
+    else:
+        catalog["app_url"] = catalog["external_url"]
+
+    return catalog
 
 
 class IndexView(TemplateView):
     template_name = "home/index.html"
 
-
-class HospitalIndexView(TemplateView):
-    template_name = "home/hospital/index.html"
-
-
-class SoilAnalysisIndexView(TemplateView):
-    template_name = "home/soil_analysis/index.html"
-
-
-class VietnamResearchIndexView(TemplateView):
-    template_name = "home/vietnam_research/index.html"
+    def get_context_data(self, **kwargs):
+        """全カタログの表示用定義を HOME のコンテキストへ渡す。"""
+        context = super().get_context_data(**kwargs)
+        context["catalogs"] = [
+            build_catalog_context(catalog["slug"]) for catalog in CATALOGS
+        ]
+        return context
 
 
-class UsaResearchIndexView(TemplateView):
-    template_name = "home/usa_research/index.html"
+class CatalogDetailView(TemplateView):
+    """
+    カタログ定義に対応する詳細ページを表示する共通ビュー。
 
+    Attributes:
+        catalog_slug: 表示対象のカタログを識別する slug。
+    """
 
-class GmarkerIndexView(TemplateView):
-    template_name = "home/gmarker/index.html"
+    catalog_slug = None
 
-
-class ShoppingIndexView(TemplateView):
-    template_name = "home/shopping/index.html"
-
-
-class RentalShopIndexView(TemplateView):
-    template_name = "home/rental_shop/index.html"
-
-
-class TaxonomyIndexView(TemplateView):
-    template_name = "home/taxonomy/index.html"
-
-
-class SecuritiesIndexView(TemplateView):
-    template_name = "home/securities/index.html"
-
-
-class LlmChatIndexView(TemplateView):
-    template_name = "home/llm_chat/index.html"
-
-
-class AiAgentIndexView(TemplateView):
-    template_name = "home/ai_agent/index.html"
-
-
-class JpStocksIndexView(TemplateView):
-    template_name = "home/jp_stocks/index.html"
-
-
-class WelfareServicesIndexView(TemplateView):
-    template_name = "home/welfare_services/index.html"
-
-
-class KokkaiIndexView(TemplateView):
-    template_name = "home/kokkai/index.html"
-
-
-class BankIndexView(TemplateView):
-    template_name = "home/bank/index.html"
-
-
-class BookmanIndexView(TemplateView):
-    template_name = "home/bookman/index.html"
+    def get_context_data(self, **kwargs):
+        """対象カタログの表示用定義を詳細ページのコンテキストへ渡す。"""
+        context = super().get_context_data(**kwargs)
+        context["catalog"] = build_catalog_context(self.catalog_slug)
+        return context

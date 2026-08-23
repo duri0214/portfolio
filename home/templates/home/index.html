@@ -1,6 +1,5 @@
 {% extends "home/base.html" %}
 {% load static %}
-{% load humanize %}
 {% block extra_css %}{% endblock %}
 {% block content %}
     <div class="container mt-4">
@@ -21,277 +20,24 @@
 
         <!-- Cards -->
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
-            <div class="col">
-                <div class="card h-100 shadow-sm border-0">
-                    <figure class="card-img-top mb-0">
-                        <img src="{% static 'home/images/hospital.png' %}" alt="不在者投票転記ツール"
-                             class="img-fluid rounded-top">
-                        <figcaption class="cat-name bg-primary text-white px-2 py-1">病院</figcaption>
-                    </figure>
-                    <div class="card-body">
-                        <h5 class="card-title">不在者投票事務用の転記</h5>
-                        <p class="card-text small text-secondary">2015年、友人の残業時間を減らすために開発。病棟別の不在者投票データを事務処理簿へ自動転記し、約6時間で完成。現場の作業時間削減と他病棟への展開につながった。現場で使える小さな自動化の効果を実感した最初の成果物。</p>
-                    </div>
-                    <div class="card-footer bg-white border-top-0">
-                        <a href="{% url 'home:about_hospital' %}" class="btn btn-primary btn-sm">詳細を見る</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card h-100 shadow-sm border-0">
-                    <figure class="card-img-top mb-0">
-                        <img src="{% static 'home/images/soil_analysis.png' %}" alt="土壌分析レポートツール"
-                             class="img-fluid rounded-top">
-                        <figcaption class="cat-name bg-success text-white px-2 py-1">農業</figcaption>
-                    </figure>
-                    <div class="card-body">
-                        <h5 class="card-title">圃場計測のレポーティング</h5>
-                        <p class="card-text small text-secondary">2023年、静岡で土壌分析に取り組み、圃場データの収集とレポート作成を支援。雨の日も風の日も計測し、現場でデータを集める難しさとIT活用の可能性を実感した。計測値を蓄積し、分析結果を共有する流れまでを見据えた。</p>
-                    </div>
-                    <div class="card-footer bg-white border-top-0">
-                        <a href="{% url 'home:about_soil_analysis' %}" class="btn btn-primary btn-sm">詳細を見る</a>
+            {% for catalog in catalogs %}
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0">
+                        <figure class="card-img-top mb-0">
+                            <img src="{% static catalog.thumbnail_path %}" alt="{{ catalog.alt }}"
+                                 class="img-fluid rounded-top">
+                            <figcaption class="cat-name bg-{{ catalog.category_class }} text-white px-2 py-1">{{ catalog.category }}</figcaption>
+                        </figure>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ catalog.title }}</h5>
+                            <p class="card-text small text-secondary">{{ catalog.description }}</p>
+                        </div>
+                        <div class="card-footer bg-white border-top-0">
+                            <a href="{{ catalog.detail_url }}" class="btn btn-primary btn-sm">詳細を見る</a>
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="col">
-                <div class="card h-100 shadow-sm border-0">
-                    <figure class="card-img-top mb-0">
-                        <img src="{% static 'home/images/vietnam_research.png' %}" alt="ベトナム株価分析ツール"
-                             class="img-fluid rounded-top">
-                        <figcaption class="cat-name bg-warning text-white px-2 py-1">経済</figcaption>
-                    </figure>
-                    <div class="card-body">
-                        <h5 class="card-title">ベトナムの株価を分析する</h5>
-                        <p class="card-text small text-secondary">2019年、チャイナリスクを見据えた投資先としてベトナムを調査。名古屋市の経済交流ミッションにも参加し、現地訪問前のプレゼンテーション作成と株価分析に取り組んだ。調査結果を整理し、投資判断の材料を可視化することを目指した。</p>
-                    </div>
-                    <div class="card-footer bg-white border-top-0">
-                        <a href="{% url 'home:about_vietnam_research' %}" class="btn btn-primary btn-sm">詳細を見る</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card h-100 shadow-sm border-0">
-                    <figure class="card-img-top mb-0">
-                        <img src="{% static 'home/images/gmarker.png' %}" alt="GoogleMapsピン配置ツール"
-                             class="img-fluid rounded-top">
-                        <figcaption class="cat-name bg-primary text-white px-2 py-1">地図</figcaption>
-                    </figure>
-                    <div class="card-body">
-                        <h5 class="card-title">GoogleMapsにピンをさす</h5>
-                        <p class="card-text small text-secondary">2015年、飲食店などのキーワードでGoogle Mapsにピンをまとめて表示し、任意のピンだけに絞り込むツールを開発。初めて外部APIを使って作ったWebアプリ。地図上の大量の候補を整理し、必要な情報だけを見やすくすることを目指した。</p>
-                    </div>
-                    <div class="card-footer bg-white border-top-0">
-                        <a href="{% url 'home:about_gmarker' %}" class="btn btn-primary btn-sm">詳細を見る</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card h-100 shadow-sm border-0">
-                    <figure class="card-img-top mb-0">
-                        <img src="{% static 'home/images/shopping.png' %}" alt="ECサイト管理ツール"
-                             class="img-fluid rounded-top">
-                        <figcaption class="cat-name bg-success text-white px-2 py-1">ＥＣ</figcaption>
-                    </figure>
-                    <div class="card-body">
-                        <h5 class="card-title">通販サイトの基礎機能</h5>
-                        <p class="card-text small text-secondary">2022年、ECサイト開発の基礎を身につけるために制作。店員・商品管理、CSV登録、写真アップロード、カード決済など、通販サイトに必要な一連の機能を実装した。管理画面から商品を登録し、購入までの流れを試せる構成にした。</p>
-                    </div>
-                    <div class="card-footer bg-white border-top-0">
-                        <a href="{% url 'home:about_shopping' %}" class="btn btn-primary btn-sm">詳細を見る</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card h-100 shadow-sm border-0">
-                    <figure class="card-img-top mb-0">
-                        <img src="{% static 'home/images/rental_shop.png' %}" alt="倉庫在庫管理ツール"
-                             class="img-fluid rounded-top">
-                        <figcaption class="cat-name bg-warning text-white px-2 py-1">倉庫</figcaption>
-                    </figure>
-                    <div class="card-body">
-                        <h5 class="card-title">倉庫のどこにいくつあるの？</h5>
-                        <p class="card-text small text-secondary">2016年の物流オープンデータ活用コンテストをきっかけに構想。2023年、Webアプリ開発の経験を活かし、倉庫のどこに何がいくつあるかを検索できる形にした。商品名や保管場所から在庫を探し、現場の確認作業を減らすことを目指した。</p>
-                    </div>
-                    <div class="card-footer bg-white border-top-0">
-                        <a href="{% url 'home:about_rental_shop' %}" class="btn btn-primary btn-sm">詳細を見る</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card h-100 shadow-sm border-0">
-                    <figure class="card-img-top mb-0">
-                        <img src="{% static 'home/images/taxonomy.png' %}" alt="生物分類樹形図ツール"
-                             class="img-fluid rounded-top">
-                        <figcaption class="cat-name bg-primary text-white px-2 py-1">分類学</figcaption>
-                    </figure>
-                    <div class="card-body">
-                        <h5 class="card-title">ニワトリとミミズの種を分類</h5>
-                        <p class="card-text small text-secondary">2017年、畑作業を通じて土壌の生物に興味を持ち、ニワトリやミミズの種類を登録して分類樹形図を作るアプリを開発。応用すれば家系図にも使える。生物の関係を視覚的にたどれるようにし、データ構造を画面で確認できるようにした。</p>
-                    </div>
-                    <div class="card-footer bg-white border-top-0">
-                        <a href="{% url 'home:about_taxonomy' %}" class="btn btn-primary btn-sm">詳細を見る</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card h-100 shadow-sm border-0">
-                    <figure class="card-img-top mb-0">
-                        <img src="{% static 'home/images/securities.png' %}" alt="有価証券報告書分析ツール"
-                             class="img-fluid rounded-top">
-                        <figcaption class="cat-name bg-success text-white px-2 py-1">金融</figcaption>
-                    </figure>
-                    <div class="card-body">
-                        <h5 class="card-title">金融庁の有価証券報告書を分析</h5>
-                        <p class="card-text small text-secondary">2019年、有価証券報告書を取得・処理するプログラムを開発。2023年にはWebアプリへ移植し、企業情報の検索や財務データの分析まで行えるツールに発展させた。書類の収集から分析までをブラウザで行い、金融情報を扱う実用的な形に近づけた。</p>
-                    </div>
-                    <div class="card-footer bg-white border-top-0">
-                        <a href="{% url 'home:about_securities' %}" class="btn btn-primary btn-sm">詳細を見る</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card h-100 shadow-sm border-0">
-                    <figure class="card-img-top mb-0">
-                        <img src="{% static 'home/images/llm_chat.png' %}" alt="LLM統合チャットツール"
-                             class="img-fluid rounded-top">
-                        <figcaption class="cat-name bg-warning text-white px-2 py-1">LLM</figcaption>
-                    </figure>
-                    <div class="card-body">
-                        <h5 class="card-title">GPTチャット</h5>
-                        <p class="card-text small text-secondary">2024年、GeminiやChatGPTなど複数のLLM、画像生成、音声入出力、RAGを扱う仕組みを開発。共通ライブラリ化し、各アプリからLLMを利用できるようにした。モデルごとの違いを意識せず、アプリの機能としてAIを組み込める構成を目指した。</p>
-                    </div>
-                    <div class="card-footer bg-white border-top-0">
-                        <a href="{% url 'home:about_llm_chat' %}" class="btn btn-primary btn-sm">詳細を見る</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card h-100 shadow-sm border-0">
-                    <figure class="card-img-top mb-0">
-                        <img src="{% static 'home/images/ai_agent.png' %}" alt="会話型AIエージェントシステム"
-                             class="img-fluid rounded-top">
-                        <figcaption class="cat-name bg-primary text-white px-2 py-1">LLM</figcaption>
-                    </figure>
-                    <div class="card-body">
-                        <h5 class="card-title">AI-AGENTの試作</h5>
-                        <p class="card-text small text-secondary">2025年、複数のAIエージェントが役割分担して対話するシステムを構築。ターン制管理とガードレールで会話の流れと入力の安全性を制御し、専門的な応答を生成する。専門分野の異なるエージェントを組み合わせ、単独のチャットでは難しい応答を試した。</p>
-                    </div>
-                    <div class="card-footer bg-white border-top-0">
-                        <a href="{% url 'home:about_ai_agent' %}" class="btn btn-primary btn-sm">詳細を見る</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card h-100 shadow-sm border-0">
-                    <figure class="card-img-top mb-0">
-                        <img src="{% static 'home/images/jp_stocks.png' %}" alt="日本株分析ツール"
-                             class="img-fluid rounded-top">
-                        <figcaption class="cat-name bg-success text-white px-2 py-1">経済</figcaption>
-                    </figure>
-                    <div class="card-body">
-                        <h5 class="card-title">日本の株価を分析する</h5>
-                        <p class="card-text small text-secondary">2025年、日本株の値動きを分析するアプリとして開発。現在は板情報の登録と売買シミュレーションを実装し、将来はRSSニュース取得などの機能追加を予定している。板情報を使った注文の流れを画面上で試せるため、株式売買の仕組みを学ぶ用途にも使える。</p>
-                    </div>
-                    <div class="card-footer bg-white border-top-0">
-                        <a href="{% url 'home:about_jp_stocks' %}" class="btn btn-primary btn-sm">詳細を見る</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card h-100 shadow-sm border-0">
-                    <figure class="card-img-top mb-0">
-                        <img src="{% static 'home/images/welfare_services.png' %}" alt="東京都福祉事務所情報ポータル"
-                             class="img-fluid rounded-top">
-                        <figcaption class="cat-name bg-info text-white px-2 py-1">ハッカソン</figcaption>
-                    </figure>
-                    <div class="card-body">
-                        <h5 class="card-title">東京都福祉事務所情報ポータル</h5>
-                        <p class="card-text small text-secondary">2025年、東京都内の福祉事務所と障がい福祉サービスの空き情報を見える化。信号機表示で空き状況を直感的に把握できるポータルをハッカソンで開発した。利用者が地域やサービスを比較しやすくし、必要な支援へ早くたどり着けることを目指した。</p>
-                    </div>
-                    <div class="card-footer bg-white border-top-0">
-                        <a href="{% url 'home:about_welfare_services' %}" class="btn btn-primary btn-sm">詳細を見る</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card h-100 shadow-sm border-0">
-                    <figure class="card-img-top mb-0">
-                        <img src="{% static 'home/images/no-image.png' %}" alt="USAニュース自動取得ツール"
-                             class="img-fluid rounded-top">
-                        <figcaption class="cat-name bg-primary text-white px-2 py-1">経済</figcaption>
-                    </figure>
-                    <div class="card-body">
-                        <h5 class="card-title">USAニュースを分析する</h5>
-                        <p class="card-text small text-secondary">2025年、米国株や政治動向を追うため、主要ニュースサイトの記事タイトル・概要・公開日時を自動取得。経済、政策、テックなどの最新トレンドを短時間で確認できる。ニュースを収集・分類する作業を自動化し、日々の情報収集を効率化することを目指した。</p>
-                    </div>
-                    <div class="card-footer bg-white border-top-0">
-                        <a href="{% url 'home:about_usa_research' %}" class="btn btn-primary btn-sm">詳細を見る</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card h-100 shadow-sm border-0">
-                    <figure class="card-img-top mb-0">
-                        <img src="{% static 'home/images/no-image.png' %}" alt="国会議事録検索・分析システム"
-                             class="img-fluid rounded-top">
-                        <figcaption class="cat-name bg-info text-white px-2 py-1">政治</figcaption>
-                    </figure>
-                    <div class="card-body">
-                        <h5 class="card-title">国会議事録を分析する</h5>
-                        <p class="card-text small text-secondary">2026年、国会議事録から必要な発言を検索し、AI（LLM）で要約・分析するシステムを開発。RAGで根拠となる議事録を参照し、質問への回答生成を目指す。膨大な一次資料を読み解く負担を減らし、根拠を確認しながら政策テーマを調べられるようにする。</p>
-                    </div>
-                    <div class="card-footer bg-white border-top-0">
-                        <a href="{% url 'home:about_kokkai' %}" class="btn btn-primary btn-sm">詳細を見る</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card h-100 shadow-sm border-0">
-                    <figure class="card-img-top mb-0">
-                        <img src="{% static 'home/images/no-image.png' %}" alt="銀行CSV分析基盤"
-                             class="img-fluid rounded-top">
-                        <figcaption class="cat-name bg-info text-white px-2 py-1">金融</figcaption>
-                    </figure>
-                    <div class="card-body">
-                        <h5 class="card-title">銀行CSVを分析</h5>
-                        <p class="card-text small text-secondary">2026年、銀行ごとに異なるCSV取引明細を取り込み、資金の流れを分析する基盤を開発。Rawデータを保持しながら、銀行横断のレポートを生成できる設計にした。取り込んだデータを分析し、日々の支出や資金の流れを把握しやすくすることを目指した。</p>
-                    </div>
-                    <div class="card-footer bg-white border-top-0">
-                        <a href="{% url 'home:about_bank' %}" class="btn btn-primary btn-sm">詳細を見る</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card h-100 shadow-sm border-0">
-                    <figure class="card-img-top mb-0">
-                        <img src="{% static 'home/images/no-image.png' %}" alt="図書館業務システム Bookman"
-                             class="img-fluid rounded-top">
-                        <figcaption class="cat-name bg-info text-white px-2 py-1">図書館</figcaption>
-                    </figure>
-                    <div class="card-body">
-                        <h5 class="card-title">図書館業務システム Bookman</h5>
-                        <p class="card-text small text-secondary">支店ごとの蔵書管理、書籍CSV登録、貸出・返却、予約・取り置き、利用者管理を一つの画面で扱える図書館業務システム。蔵書の検索からカウンター業務までをまとめて管理し、現場の作業をシンプルにすることを目指した。</p>
-                    </div>
-                    <div class="card-footer bg-white border-top-0">
-                        <a href="{% url 'home:about_bookman' %}" class="btn btn-primary btn-sm">詳細を見る</a>
-                    </div>
-                </div>
-            </div>
+            {% endfor %}
         </div>
     </div>
 {% endblock %}

@@ -8,14 +8,14 @@
                 <p class="text-muted text-center">蔵書・支店・貸出・予約を、ひとつの業務フローにつなぐ</p>
                 <div class="d-flex justify-content-center gap-2 my-4">
                     <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
-                    <a href="https://bookman.henojiya.net/" class="btn btn-primary">Bookmanを開く</a>
+                    <a href="{{ catalog.app_url }}" class="btn btn-primary">{{ catalog.app_label }}を開く</a>
                 </div>
             </header>
 
             <section class="py-3">
                 <div class="text-center">
-                    <img src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/da4733c0-e4d1-4bdf-b534-15976392824a.png"
-                         alt="図書カードをモチーフにした Bookman のホーム画面"
+                    <img src="{% static catalog.thumbnail_path %}"
+                         alt="{{ catalog.alt }}"
                          class="img-fluid rounded shadow">
                 </div>
             </section>
