@@ -4,7 +4,10 @@ import json
 
 from ai_agent.domain.service.agent_execution import AgentExecutionService
 from ai_agent.domain.service.skill_tools import GameToolSet, SkillToolCatalog
-from ai_agent.domain.valueobject.agent_execution import AgentRun
+from ai_agent.domain.valueobject.agent_execution import (
+    AgentRun,
+    ToolChainEvaluation,
+)
 from ai_agent.domain.valueobject.game import (
     AgentExecutionRecord,
     GameState,
@@ -27,6 +30,7 @@ class GameAgentService:
             ),
             tools=self.tools.function_tools(),
             model=model,
+            safety_policy=self.tools.safety_policy,
         )
 
     async def run(self, input_text: str, *, max_turns: int = 10) -> AgentRun:
@@ -135,6 +139,30 @@ class GameAgentService:
             explanation=run.report.output,
             steps=steps,
             error=run.report.error or None,
+            agent_run=run,
+        )
+
+    @staticmethod
+    def expected_tool_chain(state) -> tuple[str, ...]:
+        """選択中の問題とセリフに対応する代表Tool Chainを返す。"""
+        if not state.selected_mondai_id or not state.selected_line_id:
+            raise ValueError("問題とセリフを選択してからTool Chainを評価してください")
+        problem = state.mondai(state.selected_mondai_id)
+        return SkillToolCatalog.expected_tool_chain(
+            problem.category, state.selected_line_id
+        )
+
+    @staticmethod
+    def evaluate_tool_chain(state, run: AgentRun) -> ToolChainEvaluation:
+        """AgentRunのTool順をプリセットセリフの代表ケースと比較する。"""
+        expected = GameAgentService.expected_tool_chain(state)
+        actual = tuple(call.name for call in run.tool_calls)
+        return ToolChainEvaluation(
+            line_id=state.selected_line_id,
+            mondai_id=state.selected_mondai_id,
+            expected=expected,
+            actual=actual,
+            matched=actual == expected,
         )
 
     @staticmethod

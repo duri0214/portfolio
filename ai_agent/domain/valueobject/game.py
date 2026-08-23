@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import json
 from dataclasses import asdict, dataclass, replace
+from datetime import datetime
 from enum import StrEnum
 from typing import Any
 
+from ai_agent.domain.valueobject.agent_execution import AgentRun
 from ai_agent.domain.valueobject.skill_tool import SkillCategory
 
 
@@ -175,6 +178,7 @@ class AgentExecutionRecord:
     explanation: str
     steps: tuple[ToolExecutionRecord, ...]
     error: str | None = None
+    agent_run: AgentRun | None = None
 
     @classmethod
     def from_dict(cls, value: dict[str, Any]) -> AgentExecutionRecord:
@@ -194,6 +198,11 @@ class AgentExecutionRecord:
                 if isinstance(step, dict)
             ),
             error=(str(value["error"]) if value.get("error") else None),
+            agent_run=(
+                AgentRun.from_dict(value["agent_run"])
+                if isinstance(value.get("agent_run"), dict)
+                else None
+            ),
         )
 
 
@@ -409,7 +418,9 @@ class GameState:
 
     def to_dict(self) -> dict[str, Any]:
         """Djangoセッションへ保存するゲーム状態の辞書を返す。"""
-        return asdict(self)
+        return json.loads(
+            json.dumps(asdict(self), ensure_ascii=False, default=_json_default)
+        )
 
     @classmethod
     def from_dict(cls, value: dict[str, Any]) -> GameState:
@@ -484,3 +495,11 @@ class GameState:
                 if isinstance(record, dict)
             ),
         )
+
+
+def _json_default(value: Any) -> Any:
+    if isinstance(value, StrEnum):
+        return value.value
+    if isinstance(value, datetime):
+        return value.isoformat()
+    raise TypeError(f"value is not JSON serializable: {type(value).__name__}")

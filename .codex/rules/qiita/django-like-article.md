@@ -48,12 +48,6 @@ apply: "docs/qiita/django_like_2026.md"
    - HTMLに埋め込む場合は `{{ csrf_token }}` を使う前提にする。
    - APIをJSONで返す場合は `JsonResponse` を使う。
 
-7) コードブロックの表記
-   - Pythonファイルは `python:app/models.py` のように、コロン右側に対象ファイル名を付ける。
-   - テンプレートは `html:app/templates/app/index.html` のように書く。
-   - JavaScriptを分けて示す場合は `javascript:app/static/app/js/like.js` とする。
-   - コンソール操作は `bash:console` を使う。
-
 ## チェックリスト（レビュー用）
 - `user_id` をURLやPOST本文で受け取る例になっていないか。
 - `Like` にユーザーと記事の一意制約があるか。

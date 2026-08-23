@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from agents import function_tool
+from agents.tool_guardrails import ToolGuardrailFunctionOutput, ToolInputGuardrail
 
 from ai_agent.domain.service.game import GameService
+from ai_agent.domain.service.safety import SafetyPolicy
 from ai_agent.domain.valueobject.game import GameState
+from ai_agent.domain.valueobject.safety import GuardrailResult, GuardrailStage
 from ai_agent.domain.valueobject.skill_tool import (
     SkillCategory,
     SkillToolDefinition,
@@ -82,6 +86,40 @@ class SkillToolCatalog:
         except StopIteration as error:
             raise ValueError(f"unknown skill tool: {name}") from error
 
+    @classmethod
+    def expected_tool_chain(
+        cls, category: SkillCategory, line_id: str
+    ) -> tuple[str, ...]:
+        """代表シナリオの評価に使う教科別Tool Chainを返す。
+
+        これはAgentの実行順を固定する設定ではなく、プリセットセリフの
+        代表ケースをテストで評価するための期待値です。
+        """
+        category = SkillCategory(category)
+        chains = {
+            SkillCategory.LANGUAGE: {
+                "line-challenge": ("analyze_expression",),
+                "line-observe": ("analyze_reading",),
+                "line-chain": ("analyze_reading", "analyze_expression"),
+            },
+            SkillCategory.MATHEMATICS: {
+                "line-challenge": ("calculate",),
+                "line-observe": ("compare_quantities",),
+                "line-chain": ("calculate", "compare_quantities"),
+            },
+            SkillCategory.SCIENCE: {
+                "line-challenge": ("infer_cause",),
+                "line-observe": ("analyze_observation",),
+                "line-chain": ("infer_cause", "analyze_observation"),
+            },
+        }
+        try:
+            return chains[category][line_id]
+        except KeyError as error:
+            raise ValueError(
+                f"unknown preset line or skill category: {line_id}, {category}"
+            ) from error
+
 
 class GameToolSet:
     """GameServiceをSDK Function Toolへ変換するアダプター。
@@ -90,8 +128,14 @@ class GameToolSet:
         state: Tool実行で更新される現在のゲーム状態。
     """
 
-    def __init__(self, state: GameState | None = None) -> None:
+    def __init__(
+        self,
+        state: GameState | None = None,
+        *,
+        safety_policy: SafetyPolicy | None = None,
+    ) -> None:
         self.state = state or GameService.create_game()
+        self.safety_policy = safety_policy or SafetyPolicy()
 
     def select_mondai(self, mondai_id: str) -> dict[str, Any]:
         """Agentから問題選択を受け取り、選択後の状態を返す。"""
@@ -106,6 +150,7 @@ class GameToolSet:
     def execute(self, tool_name: str, target_mondai_id: str) -> dict[str, Any]:
         """指定されたToolだけを実行し、状態と結果を更新する。"""
         definition = SkillToolCatalog.get(tool_name)
+        self._validate_tool_arguments(tool_name, {"target_mondai_id": target_mondai_id})
         self.state, result = GameService.execute_skill(
             self.state,
             definition,
@@ -139,11 +184,93 @@ class GameToolSet:
 
     def function_tools(self) -> list[Any]:
         """Agentに登録できる6つのFunction Toolを返す。"""
-        return [
-            function_tool(self.analyze_reading),
-            function_tool(self.analyze_expression),
-            function_tool(self.calculate),
-            function_tool(self.compare_quantities),
-            function_tool(self.infer_cause),
-            function_tool(self.analyze_observation),
-        ]
+        handlers = (
+            self.analyze_reading,
+            self.analyze_expression,
+            self.calculate,
+            self.compare_quantities,
+            self.infer_cause,
+            self.analyze_observation,
+        )
+        tool_input_guardrail = ToolInputGuardrail(
+            self._game_tool_input_guardrail,
+            name="game_tool_input",
+        )
+        tool_output_guardrail = self.safety_policy.tool_output_guardrail()
+        tools = []
+        for handler in handlers:
+            tool = function_tool(handler)
+            tool.tool_input_guardrails = [tool_input_guardrail]
+            tool.tool_output_guardrails = [tool_output_guardrail]
+            tools.append(tool)
+        return tools
+
+    def _validate_tool_arguments(
+        self, tool_name: str, arguments: dict[str, Any]
+    ) -> None:
+        """直接呼び出しでもSDKと同じTool引数の安全性を適用する。"""
+        result = self._game_tool_input_result(tool_name, arguments)
+        if not result.allowed:
+            raise ValueError(result.reason)
+
+    def _game_tool_input_guardrail(self, data: Any) -> ToolGuardrailFunctionOutput:
+        tool_name = str(data.context.tool_name)
+        try:
+            arguments = json.loads(data.context.tool_arguments)
+        except (TypeError, json.JSONDecodeError):
+            result = GuardrailResult(
+                stage=GuardrailStage.TOOL_INPUT,
+                allowed=False,
+                reason=f"{tool_name}の引数は有効なJSONではありません",
+            )
+        else:
+            result = self._game_tool_input_result(tool_name, arguments)
+        if result.allowed:
+            return ToolGuardrailFunctionOutput.allow(output_info=result.to_dict())
+        return ToolGuardrailFunctionOutput.raise_exception(output_info=result.to_dict())
+
+    def _game_tool_input_result(
+        self, tool_name: str, arguments: Any
+    ) -> GuardrailResult:
+        result = self.safety_policy.check_tool_arguments(tool_name, arguments)
+        if not result.allowed:
+            return result
+        if not isinstance(arguments, dict):
+            return GuardrailResult(
+                stage=GuardrailStage.TOOL_INPUT,
+                allowed=False,
+                reason=f"{tool_name}の引数はJSONオブジェクトで指定してください",
+            )
+        try:
+            SkillToolCatalog.get(tool_name)
+        except ValueError as error:
+            return GuardrailResult(
+                stage=GuardrailStage.TOOL_INPUT,
+                allowed=False,
+                reason=str(error),
+            )
+        target_mondai_id = arguments.get("target_mondai_id")
+        if not isinstance(target_mondai_id, str) or not target_mondai_id.strip():
+            return GuardrailResult(
+                stage=GuardrailStage.TOOL_INPUT,
+                allowed=False,
+                reason="Tool引数target_mondai_idが不正です",
+            )
+        try:
+            self.state.mondai(target_mondai_id)
+        except StopIteration:
+            return GuardrailResult(
+                stage=GuardrailStage.TOOL_INPUT,
+                allowed=False,
+                reason=f"unknown mondai: {target_mondai_id}",
+            )
+        if (
+            self.state.selected_mondai_id
+            and target_mondai_id != self.state.selected_mondai_id
+        ):
+            return GuardrailResult(
+                stage=GuardrailStage.TOOL_INPUT,
+                allowed=False,
+                reason="選択中の問題以外をToolの対象にはできません",
+            )
+        return result
