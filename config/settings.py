@@ -149,8 +149,10 @@ USE_TZ = True
 LOGIN_REDIRECT_URL = "vnm:index"
 LOGOUT_REDIRECT_URL = "vnm:index"
 
-# メール認証
-MAIL_SEND_ENABLED = os.getenv("MAIL_SEND_ENABLED", "False").lower() == "true"
+# accounts メール認証
+ACCOUNT_EMAIL_SEND_ENABLED = (
+    os.getenv("ACCOUNT_EMAIL_SEND_ENABLED", "False").lower() == "true"
+)
 ACCOUNT_ACTIVATION_TIMEOUT = int(
     os.getenv("ACCOUNT_ACTIVATION_TIMEOUT", str(60 * 60 * 24 * 3))
 )

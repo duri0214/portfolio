@@ -40,7 +40,7 @@ class RegistrationViewTest(TestCase):
         self.assertContains(response, reverse("accounts:register"))
         self.assertNotContains(response, "未実装")
 
-    @override_settings(MAIL_SEND_ENABLED=False, DEBUG=True)
+    @override_settings(ACCOUNT_EMAIL_SEND_ENABLED=False, DEBUG=True)
     @patch("accounts.domain.service.registration.MailService")
     def test_registration_with_mail_disabled_does_not_connect_to_smtp(
         self, mail_service
@@ -57,11 +57,11 @@ class RegistrationViewTest(TestCase):
 
         user = get_user_model().objects.get(email="new-user@example.com")
         self.assertFalse(user.is_active)
-        self.assertContains(response, "本登録用メールを送信した扱いにしています")
+        self.assertContains(response, "accountsのメール送信設定がOFFです")
         self.assertContains(response, "/accounts/activate/")
         mail_service.assert_not_called()
 
-    @override_settings(MAIL_SEND_ENABLED=True)
+    @override_settings(ACCOUNT_EMAIL_SEND_ENABLED=True)
     @patch("accounts.domain.service.registration.MailService")
     def test_registration_with_mail_enabled_sends_activation_mail(self, mail_service):
         """
@@ -79,7 +79,7 @@ class RegistrationViewTest(TestCase):
         self.assertContains(response, "本登録用のメールを送信しました")
         mail_service.return_value.send_mail.assert_called_once()
 
-    @override_settings(MAIL_SEND_ENABLED=True)
+    @override_settings(ACCOUNT_EMAIL_SEND_ENABLED=True)
     @patch("accounts.domain.service.registration.MailService")
     def test_registration_shows_error_and_removes_user_when_mail_sending_fails(
         self, mail_service
@@ -101,7 +101,7 @@ class RegistrationViewTest(TestCase):
             get_user_model().objects.filter(email="new-user@example.com").exists()
         )
 
-    @override_settings(MAIL_SEND_ENABLED=False, DEBUG=False, IS_TESTING=False)
+    @override_settings(ACCOUNT_EMAIL_SEND_ENABLED=False, DEBUG=False, IS_TESTING=False)
     def test_registration_hides_activation_url_when_mail_is_disabled_outside_development(
         self,
     ):
@@ -115,10 +115,10 @@ class RegistrationViewTest(TestCase):
             reverse("accounts:register"), self._registration_data()
         )
 
-        self.assertContains(response, "モックモード")
+        self.assertContains(response, "accountsのメール送信設定がOFFです")
         self.assertNotContains(response, "/accounts/activate/")
 
-    @override_settings(MAIL_SEND_ENABLED=False, DEBUG=True)
+    @override_settings(ACCOUNT_EMAIL_SEND_ENABLED=False, DEBUG=True)
     def test_pending_user_cannot_log_in_until_activation(self):
         """
         シナリオ:

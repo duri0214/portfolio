@@ -29,7 +29,7 @@ class RegistrationMailService:
     @staticmethod
     def send_activation_mail(to: str, activation_url: str) -> bool:
         """本登録URLを送信し、送信無効時はSMTPへ接続せずFalseを返す。"""
-        if not settings.MAIL_SEND_ENABLED:
+        if not settings.ACCOUNT_EMAIL_SEND_ENABLED:
             return False
 
         body = f"以下のURLを開いて、本登録を完了してください。\n\n{activation_url}"

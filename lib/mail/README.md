@@ -25,7 +25,7 @@ DjangoのUser、View、URL、セッションには依存しないため、Django
 
 1. メールアドレスとパスワードでDjango標準Userを仮登録する
 2. 本登録用の期限付き認証URLを生成する
-3. `MAIL_SEND_ENABLED` が有効な場合だけ `MailService` に送信を依頼する
+3. `ACCOUNT_EMAIL_SEND_ENABLED` が有効な場合だけ `MailService` に送信を依頼する
 4. 認証URLの検証後にUserを有効化する
 
 つまり、`accounts` が「何を、いつ送るか」を決め、`MailService` が「SMTPで送る」部分だけを担当します。
@@ -52,7 +52,8 @@ MAIL_USE_TLS=True
 `MailService` は、すでに設定されている環境変数を上書きしません。単独実行時は
 `lib/mail/.env` を先に読み込み、プロジェクトルートの `.env` で不足分を補います。
 
-`MAIL_SEND_ENABLED` は `MailService` の設定ではありません。これは `accounts` が実送信を許可するか判断するためのDjango設定で、初期値は `False` です。
+`ACCOUNT_EMAIL_SEND_ENABLED` は `MailService` の設定ではありません。これは `accounts` が実送信を許可するか判断するためのDjango設定で、初期値は `False` です。
+`False` の場合、`accounts` は `MailService` を呼び出さず、SMTPにも接続しません。
 
 ## 単独利用の例
 
