@@ -10,6 +10,7 @@
                 {% elif mail_sent %}
                     <h1 class="h4">仮登録を受け付けました</h1>
                     <p class="mb-0">本登録用のメールを送信しました。メール内のリンクを開いて登録を完了してください。</p>
+                    <p class="small mt-2 mb-0">本登録用リンクの有効期限は {{ activation_expires_at|date:"Y年m月d日 H:i" }}（日本時間）です。</p>
                 {% else %}
                     <h1 class="h4">仮登録を受け付けました</h1>
                     <p>本登録用メールは送信されていません。accountsのメール送信設定がOFFのため、本登録は完了していません。</p>

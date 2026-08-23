@@ -1916,7 +1916,7 @@ urlpatterns = [
 5. サーバーがURLの有効期限・改ざん・利用済み状態を検証し、成功時だけユーザーを有効化する。
 6. 有効化後は同じURLを再利用できない。利用者は `/accounts/login/` からログインする。
 
-本登録URLの有効期限は `ACCOUNT_ACTIVATION_TIMEOUT` で管理します。期限切れ、改ざんされたURL、または本登録済みのURLでは本登録されません。
+本登録URLの有効期限は `ACCOUNT_ACTIVATION_TIMEOUT` で管理します。仮登録完了ページと認証メールに有効期限（日本時間の日時）を表示するため、利用者が期限を把握できます。期限切れ、改ざんされたURL、または本登録済みのURLでは本登録されません。
 
 #### `.env` の設定
 
@@ -1930,10 +1930,10 @@ ACCOUNT_EMAIL_SEND_ENABLED=False
 ACCOUNT_ACTIVATION_TIMEOUT=259200
 
 # 実メール送信を有効にする場合だけ、SMTP事業者の値を設定する
-MAIL_SMTP_HOST=<SMTPホスト名>
+MAIL_SMTP_HOST=smtp.gmail.com
 MAIL_SMTP_PORT=587
-MAIL_SMTP_USER=<SMTPユーザー名>
-MAIL_SMTP_PASSWORD=<SMTPパスワードまたはアプリパスワード>
+MAIL_SMTP_USER=（有効なGmailアドレス）
+MAIL_SMTP_PASSWORD=（有効なGmailアドレスのアプリパスワード）
 MAIL_USE_TLS=True
 ```
 
@@ -1941,11 +1941,11 @@ MAIL_USE_TLS=True
 | --- | --- |
 | `ACCOUNT_EMAIL_SEND_ENABLED` | `True` のときだけ、登録処理からSMTP送信を許可する。初期値は `False`。 |
 | `ACCOUNT_ACTIVATION_TIMEOUT` | 本登録URLの有効期限を秒数で指定する。初期値は3日。 |
-| `MAIL_SMTP_HOST` / `MAIL_SMTP_PORT` | SMTPサーバーの接続先を指定する。 |
-| `MAIL_SMTP_USER` / `MAIL_SMTP_PASSWORD` | SMTPの認証情報を指定する。 |
+| `MAIL_SMTP_HOST` / `MAIL_SMTP_PORT` | SMTPサーバーの接続先を指定する。Gmailでは `smtp.gmail.com` / `587` を使用する。 |
+| `MAIL_SMTP_USER` / `MAIL_SMTP_PASSWORD` | SMTPの認証情報を指定する。Gmailでは通常のGoogleアカウントパスワードではなく、2段階認証で発行したアプリパスワードを使用する。 |
 | `MAIL_USE_TLS` | `True` の場合にTLSでSMTP接続する。 |
 
-SMTPの認証情報や実在するメールアドレスは、記事・Git・`.env.example` に記載しません。値はサーバー上の `.env` にだけ安全な方法で配置し、権限のないユーザーが読めないように管理します。
+SMTPの認証情報や実在するメールアドレスは、記事・Git・`.env.example` に記載しません。上の値は形式を示す例です。実際の値はサーバー上の `.env` にだけ安全な方法で配置し、権限のないユーザーが読めないように管理します。
 
 #### 送信OFFでの開発・初期運用
 
@@ -1972,7 +1972,7 @@ $ sudo apache2ctl configtest
 $ sudo systemctl restart apache2
 ```
 
-4. `/accounts/register/` でテスト用メールアドレスを登録し、メールが届くことを確認する。
+4. `/accounts/register/` でテスト用メールアドレスを登録し、完了画面とメールの両方に同じ有効期限が表示され、メールが届くことを確認する。
 5. メール内の本登録URLを一度だけ開き、「本登録が完了しました」と表示されることを確認する。
 6. `/accounts/login/` から、登録したメールアドレスとパスワードでログインできることを確認する。
 

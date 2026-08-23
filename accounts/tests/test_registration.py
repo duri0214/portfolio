@@ -79,7 +79,10 @@ class RegistrationViewTest(TestCase):
         user = get_user_model().objects.get(email="new-user@example.com")
         self.assertFalse(user.is_active)
         self.assertContains(response, "本登録用のメールを送信しました")
+        self.assertContains(response, "本登録用リンクの有効期限")
         mail_service.return_value.send_mail.assert_called_once()
+        mail_body = mail_service.return_value.send_mail.call_args.kwargs["body"]
+        self.assertIn("本登録リンクの有効期限", mail_body)
 
     @override_settings(ACCOUNT_EMAIL_SEND_ENABLED=True)
     @patch("accounts.domain.service.registration.MailService")
