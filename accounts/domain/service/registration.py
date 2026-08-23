@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from django.conf import settings
+from django.utils import timezone
 
 from accounts.domain.repository.user import UserRepository
 from accounts.domain.valueobject.activation import AccountActivationStatus
@@ -30,12 +33,21 @@ class RegistrationMailService:
     """本登録用メールを、明示的に有効化された環境だけで送信するサービス。"""
 
     @staticmethod
-    def send_activation_mail(to: str, activation_url: str) -> bool:
-        """本登録URLを送信し、送信無効時はSMTPへ接続せずFalseを返す。"""
+    def send_activation_mail(
+        to: str, activation_url: str, activation_expires_at: datetime
+    ) -> bool:
+        """本登録URLと有効期限を送信し、送信無効時はSMTPへ接続せずFalseを返す。"""
         if not settings.ACCOUNT_EMAIL_SEND_ENABLED:
             return False
 
-        body = f"以下のURLを開いて、本登録を完了してください。\n\n{activation_url}"
+        expiration_text = timezone.localtime(activation_expires_at).strftime(
+            "%Y年%m月%d日 %H:%M"
+        )
+        body = (
+            "以下のURLを開いて、本登録を完了してください。"
+            f"\n\n{activation_url}"
+            f"\n\n本登録リンクの有効期限: {expiration_text}（日本時間）"
+        )
         MailService().send_mail(
             to=to,
             subject="【ポートフォリオ】本登録のご案内",

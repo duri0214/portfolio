@@ -1,8 +1,11 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.utils import timezone
 from django.views import View
 from django.views.generic.edit import FormView
 
@@ -24,17 +27,21 @@ class RegistrationView(FormView):
     form_class = RegistrationForm
 
     def form_valid(self, form):
-        """仮登録ユーザーを作成し、送信設定に応じて本登録メールを送る。"""
+        """仮登録ユーザーを作成し、本登録メールに有効期限を付けて送る。"""
         user = RegistrationService.create_pending_user(
             email=form.cleaned_data["email"],
             password=form.cleaned_data["password1"],
         )
         activation_url = self._activation_url(user)
+        activation_expires_at = timezone.localtime() + timedelta(
+            seconds=settings.ACCOUNT_ACTIVATION_TIMEOUT
+        )
 
         try:
             mail_sent = RegistrationMailService.send_activation_mail(
                 to=user.email,
                 activation_url=activation_url,
+                activation_expires_at=activation_expires_at,
             )
         except (MailSendError, ValueError):
             UserRepository.delete(user)
@@ -47,7 +54,10 @@ class RegistrationView(FormView):
         return render(
             self.request,
             "accounts/registration_pending.html",
-            {"mail_sent": mail_sent},
+            {
+                "mail_sent": mail_sent,
+                "activation_expires_at": activation_expires_at,
+            },
         )
 
     def _activation_url(self, user) -> str:
