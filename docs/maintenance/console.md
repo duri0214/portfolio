@@ -12,8 +12,8 @@
 - `cd /var/www/html/portfolio`
 - `python /var/www/html/portfolio/manage.py collectstatic --noinput`
 
-## venv
-- `# source /var/www/html/venv/bin/activate`
+## .venv
+- `$ source /var/www/html/portfolio/.venv/bin/activate`
 - `# deactivate`
 
 ## ログをダダ流す

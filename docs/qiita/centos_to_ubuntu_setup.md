@@ -125,7 +125,7 @@ Host henojiya
 OS を入れ直した直後など、サーバのホスト鍵が変わると次のような強烈な警告が出ます。これは“以前と異なるサーバ鍵になった”ことを示す安全装置です。
 
 ```bash:console
-(venv) PS C:\Users\yoshi\OneDrive\dev\portfolio> ssh henojiya
+(.venv) PS C:\Users\yoshi\OneDrive\dev\portfolio> ssh henojiya
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -1266,27 +1266,27 @@ $ cd /var/www/html
 $ git clone git@github.com:<your-username>/portfolio.git
 ```
 
-## venv（仮想環境）の準備
+## .venv（仮想環境）の準備
 
 ```bash:console
-# venvパッケージのインストール
+# Pythonの仮想環境パッケージのインストール
 $ sudo apt -y install python3.12-venv
 
 # クローンしたプロジェクトのルートへ移動
 $ cd /var/www/html/portfolio
 
 # 仮想環境の作成
-$ python3 -m venv venv
+$ python3 -m venv .venv
 
 # 仮想環境の有効化
-$ source venv/bin/activate
+$ source .venv/bin/activate
 
 # 仮想環境内での確認
-(venv) $ python -V
+(.venv) $ python -V
 Python 3.12.3
 
 # 仮想環境の無効化（必要に応じて）
-(venv) $ deactivate
+(.venv) $ deactivate
 ```
 
 ## 依存パッケージのインストール
@@ -1299,8 +1299,8 @@ $ sudo apt update
 $ sudo apt install -y libmysqlclient-dev pkg-config python3-dev
 
 # 仮想環境の有効化とパッケージインストール
-$ source venv/bin/activate
-(venv) $ pip install -r requirements.txt
+$ source .venv/bin/activate
+(.venv) $ pip install -r requirements.txt
 ```
 
 ## 環境ファイル（.env）の配置を確認
@@ -1331,7 +1331,7 @@ Apache と Python を連携させるためのモジュール `mod_wsgi` を設�
 
 ```bash:console
 # 仮想環境内でインストール
-(venv) $ pip install mod_wsgi
+(.venv) $ pip install mod_wsgi
 ```
 
 ### 設定情報の確認
@@ -1343,19 +1343,19 @@ Apache と Python を連携させるためのモジュール `mod_wsgi` を設�
 $ cd /var/www/html/portfolio
 
 # mod_wsgi本体のパスを確認
-$ find venv -name "mod_wsgi*.so"
-# 期待値例: venv/lib/python3.12/site-packages/mod_wsgi/server/mod_wsgi-py312.cpython-312-x86_64-linux-gnu.so
+$ find .venv -name "mod_wsgi*.so"
+# 期待値例: .venv/lib/python3.12/site-packages/mod_wsgi/server/mod_wsgi-py312.cpython-312-x86_64-linux-gnu.so
 
 # Python Home (仮想環境) のパスを確認（WSGIDaemonProcess の python-home に指定する値）
-# 方法A: find でプロジェクト配下から venv を特定（推奨）
-$ find /var/www/html/portfolio -maxdepth 2 -type d -name 'venv'
-# 期待値例: /var/www/html/portfolio/venv
+# 方法A: find でプロジェクト配下から .venv を特定（推奨）
+$ find /var/www/html/portfolio -maxdepth 2 -type d -name '.venv'
+# 期待値例: /var/www/html/portfolio/.venv
 
 # 方法B: 仮想環境を有効化して Python 側で prefix を確認
-$ source venv/bin/activate
-(venv) $ python -c 'import sys; print(sys.prefix)'
-# 期待値例: /var/www/html/portfolio/venv
-(venv) $ deactivate
+$ source .venv/bin/activate
+(.venv) $ python -c 'import sys; print(sys.prefix)'
+# 期待値例: /var/www/html/portfolio/.venv
+(.venv) $ deactivate
 ```
 
 ### Apache 設定ファイルの編集（APT 方式に統一）
@@ -1365,8 +1365,8 @@ $ source venv/bin/activate
     Ubuntu/Debian 標準のパッケージ管理である APT を用いた「APT 方式」に統一する。
 > - 「APT 方式」とは、Apache および mod_wsgi を OS 公式パッケージ（例: `libapache2-mod-wsgi-py3`）で導入し、`a2enmod`/
     `a2dismod` と `/etc/apache2/mods-available/* → mods-enabled/*` による標準のモジュール管理に従う運用を指す。
-> - 対比: `pip install mod_wsgi` で仮想環境（venv）内に導入し、`LoadModule` をサイト設定に直書きして独自の `.so`
-    を読み込む方法は、本ドキュメントでは「ソース/venv 方式」または「LoadModule 方式」と呼ぶ。
+> - 対比: `pip install mod_wsgi` で仮想環境（.venv）内に導入し、`LoadModule` をサイト設定に直書きして独自の `.so`
+    を読み込む方法は、本ドキュメントでは「ソース/.venv 方式」または「LoadModule 方式」と呼ぶ。
 > - なぜ移行するか（利点）: 依存関係と更新を APT に一元化できる／ディレクトリや設定レイアウトが標準に揃う／`LoadModule`
     の二重読み込み事故を避けやすい。
 > - 注意点: Apache や Python のバージョンは基本的に配布パッケージ提供版に合わせる前提（必要に応じてバックポートや PPA
@@ -1400,7 +1400,7 @@ WSGISocketPrefix /var/run/wsgi
     ServerName www.henojiya.net
     DocumentRoot /var/www/html
 +     WSGIScriptAlias / /var/www/html/portfolio/config/wsgi.py
-+     WSGIDaemonProcess wsgi_app python-home=/var/www/html/portfolio/venv python-path=/var/www/html/portfolio
++     WSGIDaemonProcess wsgi_app python-home=/var/www/html/portfolio/.venv python-path=/var/www/html/portfolio
 +     WSGIProcessGroup wsgi_app
 +     WSGIApplicationGroup %{GLOBAL}
 +     Alias /static/ /var/www/html/portfolio/static/
@@ -1428,7 +1428,7 @@ $ sudo systemctl restart apache2
 
 > **各項目の意味:**
 > - **WSGIScriptAlias**: URL と `wsgi.py` の紐付け設定。
-> - **WSGIDaemonProcess**: Python 仮想環境のパスを指定し、デーモンモードで実行します（ここでは APT 版 mod_wsgi と venv
+> - **WSGIDaemonProcess**: Python 仮想環境のパスを指定し、デーモンモードで実行します（ここでは APT 版 mod_wsgi と .venv
     を組み合わせています）。
 > - **WSGIProcessGroup**: デーモンプロセスをグループ化します。
 > - **WSGIApplicationGroup %{GLOBAL}**: numpy の `Interpreter change detected` 回避、拡張モジュールとの相性対策。
@@ -1495,35 +1495,35 @@ $ crontab -e
 
 ```vim:crontab
 # 10分ごとに実行
-*/10 * * * * /var/www/html/portfolio/venv/bin/python /var/www/html/hello-cron.py
+*/10 * * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/hello-cron.py
 
 # 毎月1日の0:00に証明書を更新
 0 0 1 * * /root/certbot.sh
 
 # バッチ処理の例（自分用メモ）
 0 0 1 * * /root/certbot.sh
-0 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_vietkabu
-5 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_sbi
-6 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_import_market_data
-15 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_industry_chart_and_uptrend
-20 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_industry_stacked_bar_chart
-25 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_download_edinet
-30 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py weather_fetch_forecast
-35 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py weather_fetch_warning
-40 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py collectstatic --noinput
-45 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py update_sector_rotation
-50 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py fetch_usa_rss
-51 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py update_macro_indicators
-55 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_fetch_farmland_statistics
-56 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_fetch_store_planning_data_sources
-15 18 1 * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py monthly_fao_food_balance_chart
-15 19 1 * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py monthly_cleanup_linebot_engine
-20 19 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_update_msci_weights
-25 19 1 * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py monthly_update_historical_assets
-30 19 1 * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py monthly_update_nasdaq100_list
+0 18 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_vietkabu
+5 18 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_sbi
+6 18 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py daily_import_market_data
+15 18 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py daily_industry_chart_and_uptrend
+20 18 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py daily_industry_stacked_bar_chart
+25 18 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py daily_download_edinet
+30 18 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py weather_fetch_forecast
+35 18 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py weather_fetch_warning
+40 18 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py collectstatic --noinput
+45 18 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py update_sector_rotation
+50 18 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py fetch_usa_rss
+51 18 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py update_macro_indicators
+55 18 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py daily_fetch_farmland_statistics
+56 18 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py daily_fetch_store_planning_data_sources
+15 18 1 * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py monthly_fao_food_balance_chart
+15 19 1 * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py monthly_cleanup_linebot_engine
+20 19 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py daily_update_msci_weights
+25 19 1 * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py monthly_update_historical_assets
+30 19 1 * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py monthly_update_nasdaq100_list
 
 # ※相手先サーバ（ベトナム）の証明書がうまくなくて実行できない
-20 18 1 * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py monthly_vietnam_statistics
+20 18 1 * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py monthly_vietnam_statistics
 ```
 
 ### その他
@@ -1533,12 +1533,12 @@ $ crontab -e
 
 > **Warning:**
 > 実行権限（chmod）は「シェルスクリプト（.sh）を直接実行する場合」に付与します。Django の管理コマンドは
-`venv/bin/python manage.py ...` で呼び出す想定のため、各 `management/commands/*.py` に実行権限は不要です。
+`.venv/bin/python manage.py ...` で呼び出す想定のため、各 `management/commands/*.py` に実行権限は不要です。
 >
 > - 直接実行（本書の基本方針）: crontab では以下のように Python で呼びます（chmod 不要）
     >   ```bash:console
-    > */10 * * * * /var/www/html/portfolio/venv/bin/python /var/www/html/hello-cron.py
-    > 0 18 * * * /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_vietkabu
+> */10 * * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/hello-cron.py
+> 0 18 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_vietkabu
     >   ```
 > - シェル化（任意・まとめたい場合）: 複数ジョブを1つの .sh にまとめ、`.sh` にだけ実行権限を付与します
     >   ```bash:console
@@ -1549,8 +1549,8 @@ $ crontab -e
     >   ```bash:/var/www/html/portfolio/bin/daily_jobs.sh
 
 > #!/bin/bash
-> /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_vietkabu
-> /var/www/html/portfolio/venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_sbi
+> /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_vietkabu
+> /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py daily_import_from_sbi
 >   # ほかのジョブもここに追記
 >   ```
 
@@ -1596,8 +1596,8 @@ $ sudo chown -R ubuntu:ubuntu /var/www/html
 ```bash:console
 $ cd /var/www/html/portfolio
 # DB は MySQL クライアントや DBeaver で Drop → Create（事前にバックアップ推奨）
-$ source venv/bin/activate
-(venv) $ python manage.py migrate
+$ source .venv/bin/activate
+(.venv) $ python manage.py migrate
 ```
 
 ### 2) 小リセット（特定アプリだけ履歴を整理）
@@ -1610,9 +1610,9 @@ $ source venv/bin/activate
 
 ```bash:console
 $ cd /var/www/html/portfolio
-$ source venv/bin/activate
-(venv) $ python manage.py makemigrations <app_name>
-(venv) $ python manage.py migrate
+$ source .venv/bin/activate
+(.venv) $ python manage.py makemigrations <app_name>
+(.venv) $ python manage.py migrate
 ```
 
 > Note:
@@ -1623,8 +1623,8 @@ $ source venv/bin/activate
 
 ```bash:console
 $ cd /var/www/html/portfolio
-$ source venv/bin/activate
-(venv) $ python manage.py createsuperuser
+$ source .venv/bin/activate
+(.venv) $ python manage.py createsuperuser
   Email address:
   Password:
   Password (again):
@@ -1776,29 +1776,29 @@ FileZillaのサイトマネージャーに次の内容を設定します。
 
 > Note: ここは「/var/www/html/portfolio を git clone せず、空の Django プロジェクトから始める」ための対になる手順です。重要度は低めの補足として最小構成のみ記載します。
 
-### 1) venv を有効化し、Django を導入
+### 1) .venv を有効化し、Django を導入
 
 ```bash:console
 $ cd /var/www/html/portfolio
-$ source venv/bin/activate
-(venv) $ pip install --upgrade pip
-(venv) $ pip install django
-(venv) $ django-admin --version   # 例: 6.x
+$ source .venv/bin/activate
+(.venv) $ pip install --upgrade pip
+(.venv) $ pip install django
+(.venv) $ django-admin --version   # 例: 6.x
 ```
 
 ### 2) 雛形を作成（config を設定ディレクトリに）
 
 ```bash:console
-(venv) $ mkdir -p mypage
-(venv) $ cd mypage
-(venv) $ django-admin startproject config .
-(venv) $ python manage.py startapp hoge
+(.venv) $ mkdir -p mypage
+(.venv) $ cd mypage
+(.venv) $ django-admin startproject config .
+(.venv) $ python manage.py startapp hoge
 ```
 
 開発サーバの起動確認（ローカル確認用）
 
 ```bash:console
-(venv) $ python manage.py runserver 0.0.0.0:8000
+(.venv) $ python manage.py runserver 0.0.0.0:8000
 ```
 
 ### 3) settings.py の最小編集
@@ -1823,10 +1823,10 @@ LOGGING = {
 ### 4) MySQL を使う場合（任意）
 
 - 依存ライブラリの apt 導入は、上位セクション「依存パッケージのインストール」を参照（`libmysqlclient-dev` など）。
-- venv で `mysqlclient` を導入。
+- `.venv` で `mysqlclient` を導入。
 
 ```bash:console
-(venv) $ pip install mysqlclient
+(.venv) $ pip install mysqlclient
 ```
 
 `DATABASES` を MySQL 用に変更（例）
@@ -1865,7 +1865,7 @@ DATABASES = {
 - SBI topics で使用。旧 pdfminer ではなく `pdfminer.six` を使用。
 
 ```bash:console
-(venv) $ pip install pdfminer.six
+(.venv) $ pip install pdfminer.six
 ```
 
 ## Django

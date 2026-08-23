@@ -3,5 +3,7 @@ chroma/
 *.log
 db.sqlite3
 .env
-venv
+# Python virtual environments
+.venv/
+venv/
 scripts/.my.cnf

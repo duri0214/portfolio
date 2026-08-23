@@ -695,7 +695,7 @@ Bookman はフロントエンドとバックエンドを別ターミナルで起
 
 ```console:console（ターミナル1: Django側サーバー起動）
 cd ../bookman_backend
-.\venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 python manage.py runserver 127.0.0.1:8000
 ```
 
@@ -732,7 +732,7 @@ npm audit
 
 ```console:console
 cd ../bookman_backend
-.\venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 python manage.py test
 ```
 
@@ -756,13 +756,13 @@ dev/
 - Codex 運用参照: https://github.com/duri0214/bookman_backend/blob/main/AGENTS.md
 
 ### Python と依存関係
-バックエンドは Python 3.12 以上を前提にした。仮想環境名は `venv` にしている。
+バックエンドは Python 3.12 以上を前提にした。仮想環境名は `.venv` にしている。
 
 ```console:console
 cd ../bookman_backend
 python --version
-python -m venv venv
-.\venv\Scripts\Activate.ps1
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
@@ -943,7 +943,7 @@ Bookman はバックエンドとフロントエンドを別ターミナルで起
 
 ```console:console（ターミナル1: Django側サーバー起動）
 cd ../bookman_backend
-.\venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 python manage.py runserver 127.0.0.1:8000
 ```
 

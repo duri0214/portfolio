@@ -228,7 +228,7 @@ WSGISocketPrefix /var/run/wsgi
     ServerName www.henojiya.net
     DocumentRoot /var/www/html
     WSGIScriptAlias / /var/www/html/portfolio/config/wsgi.py
-    WSGIDaemonProcess wsgi_app python-home=/var/www/html/portfolio/venv python-path=/var/www/html/portfolio
+    WSGIDaemonProcess wsgi_app python-home=/var/www/html/portfolio/.venv python-path=/var/www/html/portfolio
     WSGIProcessGroup wsgi_app
     WSGIApplicationGroup %{GLOBAL}
     Alias /static/ /var/www/html/portfolio/static/
@@ -256,7 +256,7 @@ WSGISocketPrefix /var/run/wsgi
 + </VirtualHost>
 + <VirtualHost 127.0.0.1:8000>
 +     ServerName 127.0.0.1
-+     WSGIDaemonProcess bookman_backend python-home=/var/www/html/bookman_backend/venv python-path=/var/www/html/bookman_backend
++     WSGIDaemonProcess bookman_backend python-home=/var/www/html/bookman_backend/.venv python-path=/var/www/html/bookman_backend
 +     WSGIProcessGroup bookman_backend
 +     WSGIScriptAlias / /var/www/html/bookman_backend/config/wsgi.py
 +     <Directory /var/www/html/bookman_backend/config>
@@ -302,27 +302,27 @@ $ git clone https://github.com/duri0214/bookman_backend.git
 ```
 
 ローカル開発では `~/dev/` 配下に置いていても、本番サーバーでは `portfolio` と同じ階層の `/var/www/html/` 配下に `bookman_backend` を配置する想定だ。
-backend 側は、通常の Django アプリケーションとして `.env`、venv、migration、static の設定を整える。
-venv は portfolio のものを共有せず、`bookman_backend` の中に別途作る。
-前の「バーチャルホスト」で追加した Apache 設定の `python-home=/var/www/html/bookman_backend/venv` は、この venv を指している。
+backend 側は、通常の Django アプリケーションとして `.env`、`.venv`、migration、static の設定を整える。
+`.venv` は portfolio のものを共有せず、`bookman_backend` の中に別途作る。
+前の「バーチャルホスト」で追加した Apache 設定の `python-home=/var/www/html/bookman_backend/.venv` は、この `.venv` を指している。
 
 ```bash:console
 $ cd /var/www/html/bookman_backend
-$ python3 -m venv venv
-$ source venv/bin/activate
+$ python3 -m venv .venv
+$ source .venv/bin/activate
 $ python -m pip install --upgrade pip setuptools wheel
 $ python -m pip install -r requirements.txt
 $ python manage.py check
 ```
 
-既存の venv が壊れている場合や、Python のバージョンを変えた場合は作り直す。
+既存の `.venv` が壊れている場合や、Python のバージョンを変えた場合は作り直す。
 
 ```bash:console
 $ cd /var/www/html/bookman_backend
 $ deactivate 2>/dev/null || true
-$ rm -rf venv
-$ python3 -m venv venv
-$ source venv/bin/activate
+$ rm -rf .venv
+$ python3 -m venv .venv
+$ source .venv/bin/activate
 $ python -m pip install --upgrade pip setuptools wheel
 $ python -m pip install -r requirements.txt
 $ python manage.py check
@@ -354,7 +354,7 @@ DB 権限を用意したら、README の本番メンテナンス手順と同じ�
 
 ```bash:console
 $ cd /var/www/html/bookman_backend
-$ source venv/bin/activate
+$ source .venv/bin/activate
 $ python manage.py check
 $ python manage.py migrate
 ```
@@ -415,7 +415,7 @@ $ curl -m 5 -v http://127.0.0.1:8000/bookman/api/branches/
 ```bash:console
 $ sudo tail -n 100 /var/log/apache2/error.log
 $ cd /var/www/html/bookman_backend
-$ source venv/bin/activate
+$ source .venv/bin/activate
 $ python manage.py check
 $ python manage.py migrate
 ```
