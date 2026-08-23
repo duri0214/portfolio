@@ -57,7 +57,7 @@ class RegistrationViewTest(TestCase):
 
         user = get_user_model().objects.get(email="new-user@example.com")
         self.assertFalse(user.is_active)
-        self.assertContains(response, "メール送信は現在無効です")
+        self.assertContains(response, "本登録用メールを送信した扱いにしています")
         self.assertContains(response, "/accounts/activate/")
         mail_service.assert_not_called()
 
@@ -115,7 +115,7 @@ class RegistrationViewTest(TestCase):
             reverse("accounts:register"), self._registration_data()
         )
 
-        self.assertContains(response, "メール送信は現在無効です")
+        self.assertContains(response, "モックモード")
         self.assertNotContains(response, "/accounts/activate/")
 
     @override_settings(MAIL_SEND_ENABLED=False, DEBUG=True)

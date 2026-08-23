@@ -11,11 +11,13 @@
                     <h1 class="h4">仮登録を受け付けました</h1>
                     <p class="mb-0">本登録用のメールを送信しました。メール内のリンクを開いて登録を完了してください。</p>
                 {% else %}
-                    <h1 class="h4">仮登録を受け付けました</h1>
-                    <p>メール送信は現在無効です。本登録はメール送信が有効な環境で完了できます。</p>
+                    <h1 class="h4">仮登録を受け付けました（モックモード）</h1>
+                    <p>本登録用メールを送信した扱いにしていますが、実際のメールは送信していません。</p>
                     {% if activation_url %}
-                        <p class="small">開発・テスト確認用の本登録リンク:</p>
+                        <p class="small">動作確認用の本登録リンク:</p>
                         <a class="btn btn-outline-primary" href="{{ activation_url }}">本登録を完了する</a>
+                    {% else %}
+                        <p class="small">本登録リンクは開発・テスト環境でのみ表示されます。</p>
                     {% endif %}
                 {% endif %}
                 <p class="mt-4 mb-0"><a href="{% url 'login' %}">ログイン画面へ戻る</a></p>
