@@ -1,5 +1,3 @@
-from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.encoding import force_bytes, force_str
@@ -47,12 +45,7 @@ class RegistrationView(FormView):
         return render(
             self.request,
             "accounts/registration_pending.html",
-            {
-                "mail_sent": mail_sent,
-                "activation_url": (
-                    activation_url if self._can_show_activation_url(mail_sent) else None
-                ),
-            },
+            {"mail_sent": mail_sent},
         )
 
     def _activation_url(self, user) -> str:
@@ -61,11 +54,6 @@ class RegistrationView(FormView):
         token = account_activation_token.make_token(user)
         path = reverse("accounts:activate", kwargs={"uidb64": uidb64, "token": token})
         return self.request.build_absolute_uri(path)
-
-    @staticmethod
-    def _can_show_activation_url(mail_sent: bool) -> bool:
-        """送信OFF時だけ、開発・テスト環境に限り本登録URLを画面へ表示する。"""
-        return not mail_sent and (settings.DEBUG or settings.IS_TESTING)
 
 
 class AccountActivationView(View):

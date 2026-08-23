@@ -49,7 +49,7 @@ class RegistrationViewTest(TestCase):
         シナリオ:
         - 入力: メール送信が無効な環境で有効なメールアドレスとパスワードを送信する。
         - 処理: 新規登録を実行する。
-        - 期待値: 仮登録ユーザーが作成され、SMTPには接続せず開発確認用URLが表示されること。
+        - 期待値: 仮登録ユーザーが作成され、SMTPには接続せず本登録URLも表示されないこと。
         """
         response = self.client.post(
             reverse("accounts:register"), self._registration_data()
@@ -57,8 +57,10 @@ class RegistrationViewTest(TestCase):
 
         user = get_user_model().objects.get(email="new-user@example.com")
         self.assertFalse(user.is_active)
-        self.assertContains(response, "accountsのメール送信設定がOFFです")
-        self.assertContains(response, "/accounts/activate/")
+        self.assertContains(response, "accountsのメール送信設定がOFF")
+        self.assertContains(response, "本登録は完了していません")
+        self.assertNotContains(response, "/accounts/activate/")
+        self.assertNotContains(response, "本登録を完了する")
         mail_service.assert_not_called()
 
     @override_settings(ACCOUNT_EMAIL_SEND_ENABLED=True)
@@ -115,32 +117,26 @@ class RegistrationViewTest(TestCase):
             reverse("accounts:register"), self._registration_data()
         )
 
-        self.assertContains(response, "accountsのメール送信設定がOFFです")
+        self.assertContains(response, "accountsのメール送信設定がOFF")
         self.assertNotContains(response, "/accounts/activate/")
 
     @override_settings(ACCOUNT_EMAIL_SEND_ENABLED=False, DEBUG=True)
-    def test_pending_user_cannot_log_in_until_activation(self):
+    def test_pending_user_cannot_log_in_when_mail_is_disabled(self):
         """
         シナリオ:
         - 入力: メール送信無効環境で仮登録されたユーザーの認証情報。
-        - 処理: 本登録前にログインを試行し、認証URLを開く。
-        - 期待値: 本登録前はログインできず、本登録後はログインできること。
+        - 処理: 仮登録完了画面を表示してログインを試行する。
+        - 期待値: 本登録URLを画面に表示せず、ログインもできないこと。
         """
-        self.client.post(reverse("accounts:register"), self._registration_data())
+        response = self.client.post(
+            reverse("accounts:register"), self._registration_data()
+        )
         user = get_user_model().objects.get(email="new-user@example.com")
 
+        self.assertNotContains(response, "/accounts/activate/")
+        self.assertNotContains(response, "本登録を完了する")
+        self.assertFalse(user.is_active)
         self.assertFalse(
-            self.client.login(
-                username="new-user@example.com", password="Strong-password-123"
-            )
-        )
-
-        response = self.client.get(self._activation_url(user))
-        user.refresh_from_db()
-
-        self.assertContains(response, "本登録が完了しました")
-        self.assertTrue(user.is_active)
-        self.assertTrue(
             self.client.login(
                 username="new-user@example.com", password="Strong-password-123"
             )
