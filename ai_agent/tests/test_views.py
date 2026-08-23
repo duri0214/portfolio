@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from unittest.mock import patch
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from ai_agent.domain.service.game_agent import GameAgentService
@@ -91,6 +92,69 @@ async def fake_stream_selected(self, *, max_turns=10):
 
 
 class AgentStreamingViewTest(TestCase):
+    def setUp(self):
+        """通常のゲーム操作テストは、Agent実行を許可された管理者として行う。"""
+        superuser = get_user_model().objects.create_superuser(
+            username="default-agent-admin",
+            password="password",
+            email="default-agent-admin@example.com",
+        )
+        self.client.force_login(superuser)
+
+    def test_non_superuser_cannot_execute_agent_and_sees_disabled_buttons(self):
+        """
+        シナリオ:
+        - 入力: 問題を選択済みの一般ユーザー。
+        - 処理: Agent最終決定画面を表示し、実行endpointへ直接リクエストする。
+        - 期待値: ボタンと権限案内が表示され、APIは403でAgent実行を拒否する。
+        """
+        user = get_user_model().objects.create_user(
+            username="agent-player", password="password"
+        )
+        self.client.force_login(user)
+        self.client.post(
+            "/ai_agent/",
+            {"action": "select_mondai", "mondai_id": "mondai-language"},
+        )
+
+        page = self.client.get("/ai_agent/")
+        response = self.client.post(
+            "/ai_agent/",
+            {"action": "stream_agent", "line_id": "line-observe"},
+        )
+
+        self.assertContains(
+            page,
+            "管理者権限が必要なため、Agentへ最終決定するボタンは無効化されています。",
+        )
+        self.assertContains(page, "data-agent-submit disabled", html=False)
+        self.assertEqual(response.status_code, 403)
+
+    def test_superuser_can_start_agent_stream(self):
+        """
+        シナリオ:
+        - 入力: 問題を選択済みのスーパーユーザー。
+        - 処理: Agent最終決定endpointへリクエストする。
+        - 期待値: ストリーミングレスポンスが返り、権限制御により実行を妨げないこと。
+        """
+        superuser = get_user_model().objects.create_superuser(
+            username="agent-admin", password="password", email="admin@example.com"
+        )
+        self.client.force_login(superuser)
+        self.client.post(
+            "/ai_agent/",
+            {"action": "select_mondai", "mondai_id": "mondai-language"},
+        )
+
+        with patch.object(GameAgentService, "stream_selected", fake_stream_selected):
+            response = self.client.post(
+                "/ai_agent/",
+                {"action": "stream_agent", "line_id": "line-observe"},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/event-stream; charset=utf-8")
+
     def test_board_displays_special_spaces_and_persists_bonus_event(self):
         """
         シナリオ:
