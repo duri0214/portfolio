@@ -1945,6 +1945,8 @@ MAIL_USE_TLS=True
 | `MAIL_SMTP_USER` / `MAIL_SMTP_PASSWORD` | SMTPの認証情報を指定する。Gmailでは通常のGoogleアカウントパスワードではなく、2段階認証で発行したアプリパスワードを使用する。 |
 | `MAIL_USE_TLS` | `True` の場合にTLSでSMTP接続する。 |
 
+Gmailのアプリパスワードの発行手順は、[Gmail ヘルプ「アプリ パスワードでログインする」](https://support.google.com/mail/answer/185833?hl=ja) を参照してください。
+
 SMTPの認証情報や実在するメールアドレスは、記事・Git・`.env.example` に記載しません。上の値は形式を示す例です。実際の値はサーバー上の `.env` にだけ安全な方法で配置し、権限のないユーザーが読めないように管理します。
 
 #### 送信OFFでの開発・初期運用
