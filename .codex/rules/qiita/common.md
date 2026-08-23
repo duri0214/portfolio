@@ -1,4 +1,8 @@
-# Qiita 記事ルール
+---
+apply: "docs/qiita/.*"
+---
+
+# Qiita 記事共通ルール
 
 ## ソースコードURL
 
