@@ -19,7 +19,7 @@ OpenAI Agents SDKでAgentがFunction Toolを選びながら処理を進める仕
 
 ソースコード:
 
-<https://github.com/duri0214/portfolio/tree/master/ai_agent>
+https://github.com/duri0214/portfolio/tree/master/ai_agent
 
 ## この記事で扱うこと
 
