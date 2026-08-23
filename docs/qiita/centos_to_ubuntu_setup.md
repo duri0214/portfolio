@@ -1874,342 +1874,121 @@ DATABASES = {
 
 ## Django
 
-### ログイン機能
+### 会員登録とメール認証（`accounts`）
 
-セットアップのタイミング的にここに書いておくけどアプリケーション作るのに慣れてからやること。ログイン機能は、ログイン機能としてのアプリケーションを別個につくるのがベスト・プラクティスだ。
+このリポジトリでは、会員登録とメール認証を `accounts` アプリで提供します。Django標準のユーザーを利用するため、会員登録用のアプリやユーザーモデルを追加する作業は不要です。リポジトリをセットアップした時点で、`config/settings.py` の `INSTALLED_APPS` と `config/urls.py` には次の構成が含まれています。
 
-### Reset（※必要に応じて）
-
-1. まず各appディレクトリの `migrations` ディレクトリを消してまわります
-2. dbを消します（＝portfolio_db）
-3. db を作ります
-
-### startapp
-
-[Django でUserモデルのカスタマイズ](https://narito.ninja/blog/detail/39/)
-
-```console:console
-# cd /var/www/html/portfolio
-# python3 manage.py startapp register
-```
-
-```py:/var/www/html/portfolio/register/models.py
-from django.db import models
-from django.core.mail import send_mail
-from django.contrib.auth.models import PermissionsMixin, UserManager
-from django.contrib.auth.base_user import AbstractBaseUser
-from django.utils.translation import ugettext_lazy as _
-from django.utils import timezone
-
-
-class CustomUserManager(UserManager):
-    """ユーザーマネージャー"""
-    use_in_migrations = True
-
-    def _create_user(self, email, password, **extra_fields):
-        if not email:
-            raise ValueError('The given email must be set')
-        email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
-
-    def create_user(self, email, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', False)
-        extra_fields.setdefault('is_superuser', False)
-        return self._create_user(email, password, **extra_fields)
-
-    def create_superuser(self, email, password, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
-        if extra_fields.get('is_staff') is not True:
-            raise ValueError('Superuser must have is_staff=True.')
-        if extra_fields.get('is_superuser') is not True:
-            raise ValueError('Superuser must have is_superuser=True.')
-        return self._create_user(email, password, **extra_fields)
-
-
-class User(AbstractBaseUser, PermissionsMixin):
-    """カスタムユーザーモデル."""
-
-    email = models.EmailField(_('email address'), unique=True)
-    first_name = models.CharField(_('first name'), max_length=30, blank=True)
-    last_name = models.CharField(_('last name'), max_length=150, blank=True)
-
-    is_staff = models.BooleanField(
-        _('staff status'),
-        default=False,
-        help_text=_(
-            'Designates whether the user can log into this admin site.'),
-    )
-    is_active = models.BooleanField(
-        _('active'),
-        default=True,
-        help_text=_(
-            'Designates whether this user should be treated as active. '
-            'Unselect this instead of deleting accounts.'
-        ),
-    )
-    date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
-
-    objects = CustomUserManager()
-
-    EMAIL_FIELD = 'email'
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
-
-    class Meta:
-        verbose_name = _('user')
-        verbose_name_plural = _('users')
-
-    def get_full_name(self):
-        """Return the first_name plus the last_name, with a space in
-        between."""
-        full_name = '%s %s' % (self.first_name, self.last_name)
-        return full_name.strip()
-
-    def get_short_name(self):
-        """Return the short name for the user."""
-        return self.first_name
-
-    def email_user(self, subject, message, from_email=None, **kwargs):
-        """Send an email to this user."""
-        send_mail(subject, message, from_email, [self.email], **kwargs)
-
-    @property
-    def username(self):
-        """username属性のゲッター
-
-        他アプリケーションが、username属性にアクセスした場合に備えて定義
-        メールアドレスを返す
-        """
-        return self.email
-```
-
-```diff:/var/www/html/portfolio/config/settings.py
+```py:config/settings.py（抜粋）
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-+    'register.apps.RegisterConfig',
+    # ...
+    "accounts",
 ]
 ```
 
-```diff:/var/www/html/portfolio/config/settings.py（最下段に追記）
-+ # login
-+ LOGIN_URL = 'register:login'
-+ LOGIN_REDIRECT_URL = 'vnm:index'  #ログイン後にリダイレクトしたい先
-+ LOGOUT_REDIRECT_URL = "vnm:index" #ログアウト後にリダイレクトしたい先
-+ AUTH_USER_MODEL = 'register.User'
-```
-
-```console:/var/www/html/portfolio/register
-# mkdir -p templates/register
-# vi templates/register/base.html
-```
-
-```html:/var/www/html/portfolio/register/templates/register/base.html
-{% load static %}
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-43097095-9"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'UA-43097095-9');
-    </script>
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>VNMビューア</title>
-
-    <!-- css -->
-    <link rel="stylesheet" href="{% static 'register/css/reset.css' %}">
-    <link rel="stylesheet" href="{% static 'register/css/index.css' %}">
-
-    <!-- font -->
-    <link href="https://fonts.googleapis.com/css?family=Sawarabi+Gothic" rel="stylesheet">
-    <!-- fontawesome -->
-    <link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet">
-
-    <!-- favicon -->
-    <link rel="shortcut icon" href="{% static 'register/images/c_r.ico' %}">
-
-</head>
-<body>
-    <!-- nav -->
-    <h1></h1>
-
-    <div id="main">
-        {% block content %}{% endblock %}
-    </div>
-
-    <footer>
-        <p>© 2019 henojiya. / <a href="https://github.com/duri0214" target="_blank">github portfolio</a></p>
-    </footer>
-
-</body>
-</html>
-```
-
-```py:/var/www/html/portfolio/register/views.py
-"""views.py"""
-from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.contrib.auth.views import LoginView, LogoutView
-from django.contrib.sites.shortcuts import get_current_site
-from django.core.signing import BadSignature, SignatureExpired, loads, dumps
-from django.http import HttpResponseBadRequest
-from django.shortcuts import redirect
-from django.template.loader import render_to_string
-from django.views import generic
-from .forms import UserCreateForm
-
-# signup
-class UserCreate(generic.CreateView):
-    """ユーザー仮登録"""
-    template_name = 'register/user_create.html'
-    form_class = UserCreateForm
-
-    def form_valid(self, form):
-        """仮登録と本登録用メールの発行."""
-        # 仮登録と本登録の切り替えは、is_active属性を使うと簡単です。
-        # 退会処理も、is_activeをFalseにするだけにしておくと捗ります。
-        user = form.save(commit=False)
-        user.is_active = False
-        user.save()
-
-        # アクティベーションURLの送付
-        current_site = get_current_site(self.request)
-        domain = current_site.domain
-        context = {
-            'protocol': self.request.scheme,
-            'domain': domain,
-            'token': dumps(user.pk),
-            'user': user,
-        }
-        folder = settings.BASE_DIR + '/register/templates/register/mail_template/'
-        subject = render_to_string(folder + 'subject.txt', context)
-        message = render_to_string(folder + 'message.txt', context)
-
-        user.email_user(subject, message)
-        return redirect('register:user_create_done')
-
-
-class UserCreateDone(generic.TemplateView):
-    """ユーザー仮登録したよ"""
-    template_name = 'register/user_create_done.html'
-
-
-class UserCreateComplete(generic.TemplateView):
-    """メール内URLアクセス後のユーザー本登録"""
-    template_name = 'register/user_create_complete.html'
-    timeout_seconds = getattr(settings, 'ACTIVATION_TIMEOUT_SECONDS', 60*60*24)  # デフォルトでは1日以内
-
-    def get(self, request, *args, **kwargs):
-        """tokenが正しければ本登録."""
-        token = kwargs.get('token')
-        try:
-            user_pk = loads(token, max_age=self.timeout_seconds)
-
-        # 期限切れ
-        except SignatureExpired:
-            return HttpResponseBadRequest()
-
-        # tokenが間違っている
-        except BadSignature:
-            return HttpResponseBadRequest()
-
-        # tokenは問題なし
-        else:
-            try:
-                user = get_user_model().objects.get(pk=user_pk)
-            except get_user_model().DoesNotExist:
-                return HttpResponseBadRequest()
-            else:
-                if not user.is_active:
-                    # 問題なければ本登録とする
-                    user.is_active = True
-                    user.save()
-                    return super().get(request, **kwargs)
-
-        return HttpResponseBadRequest()
-
-
-class Login(LoginView):
-    """ログインページ"""
-    template_name = 'register/login.html'
-```
-
-```py:/var/www/html/portfolio/register/forms.py
-"""forms.py"""
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import get_user_model
-
-class UserCreateForm(UserCreationForm):
-    """ユーザー登録用フォーム"""
-
-    class Meta:
-        model = get_user_model()
-        fields = ('email',)
-
-    def clean_email(self):
-        """clean_email"""
-        email = self.cleaned_data['email']
-        get_user_model().objects.filter(email=email, is_active=False).delete()
-        return email
-```
-
-```html:/var/www/html/portfolio/register/templates/register/login.html
-{% extends "register/base.html" %}
-{% block content %}
-<div class="card col-md-6">
-    <div class="card-body">
-        <form action="{% url 'register:login' %}" method="POST">
-            {{ form.non_field_errors }}
-            {% for field in form %}
-                {{ field }}
-                {{ field.errors }}
-                <hr>
-            {% endfor %}
-            <button type="submit" class="btn btn-success btn-lg btn-block" >ログイン</button>
-            <input type="hidden" name="next" value="{{ next }}" />
-            {% csrf_token %}
-        </form>
-    </div>
-</div>
-<div class="">
-    <div class="card-body">
-        <a href="{% url 'register:user_create' %}" class="" >会員登録</a>
-    </div>
-</div>
-{% endblock %}
-```
-
-```py:/var/www/html/portfolio/register/urls.py
-"""urls.py"""
-from django.urls import path
-from . import views
-from django.contrib.auth.views import LoginView, LogoutView
-
-app_name = 'register'
-
+```py:config/urls.py（抜粋）
 urlpatterns = [
-    path('login/', LoginView.as_view(template_name='register/login.html'), name='login'),
-    path('logout/', LogoutView.as_view(), name='logout'),
-    path('user_create/', views.UserCreate.as_view(), name='user_create'),
-    path('user_create/done', views.UserCreateDone.as_view(), name='user_create_done'),
-    path('user_create/complete/<str:token>/', views.UserCreateComplete.as_view(), name='user_create_complete'),
+    # ...
+    path("accounts/", include("accounts.urls")),
+    path("accounts/login/", CustomLoginView.as_view(), name="login"),
+    path("accounts/logout/", LogoutView.as_view(), name="logout"),
 ]
 ```
+
+会員登録画面は `/accounts/register/`、ログイン画面は `/accounts/login/` です。登録後の画面やメールに表示されるURLを手作業で作成・置換せず、リポジトリに含まれる `accounts` の実装をそのまま使います。
+
+#### `accounts` と `MailService` の責務
+
+`accounts` は会員登録の業務フローを担当します。
+
+1. メールアドレスとパスワードを受け取り、`is_active=False` の仮登録ユーザーを作成する
+2. ユーザー状態を含む期限付き・一度限りの本登録URLを生成する
+3. メール送信を許可する設定の場合だけ、送信を `MailService` に依頼する
+4. URLの検証に成功したユーザーだけを本登録へ切り替え、ログインを許可する
+
+`lib/mail/MailService` はSMTP接続・TLS・SMTP認証・メール送信だけを担当します。ユーザー作成、本登録の判定、認証URLの生成、メールを送るかどうかの判断は担当しません。つまり、`accounts` が「何をいつ送るか」を決め、`MailService` が「SMTPで送る」部分を実行します。
+
+#### 本登録の流れ
+
+1. 利用者が `/accounts/register/` でメールアドレスとパスワードを入力する。
+2. `accounts` がログインできない仮登録ユーザーを作成する。
+3. メール送信が有効なら、`accounts` が本登録URLを生成して `MailService` に送信を依頼する。
+4. 利用者がメール内の `/accounts/activate/<uidb64>/<token>/` を開く。
+5. サーバーがURLの有効期限・改ざん・利用済み状態を検証し、成功時だけユーザーを有効化する。
+6. 有効化後は同じURLを再利用できない。利用者は `/accounts/login/` からログインする。
+
+本登録URLの有効期限は `ACCOUNT_ACTIVATION_TIMEOUT` で管理します。期限切れ、改ざんされたURL、または本登録済みのURLでは本登録されません。
+
+#### `.env` の設定
+
+プロジェクトルート `/var/www/html/portfolio/.env` に、次の設定を追加または確認します。`config/settings.py` はこのファイルを読み込むため、Apache/mod_wsgi で実行する場合も同じ設定が使われます。
+
+```dotenv:/var/www/html/portfolio/.env
+# メール送信を開始するまでは False のままにする
+ACCOUNT_EMAIL_SEND_ENABLED=False
+
+# 本登録URLの有効期限（秒）。初期値は 259200 = 3日
+ACCOUNT_ACTIVATION_TIMEOUT=259200
+
+# 実メール送信を有効にする場合だけ、SMTP事業者の値を設定する
+MAIL_SMTP_HOST=<SMTPホスト名>
+MAIL_SMTP_PORT=587
+MAIL_SMTP_USER=<SMTPユーザー名>
+MAIL_SMTP_PASSWORD=<SMTPパスワードまたはアプリパスワード>
+MAIL_USE_TLS=True
+```
+
+| 設定 | 役割 |
+| --- | --- |
+| `ACCOUNT_EMAIL_SEND_ENABLED` | `True` のときだけ、登録処理からSMTP送信を許可する。初期値は `False`。 |
+| `ACCOUNT_ACTIVATION_TIMEOUT` | 本登録URLの有効期限を秒数で指定する。初期値は3日。 |
+| `MAIL_SMTP_HOST` / `MAIL_SMTP_PORT` | SMTPサーバーの接続先を指定する。 |
+| `MAIL_SMTP_USER` / `MAIL_SMTP_PASSWORD` | SMTPの認証情報を指定する。 |
+| `MAIL_USE_TLS` | `True` の場合にTLSでSMTP接続する。 |
+
+SMTPの認証情報や実在するメールアドレスは、記事・Git・`.env.example` に記載しません。値はサーバー上の `.env` にだけ安全な方法で配置し、権限のないユーザーが読めないように管理します。
+
+#### 送信OFFでの開発・初期運用
+
+初期状態では、次のように送信を無効にします。
+
+```dotenv:/var/www/html/portfolio/.env
+ACCOUNT_EMAIL_SEND_ENABLED=False
+```
+
+この状態で会員登録すると、仮登録ユーザーは作成されますが、`MailService` は呼び出されずSMTPへも接続しません。本登録URLは画面に表示されず、仮登録ユーザーは `is_active=False` のためログインできません。
+
+URLを直接指定して本登録エンドポイントを開いた場合も、サーバー側で本登録を拒否します。これは画面上のリンクを隠すだけではなく、送信OFFの環境でユーザーを有効化しないための制御です。送信を有効にした後、対象ユーザーには改めて会員登録を行ってもらいます。
+
+#### 実メール送信を有効にする手順
+
+1. SMTP事業者からホスト名・ポート・TLS要件・専用の認証情報を確認する。
+2. サーバー上の `/var/www/html/portfolio/.env` に `MAIL_SMTP_*`、`MAIL_USE_TLS=True`、`ACCOUNT_EMAIL_SEND_ENABLED=True` を設定する。
+3. 構文を確認してApacheを再起動する。
+
+```bash:console
+$ cd /var/www/html/portfolio
+$ sudo apache2ctl configtest
+# 期待値: Syntax OK
+$ sudo systemctl restart apache2
+```
+
+4. `/accounts/register/` でテスト用メールアドレスを登録し、メールが届くことを確認する。
+5. メール内の本登録URLを一度だけ開き、「本登録が完了しました」と表示されることを確認する。
+6. `/accounts/login/` から、登録したメールアドレスとパスワードでログインできることを確認する。
+
+送信に失敗した場合は、SMTP設定とApacheのエラーログを確認します。認証情報をログやチケットへ転載せず、設定を修正した後に新しいテスト登録で再確認してください。
+
+#### 開発環境での確認
+
+開発環境でもプロジェクトルートの `.env` を使用します。SMTPへの接続を避けたい場合は `ACCOUNT_EMAIL_SEND_ENABLED=False` のまま、次のように起動します。
+
+```bash:console
+$ cd /var/www/html/portfolio
+$ source .venv/bin/activate
+(.venv) $ python manage.py runserver
+```
+
+送信OFFでは仮登録後に本登録できず、認証URLを直接開いても拒否されることを確認します。実送信の確認が必要な場合だけ、管理されたテスト用SMTP認証情報で送信を有効にし、登録・受信・本登録・ログインまでを確認します。
 
 ### admin管理画面 にテーブルを追加表示する
 
