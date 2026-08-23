@@ -15,7 +15,7 @@ HOME の各カタログ用サムネイルを生成するための資料です。
 
 ### Bookman
 
-保存ファイル名: `bookman.png`  
+保存ファイル名: `bookman.png`
 alt テキスト: 図書館業務システム Bookman
 
 **生成プロンプト**
@@ -24,7 +24,7 @@ alt テキスト: 図書館業務システム Bookman
 
 ### USA リサーチ
 
-保存ファイル名: `usa_research.png`  
+保存ファイル名: `usa_research.png`
 alt テキスト: USAニュース自動取得ツール
 
 **生成プロンプト**
@@ -33,7 +33,7 @@ alt テキスト: USAニュース自動取得ツール
 
 ### KOKKAI
 
-保存ファイル名: `kokkai.png`  
+保存ファイル名: `kokkai.png`
 alt テキスト: 国会議事録検索・分析システム
 
 **生成プロンプト**
@@ -42,7 +42,7 @@ alt テキスト: 国会議事録検索・分析システム
 
 ### BANK
 
-保存ファイル名: `bank.png`  
+保存ファイル名: `bank.png`
 alt テキスト: 銀行CSV分析基盤
 
 **生成プロンプト**
@@ -53,7 +53,7 @@ alt テキスト: 銀行CSV分析基盤
 
 ### HOSPITAL
 
-保存ファイル名: `hospital.png`  
+保存ファイル名: `hospital.png`
 alt テキスト: 不在者投票転記ツール
 
 **生成プロンプト**
@@ -62,7 +62,7 @@ alt テキスト: 不在者投票転記ツール
 
 ### SOIL ANALYSIS
 
-保存ファイル名: `soil_analysis.png`  
+保存ファイル名: `soil_analysis.png`
 alt テキスト: 土壌分析レポートツール
 
 **生成プロンプト**
@@ -71,7 +71,7 @@ alt テキスト: 土壌分析レポートツール
 
 ### VIETNAM
 
-保存ファイル名: `vietnam_research.png`  
+保存ファイル名: `vietnam_research.png`
 alt テキスト: ベトナム株価分析ツール
 
 **生成プロンプト**
@@ -80,7 +80,7 @@ alt テキスト: ベトナム株価分析ツール
 
 ### GMARKER
 
-保存ファイル名: `gmarker.png`  
+保存ファイル名: `gmarker.png`
 alt テキスト: GoogleMapsピン配置ツール
 
 **生成プロンプト**
@@ -89,7 +89,7 @@ alt テキスト: GoogleMapsピン配置ツール
 
 ### SHOPPING
 
-保存ファイル名: `shopping.png`  
+保存ファイル名: `shopping.png`
 alt テキスト: ECサイト管理ツール
 
 **生成プロンプト**
@@ -98,7 +98,7 @@ alt テキスト: ECサイト管理ツール
 
 ### RENTAL SHOP
 
-保存ファイル名: `rental_shop.png`  
+保存ファイル名: `rental_shop.png`
 alt テキスト: 倉庫在庫管理ツール
 
 **生成プロンプト**
@@ -107,7 +107,7 @@ alt テキスト: 倉庫在庫管理ツール
 
 ### TAXONOMY
 
-保存ファイル名: `taxonomy.png`  
+保存ファイル名: `taxonomy.png`
 alt テキスト: 生物分類樹形図ツール
 
 **生成プロンプト**
@@ -116,7 +116,7 @@ alt テキスト: 生物分類樹形図ツール
 
 ### SECURITIES REPORT
 
-保存ファイル名: `securities.png`  
+保存ファイル名: `securities.png`
 alt テキスト: 有価証券報告書分析ツール
 
 **生成プロンプト**
@@ -125,7 +125,7 @@ alt テキスト: 有価証券報告書分析ツール
 
 ### LLM CHAT
 
-保存ファイル名: `llm_chat.png`  
+保存ファイル名: `llm_chat.png`
 alt テキスト: LLM統合チャットツール
 
 **生成プロンプト**
@@ -134,7 +134,7 @@ alt テキスト: LLM統合チャットツール
 
 ### AI AGENT
 
-保存ファイル名: `ai_agent.png`  
+保存ファイル名: `ai_agent.png`
 alt テキスト: 会話型AIエージェントシステム
 
 **生成プロンプト**
@@ -143,7 +143,7 @@ alt テキスト: 会話型AIエージェントシステム
 
 ### JP STOCKS
 
-保存ファイル名: `jp_stocks.png`  
+保存ファイル名: `jp_stocks.png`
 alt テキスト: 日本株分析ツール
 
 **生成プロンプト**
@@ -152,7 +152,7 @@ alt テキスト: 日本株分析ツール
 
 ### WELFARE SERVICES
 
-保存ファイル名: `welfare_services.png`  
+保存ファイル名: `welfare_services.png`
 alt テキスト: 東京都福祉事務所情報ポータル
 
 **生成プロンプト**
