@@ -3,5 +3,9 @@ chroma/
 *.log
 db.sqlite3
 .env
-venv
+# Python virtual environments
+.venv/
+venv/
+# JetBrains IDE settings
+.idea/
 scripts/.my.cnf

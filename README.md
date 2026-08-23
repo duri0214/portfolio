@@ -8,16 +8,16 @@ Django(Python)を用いた、各種データ分析・可視化ツールのポー
 
 ## 1. セットアップ
 
-### 仮想環境 (venv) の構築
+### 仮想環境 (.venv) の構築
 
 **Linux**
 
 ```bash
 # 作成
-python3 -m venv venv
+python3 -m venv .venv
 
 # 有効化
-source venv/bin/activate
+source .venv/bin/activate
 
 # 依存関係のインストール
 pip install --upgrade pip setuptools wheel
@@ -26,42 +26,15 @@ pip install -r requirements.txt
 
 **Windows (PowerShell)**
 
-既に `(venv)` が表示されている場合や `venv` フォルダが存在する場合は、この作成手順ではなく「venv の再構築 (リセット)
-」を実行してください。
-
 ```powershell
 # 作成
-python -m venv venv
+python -m venv .venv
 
 # 有効化
-.\venv\Scripts\activate
+.\.venv\Scripts\activate
 
 # 依存関係のインストール
 pip install --upgrade pip setuptools wheel
-pip install -r requirements.txt
-```
-
-### venv の再構築 (リセット)
-
-ライブラリの更新などで環境を初期化したい場合。
-
-**Linux**
-
-```bash
-deactivate
-rm -rf venv
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-**Windows (PowerShell)**
-
-```powershell
-deactivate 2>$null
-Remove-Item -Recurse -Force venv -ErrorAction SilentlyContinue
-python -m venv venv
-.\venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
@@ -112,12 +85,12 @@ git clean -fd
 
 サーバー構築時、または権限エラーが発生した際に実行してください。
 これにより、以降に生成されるファイルも自動的に適切な権限（ACL）を継承します。
-`venv` は実行ファイルを含むため、一括 `chmod 664` の対象から除外します。
+`.venv` は実行ファイルを含むため、一括 `chmod 664` の対象から除外します。
 
 ```bash
 sudo chown -R ubuntu:www-data /var/www/html/portfolio
-sudo find /var/www/html/portfolio -path /var/www/html/portfolio/venv -prune -o -type d -exec chmod 775 {} +
-sudo find /var/www/html/portfolio -path /var/www/html/portfolio/venv -prune -o -type f -exec chmod 664 {} +
+sudo find /var/www/html/portfolio -path /var/www/html/portfolio/.venv -prune -o -type d -exec chmod 775 {} +
+sudo find /var/www/html/portfolio -path /var/www/html/portfolio/.venv -prune -o -type f -exec chmod 664 {} +
 sudo chmod +x /var/www/html/portfolio/scripts/*.sh
 sudo apt update && sudo apt install acl -y
 sudo setfacl -R -d -m u:ubuntu:rwx /var/www/html/portfolio/media
@@ -125,20 +98,20 @@ sudo setfacl -R -d -m g:www-data:rwx /var/www/html/portfolio/media
 sudo setfacl -R -d -m o::rx /var/www/html/portfolio/media
 ```
 
-#### 3. venv の再構築 (リセット)
+#### 3. .venv の再構築 (リセット)
 
 (ライブラリに変更がある場合のみでOK。通常は `pip install -r requirements.txt` のみ)
 
 ```bash
 deactivate 2>/dev/null || true
-rm -rf venv
-python3 -m venv venv
+rm -rf .venv
+python3 -m venv .venv
 ```
 
 #### 4. 環境の構築
 
 ```bash
-source /var/www/html/portfolio/venv/bin/activate
+source /var/www/html/portfolio/.venv/bin/activate
 python -m pip install --upgrade pip setuptools wheel
 python -m pip install -r requirements.txt
 ```
@@ -200,7 +173,7 @@ frontend の初回セットアップは `bookman_nextjs` の README を参照し
 cd /var/www/html/bookman_backend
 git fetch --prune origin
 git pull
-source venv/bin/activate
+source .venv/bin/activate
 python manage.py check
 python manage.py migrate
 
