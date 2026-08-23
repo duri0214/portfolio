@@ -10,8 +10,6 @@ Django(Python)を用いた、各種データ分析・可視化ツールのポー
 
 ### 仮想環境 (.venv) の構築
 
-既存の `.venv` または旧 `venv` がある場合は、通常の作成手順ではなく下記の「既存の仮想環境を再構築する場合」を実行してください。
-
 **Linux**
 
 ```bash
@@ -37,30 +35,6 @@ python -m venv .venv
 
 # 依存関係のインストール
 pip install --upgrade pip setuptools wheel
-pip install -r requirements.txt
-```
-
-### 既存の仮想環境を再構築する場合
-
-既存の `.venv` を初期化する場合や、旧 `venv` から移行する場合に実行してください。仮想環境の実行ファイルには作成時のパスが含まれるため、ディレクトリ名だけ変更せず、既存の仮想環境を削除して `.venv` を作り直します。必要なパッケージは `requirements.txt` から再インストールします。
-
-**Linux**
-
-```bash
-deactivate 2>/dev/null || true
-rm -rf .venv venv
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-**Windows (PowerShell)**
-
-```powershell
-deactivate 2>$null
-Remove-Item -Recurse -Force .venv, venv -ErrorAction SilentlyContinue
-python -m venv .venv
-.\.venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
