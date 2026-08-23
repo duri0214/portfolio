@@ -1,8 +1,72 @@
-"""HOME とカタログ詳細ページで共有するカタログ定義。"""
+"""HOME とカタログ詳細ページで共有するカタログの値を定義する。"""
+
+from dataclasses import dataclass, replace
 
 DEFAULT_THUMBNAIL = "no-image.png"
 
-CATALOGS = (
+
+@dataclass(frozen=True)
+class Catalog:
+    """HOME に表示するアプリケーションのカタログ。
+
+    Attributes:
+        slug: カタログを識別するスラッグ。
+        detail_path: 詳細画面のURLパス。
+        detail_url_name: 詳細画面のURL名。
+        app_url_name: アプリケーション画面のURL名。
+        external_url: 外部アプリケーションのURL。
+        app_label: Djangoアプリケーションラベル。
+        thumbnail: サムネイルのファイル名。
+        alt: サムネイル画像の代替テキスト。
+        category: 表示するカテゴリ名。
+        category_class: カテゴリ表示用のCSSクラス。
+        title: カタログのタイトル。
+        description: カタログの説明。
+        detail_url: 解決済みの詳細画面URL。
+        app_url: 解決済みのアプリケーションURL。
+    """
+
+    slug: str
+    detail_path: str
+    detail_url_name: str
+    app_url_name: str | None
+    external_url: str | None
+    app_label: str
+    thumbnail: str | None
+    alt: str
+    category: str
+    category_class: str
+    title: str
+    description: str
+    detail_url: str | None = None
+    app_url: str | None = None
+
+    @property
+    def thumbnail_name(self) -> str:
+        """表示するサムネイルのファイル名を返す。"""
+        return self.thumbnail or DEFAULT_THUMBNAIL
+
+    @property
+    def thumbnail_path(self) -> str:
+        """表示するサムネイルの静的ファイルパスを返す。"""
+        return f"home/images/{self.thumbnail_name}"
+
+    def with_urls(self, *, detail_url: str, app_url: str) -> "Catalog":
+        """画面表示に必要なURLを設定した新しいカタログを返す。"""
+        return replace(self, detail_url=detail_url, app_url=app_url)
+
+    @classmethod
+    def all(cls) -> tuple["Catalog", ...]:
+        """登録済みのカタログを返す。"""
+        return tuple(cls(**definition) for definition in _CATALOG_DEFINITIONS)
+
+    @classmethod
+    def get(cls, slug: str) -> "Catalog":
+        """スラッグに対応するカタログを返す。"""
+        return cls(**_CATALOG_DEFINITIONS_BY_SLUG[slug])
+
+
+_CATALOG_DEFINITIONS = (
     {
         "slug": "hospital",
         "detail_path": "about/hospital/",
@@ -229,23 +293,6 @@ CATALOGS = (
     },
 )
 
-CATALOGS_BY_SLUG = {catalog["slug"]: catalog for catalog in CATALOGS}
-
-
-def get_catalog(slug):
-    """
-    指定した slug のカタログ定義を返す。
-
-    Args:
-        slug: カタログを識別する slug。
-
-    Returns:
-        表示に利用するカタログ定義のコピー。サムネイル未提供の場合は
-        ``DEFAULT_THUMBNAIL`` を設定する。
-
-    Raises:
-        KeyError: 登録されていない slug が指定された場合。
-    """
-    catalog = CATALOGS_BY_SLUG[slug]
-    thumbnail = catalog["thumbnail"] or DEFAULT_THUMBNAIL
-    return {**catalog, "thumbnail": thumbnail}
+_CATALOG_DEFINITIONS_BY_SLUG = {
+    definition["slug"]: definition for definition in _CATALOG_DEFINITIONS
+}

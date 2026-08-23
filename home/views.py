@@ -1,55 +1,52 @@
+"""HOME画面とカタログ詳細画面のビューを定義する。"""
+
 from django.urls import reverse
 from django.views.generic import TemplateView
 
-from home.catalogs import CATALOGS, get_catalog
+from home.domain.valueobject.catalog import Catalog
 
 
-def build_catalog_context(slug):
-    """
-    カタログ定義に表示用のサムネイルパスと各リンクを追加する。
+class CatalogContextMixin:
+    """カタログをテンプレート表示用の値に変換する。"""
 
-    Args:
-        slug: 表示対象のカタログを識別する slug。
-
-    Returns:
-        HOME と詳細ページのテンプレートが利用する表示用のカタログ情報。
-    """
-    catalog = get_catalog(slug)
-    catalog["thumbnail_path"] = f"home/images/{catalog['thumbnail']}"
-    catalog["detail_url"] = reverse(f"home:{catalog['detail_url_name']}")
-
-    if catalog["app_url_name"]:
-        catalog["app_url"] = reverse(catalog["app_url_name"])
-    else:
-        catalog["app_url"] = catalog["external_url"]
-
-    return catalog
+    def _catalog_for_display(self, catalog: Catalog) -> Catalog:
+        """URLを解決したカタログを返す。"""
+        app_url = (
+            reverse(catalog.app_url_name)
+            if catalog.app_url_name
+            else catalog.external_url
+        )
+        return catalog.with_urls(
+            detail_url=reverse(f"home:{catalog.detail_url_name}"),
+            app_url=app_url,
+        )
 
 
-class IndexView(TemplateView):
+class IndexView(CatalogContextMixin, TemplateView):
+    """全カタログを表示するHOME画面のビュー。"""
+
     template_name = "home/index.html"
 
     def get_context_data(self, **kwargs):
-        """全カタログの表示用定義を HOME のコンテキストへ渡す。"""
+        """全カタログを含むテンプレートコンテキストを返す。"""
         context = super().get_context_data(**kwargs)
         context["catalogs"] = [
-            build_catalog_context(catalog["slug"]) for catalog in CATALOGS
+            self._catalog_for_display(catalog) for catalog in Catalog.all()
         ]
         return context
 
 
-class CatalogDetailView(TemplateView):
-    """
-    カタログ定義に対応する詳細ページを表示する共通ビュー。
+class CatalogDetailView(CatalogContextMixin, TemplateView):
+    """指定したカタログの詳細画面を表示するビュー。
 
     Attributes:
-        catalog_slug: 表示対象のカタログを識別する slug。
+        catalog_slug: 表示対象のカタログを識別するスラッグ。
     """
 
     catalog_slug = None
 
     def get_context_data(self, **kwargs):
-        """対象カタログの表示用定義を詳細ページのコンテキストへ渡す。"""
+        """対象カタログを含むテンプレートコンテキストを返す。"""
         context = super().get_context_data(**kwargs)
-        context["catalog"] = build_catalog_context(self.catalog_slug)
+        context["catalog"] = self._catalog_for_display(Catalog.get(self.catalog_slug))
         return context

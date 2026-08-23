@@ -3,7 +3,7 @@ from pathlib import Path
 from django.test import SimpleTestCase
 from django.urls import reverse
 
-from home.catalogs import CATALOGS, DEFAULT_THUMBNAIL
+from home.domain.valueobject.catalog import Catalog
 
 
 class BookmanHomeTests(SimpleTestCase):
@@ -45,18 +45,16 @@ class BookmanHomeTests(SimpleTestCase):
         - 処理: 各詳細ページを GET する。
         - 期待値: ヘッダーにアプリを開くリンクが表示されること。
         """
-        for catalog in CATALOGS:
-            if not catalog["app_url_name"]:
+        for catalog in Catalog.all():
+            if not catalog.app_url_name:
                 continue
 
-            with self.subTest(slug=catalog["slug"]):
-                response = self.client.get(
-                    reverse(f"home:{catalog['detail_url_name']}")
-                )
+            with self.subTest(slug=catalog.slug):
+                response = self.client.get(reverse(f"home:{catalog.detail_url_name}"))
 
-                app_url = reverse(catalog["app_url_name"])
+                app_url = reverse(catalog.app_url_name)
                 self.assertContains(response, app_url)
-                self.assertContains(response, f"{catalog['app_label']}を開く")
+                self.assertContains(response, f"{catalog.app_label}を開く")
                 button_href = f'href="{app_url}" class="btn btn-primary"'
                 self.assertEqual(response.content.decode().count(button_href), 1)
                 self.assertNotContains(
@@ -102,15 +100,13 @@ class CatalogDefinitionTests(SimpleTestCase):
         - 期待値: 登録漏れや存在しない画像参照がないこと。
         """
         image_directory = Path(__file__).parent / "static" / "home" / "images"
-        registered_images = {
-            catalog["thumbnail"] or DEFAULT_THUMBNAIL for catalog in CATALOGS
-        }
+        registered_images = {catalog.thumbnail_name for catalog in Catalog.all()}
         actual_images = {path.name for path in image_directory.glob("*.png")}
 
         self.assertEqual(actual_images, registered_images)
-        for catalog in CATALOGS:
-            if catalog["thumbnail"]:
-                self.assertEqual(catalog["thumbnail"], f"{catalog['slug']}.png")
+        for catalog in Catalog.all():
+            if catalog.thumbnail:
+                self.assertEqual(catalog.thumbnail, f"{catalog.slug}.png")
 
     def test_home_and_catalog_details_use_shared_thumbnail_definitions(self):
         """
@@ -121,16 +117,15 @@ class CatalogDefinitionTests(SimpleTestCase):
         """
         home_response = self.client.get(reverse("home:index"))
 
-        for catalog in CATALOGS:
-            thumbnail = catalog["thumbnail"] or DEFAULT_THUMBNAIL
-            image_src = f"/static/home/images/{thumbnail}"
-            with self.subTest(page="home", slug=catalog["slug"]):
+        for catalog in Catalog.all():
+            image_src = f"/static/{catalog.thumbnail_path}"
+            with self.subTest(page="home", slug=catalog.slug):
                 self.assertContains(home_response, f'src="{image_src}"')
-                self.assertContains(home_response, f'alt="{catalog["alt"]}"')
+                self.assertContains(home_response, f'alt="{catalog.alt}"')
 
             detail_response = self.client.get(
-                reverse(f"home:{catalog['detail_url_name']}")
+                reverse(f"home:{catalog.detail_url_name}")
             )
-            with self.subTest(page="detail", slug=catalog["slug"]):
+            with self.subTest(page="detail", slug=catalog.slug):
                 self.assertContains(detail_response, f'src="{image_src}"')
-                self.assertContains(detail_response, f'alt="{catalog["alt"]}"')
+                self.assertContains(detail_response, f'alt="{catalog.alt}"')
