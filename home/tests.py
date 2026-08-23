@@ -3,7 +3,7 @@ from pathlib import Path
 from django.test import SimpleTestCase
 from django.urls import reverse
 
-from home.domain.valueobject.catalog import Catalog
+from home.domain.valueobject.catalog import Catalog, DEFAULT_THUMBNAIL
 
 
 class BookmanHomeTests(SimpleTestCase):
@@ -97,10 +97,12 @@ class CatalogDefinitionTests(SimpleTestCase):
         シナリオ:
         - 入力: カタログ定義と home のサムネイルディレクトリにある PNG ファイル。
         - 処理: 定義上の画像名と実ファイル名を集合として比較する。
-        - 期待値: 登録漏れや存在しない画像参照がないこと。
+        - 期待値: 登録漏れや存在しない画像参照がなく、共有フォールバック画像も存在すること。
         """
         image_directory = Path(__file__).parent / "static" / "home" / "images"
-        registered_images = {catalog.thumbnail_name for catalog in Catalog.all()}
+        registered_images = {
+            catalog.thumbnail_name for catalog in Catalog.all()
+        } | {DEFAULT_THUMBNAIL}
         actual_images = {path.name for path in image_directory.glob("*.png")}
 
         self.assertEqual(actual_images, registered_images)
