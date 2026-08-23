@@ -8,7 +8,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # .env ファイルを読み込む
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parents[2]
 load_dotenv(BASE_DIR / ".env")
 
 # ロガーの設定
@@ -26,7 +26,7 @@ class MailSendError(Exception):
 class MailService:
     """
     SMTPを使用してメールを送信するスタンドアロンサービス。
-    Djangoなどのフレームワークに依存せず、lib/mail/.env の設定を使用して動作します。
+    Djangoなどのフレームワークに依存せず、プロジェクトルートの .env 設定を使用して動作します。
     """
 
     def __init__(self):
@@ -60,7 +60,7 @@ class MailService:
             )
 
     def send_mail(
-        self, to: str, subject: str, body: str, html_body: str = None
+        self, to: str, subject: str, body: str, html_body: str | None = None
     ) -> bool:
         """
         メールを送信します。

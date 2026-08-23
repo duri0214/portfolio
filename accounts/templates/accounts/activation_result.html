@@ -1,0 +1,21 @@
+{% extends "home/base.html" %}
+
+{% block content %}
+    <div class="container" style="margin-top: 100px">
+        <div class="card col-md-6 mx-auto shadow">
+            <div class="card-body text-center">
+                {% if activation_status == "valid" %}
+                    <h1 class="h4">本登録が完了しました</h1>
+                    <p>ログインしてサービスをご利用いただけます。</p>
+                {% elif activation_status == "expired" %}
+                    <h1 class="h4">認証リンクの有効期限が切れています</h1>
+                    <p>お手数ですが、もう一度会員登録を行ってください。</p>
+                {% else %}
+                    <h1 class="h4">無効な認証リンクです</h1>
+                    <p>リンクが間違っているか、すでに使用されています。</p>
+                {% endif %}
+                <a class="btn btn-primary mt-2" href="{% url 'login' %}">ログイン画面へ</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

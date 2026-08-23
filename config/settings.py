@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.humanize",
+    "accounts",
     "vietnam_research",
     "usa_research",
     "gmarker",
@@ -147,6 +148,12 @@ USE_TZ = True
 # login
 LOGIN_REDIRECT_URL = "vnm:index"
 LOGOUT_REDIRECT_URL = "vnm:index"
+
+# メール認証
+MAIL_SEND_ENABLED = os.getenv("MAIL_SEND_ENABLED", "False").lower() == "true"
+ACCOUNT_ACTIVATION_TIMEOUT = int(
+    os.getenv("ACCOUNT_ACTIVATION_TIMEOUT", str(60 * 60 * 24 * 3))
+)
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/

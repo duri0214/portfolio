@@ -38,6 +38,7 @@ urlpatterns = [
     path("robots.txt", robots_txt, name="robots_txt"),
     path("sitemap.xml", sitemap_xml, name="sitemap_xml"),
     path("", include("home.urls")),
+    path("accounts/", include("accounts.urls")),
     path("vietnam_research/", include("vietnam_research.urls")),
     path("usa_research/", include("usa_research.urls")),
     path("gmarker/", include("gmarker.urls")),

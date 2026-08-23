@@ -1,0 +1,25 @@
+{% extends "home/base.html" %}
+
+{% block content %}
+    <div class="container" style="margin-top: 100px">
+        <div class="card col-md-6 mx-auto shadow">
+            <div class="card-body text-center">
+                {% if mail_error %}
+                    <h1 class="h4">メール送信に失敗しました</h1>
+                    <p class="mb-0">時間をおいて、もう一度会員登録を行ってください。</p>
+                {% elif mail_sent %}
+                    <h1 class="h4">仮登録を受け付けました</h1>
+                    <p class="mb-0">本登録用のメールを送信しました。メール内のリンクを開いて登録を完了してください。</p>
+                {% else %}
+                    <h1 class="h4">仮登録を受け付けました</h1>
+                    <p>メール送信は現在無効です。本登録はメール送信が有効な環境で完了できます。</p>
+                    {% if activation_url %}
+                        <p class="small">開発・テスト確認用の本登録リンク:</p>
+                        <a class="btn btn-outline-primary" href="{{ activation_url }}">本登録を完了する</a>
+                    {% endif %}
+                {% endif %}
+                <p class="mt-4 mb-0"><a href="{% url 'login' %}">ログイン画面へ戻る</a></p>
+            </div>
+        </div>
+    </div>
+{% endblock %}
