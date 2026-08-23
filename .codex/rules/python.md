@@ -134,10 +134,47 @@ summary = f"土壌診断の結果、{'・'.join([res.label for res in [ph_res, e
 ## Value Object (VO) と Domain Model の責務
 
 - Value Object や Domain Model を作成・変更するときだけ、`.codex/rules/references/python-value-object.md` を読む。
-- Value Object や Domain Model の責務に属する処理は、モジュール関数として定義して関数だけを直接 import（生 import）しない。責務を持つクラスのメソッドとして定義し、クラス経由で利用する。
-- 同じ責務を持つクラス群で共通の変換・検証処理を使う場合は、責務を表す共通基底クラスのメソッドとして定義して継承する。
+
+## クラスが使う共通処理と継承
+
+- クラスが使用する日付形式の変換、保存値の復元、`to_dict` などの処理を複数クラスで共有する場合は、モジュール関数を直接 import（生 import）して使わない。同じ責務を持つクラス群の親クラスにメソッドとして定義し、利用側のクラスがその親クラスを継承する。
+- 親クラスはメソッド名ではなく、責務と利用するクラス群を単位に作る。日付形式の変換と直列化など責務が異なる処理は、それぞれ別の親クラスへ分ける。
+- 同じ `to_dict` という名前でも、実行履歴、記事、APIレスポンスなど責務が異なるクラスへ、`to_dict` だけを持つ汎用的な `ToDictMixin` を横断的に継承させない。責務ごとの親クラスを作るか、共有が不要なら各クラス自身に実装する。
 - `classmethod` から継承した共通メソッドを呼ぶ場合は、具象クラス名を固定せず `cls` 経由で呼び出す。
-- 責務が異なるクラス間で処理を共有するためだけに継承を導入しない。
+
+**良い例:**
+
+```python
+class _AgentExecutionValueParser:
+    @staticmethod
+    def _datetime_from_value(value: str) -> datetime:
+        return datetime.fromisoformat(value)
+
+
+class AgentRun(_AgentExecutionValueParser):
+    @classmethod
+    def from_dict(cls, value: dict[str, str]) -> AgentRun:
+        return cls(started_at=cls._datetime_from_value(value["started_at"]))
+```
+
+**悪い例:**
+
+```python
+from common.parsers import datetime_from_value
+
+
+class ToDictMixin:
+    def to_dict(self) -> dict[str, object]:
+        ...
+
+
+class AgentRun(ToDictMixin):
+    ...
+
+
+class Article(ToDictMixin):
+    ...
+```
 
 ## Domain 層の配置
 
