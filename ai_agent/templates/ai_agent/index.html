@@ -81,13 +81,16 @@
                         {% csrf_token %}
                         <input type="hidden" name="action" value="stream_agent">
                         <input type="hidden" name="line_id" value="{{ line.line_id }}">
-                        <button class="btn w-100 h-100 text-start {% if line.line_id == game.selected_line_id %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit" data-agent-submit {% if not selected_mondai or selected_mondai.solved %}disabled{% endif %}>
+                        <button class="btn w-100 h-100 text-start {% if line.line_id == game.selected_line_id %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit" data-agent-submit {% if not can_execute_agent or not selected_mondai or selected_mondai.solved %}disabled{% endif %}>
                             {{ line.label }}
                         </button>
                     </form>
                 </div>
                 {% endfor %}
                 </div>
+                {% if not can_execute_agent %}
+                <p class="small text-muted mb-0">管理者権限が必要なため、Agentへ最終決定するボタンは無効化されています。</p>
+                {% endif %}
             </section>
         </div>
         <div class="col-lg-6">

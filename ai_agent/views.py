@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from django.contrib import messages
 from django.core import signing
+from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse, StreamingHttpResponse
 from django.shortcuts import redirect
 from django.views.generic import TemplateView
@@ -46,6 +47,7 @@ class IndexView(TemplateView):
         context["selected_mondai"] = (
             game.mondai(game.selected_mondai_id) if game.selected_mondai_id else None
         )
+        context["can_execute_agent"] = self.request.user.is_superuser
         context["board_cells"] = self._board_cells(game)
         return context
 
@@ -67,6 +69,7 @@ class IndexView(TemplateView):
                     f"{event.space_name}へ移動しました。{event.summary}",
                 )
             elif action == "stream_agent":
+                self._ensure_superuser(request)
                 if not game.selected_mondai_id:
                     raise ValueError("先に対象の問題を選択してください")
                 base_state = game
@@ -81,6 +84,7 @@ class IndexView(TemplateView):
                 self._save_state(response, game)
                 return response
             elif action == "select_line":
+                self._ensure_superuser(request)
                 if not game.selected_mondai_id:
                     raise ValueError("先に対象の問題を選択してください")
                 game = GameService.select_line(game, request.POST["line_id"])
@@ -160,6 +164,12 @@ class IndexView(TemplateView):
         response["X-Accel-Buffering"] = "no"
         self._delete_legacy_state_cookie(response)
         return response
+
+    @staticmethod
+    def _ensure_superuser(request):
+        """Agent実行はスーパーユーザーからの要求だけを受け付ける。"""
+        if not request.user.is_superuser:
+            raise PermissionDenied("Agentの最終決定には管理者権限が必要です")
 
     @staticmethod
     def _sse(payload):
