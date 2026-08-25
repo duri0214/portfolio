@@ -1,37 +1,33 @@
+import os
 import re
 from datetime import date
 
 from django.db import transaction
-from ...models import Meeting, Speech
-from .kokkai_api import KokkaiAPIClient
-from ..valueobject.meeting import MeetingRecord, SpeechRecord
 
 from lib.llm.service.completion import OpenAILlmRagService
 from lib.llm.valueobject.completion import RagDocument
-import os
+
+from ..repository.meeting_repository import MeetingRepository
+from ..valueobject.meeting import MeetingRecord, SpeechRecord
+from .kokkai_api import KokkaiAPIClient
 
 
 class KokkaiPipeline:
     """
-    国会議事録を「思考のためのデータ変換装置」へと昇華させるナレッジ工場のパイプライン。
+    選択された会議録の全文を保存し、必要な場合だけEmbeddingへ登録する。
 
-    [設計思想: ドメイン粒度で並べたバッチの連なり]
-    このパイプラインは、単なる技術的な処理の羅列ではなく、国会の制度や議論の構造（ドメイン）に
-    即した抽象度で設計された、一連のバッチ処理の連なりです。
-
-    同じドメイン抽象度の処理をバッチ単位で直列に接続することで、
-    巨大なJSONデータを、政治を観測し思考するための「知識構造」へと変換します。
-
-    工程バッチフロー:
-    [開催日バッチ] ─▶ [会議バッチ] ─▶ [議題バッチ] ─▶ [発言バッチ] ─▶ [話題バッチ:RAG]
-
-    各工程は「国会の議論構造」を復元しながら価値を付与し、
-    最終的に市民が政治を多角的に理解できる知識インフラへと昇華させます。
+    会議録メタデータの索引化は MeetingIndexService が担当し、このクラスでは実行しない。
     """
 
-    def __init__(self, api_key: str | None = None):
-        self.client = KokkaiAPIClient()
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+    def __init__(
+        self,
+        api_key: str | None = None,
+        client: KokkaiAPIClient | None = None,
+        repository: MeetingRepository | None = None,
+    ) -> None:
+        self.client = client or KokkaiAPIClient()
+        self.repository = repository or MeetingRepository()
+        self.api_key = os.getenv("OPENAI_API_KEY") if api_key is None else api_key
 
         if self.api_key:
             self.rag_service = OpenAILlmRagService(
@@ -43,11 +39,7 @@ class KokkaiPipeline:
             self.rag_service = None
 
     def process_and_save_meetings(self, start_date: date, end_date: date):
-        """
-        [工程1: 開催日バッチ ─▶ 会議バッチ]
-        指定された日付範囲（開催日粒度）を巡回し、各開催日に含まれる会議（会議粒度）を抽出する。
-        大量の会議録をAPIから取得し、1件ずつのドメインオブジェクトとして後続の工程に投入する。
-        """
+        """互換性のため、指定期間の会議録本文をすべて取得・保存する。"""
         print(f"Starting pipeline for period: {start_date} to {end_date}")
         current_start = 1
         while True:
@@ -82,58 +74,35 @@ class KokkaiPipeline:
             current_start = result.next_record_position
         print("Pipeline execution completed.")
 
+    def import_selected_meetings(self, meeting_ids: list[str]) -> int:
+        """指定された会議録IDだけを全文取得し、保存した件数を返す。"""
+        imported_count = 0
+        for meeting_id in dict.fromkeys(meeting_ids):
+            result = self.client.fetch_meeting(meeting_id)
+            for meeting_record in result.meeting_records:
+                self._process_meeting_record(meeting_record)
+                imported_count += 1
+        return imported_count
+
     def _process_meeting_record(self, a_meeting: MeetingRecord):
         """
-        [工程2-5: 会議 ─▶ 議題 ─▶ 発言 ─▶ 話題バッチ]
-        1つの会議（会議粒度）を、議題・発言・話題（論点）というドメイン粒度に沿って分解・変換する。
+        会議録1件の発言を保存し、設定済みの場合だけEmbeddingへ登録する。
 
-        このメソッドは、1つの会議録をドメインの抽象度を下げながら価値を高めるプロセスを担います：
-
-        - 工程2: 会議バッチ (DB保存): 会議の基本情報を永続化する。
-          ※ Meeting テーブルは「1会議（セッション）につき 1レコード」として保持されます。
-        - 工程3: 議題バッチ (文脈化): 会議内を意味のある議題・論点セクションに分割する。
-          ※ 議題名は RAG のメタデータとしてのみ活用され、DBのレコード分割には影響しません。
-        - 工程4: 発言バッチ: 各発言を Speech レコードとして保存し、ベクトル化（Embedding）を行う。
-        - 工程5: 話題バッチ (RAG登録): ベクトルデータを知識ベースに格納し、検索可能にする。
-
-        [エラーハンドリングと整合性]
-        transaction.atomic() により、このメソッド内（1つの会議単位）の処理はアトミックに保証されます。
-        途中でエラーが発生した場合は、その会議に関するDBおよびベクトルDBへの変更のみがロールバックされます。
-        呼び出し元のループ全体がロールバックされることはありません。
+        索引更新ではこのメソッドを呼ばないため、発言削除やEmbeddingは発生しない。
         """
-        with transaction.atomic():
-            meeting_obj, created = Meeting.objects.update_or_create(
-                min_id=a_meeting.issue_id,
-                defaults={
-                    "meeting_date": a_meeting.date_obj,
-                    "session_number": a_meeting.session,
-                    "house": a_meeting.name_of_house,
-                    "committee": a_meeting.name_of_meeting,
-                    "meeting_number": a_meeting.issue,
-                    "url": a_meeting.meeting_url,
-                },
-            )
-            if not created:
-                meeting_obj.speeches.all().delete()
-            agendas = self._split_by_agenda(a_meeting)
-            total_speech_order = 0
-            rag_docs = []
-            for agenda_title, speeches in agendas:
-                for s in speeches:
-                    total_speech_order += 1
-                    role = s.speaker_role
-                    Speech.objects.create(
-                        meeting=meeting_obj,
-                        speaker_name=s.speaker,
-                        speaker_role=role,
-                        speaker_affiliation=s.speaker_group,
-                        speech_text=s.speech or "",
-                        speech_order=total_speech_order,
-                    )
-                    if self.rag_service and s.speech:
-                        stable_id_prefix = f"{a_meeting.issue_id}_{total_speech_order}"
-                        doc = RagDocument(
-                            page_content=s.speech,
+        agendas = self._split_by_agenda(a_meeting)
+        total_speech_order = 0
+        speeches = []
+        rag_docs = []
+        for agenda_title, agenda_speeches in agendas:
+            for speech in agenda_speeches:
+                total_speech_order += 1
+                speeches.append((speech, total_speech_order))
+                if self.rag_service and speech.speech:
+                    stable_id_prefix = f"{a_meeting.issue_id}_{total_speech_order}"
+                    rag_docs.append(
+                        RagDocument(
+                            page_content=speech.speech,
                             metadata={
                                 "meeting_date": a_meeting.date,
                                 "session_number": a_meeting.session,
@@ -141,13 +110,15 @@ class KokkaiPipeline:
                                 "committee": a_meeting.name_of_meeting,
                                 "meeting_number": a_meeting.issue,
                                 "agenda_title": agenda_title,
-                                "speaker_name": s.speaker,
-                                "speaker_role": role or "",
+                                "speaker_name": speech.speaker,
+                                "speaker_role": speech.speaker_role or "",
                                 "url": a_meeting.meeting_url,
                                 "id": stable_id_prefix,
                             },
                         )
-                        rag_docs.append(doc)
+                    )
+        with transaction.atomic():
+            self.repository.replace_meeting_contents(a_meeting, speeches)
             if self.rag_service and rag_docs:
                 self.rag_service.upsert_documents(rag_docs)
 
@@ -155,43 +126,7 @@ class KokkaiPipeline:
     def _split_by_agenda(
         a_meeting: MeetingRecord,
     ) -> list[tuple[str, list[SpeechRecord]]]:
-        """
-        [工程3: 議題バッチ]
-        会議録という巨大なテキストバッチを、議論の主題（ドメイン境界）に基づいて、
-        より小さな「議題・論点バッチ」へと再構成する。
-
-        [なぜ upsert_documents の自動分割があるのに、このメソッドが必要なのか]
-        lib/llm/service/completion.py の upsert_documents で行われる分割は、
-        あくまで「APIの制限を回避するための技術的な固定長分割」です。
-        一方、この _split_by_agenda は「国会の議論構造に基づいた意味的な分割」を行います。
-
-        これは、LangChain等で長大なPDFを処理する際に、各チャンクに「ページ番号」や
-        「章タイトル」をメタデータとして付与し、分割後も元の文脈を辿れるようにする手法と同じ設計思想です。
-
-        [話の流れの整合性について]
-        このメソッドによる「砕き」は、発言の時系列順序を一切崩しません。
-        単に発言の連なりの上に「ここからこの話題」というインデックス（しおり／ブックマーク）を置くだけの処理です。
-        そのため、話の流れがガチャガチャになることはなく、文脈を維持したまま構造化が可能です。
-
-        [人間境界とAI境界の両立]
-        この設計により、以下の2つの境界を両立させています：
-        1. MySQL（人間境界）: ユーザーが閲覧する単位（1会議1レコード）。
-        2. Chroma DB（AI境界）: 検索に最適化された単位（議題メタデータ付きの細かいチャンク）。
-
-        このメソッドを維持することで以下の価値が生まれます：
-        1. 意味的なメタデータの付与:
-           各発言に「どの議題の下で行われたか」という agenda_title メタデータを付与できます。
-           技術的に「バナナが腐る」がちぎれたとしても、「腐敗のメカニズムに関する議題」という
-           強力な文脈を保持したまま検索・回答生成が可能になります。
-        2. RAG精度の向上:
-           検索時に「議題名」が補助情報として機能し、生成時にはLLMが「この発言はどのトピックの審議中か」
-           を正しく理解できるようになります。
-        3. 制度への適合:
-           国会というドメインの性質（議題単位の進行）をデータ構造に反映できます。
-
-        この工程は、単なるテキスト分割ではなく、国会の議論構造をデータ上に復元する「意味的再構成」であり、
-        技術的な制約回避とは独立した、ナレッジの価値を高めるための必須工程です。
-        """
+        """発言順を維持したまま、RAG用に発言を議題ごとにまとめる。"""
         agendas = []
         # 議題（○...）が検出される前の発言（開会宣言や出席議員の報告など）を
         # 「冒頭」という仮想的な議題タイトルでグループ化する。

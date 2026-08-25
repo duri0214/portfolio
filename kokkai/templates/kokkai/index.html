@@ -9,14 +9,22 @@
     </nav>
     <div class="bg-light p-5 rounded mb-4">
         <h1 class="display-5">国会議事録 開催実績インデックス</h1>
-        <p class="lead">実際に議事録が存在する開催日を抽出します。</p>
+        <p class="lead mb-0">議事録の所在を確認してから、必要な会議録だけ全文を取得します。</p>
     </div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}" role="alert">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
 
     <div class="card mb-4">
         <div class="card-body">
-            <h5 class="card-title">期間指定クロール</h5>
+            <h5 class="card-title">会議録メタデータの索引作成</h5>
+            <p class="card-text text-muted">発言本文、Embedding、LLMは取得・実行しません。</p>
             <form method="post">
                 {% csrf_token %}
+                <input type="hidden" name="action" value="create_index">
                 <div class="row g-3">
                     <div class="col-md-5">
                         <label for="start_date" class="form-label">開始日</label>
@@ -27,7 +35,7 @@
                         <input type="date" id="end_date" name="end_date" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
                     </div>
                     <div class="col-md-2 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary w-100">実行</button>
+                        <button type="submit" class="btn btn-primary w-100">索引を作成</button>
                     </div>
                 </div>
             </form>
@@ -36,7 +44,7 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h3>開催日一覧</h3>
+            <h3>会議録一覧</h3>
             <div class="d-flex align-items-center">
                 <a href="https://kokkai.ndl.go.jp/#/result" target="_blank" class="btn btn-link p-0 me-2">
                     会議録全量へのリンク（結果を表示）
@@ -53,18 +61,29 @@
 
     <div class="alert alert-info py-3 mb-4">
         <i class="bi bi-info-circle-fill me-2"></i>
-        <strong>お知らせ:</strong><br>
-        先方システムの都合上、日付別に直接検索結果を表示するリンクを貼ることができません。<br>
-        お手数ですが、上記の「会議録全量へのリンク」から、手動で検索条件を入力してください。<br>
-        なお、日付ごとの発言詳細や各件数の詳細については、後ほど実装予定です。
+        <strong>使い方:</strong><br>
+        まず期間を指定して索引を作成し、一覧から本文を取得する会議録を選択してください。<br>
+        索引の更新は、既に保存した発言やChromaのデータを削除しません。
     </div>
 
-    <div class="table-responsive">
-        <table class="table table-striped">
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="fetch_selected">
+        <input type="hidden" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+        <input type="hidden" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+        <div class="d-flex justify-content-end mb-3">
+            <button type="submit" class="btn btn-primary">選択した会議録の本文を取得</button>
+        </div>
+        <div class="table-responsive">
+        <table class="table table-striped align-middle">
             <thead>
                 <tr>
+                    <th scope="col">取得</th>
                     <th>日付</th>
-                    <th>委員会 / 議題</th>
+                    <th>会議情報</th>
+                    <th>会議録ID</th>
+                    <th>参照URL</th>
+                    <th>本文</th>
                 </tr>
             </thead>
             <tbody>
@@ -72,25 +91,42 @@
                 {% for day in date_list %}
                 {% for meeting in day.list %}
                 <tr>
+                    <td>
+                        <input class="form-check-input" type="checkbox" name="meeting_ids" value="{{ meeting.min_id }}" aria-label="{{ meeting.committee }} {{ meeting.meeting_number }} を選択">
+                    </td>
                     {% if forloop.first %}
                     <td rowspan="{{ day.list|length }}">
                         {{ day.grouper|date:"Y-m-d" }}({{ day.list|length }})
                     </td>
                     {% endif %}
                     <td>
-                        <a href="{% url 'kokkai:meeting_detail' meeting.pk %}">
-                            {{ meeting.committee }} {{ meeting.meeting_number }}
-                        </a>
+                        {{ meeting.house }}<br>
+                        <a href="{% url 'kokkai:meeting_detail' meeting.pk %}">{{ meeting.committee }} {{ meeting.meeting_number }}</a>
+                    </td>
+                    <td><code>{{ meeting.min_id }}</code></td>
+                    <td>
+                        <a href="{{ meeting.url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">会議録</a>
+                        {% if meeting.pdf_url %}
+                        <a href="{{ meeting.pdf_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">PDF</a>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if meeting.speech_count %}
+                        <span class="badge text-bg-success">取得済み</span>
+                        {% else %}
+                        <span class="badge text-bg-secondary">未取得</span>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
                 {% empty %}
                 <tr>
-                    <td colspan="2" class="text-center">データがありません。期間を指定して実行してください。</td>
+                    <td colspan="6" class="text-center">指定期間に議事録はありません。期間を変更して索引を作成してください。</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-    </div>
+        </div>
+    </form>
 </div>
 {% endblock %}
