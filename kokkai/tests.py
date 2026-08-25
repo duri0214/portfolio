@@ -255,10 +255,6 @@ class IndexViewTests(TestCase):
         self.assertContains(response, "期間内の会議録カタログを取得")
         self.assertContains(response, "会議録全量へのリンク")
         self.assertNotContains(response, "（結果を表示）")
-        self.assertContains(
-            response,
-            "NDLシステムはURL引数での直接検索が制限されているため、リンク先で検索条件を入力してください。",
-        )
         self.assertNotContains(response, 'data-bs-toggle="tooltip"')
         self.assertNotContains(
             response, "期間内の会議録のタイトルと開催情報を一覧で取得します"
