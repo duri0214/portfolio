@@ -59,18 +59,18 @@
         </div>
     </div>
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
         <h3 class="mb-0">会議録一覧</h3>
-        <form method="get" class="d-flex align-items-center gap-2">
+        <form method="get" class="d-flex align-items-center gap-2 flex-nowrap">
             <input type="hidden" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
             <input type="hidden" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
-            <label for="page_size" class="form-label mb-0">表示件数</label>
-            <select id="page_size" name="page_size" class="form-select form-select-sm">
+            <label for="page_size" class="form-label mb-0 text-nowrap">表示件数</label>
+            <select id="page_size" name="page_size" class="form-select form-select-sm w-auto">
                 {% for option in page_size_options %}
                 <option value="{{ option }}" {% if option == page_size %}selected{% endif %}>{{ option }}件</option>
                 {% endfor %}
             </select>
-            <button type="submit" class="btn btn-sm btn-outline-secondary">適用</button>
+            <button type="submit" class="btn btn-sm btn-outline-secondary text-nowrap">適用</button>
         </form>
     </div>
 
