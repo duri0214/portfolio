@@ -23,8 +23,8 @@
         <strong>使い方:</strong>
         <ol class="mb-0 mt-2">
             <li>期間を指定し、「カタログを取得」を押します。</li>
-            <li>ダウンロードしたい会議録を選択します。</li>
-            <li>「選択した会議録の本文を取得」を押します。</li>
+            <li>会議録一覧から、ダウンロードしたい会議録を選択します。</li>
+            <li>「本文を取得」を押すと、選択した会議録の本文を取得・保存します。</li>
             <li>取得済みの会議録を再選択すると、本文を再取得できます。</li>
         </ol>
     </div>
@@ -69,7 +69,7 @@
         <input type="hidden" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
         <input type="hidden" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
         <div class="d-flex justify-content-end mb-3">
-            <button type="submit" class="btn btn-primary">選択した会議録の本文を取得</button>
+            <button type="submit" class="btn btn-primary">本文を取得</button>
         </div>
         <div class="table-responsive">
         <table class="table table-striped align-middle">

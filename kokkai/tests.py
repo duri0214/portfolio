@@ -266,7 +266,14 @@ class IndexViewTests(TestCase):
         self.assertContains(response, "spinner-border")
         self.assertNotContains(response, 'id="index-loading"')
         self.assertNotContains(response, "rowspan=")
-        self.assertContains(response, "ダウンロードしたい会議録を選択します")
+        self.assertContains(
+            response, "会議録一覧から、ダウンロードしたい会議録を選択します"
+        )
+        self.assertContains(
+            response,
+            "「本文を取得」を押すと、選択した会議録の本文を取得・保存します",
+        )
+        self.assertNotContains(response, "選択した会議録の本文を取得</button>")
         self.assertContains(
             response, "取得済みの会議録を再選択すると、本文を再取得できます"
         )
