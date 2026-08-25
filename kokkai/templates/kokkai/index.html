@@ -40,10 +40,6 @@
                         </button>
                     </div>
                 </div>
-                <div class="alert alert-secondary mt-3 mb-0 d-none" id="index-loading" role="status" aria-live="polite">
-                    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
-                    索引を作成中です。完了までこの画面を閉じないでください。
-                </div>
             </form>
         </div>
     </div>
@@ -135,16 +131,14 @@
     document.addEventListener("DOMContentLoaded", function () {
         const indexForm = document.getElementById("index-form");
         const submitButton = document.getElementById("index-submit");
-        const loadingMessage = document.getElementById("index-loading");
 
-        if (!indexForm || !submitButton || !loadingMessage) {
+        if (!indexForm || !submitButton) {
             return;
         }
 
         indexForm.addEventListener("submit", function () {
             submitButton.disabled = true;
             submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>索引を作成中…';
-            loadingMessage.classList.remove("d-none");
         });
     });
 </script>

@@ -249,9 +249,8 @@ class IndexViewTests(TestCase):
         self.assertContains(response, 'name="meeting_ids"')
         self.assertContains(response, "PDF")
         self.assertContains(response, 'id="index-form"')
-        self.assertContains(response, 'id="index-loading"')
-        self.assertContains(response, "索引を作成中です。")
         self.assertContains(response, "spinner-border")
+        self.assertNotContains(response, 'id="index-loading"')
         self.assertNotContains(response, "rowspan=")
 
     @patch("kokkai.views.MeetingIndexService")
