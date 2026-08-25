@@ -28,13 +28,11 @@
     <div class="card mb-4">
         <div class="card-body">
             <h5 class="card-title">期間内の会議録カタログを取得</h5>
-            <div class="d-flex align-items-center mb-3">
-                <a href="https://kokkai.ndl.go.jp/#/result" target="_blank" class="btn btn-link p-0 me-2">
-                    会議録全量へのリンク（結果を表示）
+            <div class="mb-3">
+                <a href="https://kokkai.ndl.go.jp/#/result" target="_blank" class="btn btn-link p-0">
+                    会議録全量へのリンク
                 </a>
-                <span class="badge rounded-pill bg-info text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="NDLシステムはURL引数での直接検索が制限されているため、こちらのリンクから手動で条件を入力してください。">
-                    ?
-                </span>
+                <p class="text-muted small mb-0">NDLシステムはURL引数での直接検索が制限されているため、リンク先で検索条件を入力してください。</p>
             </div>
             <form method="post" id="index-form">
                 {% csrf_token %}

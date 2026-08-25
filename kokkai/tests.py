@@ -253,6 +253,13 @@ class IndexViewTests(TestCase):
         self.assertContains(response, "衆議院")
         self.assertContains(response, "本会議 第1号")
         self.assertContains(response, "期間内の会議録カタログを取得")
+        self.assertContains(response, "会議録全量へのリンク")
+        self.assertNotContains(response, "（結果を表示）")
+        self.assertContains(
+            response,
+            "NDLシステムはURL引数での直接検索が制限されているため、リンク先で検索条件を入力してください。",
+        )
+        self.assertNotContains(response, 'data-bs-toggle="tooltip"')
         self.assertNotContains(
             response, "期間内の会議録のタイトルと開催情報を一覧で取得します"
         )
@@ -269,7 +276,7 @@ class IndexViewTests(TestCase):
         )
         self.assertLess(
             content.index("期間内の会議録カタログを取得"),
-            content.index("会議録全量へのリンク（結果を表示）"),
+            content.index("会議録全量へのリンク"),
         )
 
     @patch("kokkai.views.MeetingIndexService")
