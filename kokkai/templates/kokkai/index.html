@@ -135,6 +135,9 @@
             <ul class="pagination mb-0">
                 {% if page_obj.has_previous %}
                 <li class="page-item">
+                    <a class="page-link" href="?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}&page_size={{ page_size }}&page=1">最初へ</a>
+                </li>
+                <li class="page-item">
                     <a class="page-link" href="?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}&page_size={{ page_size }}&page={{ page_obj.previous_page_number }}">前へ</a>
                 </li>
                 {% endif %}
@@ -144,6 +147,9 @@
                 {% if page_obj.has_next %}
                 <li class="page-item">
                     <a class="page-link" href="?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}&page_size={{ page_size }}&page={{ page_obj.next_page_number }}">次へ</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}&page_size={{ page_size }}&page={{ paginator.num_pages }}">最後へ</a>
                 </li>
                 {% endif %}
             </ul>

@@ -329,14 +329,18 @@ class IndexViewTests(TestCase):
         self.assertContains(response, "60件")
         self.assertContains(response, "120件")
         self.assertContains(response, "次へ")
+        self.assertContains(response, "最後へ")
         self.assertNotContains(response, "前へ")
+        self.assertNotContains(response, "最初へ")
 
         second_page = self.client.get(reverse("kokkai:index"), {**query, "page": "2"})
 
         self.assertEqual(second_page.context["page_obj"].number, 2)
         self.assertEqual(len(second_page.context["meetings_by_date"]), 1)
         self.assertContains(second_page, "前へ")
+        self.assertContains(second_page, "最初へ")
         self.assertNotContains(second_page, "次へ")
+        self.assertNotContains(second_page, "最後へ")
 
         sixty_page = self.client.get(
             reverse("kokkai:index"), {**query, "page_size": "60"}
