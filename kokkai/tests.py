@@ -271,6 +271,10 @@ class IndexViewTests(TestCase):
         )
         self.assertContains(
             response,
+            "期間の目安がつかない場合は、「会議録全量へのリンク」から開催状況を確認します",
+        )
+        self.assertContains(
+            response,
             "「本文を取得」を押すと、選択した会議録の本文を取得・保存します",
         )
         self.assertNotContains(response, "選択した会議録の本文を取得</button>")
@@ -286,7 +290,7 @@ class IndexViewTests(TestCase):
         )
         self.assertLess(
             content.index("期間内の会議録カタログを取得"),
-            content.index("会議録全量へのリンク"),
+            content.rindex("会議録全量へのリンク"),
         )
 
     @patch("kokkai.views.MeetingIndexService")
