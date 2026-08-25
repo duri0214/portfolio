@@ -15,6 +15,8 @@ class IndexView(ListView):
     model = Meeting
     template_name = "kokkai/index.html"
     context_object_name = "meetings_by_date"
+    PAGE_SIZE_OPTIONS = (30, 60, 120)
+    DEFAULT_PAGE_SIZE = 30
 
     def get_queryset(self):
         start_date, end_date = self._get_period(self.request.GET)
@@ -29,7 +31,23 @@ class IndexView(ListView):
         start_date, end_date = self._get_period(self.request.GET)
         context["start_date"] = start_date
         context["end_date"] = end_date
+        context["page_size"] = self._get_page_size()
+        context["page_size_options"] = self.PAGE_SIZE_OPTIONS
         return context
+
+    def get_paginate_by(self, queryset):
+        return self._get_page_size()
+
+    def _get_page_size(self):
+        try:
+            page_size = int(self.request.GET.get("page_size", self.DEFAULT_PAGE_SIZE))
+        except (TypeError, ValueError):
+            return self.DEFAULT_PAGE_SIZE
+        return (
+            page_size
+            if page_size in self.PAGE_SIZE_OPTIONS
+            else self.DEFAULT_PAGE_SIZE
+        )
 
     @staticmethod
     def post(request, *args, **kwargs):

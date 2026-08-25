@@ -294,6 +294,55 @@ class IndexViewTests(TestCase):
             content.rindex("会議録全量へのリンク"),
         )
 
+    def test_index_paginates_meetings_with_native_page_size_options(self):
+        """
+        シナリオ:
+        - 入力: 同じ期間内に31件ある会議録一覧。
+        - 処理: 1ページ30件で会議録一覧を表示し、次ページへ移動する。
+        - 期待値: Django標準のページングと30・60・120件の表示件数を利用できること。
+        """
+        for index in range(31):
+            Meeting.objects.create(
+                meeting_date=date(2024, 1, 26),
+                session_number=213,
+                house="衆議院",
+                committee=f"本会議{index:02d}",
+                meeting_number="第1号",
+                min_id=f"121305254X{index:03d}20240126",
+                url=f"https://example.com/meeting/{index}",
+            )
+
+        query = {
+            "start_date": "2024-01-26",
+            "end_date": "2024-01-26",
+            "page_size": "30",
+        }
+        response = self.client.get(reverse("kokkai:index"), query)
+
+        self.assertEqual(response.context["page_size_options"], (30, 60, 120))
+        self.assertEqual(response.context["page_size"], 30)
+        self.assertEqual(response.context["paginator"].per_page, 30)
+        self.assertEqual(response.context["page_obj"].number, 1)
+        self.assertEqual(len(response.context["meetings_by_date"]), 30)
+        self.assertContains(response, "表示件数")
+        self.assertContains(response, "30件")
+        self.assertContains(response, "60件")
+        self.assertContains(response, "120件")
+        self.assertContains(response, "次へ")
+        self.assertNotContains(response, "前へ")
+
+        second_page = self.client.get(reverse("kokkai:index"), {**query, "page": "2"})
+
+        self.assertEqual(second_page.context["page_obj"].number, 2)
+        self.assertEqual(len(second_page.context["meetings_by_date"]), 1)
+        self.assertContains(second_page, "前へ")
+        self.assertNotContains(second_page, "次へ")
+
+        sixty_page = self.client.get(
+            reverse("kokkai:index"), {**query, "page_size": "60"}
+        )
+        self.assertEqual(sixty_page.context["paginator"].per_page, 60)
+
     @patch("kokkai.views.MeetingIndexService")
     def test_create_index_with_no_results_shows_period_guidance(self, service_class):
         """
