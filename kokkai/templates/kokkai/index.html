@@ -8,8 +8,8 @@
         </ol>
     </nav>
     <div class="bg-light p-5 rounded mb-4">
-        <h1 class="display-5">国会議事録 開催実績インデックス</h1>
-        <p class="lead mb-0">議事録の所在を確認してから、必要な会議録だけ全文を取得します。</p>
+        <h1 class="display-5">国会会議録カタログ</h1>
+        <p class="lead mb-0">期間内の会議録を一覧で確認し、必要な会議録だけ本文を取得します。</p>
     </div>
 
     {% if messages %}
@@ -20,8 +20,8 @@
 
     <div class="card mb-4">
         <div class="card-body">
-            <h5 class="card-title">期間内の会議録を軽量に取得</h5>
-            <p class="card-text text-muted">会議録のタイトルと開催情報を先に取得します。必要な会議録を選んでから本文を取得できます。</p>
+            <h5 class="card-title">期間内の会議録一覧を作成</h5>
+            <p class="card-text text-muted">期間内の会議録のタイトルと開催情報を一覧で取得します。必要な会議録を選んでから本文を取得できます。</p>
             <form method="post" id="index-form">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create_index">
@@ -56,16 +56,18 @@
                 </span>
             </div>
         </div>
+        {% if has_meetings %}
         <a href="{% url 'kokkai:download' %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="btn btn-outline-success">
-            Markdown形式 でダウンロード
+            一覧をMarkdownで保存
         </a>
+        {% endif %}
     </div>
 
     <div class="alert alert-info py-3 mb-4">
         <i class="bi bi-info-circle-fill me-2"></i>
         <strong>使い方:</strong><br>
-        まず期間を指定して索引を作成し、一覧から本文を取得する会議録を選択してください。<br>
-        索引の更新は、既に保存した発言やChromaのデータを削除しません。
+        まず期間を指定して会議録一覧を作成し、一覧から本文を取得する会議録を選択してください。<br>
+        一覧の更新は、既に保存した発言やChromaのデータを削除しません。
     </div>
 
     <form method="post">
@@ -114,7 +116,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" class="text-center">指定期間に議事録はありません。期間を変更して索引を作成してください。</td>
+                    <td colspan="5" class="text-center">指定期間に議事録はありません。期間を変更して一覧を作成してください。</td>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -4,7 +4,7 @@
 <div class="container">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">開催日一覧</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">会議録一覧</a></li>
             <li class="breadcrumb-item active" aria-current="page">{{ meeting.meeting_date|date:"Y-m-d" }} {{ meeting.committee }}</li>
         </ol>
     </nav>
@@ -22,7 +22,7 @@
 
     {% if not has_speeches %}
     <div class="alert alert-info" role="alert">
-        この会議録はメタデータのみ取得済みです。開催日一覧に戻り、本文取得の対象として選択してください。
+        この会議録は会議情報のみ取得済みです。会議録一覧に戻り、本文取得の対象として選択してください。
     </div>
     {% endif %}
 

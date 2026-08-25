@@ -114,15 +114,20 @@ def download_markdown(request):
     if end_date_str:
         query = query.filter(meeting_date__lte=end_date_str)
 
-    content = "\n".join(
-        f"- {meeting.meeting_date:%Y-%m-%d} | {meeting.house} | "
-        f"{meeting.committee} {meeting.meeting_number} | {meeting.min_id} | "
-        f"{meeting.url}"
-        for meeting in query
-    )
-    if content:
-        content += "\n"
+    meetings = list(query)
+    lines = ["# 会議録一覧", ""]
+    for meeting in meetings:
+        links = [f"[会議録]({meeting.url})"]
+        if meeting.pdf_url:
+            links.append(f"[PDF]({meeting.pdf_url})")
+        lines.append(
+            f"- {meeting.meeting_date:%Y-%m-%d} | {meeting.house} | "
+            f"{meeting.committee} {meeting.meeting_number} | "
+            f"{' / '.join(links)}"
+        )
 
-    response = HttpResponse(content, content_type="text/markdown")
-    response["Content-Disposition"] = 'attachment; filename="meeting_index.md"'
+    content = "\n".join(lines) + "\n" if meetings else ""
+
+    response = HttpResponse(content, content_type="text/markdown; charset=utf-8")
+    response["Content-Disposition"] = 'attachment; filename="meeting_list.md"'
     return response
