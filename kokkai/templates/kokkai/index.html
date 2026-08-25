@@ -8,15 +8,38 @@
         </ol>
     </nav>
     <div class="bg-light p-5 rounded mb-4">
-        <h1 class="display-5">国会議事録 開催実績インデックス</h1>
-        <p class="lead">実際に議事録が存在する開催日を抽出します。</p>
+        <h1 class="display-5">国会会議録ロープレ</h1>
+        <p class="lead mb-0">実際の国会会議を題材に、役割と文脈を意識した学習ゲーム</p>
+    </div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}" role="alert">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="alert alert-info py-3 mb-4">
+        <i class="bi bi-info-circle-fill me-2"></i>
+        <strong>使い方:</strong>
+        <ol class="mb-0 mt-2">
+            <li>期間を指定し、「カタログを取得」を押します。（期間の目安がつかない場合は、「会議録全量へのリンク」から開催状況を確認します。）</li>
+            <li>会議録一覧から、ロープレに使いたい会議録を選択します。</li>
+            <li>「本文を取得」を押すと、選択した会議録の本文を取得・保存します。</li>
+            <li>取得済みの会議録を再選択すると、本文を再取得できます。</li>
+        </ol>
     </div>
 
     <div class="card mb-4">
         <div class="card-body">
-            <h5 class="card-title">期間指定クロール</h5>
-            <form method="post">
+            <h5 class="card-title">期間内の会議録カタログを取得</h5>
+            <div class="mb-3">
+                <a href="https://kokkai.ndl.go.jp/#/result" target="_blank" class="btn btn-link p-0">
+                    会議録全量へのリンク
+                </a>
+            </div>
+            <form method="post" id="index-form">
                 {% csrf_token %}
+                <input type="hidden" name="action" value="create_index">
                 <div class="row g-3">
                     <div class="col-md-5">
                         <label for="start_date" class="form-label">開始日</label>
@@ -27,70 +50,129 @@
                         <input type="date" id="end_date" name="end_date" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
                     </div>
                     <div class="col-md-2 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary w-100">実行</button>
+                        <button type="submit" class="btn btn-primary w-100" id="index-submit">
+                            カタログを取得
+                        </button>
                     </div>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h3>開催日一覧</h3>
-            <div class="d-flex align-items-center">
-                <a href="https://kokkai.ndl.go.jp/#/result" target="_blank" class="btn btn-link p-0 me-2">
-                    会議録全量へのリンク（結果を表示）
-                </a>
-                <span class="badge rounded-pill bg-info text-dark" data-bs-toggle="tooltip" data-bs-placement="top" title="NDLシステムはURL引数での直接検索が制限されているため、こちらのリンクから手動で条件を入力してください。">
-                    ?
-                </span>
-            </div>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+        <h3 class="mb-0">会議録一覧</h3>
+        <form method="get" class="d-flex align-items-center gap-2 flex-nowrap">
+            <input type="hidden" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+            <input type="hidden" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+            <label for="page_size" class="form-label mb-0 text-nowrap">表示件数</label>
+            <select id="page_size" name="page_size" class="form-select form-select-sm w-auto">
+                {% for option in page_size_options %}
+                <option value="{{ option }}" {% if option == page_size %}selected{% endif %}>{{ option }}件</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-sm btn-outline-secondary text-nowrap">適用</button>
+        </form>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="fetch_selected">
+        <input type="hidden" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+        <input type="hidden" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+        <div class="d-flex justify-content-end mb-3">
+            <button type="submit" class="btn btn-primary">本文を取得</button>
         </div>
-        <a href="{% url 'kokkai:download' %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="btn btn-outline-success">
-            Markdown形式 でダウンロード
-        </a>
-    </div>
-
-    <div class="alert alert-info py-3 mb-4">
-        <i class="bi bi-info-circle-fill me-2"></i>
-        <strong>お知らせ:</strong><br>
-        先方システムの都合上、日付別に直接検索結果を表示するリンクを貼ることができません。<br>
-        お手数ですが、上記の「会議録全量へのリンク」から、手動で検索条件を入力してください。<br>
-        なお、日付ごとの発言詳細や各件数の詳細については、後ほど実装予定です。
-    </div>
-
-    <div class="table-responsive">
-        <table class="table table-striped">
+        <div class="table-responsive">
+        <table class="table table-striped align-middle">
             <thead>
                 <tr>
+                    <th scope="col">取得</th>
                     <th>日付</th>
-                    <th>委員会 / 議題</th>
+                    <th>会議情報</th>
+                    <th>参照URL</th>
+                    <th>本文</th>
                 </tr>
             </thead>
             <tbody>
-                {% regroup meetings_by_date by meeting_date as date_list %}
-                {% for day in date_list %}
-                {% for meeting in day.list %}
+                {% for meeting in meetings_by_date %}
                 <tr>
-                    {% if forloop.first %}
-                    <td rowspan="{{ day.list|length }}">
-                        {{ day.grouper|date:"Y-m-d" }}({{ day.list|length }})
-                    </td>
-                    {% endif %}
                     <td>
-                        <a href="{% url 'kokkai:meeting_detail' meeting.pk %}">
-                            {{ meeting.committee }} {{ meeting.meeting_number }}
-                        </a>
+                        <input class="form-check-input" type="checkbox" name="meeting_ids" value="{{ meeting.min_id }}" aria-label="{{ meeting.committee }} {{ meeting.meeting_number }} を選択">
+                    </td>
+                    <td>{{ meeting.meeting_date|date:"Y-m-d" }}</td>
+                    <td>
+                        {{ meeting.house }}<br>
+                        <a href="{% url 'kokkai:meeting_detail' meeting.pk %}">{{ meeting.committee }} {{ meeting.meeting_number }}</a>
+                    </td>
+                    <td>
+                        <a href="{{ meeting.url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">会議録</a>
+                        {% if meeting.pdf_url %}
+                        <a href="{{ meeting.pdf_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">PDF</a>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if meeting.speech_count %}
+                        <span class="badge text-bg-success">取得済み</span>
+                        {% else %}
+                        <span class="badge text-bg-secondary">未取得</span>
+                        {% endif %}
                     </td>
                 </tr>
-                {% endfor %}
                 {% empty %}
                 <tr>
-                    <td colspan="2" class="text-center">データがありません。期間を指定して実行してください。</td>
+                    <td colspan="5" class="text-center">指定期間に議事録はありません。期間を変更してカタログを取得してください。</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-    </div>
+        </div>
+    </form>
+
+    {% if is_paginated %}
+    <nav aria-label="会議録一覧ページ" class="mt-3">
+        <div class="d-flex flex-column align-items-center gap-2">
+            <span class="small text-muted">{{ page_obj.start_index }}-{{ page_obj.end_index }}件 / 全{{ paginator.count }}件</span>
+            <ul class="pagination mb-0">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}&page_size={{ page_size }}&page=1">最初へ</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}&page_size={{ page_size }}&page={{ page_obj.previous_page_number }}">前へ</a>
+                </li>
+                {% endif %}
+                <li class="page-item disabled">
+                    <span class="page-link">{{ page_obj.number }} / {{ paginator.num_pages }}</span>
+                </li>
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}&page_size={{ page_size }}&page={{ page_obj.next_page_number }}">次へ</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}&page_size={{ page_size }}&page={{ paginator.num_pages }}">最後へ</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+    {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const indexForm = document.getElementById("index-form");
+        const submitButton = document.getElementById("index-submit");
+
+        if (!indexForm || !submitButton) {
+            return;
+        }
+
+        indexForm.addEventListener("submit", function () {
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>カタログを取得中…';
+        });
+    });
+</script>
 {% endblock %}
