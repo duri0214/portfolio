@@ -55,11 +55,6 @@
                 </span>
             </div>
         </div>
-        {% if has_meetings %}
-        <a href="{% url 'kokkai:download' %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="btn btn-outline-success">
-            一覧をMarkdownで保存
-        </a>
-        {% endif %}
     </div>
 
     <div class="alert alert-info py-3 mb-4">

@@ -256,7 +256,6 @@ class IndexViewTests(TestCase):
             response, "期間内の会議録のタイトルと開催情報を一覧で取得します"
         )
         self.assertContains(response, "カタログを取得中…")
-        self.assertContains(response, "一覧をMarkdownで保存")
         self.assertContains(response, 'name="meeting_ids"')
         self.assertContains(response, "PDF")
         self.assertContains(response, 'id="index-form"')
@@ -338,53 +337,3 @@ class IndexViewTests(TestCase):
 
         self.assertContains(response, "全文を取得する会議録を選択してください。")
         pipeline_class.assert_not_called()
-
-
-class DownloadMarkdownTests(TestCase):
-    def test_downloads_filtered_meetings_as_markdown_without_internal_id(self):
-        """
-        シナリオ:
-        - 入力: 対象期間内外の会議録一覧。
-        - 処理: 対象期間の会議録一覧をMarkdownでダウンロードする。
-        - 期待値: 期間内の各会議録をリンク付きで出力し、内部IDは独立した項目として出力しないこと。
-        """
-        Meeting.objects.create(
-            meeting_date=date(2024, 1, 26),
-            session_number=213,
-            house="衆議院",
-            committee="本会議",
-            meeting_number="第1号",
-            min_id="121305254X00120240126",
-            url="https://kokkai.ndl.go.jp/txt/121305254X00120240126",
-            pdf_url="https://kokkai.ndl.go.jp/img/121305254X00120240126",
-        )
-        Meeting.objects.create(
-            meeting_date=date(2024, 2, 1),
-            session_number=213,
-            house="参議院",
-            committee="本会議",
-            meeting_number="第2号",
-            min_id="121305254X00220240201",
-            url="https://kokkai.ndl.go.jp/txt/121305254X00220240201",
-        )
-
-        response = self.client.get(
-            reverse("kokkai:download"),
-            {"start_date": "2024-01-26", "end_date": "2024-01-26"},
-        )
-
-        content = response.content.decode()
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            response["Content-Disposition"],
-            'attachment; filename="meeting_list.md"',
-        )
-        self.assertIn("# 会議録一覧", content)
-        self.assertIn(
-            "- 2024-01-26 | 衆議院 | 本会議 第1号 | "
-            "[会議録](https://kokkai.ndl.go.jp/txt/121305254X00120240126) / "
-            "[PDF](https://kokkai.ndl.go.jp/img/121305254X00120240126)",
-            content,
-        )
-        self.assertNotIn(" | 121305254X00120240126 | ", content)
-        self.assertNotIn("2024-02-01", content)

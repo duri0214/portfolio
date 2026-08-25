@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 
 from django.contrib import messages
 from django.db.models import Count
-from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import DetailView, ListView
@@ -30,7 +29,6 @@ class IndexView(ListView):
         start_date, end_date = self._get_period(self.request.GET)
         context["start_date"] = start_date
         context["end_date"] = end_date
-        context["has_meetings"] = context["meetings_by_date"].exists()
         return context
 
     @staticmethod
@@ -100,34 +98,3 @@ class MeetingDetailView(DetailView):
         context["speeches"] = self.object.speeches.all().order_by("speech_order")
         context["has_speeches"] = context["speeches"].exists()
         return context
-
-
-def download_markdown(request):
-    start_date_str = request.GET.get("start_date")
-    end_date_str = request.GET.get("end_date")
-
-    query = Meeting.objects.all().order_by(
-        "meeting_date", "committee", "meeting_number"
-    )
-    if start_date_str:
-        query = query.filter(meeting_date__gte=start_date_str)
-    if end_date_str:
-        query = query.filter(meeting_date__lte=end_date_str)
-
-    meetings = list(query)
-    lines = ["# 会議録一覧", ""]
-    for meeting in meetings:
-        links = [f"[会議録]({meeting.url})"]
-        if meeting.pdf_url:
-            links.append(f"[PDF]({meeting.pdf_url})")
-        lines.append(
-            f"- {meeting.meeting_date:%Y-%m-%d} | {meeting.house} | "
-            f"{meeting.committee} {meeting.meeting_number} | "
-            f"{' / '.join(links)}"
-        )
-
-    content = "\n".join(lines) + "\n" if meetings else ""
-
-    response = HttpResponse(content, content_type="text/markdown; charset=utf-8")
-    response["Content-Disposition"] = 'attachment; filename="meeting_list.md"'
-    return response
