@@ -224,7 +224,7 @@ class IndexViewTests(TestCase):
         """
         シナリオ:
         - 入力: PDF URLを含む、本文未取得の会議録メタデータ。
-        - 処理: 対象期間を指定してシナリオ用の会議録選択画面を表示する。
+        - 処理: 対象期間を指定してロープレ用の会議録選択画面を表示する。
         - 期待値: 院名、会議名、PDFリンク、本文取得用の選択欄が表示されること。
         """
         Meeting.objects.create(
@@ -244,11 +244,9 @@ class IndexViewTests(TestCase):
         )
 
         self.assertNotContains(response, "<th>会議録ID</th>")
-        self.assertContains(response, "シナリオに使う会議録を選択")
-        self.assertContains(
-            response,
-            "期間を指定して会議録カタログを取得し、シナリオに使う会議録を選択します",
-        )
+        self.assertContains(response, "国会会議録ロープレ")
+        self.assertContains(response, "ロープレに使う会議録を選択します")
+        self.assertNotContains(response, "シナリオに使う会議録")
         self.assertContains(response, "衆議院")
         self.assertContains(response, "本会議 第1号")
         self.assertContains(response, "期間内の会議録カタログを取得")
