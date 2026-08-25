@@ -248,6 +248,11 @@ class IndexViewTests(TestCase):
         self.assertContains(response, "本会議 第1号")
         self.assertContains(response, 'name="meeting_ids"')
         self.assertContains(response, "PDF")
+        self.assertContains(response, 'id="index-form"')
+        self.assertContains(response, 'id="index-loading"')
+        self.assertContains(response, "索引を作成中です。")
+        self.assertContains(response, "spinner-border")
+        self.assertNotContains(response, "rowspan=")
 
     @patch("kokkai.views.MeetingIndexService")
     def test_create_index_with_no_results_shows_period_guidance(self, service_class):

@@ -22,7 +22,7 @@
         <div class="card-body">
             <h5 class="card-title">会議録メタデータの索引作成</h5>
             <p class="card-text text-muted">発言本文、Embedding、LLMは取得・実行しません。</p>
-            <form method="post">
+            <form method="post" id="index-form">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create_index">
                 <div class="row g-3">
@@ -35,8 +35,14 @@
                         <input type="date" id="end_date" name="end_date" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
                     </div>
                     <div class="col-md-2 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary w-100">索引を作成</button>
+                        <button type="submit" class="btn btn-primary w-100" id="index-submit">
+                            索引を作成
+                        </button>
                     </div>
+                </div>
+                <div class="alert alert-secondary mt-3 mb-0 d-none" id="index-loading" role="status" aria-live="polite">
+                    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                    索引を作成中です。完了までこの画面を閉じないでください。
                 </div>
             </form>
         </div>
@@ -87,18 +93,12 @@
                 </tr>
             </thead>
             <tbody>
-                {% regroup meetings_by_date by meeting_date as date_list %}
-                {% for day in date_list %}
-                {% for meeting in day.list %}
+                {% for meeting in meetings_by_date %}
                 <tr>
                     <td>
                         <input class="form-check-input" type="checkbox" name="meeting_ids" value="{{ meeting.min_id }}" aria-label="{{ meeting.committee }} {{ meeting.meeting_number }} を選択">
                     </td>
-                    {% if forloop.first %}
-                    <td rowspan="{{ day.list|length }}">
-                        {{ day.grouper|date:"Y-m-d" }}({{ day.list|length }})
-                    </td>
-                    {% endif %}
+                    <td>{{ meeting.meeting_date|date:"Y-m-d" }}</td>
                     <td>
                         {{ meeting.house }}<br>
                         <a href="{% url 'kokkai:meeting_detail' meeting.pk %}">{{ meeting.committee }} {{ meeting.meeting_number }}</a>
@@ -118,7 +118,6 @@
                         {% endif %}
                     </td>
                 </tr>
-                {% endfor %}
                 {% empty %}
                 <tr>
                     <td colspan="6" class="text-center">指定期間に議事録はありません。期間を変更して索引を作成してください。</td>
@@ -129,4 +128,24 @@
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const indexForm = document.getElementById("index-form");
+        const submitButton = document.getElementById("index-submit");
+        const loadingMessage = document.getElementById("index-loading");
+
+        if (!indexForm || !submitButton || !loadingMessage) {
+            return;
+        }
+
+        indexForm.addEventListener("submit", function () {
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>索引を作成中…';
+            loadingMessage.classList.remove("d-none");
+        });
+    });
+</script>
 {% endblock %}
