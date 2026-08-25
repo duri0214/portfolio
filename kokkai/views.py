@@ -52,11 +52,7 @@ class IndexView(ListView):
         action = request.POST.get("action")
         if action == "create_index":
             indexed_count = MeetingIndexService().create_index(start_date, end_date)
-            if indexed_count:
-                messages.success(
-                    request, f"{indexed_count}件の会議録メタデータを索引化しました。"
-                )
-            else:
+            if not indexed_count:
                 messages.info(
                     request,
                     "指定期間に議事録はありません。期間を変更して再度お試しください。",

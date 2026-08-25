@@ -280,6 +280,31 @@ class IndexViewTests(TestCase):
             date(2024, 1, 1), date(2024, 1, 1)
         )
 
+    @patch("kokkai.views.MeetingIndexService")
+    def test_create_index_success_does_not_show_completion_flash(self, service_class):
+        """
+        シナリオ:
+        - 入力: 指定期間の索引作成が674件を返す画面リクエスト。
+        - 処理: 索引作成フォームを送信する。
+        - 期待値: 完了件数のフラッシュメッセージを表示せず、一覧だけを更新すること。
+        """
+        service_class.return_value.create_index.return_value = 674
+
+        response = self.client.post(
+            reverse("kokkai:index"),
+            {
+                "action": "create_index",
+                "start_date": "2024-01-01",
+                "end_date": "2024-01-31",
+            },
+            follow=True,
+        )
+
+        self.assertNotContains(response, "674件の会議録メタデータを索引化しました。")
+        service_class.return_value.create_index.assert_called_once_with(
+            date(2024, 1, 1), date(2024, 1, 31)
+        )
+
     @patch("kokkai.views.KokkaiPipeline")
     def test_fetch_selected_without_selection_does_not_import_contents(
         self, pipeline_class
