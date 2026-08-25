@@ -83,7 +83,6 @@
                     <th scope="col">取得</th>
                     <th>日付</th>
                     <th>会議情報</th>
-                    <th>会議録ID</th>
                     <th>参照URL</th>
                     <th>本文</th>
                 </tr>
@@ -99,7 +98,6 @@
                         {{ meeting.house }}<br>
                         <a href="{% url 'kokkai:meeting_detail' meeting.pk %}">{{ meeting.committee }} {{ meeting.meeting_number }}</a>
                     </td>
-                    <td><code>{{ meeting.min_id }}</code></td>
                     <td>
                         <a href="{{ meeting.url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">会議録</a>
                         {% if meeting.pdf_url %}
@@ -116,7 +114,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="text-center">指定期間に議事録はありません。期間を変更して索引を作成してください。</td>
+                    <td colspan="5" class="text-center">指定期間に議事録はありません。期間を変更して索引を作成してください。</td>
                 </tr>
                 {% endfor %}
             </tbody>

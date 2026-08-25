@@ -243,7 +243,7 @@ class IndexViewTests(TestCase):
             {"start_date": "2024-01-26", "end_date": "2024-01-26"},
         )
 
-        self.assertContains(response, "121305254X00120240126")
+        self.assertNotContains(response, "<th>会議録ID</th>")
         self.assertContains(response, "衆議院")
         self.assertContains(response, "本会議 第1号")
         self.assertContains(response, "期間内の会議録を軽量に取得")
