@@ -266,6 +266,13 @@ class IndexViewTests(TestCase):
         self.assertContains(response, "spinner-border")
         self.assertNotContains(response, 'id="index-loading"')
         self.assertNotContains(response, "rowspan=")
+        self.assertContains(response, "ダウンロードしたい会議録を選択します")
+        self.assertContains(
+            response, "取得済みの会議録を再選択すると、本文を再取得できます"
+        )
+        self.assertNotContains(
+            response, "カタログの更新は、既に保存した発言やChromaのデータを削除しません"
+        )
         content = response.content.decode()
         self.assertLess(
             content.index("使い方:"), content.index("期間内の会議録カタログを取得")
