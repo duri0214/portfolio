@@ -267,7 +267,7 @@ class IndexViewTests(TestCase):
         self.assertNotContains(response, 'id="index-loading"')
         self.assertNotContains(response, "rowspan=")
         self.assertContains(
-            response, "会議録一覧から、ダウンロードしたい会議録を選択します"
+            response, "会議録一覧から、ロープレに使いたい会議録を選択します"
         )
         self.assertContains(
             response,
