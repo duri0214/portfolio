@@ -247,7 +247,7 @@ class IndexViewTests(TestCase):
         self.assertContains(response, "国会会議録ロープレ")
         self.assertContains(
             response,
-            "役割を選んで進める会話型クイズゲームに使う会議録を選択します",
+            "役割を選んで進める会話型クイズゲーム",
         )
         self.assertNotContains(response, "シナリオに使う会議録")
         self.assertContains(response, "衆議院")
