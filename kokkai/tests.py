@@ -271,8 +271,9 @@ class IndexViewTests(TestCase):
         )
         self.assertContains(
             response,
-            "期間の目安がつかない場合は、「会議録全量へのリンク」から開催状況を確認します",
+            "（期間の目安がつかない場合は、「会議録全量へのリンク」から開催状況を確認します。）",
         )
+        self.assertNotContains(response, "<li>期間の目安がつかない場合は")
         self.assertContains(
             response,
             "「本文を取得」を押すと、選択した会議録の本文を取得・保存します",
