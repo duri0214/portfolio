@@ -246,6 +246,8 @@ class IndexViewTests(TestCase):
         self.assertContains(response, "121305254X00120240126")
         self.assertContains(response, "衆議院")
         self.assertContains(response, "本会議 第1号")
+        self.assertContains(response, "期間内の会議録を軽量に取得")
+        self.assertContains(response, "会議録のタイトルと開催情報を先に取得します")
         self.assertContains(response, 'name="meeting_ids"')
         self.assertContains(response, "PDF")
         self.assertContains(response, 'id="index-form"')

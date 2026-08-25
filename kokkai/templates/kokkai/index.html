@@ -20,8 +20,8 @@
 
     <div class="card mb-4">
         <div class="card-body">
-            <h5 class="card-title">会議録メタデータの索引作成</h5>
-            <p class="card-text text-muted">発言本文、Embedding、LLMは取得・実行しません。</p>
+            <h5 class="card-title">期間内の会議録を軽量に取得</h5>
+            <p class="card-text text-muted">会議録のタイトルと開催情報を先に取得します。必要な会議録を選んでから本文を取得できます。</p>
             <form method="post" id="index-form">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create_index">
@@ -36,7 +36,7 @@
                     </div>
                     <div class="col-md-2 d-flex align-items-end">
                         <button type="submit" class="btn btn-primary w-100" id="index-submit">
-                            索引を作成
+                            一覧を取得
                         </button>
                     </div>
                 </div>
@@ -138,7 +138,7 @@
 
         indexForm.addEventListener("submit", function () {
             submitButton.disabled = true;
-            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>索引を作成中…';
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>一覧を取得中…';
         });
     });
 </script>
