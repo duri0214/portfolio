@@ -293,7 +293,7 @@ class ScenarioServiceTests(TestCase):
         self.assertContains(response, 'value="create_scenario"')
         self.assertContains(
             response,
-            "会議録を題材に、あなたの役割としてどう対応するかを選ぶ教育用ロールプレイです。",
+            "会議録の発言を要約・再構成し、あなたの役割としてどう対応するかを選ぶ教育用ロールプレイです。",
         )
         self.assertNotContains(response, "実在人物が実際に発言した内容ではありません。")
 
@@ -436,6 +436,9 @@ class ScenarioGameViewTests(TestCase):
             game_response = self.client.get(game_url)
             self.assertContains(game_response, "choice-deck")
             self.assertContains(game_response, "左右にスワイプ")
+            self.assertContains(
+                game_response, "会議録の発言を要約・再構成したロールプレイです。"
+            )
             response = self.client.post(
                 game_url,
                 {"action": "answer", "choice_id": self.correct_choice.pk},
