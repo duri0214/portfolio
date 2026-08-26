@@ -435,7 +435,9 @@ class ScenarioGameViewTests(TestCase):
             self.client.post(game_url, {"action": "next"})
             game_response = self.client.get(game_url)
             self.assertContains(game_response, "choice-deck")
-            self.assertContains(game_response, "左右にスワイプ")
+            self.assertContains(game_response, "クリックして返答を選びます")
+            self.assertContains(game_response, "choice-card-flash")
+            self.assertNotContains(game_response, "スワイプ")
             self.assertContains(
                 game_response, "会議録の発言を要約・再構成したロールプレイです。"
             )

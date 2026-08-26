@@ -32,10 +32,9 @@
         border-radius: 1rem;
         background: #ffffff;
         color: #212529;
-        cursor: grab;
+        cursor: pointer;
         padding: 1.25rem;
         text-align: left;
-        touch-action: none;
         transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, opacity .2s ease;
     }
 
@@ -47,14 +46,30 @@
         transform: translateY(-4px);
     }
 
-    .choice-card.is-dragging {
-        cursor: grabbing;
-        transition: none;
+    .choice-card.is-selected {
+        animation: choice-card-flash .16s ease-in-out 3;
+        border-color: #0d6efd;
+        box-shadow: 0 .5rem 1.25rem rgba(13, 110, 253, .28);
     }
 
+    .choice-card.is-waiting,
     .choice-card.is-submitting {
+        cursor: default;
         opacity: .55;
         pointer-events: none;
+    }
+
+    @keyframes choice-card-flash {
+        50% {
+            background: #cfe2ff;
+            transform: scale(1.02);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .choice-card.is-selected {
+            animation: none;
+        }
     }
 
     .choice-card-number {
@@ -109,7 +124,7 @@
         </div>
 
         <p class="small text-muted mb-3">
-            会議録の発言を要約・再構成したロールプレイです。カードをタップするか、左右にスワイプして返答を選びます。
+            会議録の発言を要約・再構成したロールプレイです。カードをクリックして返答を選びます。
         </p>
 
         {% if current_turn %}
@@ -136,16 +151,17 @@
                 <input type="hidden" name="action" value="answer">
                 <fieldset>
                     <legend class="h5 mb-2">あなたなら、どう返す？</legend>
-                    <p class="small text-muted mb-3">選びたいカードをタップ、または左右にスワイプしてください。</p>
+                    <p class="small text-muted mb-3">選びたいカードをクリックしてください。選択したカードが短く点滅してから次へ進みます。</p>
                     <div class="choice-deck" id="choice-deck">
                         {% for choice in current_choices %}
                         <button type="submit" name="choice_id" value="{{ choice.pk }}" class="choice-card" data-choice-card>
                             <span class="choice-card-number">回答 {{ forloop.counter }}</span>
                             <span class="choice-card-text">{{ choice.text }}</span>
-                            <span class="choice-card-hint">タップ / スワイプで選択</span>
+                            <span class="choice-card-hint">クリックして選択</span>
                         </button>
                         {% endfor %}
                     </div>
+                    <p class="visually-hidden" id="choice-selection-status" aria-live="polite"></p>
                 </fieldset>
                 {% else %}
                 <input type="hidden" name="action" value="next">
@@ -179,6 +195,7 @@
     document.addEventListener("DOMContentLoaded", function () {
         const form = document.getElementById("roleplay-form");
         const cards = Array.from(document.querySelectorAll("[data-choice-card]"));
+        const selectionStatus = document.getElementById("choice-selection-status");
 
         if (!form || !cards.length) {
             return;
@@ -195,53 +212,25 @@
         });
 
         cards.forEach(function (card) {
-            let startX = 0;
-            let startY = 0;
-            let currentX = 0;
-            let dragging = false;
-
-            card.addEventListener("pointerdown", function (event) {
+            card.addEventListener("click", function (event) {
                 if (submitting) {
-                    return;
-                }
-                startX = event.clientX;
-                startY = event.clientY;
-                currentX = 0;
-                dragging = true;
-                card.classList.add("is-dragging");
-                card.setPointerCapture(event.pointerId);
-            });
-
-            card.addEventListener("pointermove", function (event) {
-                if (!dragging || submitting) {
-                    return;
-                }
-                currentX = event.clientX - startX;
-                const currentY = event.clientY - startY;
-                if (Math.abs(currentX) > 8 || Math.abs(currentY) > 8) {
                     event.preventDefault();
-                }
-                card.style.transform = "translate(" + currentX + "px, " + (currentY * .15) + "px) rotate(" + (currentX * .04) + "deg)";
-            });
-
-            card.addEventListener("pointerup", function (event) {
-                if (!dragging || submitting) {
                     return;
                 }
-                dragging = false;
-                card.classList.remove("is-dragging");
-                card.releasePointerCapture(event.pointerId);
-                if (Math.abs(currentX) < 80) {
-                    card.style.transform = "";
-                    return;
+                event.preventDefault();
+                submitting = true;
+                cards.forEach(function (choiceCard) {
+                    choiceCard.classList.add("is-waiting");
+                    choiceCard.setAttribute("aria-disabled", "true");
+                });
+                card.classList.remove("is-waiting");
+                card.classList.add("is-selected");
+                if (selectionStatus) {
+                    selectionStatus.textContent = "選択を反映しています。";
                 }
-                form.requestSubmit(card);
-            });
-
-            card.addEventListener("pointercancel", function () {
-                dragging = false;
-                card.classList.remove("is-dragging");
-                card.style.transform = "";
+                window.setTimeout(function () {
+                    form.requestSubmit(card);
+                }, 500);
             });
         });
     });
