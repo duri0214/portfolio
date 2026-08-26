@@ -247,6 +247,20 @@ class ScenarioServiceTests(TestCase):
         self.assertContains(response, "シナリオを生成中")
         self.assertContains(response, 'value="create_scenario"')
 
+    def test_meeting_detail_collapses_source_speeches_before_scenario_exists(self):
+        """
+        シナリオ:
+        - 入力: まだシナリオを作成していない本文取得済み会議録。
+        - 処理: 会議詳細画面を表示する。
+        - 期待値: 原文は初期表示で折りたたまれ、必要なときだけ確認できること。
+        """
+        response = self.client.get(
+            reverse("kokkai:meeting_detail", args=[self.meeting.pk])
+        )
+
+        self.assertContains(response, "会議録の原文を確認する")
+        self.assertContains(response, "<details")
+
     def test_meeting_detail_collapses_source_speeches_after_scenario_exists(self):
         """
         シナリオ:

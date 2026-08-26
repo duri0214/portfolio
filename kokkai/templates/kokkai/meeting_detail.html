@@ -71,10 +71,9 @@
         </div>
     </section>
 
-    {% if scenario %}
+    {% if has_speeches %}
     <details class="mt-4">
-        <summary class="text-muted">会議録の原文を確認する（シナリオの生成元）</summary>
-    {% endif %}
+        <summary class="text-muted">会議録の原文を確認する{% if scenario %}（シナリオの生成元）{% endif %}</summary>
 
     <div class="speeches mt-3">
         {% for speech in speeches %}
@@ -92,7 +91,6 @@
         </div>
         {% endfor %}
     </div>
-    {% if scenario %}
     </details>
     {% endif %}
 </div>
