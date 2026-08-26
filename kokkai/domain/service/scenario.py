@@ -75,6 +75,7 @@ class OpenAIScenarioGenerator:
                         "入力にある値を使ってください。各ターンには選択肢を必ず二つ作り、"
                         "適切な選択を一つだけ指定してください。入力された全アクターに"
                         "少なくとも一つのターンを割り当ててください。"
+                        "Return valid json only."
                     ),
                 },
                 {
@@ -170,6 +171,7 @@ class OpenAIScenarioGenerator:
                         "会議録の入力単位を、後段のゲームシナリオ生成に使う短い"
                         "構造化要約へ変換してください。事実を追加せず、speech_order、"
                         "actor_key、source_url を必ず残してください。"
+                        "Return valid json only."
                     ),
                 },
                 {"role": "user", "content": source_chunk},

@@ -92,6 +92,11 @@ class OpenAIScenarioGeneratorTests(SimpleTestCase):
 
         self.assertEqual(len(summaries), 2)
         self.assertEqual(client.chat.completions.create.call_count, 15)
+        for call in client.chat.completions.create.call_args_list:
+            messages = call.kwargs["messages"]
+            self.assertTrue(
+                any("json" in str(message["content"]) for message in messages)
+            )
 
 
 class ScenarioServiceTests(TestCase):
