@@ -10,6 +10,7 @@ from .domain.repository.scenario_repository import ScenarioRepository
 from .domain.service.meeting_index import MeetingIndexService
 from .domain.service.pipeline import KokkaiPipeline
 from .domain.service.scenario import ScenarioGenerationError, ScenarioService
+from .domain.service.scenario_play import ScenarioPlayError, ScenarioPlayService
 from .domain.valueobject.meeting import MEETING_METADATA_SPEAKER_NAME
 from .models import Meeting
 
@@ -159,7 +160,7 @@ class ScenarioActorSelectView(DetailView):
         scenario = self.get_object()
         actor_id = request.POST.get("actor_id")
         try:
-            play = ScenarioRepository().create_play(scenario, int(actor_id))
+            play = ScenarioPlayService().start(scenario, int(actor_id))
         except (TypeError, ValueError):
             messages.error(request, "担当する登場アクターを選択してください。")
             return redirect("kokkai:scenario_actor_select", scenario_id=scenario.pk)
@@ -218,42 +219,16 @@ class ScenarioGameView(DetailView):
         if play.is_completed:
             return redirect("kokkai:scenario_result", play_id=play.play_id)
 
-        current_turn = next(
-            (
-                turn
-                for turn in play.scenario.turns.all()
-                if turn.turn_number == play.next_turn_number
-            ),
-            None,
-        )
-        if current_turn is None:
-            return redirect("kokkai:scenario_result", play_id=play.play_id)
-
-        repository = ScenarioRepository()
-        action = request.POST.get("action")
-        choices = list(current_turn.choices.all())
         try:
-            if action == "answer":
-                if current_turn.actor_id != play.selected_actor_id or not choices:
-                    raise ValueError(
-                        "This turn cannot be answered by the selected actor."
-                    )
-                repository.answer_play(
-                    play,
-                    current_turn.pk,
-                    int(request.POST.get("choice_id")),
-                )
-            elif action == "next":
-                if current_turn.actor_id == play.selected_actor_id and choices:
-                    raise ValueError("Choose one of the two answers before continuing.")
-                repository.advance_play(play)
-            else:
-                raise ValueError("Unknown game action.")
-        except (TypeError, ValueError):
+            updated_play = ScenarioPlayService().progress(
+                str(play.play_id),
+                request.POST.get("action"),
+                request.POST.get("choice_id"),
+            )
+        except ScenarioPlayError:
             messages.error(request, "選択肢を確認して、もう一度操作してください。")
             return redirect("kokkai:scenario_game", play_id=play.play_id)
 
-        updated_play = repository.get_play(play.play_id)
         if updated_play.is_completed:
             return redirect("kokkai:scenario_result", play_id=play.play_id)
         return redirect("kokkai:scenario_game", play_id=play.play_id)

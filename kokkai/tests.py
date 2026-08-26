@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import date
 from unittest.mock import Mock, call, patch
 
@@ -207,7 +208,7 @@ class KokkaiPipelineTests(TestCase):
             1, 1, 1, None, [selected_record]
         )
         repository = Mock()
-        pipeline = KokkaiPipeline("test-key", client, repository)
+        pipeline = KokkaiPipeline(client, repository)
 
         imported_count = pipeline.import_selected_meetings(
             [selected_record.issue_id, selected_record.issue_id]
@@ -216,7 +217,40 @@ class KokkaiPipelineTests(TestCase):
         self.assertEqual(imported_count, 1)
         client.fetch_meeting.assert_called_once_with(selected_record.issue_id)
         repository.replace_meeting_contents.assert_called_once()
-        self.assertIsNone(pipeline.rag_service)
+
+    def test_import_excludes_metadata_and_empty_speeches_without_embedding(self):
+        """
+        シナリオ:
+        - 入力: 本文、会議録情報メタデータ、空本文を含む会議録取得結果。
+        - 処理: 選択した会議録本文を取り込む。
+        - 期待値: 実発言だけを連番で保存し、埋め込み処理を呼ばないこと。
+        """
+        selected_record = meeting_record()
+        source_speech = selected_record.speech_records[0]
+        metadata_speech = replace(
+            source_speech,
+            speaker="会議録情報",
+            speech="会議の日時などのメタデータ",
+        )
+        empty_speech = replace(source_speech, speaker="空の発言", speech=None)
+        selected_record = replace(
+            selected_record,
+            speech_records=[metadata_speech, empty_speech, source_speech],
+        )
+        client = Mock()
+        client.fetch_meeting.return_value = MeetingSearchResult(
+            1, 1, 1, None, [selected_record]
+        )
+        repository = Mock()
+
+        KokkaiPipeline(client, repository).import_selected_meetings(
+            [selected_record.issue_id]
+        )
+
+        repository.replace_meeting_contents.assert_called_once_with(
+            selected_record,
+            [(source_speech, 1)],
+        )
 
 
 class IndexViewTests(TestCase):

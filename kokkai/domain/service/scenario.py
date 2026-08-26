@@ -4,13 +4,19 @@ import hashlib
 import json
 import os
 from collections import OrderedDict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Protocol
 
-from openai import OpenAI
+from openai import OpenAI, OpenAIError
 
 from ...models import Meeting, MeetingScenario, Speech
 from ..repository.scenario_repository import ScenarioRepository
+from ..valueobject.scenario import (
+    ScenarioActorData,
+    ScenarioChoiceData,
+    ScenarioPayload,
+    ScenarioTurnData,
+)
 
 
 class ScenarioGenerationError(Exception):
@@ -25,7 +31,7 @@ class ScenarioGenerator(Protocol):
     def generate(
         self,
         meeting: Meeting,
-        actors: list[dict[str, Any]],
+        actors: list[ScenarioActorData],
         source_chunks: list[str],
     ) -> dict[str, Any]:
         """シナリオの構造化データを返す。"""
@@ -52,7 +58,7 @@ class OpenAIScenarioGenerator:
     def generate(
         self,
         meeting: Meeting,
-        actors: list[dict[str, Any]],
+        actors: list[ScenarioActorData],
         source_chunks: list[str],
     ) -> dict[str, Any]:
         """一次発言を根拠に、再生用のJSONシナリオを一度だけ生成する。"""
@@ -61,10 +67,9 @@ class OpenAIScenarioGenerator:
 
         client = OpenAI(api_key=self.api_key)
         source_chunks = self._summarize_source_chunks(client, source_chunks)
-        response = client.chat.completions.create(
-            model=self.model,
-            response_format={"type": "json_object"},
-            messages=[
+        content = self._request_json_content(
+            client,
+            [
                 {
                     "role": "system",
                     "content": (
@@ -92,7 +97,7 @@ class OpenAIScenarioGenerator:
                                 "meeting_number": meeting.meeting_number,
                                 "source_url": meeting.url,
                             },
-                            "actors": actors,
+                            "actors": [actor.to_prompt_value() for actor in actors],
                             "source_chunks": source_chunks,
                             "output_schema": {
                                 "title": "string",
@@ -128,11 +133,6 @@ class OpenAIScenarioGenerator:
                 },
             ],
         )
-        content = response.choices[0].message.content
-        if not content:
-            raise ScenarioGenerationError(
-                "The scenario generator returned an empty response."
-            )
         try:
             generated = json.loads(content)
         except json.JSONDecodeError as error:
@@ -162,10 +162,9 @@ class OpenAIScenarioGenerator:
 
     def _summarize_chunk(self, client: OpenAI, source_chunk: str) -> str:
         """入力単位の発言順・アクター・根拠を失わない短い構造化要約を作る。"""
-        response = client.chat.completions.create(
-            model=self.model,
-            response_format={"type": "json_object"},
-            messages=[
+        content = self._request_json_content(
+            client,
+            [
                 {
                     "role": "system",
                     "content": (
@@ -178,10 +177,28 @@ class OpenAIScenarioGenerator:
                 {"role": "user", "content": source_chunk},
             ],
         )
+        return content[: self.CHUNK_SUMMARY_CHARACTERS]
+
+    def _request_json_content(
+        self, client: OpenAI, messages: list[dict[str, str]]
+    ) -> str:
+        """OpenAIへJSON出力を要求し、利用者に返せるドメイン例外へ変換する。"""
+        try:
+            response = client.chat.completions.create(
+                model=self.model,
+                response_format={"type": "json_object"},
+                messages=messages,
+            )
+        except OpenAIError as error:
+            raise ScenarioGenerationError(
+                "The scenario generator request failed."
+            ) from error
         content = response.choices[0].message.content
         if not content:
-            raise ScenarioGenerationError("A source chunk summary was empty.")
-        return content[: self.CHUNK_SUMMARY_CHARACTERS]
+            raise ScenarioGenerationError(
+                "The scenario generator returned an empty response."
+            )
+        return content
 
     def _batched(self, summaries: list[str]) -> list[list[str]]:
         """集約用の要約を、プロンプト上限を超えない単位に分ける。"""
@@ -246,10 +263,7 @@ class ScenarioService:
         source_chunks = self._build_source_chunks(speeches, actors)
         generated = self.generator.generate(meeting, actors, source_chunks)
         payload = self._normalize_payload(generated, actors, speeches)
-        scenario_actor_keys = {turn["actor_key"] for turn in payload["turns"]}
-        scenario_actors = [
-            actor for actor in actors if actor["key"] in scenario_actor_keys
-        ]
+        scenario_actors = [actor for actor in actors if actor.key in payload.actor_keys]
         return self.repository.create_scenario(
             meeting=meeting,
             source_hash=source_hash,
@@ -277,7 +291,7 @@ class ScenarioService:
         return hashlib.sha256(encoded).hexdigest()
 
     @staticmethod
-    def _build_actors(speeches: list[Speech]) -> list[dict[str, Any]]:
+    def _build_actors(speeches: list[Speech]) -> list[ScenarioActorData]:
         grouped: OrderedDict[tuple[str, str, str], int] = OrderedDict()
         for speech in speeches:
             identity = (
@@ -287,26 +301,23 @@ class ScenarioService:
             )
             grouped[identity] = grouped.get(identity, 0) + 1
         return [
-            {
-                "key": f"actor-{index}",
-                "display_order": index,
-                "name": name,
-                "role": role,
-                "affiliation": affiliation,
-                "speech_count": speech_count,
-            }
+            ScenarioActorData(
+                key=f"actor-{index}",
+                display_order=index,
+                name=name,
+                role=role,
+                affiliation=affiliation,
+                speech_count=speech_count,
+            )
             for index, ((name, role, affiliation), speech_count) in enumerate(
                 grouped.items(), start=1
             )
         ]
 
     def _build_source_chunks(
-        self, speeches: list[Speech], actors: list[dict[str, Any]]
+        self, speeches: list[Speech], actors: list[ScenarioActorData]
     ) -> list[str]:
-        actor_keys = {
-            (actor["name"], actor["role"], actor["affiliation"]): actor["key"]
-            for actor in actors
-        }
+        actor_keys = {actor.identity: actor.key for actor in actors}
         chunks: list[str] = []
         chunk_parts: list[str] = []
         chunk_length = 0
@@ -344,30 +355,34 @@ class ScenarioService:
 
     @staticmethod
     def _normalize_payload(
-        generated: dict[str, Any], actors: list[dict[str, Any]], speeches: list[Speech]
-    ) -> dict[str, Any]:
-        actor_keys = {actor["key"] for actor in actors}
+        generated: dict[str, Any],
+        actors: list[ScenarioActorData],
+        speeches: list[Speech],
+    ) -> ScenarioPayload:
+        actor_keys = {actor.key for actor in actors}
         speech_orders = {speech.speech_order for speech in speeches}
         raw_turns = generated.get("turns")
         if not isinstance(raw_turns, list):
             raise ScenarioGenerationError("The scenario does not contain turns.")
 
-        turns: list[dict[str, Any]] = []
+        turns: list[ScenarioTurnData] = []
         for raw_turn in raw_turns:
             if not isinstance(raw_turn, dict):
                 continue
             actor_key = raw_turn.get("actor_key")
             evidence_speech_order = raw_turn.get("evidence_speech_order")
             choices = raw_turn.get("choices")
+            dialogue = str(raw_turn.get("dialogue", "")).strip()
             if (
                 actor_key not in actor_keys
                 or not isinstance(evidence_speech_order, int)
                 or evidence_speech_order not in speech_orders
                 or not isinstance(choices, list)
                 or len(choices) != 2
+                or not dialogue
             ):
                 continue
-            normalized_choices = []
+            normalized_choices: list[ScenarioChoiceData] = []
             for choice_number, choice in enumerate(choices, start=1):
                 if (
                     not isinstance(choice, dict)
@@ -376,47 +391,67 @@ class ScenarioService:
                     normalized_choices = []
                     break
                 normalized_choices.append(
-                    {
-                        "choice_number": choice_number,
-                        "text": str(choice["text"]).strip(),
-                        "is_correct": bool(choice.get("is_correct")),
-                        "rationale": str(choice.get("rationale", "")).strip(),
-                    }
+                    ScenarioChoiceData(
+                        choice_number=choice_number,
+                        text=str(choice["text"]).strip(),
+                        is_correct=bool(choice.get("is_correct")),
+                        rationale=str(choice.get("rationale", "")).strip(),
+                    )
                 )
             if not normalized_choices:
                 continue
-            if not any(choice["is_correct"] for choice in normalized_choices):
-                normalized_choices[0]["is_correct"] = True
-            for choice in normalized_choices[1:]:
-                if normalized_choices[0]["is_correct"] and choice["is_correct"]:
-                    choice["is_correct"] = False
+            correct_choice_index = next(
+                (
+                    index
+                    for index, choice in enumerate(normalized_choices)
+                    if choice.is_correct
+                ),
+                0,
+            )
+            normalized_choices = [
+                replace(choice, is_correct=index == correct_choice_index)
+                for index, choice in enumerate(normalized_choices)
+            ]
             order_key = f"{actor_key}:{evidence_speech_order}"
             if hashlib.sha256(order_key.encode()).digest()[0] % 2:
                 normalized_choices.reverse()
-            for choice_number, choice in enumerate(normalized_choices, start=1):
-                choice["choice_number"] = choice_number
+            normalized_choices = [
+                replace(choice, choice_number=choice_number)
+                for choice_number, choice in enumerate(normalized_choices, start=1)
+            ]
             turns.append(
-                {
-                    "turn_number": len(turns) + 1,
-                    "actor_key": actor_key,
-                    "dialogue": str(raw_turn.get("dialogue", "")).strip(),
-                    "evidence_speech_order": evidence_speech_order,
-                    "evidence_note": str(raw_turn.get("evidence_note", "")).strip(),
-                    "choices": normalized_choices,
-                }
+                ScenarioTurnData(
+                    turn_number=len(turns) + 1,
+                    actor_key=actor_key,
+                    dialogue=dialogue,
+                    evidence_speech_order=evidence_speech_order,
+                    evidence_note=(
+                        str(raw_turn.get("evidence_note", "")).strip()
+                        or "会議録の発言を根拠にしたターンです。"
+                    ),
+                    choices=tuple(normalized_choices),
+                )
             )
         if not turns:
             raise ScenarioGenerationError("The scenario did not contain valid turns.")
-        return {
-            "title": str(generated.get("title") or "会議録シミュレーション").strip(),
-            "background": str(generated.get("background") or "").strip(),
-            "success_label": str(generated.get("success_label") or "成立").strip(),
-            "failure_label": str(generated.get("failure_label") or "不成立").strip(),
-            "judgment_criteria": str(
+        return ScenarioPayload(
+            title=str(generated.get("title") or "会議録シミュレーション").strip(),
+            background=str(generated.get("background") or "").strip(),
+            success_label=str(generated.get("success_label") or "成立").strip(),
+            failure_label=str(generated.get("failure_label") or "不成立").strip(),
+            judgment_criteria=str(
                 generated.get("judgment_criteria") or "根拠発言に沿った選択を行うこと。"
             ).strip(),
-            "passing_score": max(
-                0, min(100, int(generated.get("passing_score") or 50))
+            passing_score=ScenarioService._normalize_passing_score(
+                generated.get("passing_score")
             ),
-            "turns": turns,
-        }
+            turns=tuple(turns),
+        )
+
+    @staticmethod
+    def _normalize_passing_score(value: Any) -> int:
+        """LLMのスコア値を0から100までの整数へ正規化する。"""
+        try:
+            return max(0, min(100, int(value)))
+        except (TypeError, ValueError):
+            return 50

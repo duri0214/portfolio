@@ -2,8 +2,13 @@ from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
+from openai import OpenAIError
 
-from kokkai.domain.service.scenario import OpenAIScenarioGenerator, ScenarioService
+from kokkai.domain.service.scenario import (
+    OpenAIScenarioGenerator,
+    ScenarioGenerationError,
+    ScenarioService,
+)
 from kokkai.models import (
     Meeting,
     MeetingScenario,
@@ -34,7 +39,7 @@ class FakeScenarioGenerator:
             "passing_score": 50,
             "turns": [
                 {
-                    "actor_key": actors[0]["key"],
+                    "actor_key": actors[0].key,
                     "dialogue": "論点を確認します。",
                     "evidence_speech_order": 1,
                     "evidence_note": "最初の発言で論点が示されています。",
@@ -52,7 +57,7 @@ class FakeScenarioGenerator:
                     ],
                 },
                 {
-                    "actor_key": actors[-1]["key"],
+                    "actor_key": actors[-1].key,
                     "dialogue": "次の確認事項です。",
                     "evidence_speech_order": 2,
                     "evidence_note": "二つ目の発言が確認事項の根拠です。",
@@ -82,6 +87,15 @@ class PartialScenarioGenerator(FakeScenarioGenerator):
         return generated
 
 
+class InvalidScoreScenarioGenerator(FakeScenarioGenerator):
+    """数値ではない合格点を返すテスト用ジェネレーター。"""
+
+    def generate(self, meeting, actors, source_chunks):
+        generated = super().generate(meeting, actors, source_chunks)
+        generated["passing_score"] = "invalid"
+        return generated
+
+
 class OpenAIScenarioGeneratorTests(SimpleTestCase):
     def test_long_meeting_chunks_are_summarized_and_aggregated_in_bounded_groups(self):
         """
@@ -105,6 +119,23 @@ class OpenAIScenarioGeneratorTests(SimpleTestCase):
             messages = call.kwargs["messages"]
             self.assertTrue(
                 any("json" in str(message["content"]) for message in messages)
+            )
+
+    def test_openai_request_error_is_converted_to_scenario_generation_error(self):
+        """
+        シナリオ:
+        - 入力: OpenAI SDK がリクエスト例外を返す生成クライアント。
+        - 処理: JSON出力を要求する。
+        - 期待値: SDK例外を画面で扱えるシナリオ生成例外へ変換する。
+        """
+        generator = OpenAIScenarioGenerator(api_key="test-key")
+        client = Mock()
+        client.chat.completions.create.side_effect = OpenAIError("network error")
+
+        with self.assertRaises(ScenarioGenerationError):
+            generator._request_json_content(
+                client,
+                [{"role": "system", "content": "Return valid json only."}],
             )
 
 
@@ -192,6 +223,20 @@ class ScenarioServiceTests(TestCase):
         self.assertTrue(created)
         self.assertEqual(scenario.actors.count(), 1)
         self.assertEqual(scenario.turns.count(), 1)
+
+    def test_invalid_passing_score_falls_back_to_the_default(self):
+        """
+        シナリオ:
+        - 入力: 数値ではない合格点を含む生成結果。
+        - 処理: シナリオを正規化して保存する。
+        - 期待値: 例外にせず、既定の合格点50を保存する。
+        """
+        service = ScenarioService(generator=InvalidScoreScenarioGenerator())
+
+        scenario, created = service.get_or_create(self.meeting)
+
+        self.assertTrue(created)
+        self.assertEqual(scenario.passing_score, 50)
 
     def test_meeting_metadata_record_is_not_used_for_scenario_or_display(self):
         """

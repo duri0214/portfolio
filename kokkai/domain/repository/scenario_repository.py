@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import Any
 
 from django.db import transaction
 from django.db.models import Max
-from django.utils import timezone
 
 from ...models import (
     Meeting,
@@ -18,6 +16,7 @@ from ...models import (
     Speech,
 )
 from ..valueobject.meeting import MEETING_METADATA_SPEAKER_NAME
+from ..valueobject.scenario import ScenarioActorData, ScenarioPayload
 
 
 class ScenarioRepository:
@@ -72,8 +71,8 @@ class ScenarioRepository:
         source_hash: str,
         prompt_version: str,
         generator_model: str,
-        payload: dict[str, Any],
-        actors: Iterable[dict[str, Any]],
+        payload: ScenarioPayload,
+        actors: Iterable[ScenarioActorData],
         speeches_by_order: dict[int, Speech],
     ) -> MeetingScenario:
         """新しいバージョンのシナリオ、アクター、ターン、二択をまとめて保存する。"""
@@ -88,22 +87,22 @@ class ScenarioRepository:
                 source_hash=source_hash,
                 prompt_version=prompt_version,
                 generator_model=generator_model,
-                title=payload["title"],
-                background=payload["background"],
-                success_label=payload["success_label"],
-                failure_label=payload["failure_label"],
-                judgment_criteria=payload["judgment_criteria"],
-                passing_score=payload["passing_score"],
+                title=payload.title,
+                background=payload.background,
+                success_label=payload.success_label,
+                failure_label=payload.failure_label,
+                judgment_criteria=payload.judgment_criteria,
+                passing_score=payload.passing_score,
             )
             ScenarioActor.objects.bulk_create(
                 [
                     ScenarioActor(
                         scenario=scenario,
-                        display_order=actor["display_order"],
-                        name=actor["name"],
-                        role=actor["role"],
-                        affiliation=actor["affiliation"],
-                        speech_count=actor["speech_count"],
+                        display_order=actor.display_order,
+                        name=actor.name,
+                        role=actor.role,
+                        affiliation=actor.affiliation,
+                        speech_count=actor.speech_count,
                     )
                     for actor in actor_list
                 ]
@@ -113,40 +112,39 @@ class ScenarioRepository:
                 for actor in ScenarioActor.objects.filter(scenario=scenario)
             }
             actors_by_key = {
-                actor["key"]: saved_actors_by_identity[
-                    (actor["name"], actor["role"], actor["affiliation"])
-                ]
+                actor.key: saved_actors_by_identity[actor.identity]
                 for actor in actor_list
             }
 
-            for turn_data in payload["turns"]:
+            for turn_data in payload.turns:
                 turn = ScenarioTurn.objects.create(
                     scenario=scenario,
-                    turn_number=turn_data["turn_number"],
-                    actor=actors_by_key[turn_data["actor_key"]],
-                    dialogue=turn_data["dialogue"],
-                    evidence_speech=speeches_by_order[
-                        turn_data["evidence_speech_order"]
-                    ],
-                    evidence_note=turn_data["evidence_note"],
+                    turn_number=turn_data.turn_number,
+                    actor=actors_by_key[turn_data.actor_key],
+                    dialogue=turn_data.dialogue,
+                    evidence_speech=speeches_by_order[turn_data.evidence_speech_order],
+                    evidence_note=turn_data.evidence_note,
                 )
                 ScenarioChoice.objects.bulk_create(
                     [
                         ScenarioChoice(
                             turn=turn,
-                            choice_number=choice["choice_number"],
-                            text=choice["text"],
-                            is_correct=choice["is_correct"],
-                            rationale=choice["rationale"],
+                            choice_number=choice.choice_number,
+                            text=choice.text,
+                            is_correct=choice.is_correct,
+                            rationale=choice.rationale,
                         )
-                        for choice in turn_data["choices"]
+                        for choice in turn_data.choices
                     ]
                 )
         return scenario
 
     def create_play(self, scenario: MeetingScenario, actor_id: int) -> ScenarioPlay:
         """担当アクターを選んだ新規プレイを開始する。"""
-        actor = ScenarioActor.objects.get(pk=actor_id, scenario=scenario)
+        try:
+            actor = ScenarioActor.objects.get(pk=actor_id, scenario=scenario)
+        except ScenarioActor.DoesNotExist as error:
+            raise ValueError("The selected actor is invalid.") from error
         return ScenarioPlay.objects.create(scenario=scenario, selected_actor=actor)
 
     def get_play(self, play_id: str) -> ScenarioPlay:
@@ -165,71 +163,46 @@ class ScenarioRepository:
             .get(play_id=play_id)
         )
 
-    def advance_play(self, play: ScenarioPlay) -> None:
-        """選択を伴わない発言を読み終えたプレイを次のターンへ進める。"""
-        with transaction.atomic():
-            locked_play = (
-                ScenarioPlay.objects.select_for_update()
-                .select_related("scenario")
-                .get(pk=play.pk)
-            )
-            self._move_to_next_turn(locked_play)
+    def get_locked_play(self, play_id: str) -> ScenarioPlay:
+        """更新中のプレイをロックし、進行に必要な関連を取得する。"""
+        return (
+            ScenarioPlay.objects.select_for_update()
+            .select_related("scenario", "selected_actor")
+            .get(play_id=play_id)
+        )
 
-    def answer_play(self, play: ScenarioPlay, turn_id: int, choice_id: int) -> None:
-        """選択肢を保存して得点を更新し、次のターンへ進める。"""
-        with transaction.atomic():
-            locked_play = (
-                ScenarioPlay.objects.select_for_update()
-                .select_related("scenario")
-                .get(pk=play.pk)
-            )
-            turn = ScenarioTurn.objects.select_related("scenario").get(pk=turn_id)
-            choice = ScenarioChoice.objects.select_related("turn").get(pk=choice_id)
-            if locked_play.is_completed:
-                raise ValueError("This play has already been completed.")
-            if (
-                turn.scenario_id != locked_play.scenario_id
-                or choice.turn_id != turn.pk
-                or turn.turn_number != locked_play.next_turn_number
-            ):
-                raise ValueError(
-                    "The selected choice does not belong to the current turn."
-                )
+    def get_turn(self, scenario_id: int, turn_number: int) -> ScenarioTurn | None:
+        """指定したシナリオのターンと選択肢を取得する。"""
+        return (
+            ScenarioTurn.objects.select_related("actor")
+            .prefetch_related("choices")
+            .filter(scenario_id=scenario_id, turn_number=turn_number)
+            .first()
+        )
 
-            ScenarioPlayAnswer.objects.create(
-                play=locked_play, turn=turn, choice=choice
-            )
-            locked_play.answer_count += 1
-            if choice.is_correct:
-                locked_play.score += 1
-            locked_play.save(update_fields=["answer_count", "score"])
-            self._move_to_next_turn(locked_play)
+    @staticmethod
+    def get_turn_choices(turn: ScenarioTurn) -> list[ScenarioChoice]:
+        """ターンに紐づく選択肢を表示順で取得する。"""
+        return list(turn.choices.all())
 
-    def _move_to_next_turn(self, play: ScenarioPlay) -> None:
-        last_turn_number = (
-            ScenarioTurn.objects.filter(scenario=play.scenario).aggregate(
+    @staticmethod
+    def get_last_turn_number(scenario_id: int) -> int:
+        """シナリオの最終ターン番号を返す。"""
+        return (
+            ScenarioTurn.objects.filter(scenario_id=scenario_id).aggregate(
                 last=Max("turn_number")
             )["last"]
             or 0
         )
-        if play.next_turn_number >= last_turn_number:
-            self._complete_play(play)
-            return
-        play.next_turn_number += 1
-        play.save(update_fields=["next_turn_number"])
 
     @staticmethod
-    def _complete_play(play: ScenarioPlay) -> None:
-        score_percentage = (
-            (play.score / play.answer_count * 100) if play.answer_count else 0
-        )
-        is_success = score_percentage >= play.scenario.passing_score
-        play.result_label = (
-            play.scenario.success_label if is_success else play.scenario.failure_label
-        )
-        play.result_explanation = (
-            f"{play.scenario.judgment_criteria}\n"
-            f"正解数: {play.score}/{play.answer_count}（{score_percentage:.0f}%）"
-        )
-        play.completed_at = timezone.now()
-        play.save(update_fields=["result_label", "result_explanation", "completed_at"])
+    def create_play_answer(
+        play: ScenarioPlay, turn: ScenarioTurn, choice: ScenarioChoice
+    ) -> None:
+        """選択済みの回答を永続化する。"""
+        ScenarioPlayAnswer.objects.create(play=play, turn=turn, choice=choice)
+
+    @staticmethod
+    def save_play(play: ScenarioPlay, update_fields: list[str]) -> None:
+        """更新されたプレイ状態を永続化する。"""
+        play.save(update_fields=update_fields)
