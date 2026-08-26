@@ -1,11 +1,7 @@
-import os
 import re
 from datetime import date
 
 from django.db import transaction
-
-from lib.llm.service.completion import OpenAILlmRagService
-from lib.llm.valueobject.completion import RagDocument
 
 from ..repository.meeting_repository import MeetingRepository
 from ..valueobject.meeting import (
@@ -18,9 +14,10 @@ from .kokkai_api import KokkaiAPIClient
 
 class KokkaiPipeline:
     """
-    選択された会議録の全文を保存し、必要な場合だけEmbeddingへ登録する。
+    選択された会議録の全文を発言単位で保存する。
 
-    会議録メタデータの索引化は MeetingIndexService が担当し、このクラスでは実行しない。
+    会議録メタデータの索引化は MeetingIndexService が担当する。
+    Embedding登録はシナリオ作成の主経路ではないため、この取り込みでは行わない。
     """
 
     def __init__(
@@ -31,16 +28,8 @@ class KokkaiPipeline:
     ) -> None:
         self.client = client or KokkaiAPIClient()
         self.repository = repository or MeetingRepository()
-        self.api_key = os.getenv("OPENAI_API_KEY") if api_key is None else api_key
-
-        if self.api_key:
-            self.rag_service = OpenAILlmRagService(
-                model="gpt-4o",  # 適宜調整
-                api_key=self.api_key,
-                collection_name="kokkai_speeches",
-            )
-        else:
-            self.rag_service = None
+        self.api_key = api_key
+        self.rag_service = None
 
     def process_and_save_meetings(self, start_date: date, end_date: date):
         """互換性のため、指定期間の会議録本文をすべて取得・保存する。"""
@@ -66,7 +55,7 @@ class KokkaiPipeline:
                 except Exception as e:
                     print(f"    Error processing a_meeting {a_meeting.issue_id}: {e}")
                     # 1つの会議の失敗が、期間全体のバッチ処理を止めないように制御する。
-                    # エラーが発生した会議のDB/RAG変更は _process_meeting_record 内でロールバックされるが、
+                    # エラーが発生した会議のDB変更は _process_meeting_record 内でロールバックされるが、
                     # それ以前に完了した会議のデータは保持される。
                     continue
 
@@ -90,49 +79,27 @@ class KokkaiPipeline:
 
     def _process_meeting_record(self, a_meeting: MeetingRecord):
         """
-        会議録1件の発言を保存し、設定済みの場合だけEmbeddingへ登録する。
+        会議録1件の発言をDBへ保存する。
 
-        索引更新ではこのメソッドを呼ばないため、発言削除やEmbeddingは発生しない。
+        索引更新ではこのメソッドを呼ばないため、発言の置き換えは発生しない。
         """
         agendas = self._split_by_agenda(a_meeting)
         total_speech_order = 0
         speeches = []
-        rag_docs = []
-        for agenda_title, agenda_speeches in agendas:
+        for _, agenda_speeches in agendas:
             for speech in agenda_speeches:
                 if speech.speaker == MEETING_METADATA_SPEAKER_NAME:
                     continue
                 total_speech_order += 1
                 speeches.append((speech, total_speech_order))
-                if self.rag_service and speech.speech:
-                    stable_id_prefix = f"{a_meeting.issue_id}_{total_speech_order}"
-                    rag_docs.append(
-                        RagDocument(
-                            page_content=speech.speech,
-                            metadata={
-                                "meeting_date": a_meeting.date,
-                                "session_number": a_meeting.session,
-                                "house": a_meeting.name_of_house,
-                                "committee": a_meeting.name_of_meeting,
-                                "meeting_number": a_meeting.issue,
-                                "agenda_title": agenda_title,
-                                "speaker_name": speech.speaker,
-                                "speaker_role": speech.speaker_role or "",
-                                "url": a_meeting.meeting_url,
-                                "id": stable_id_prefix,
-                            },
-                        )
-                    )
         with transaction.atomic():
             self.repository.replace_meeting_contents(a_meeting, speeches)
-            if self.rag_service and rag_docs:
-                self.rag_service.upsert_documents(rag_docs)
 
     @staticmethod
     def _split_by_agenda(
         a_meeting: MeetingRecord,
     ) -> list[tuple[str, list[SpeechRecord]]]:
-        """発言順を維持したまま、RAG用に発言を議題ごとにまとめる。"""
+        """発言順を維持したまま、シナリオ生成用に発言を議題ごとにまとめる。"""
         agendas = []
         # 議題（○...）が検出される前の発言（開会宣言や出席議員の報告など）を
         # 「冒頭」という仮想的な議題タイトルでグループ化する。

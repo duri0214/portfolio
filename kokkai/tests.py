@@ -199,7 +199,7 @@ class KokkaiPipelineTests(TestCase):
         シナリオ:
         - 入力: 同じ会議録IDを重複して選択し、全文取得結果を返すAPIクライアント。
         - 処理: import_selected_meetings を呼び出す。
-        - 期待値: 重複を除いた会議録IDだけを全文取得し、Embedding未設定ではRAG登録しないこと。
+        - 期待値: 重複を除いた会議録IDだけを全文取得し、本文保存時にRAG登録しないこと。
         """
         selected_record = meeting_record()
         client = Mock()
@@ -207,7 +207,7 @@ class KokkaiPipelineTests(TestCase):
             1, 1, 1, None, [selected_record]
         )
         repository = Mock()
-        pipeline = KokkaiPipeline("", client, repository)
+        pipeline = KokkaiPipeline("test-key", client, repository)
 
         imported_count = pipeline.import_selected_meetings(
             [selected_record.issue_id, selected_record.issue_id]
