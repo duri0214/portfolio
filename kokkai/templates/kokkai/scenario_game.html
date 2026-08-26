@@ -229,7 +229,15 @@
                     selectionStatus.textContent = "選択を反映しています。";
                 }
                 window.setTimeout(function () {
-                    form.requestSubmit(card);
+                    // requestSubmit() is not available in every supported browser.
+                    // Use a hidden field and the native form submit so the selected
+                    // choice is sent even when the delayed submitter API is missing.
+                    const choiceInput = document.createElement("input");
+                    choiceInput.type = "hidden";
+                    choiceInput.name = "choice_id";
+                    choiceInput.value = card.value;
+                    form.appendChild(choiceInput);
+                    HTMLFormElement.prototype.submit.call(form);
                 }, 500);
             });
         });
