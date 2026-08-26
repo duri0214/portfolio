@@ -186,6 +186,21 @@ class ScenarioServiceTests(TestCase):
         self.assertTrue(availability.needs_regeneration)
         self.assertEqual(len(self.generator.calls), 1)
 
+    def test_meeting_detail_contains_generation_loading_feedback(self):
+        """
+        シナリオ:
+        - 入力: 本文を取り込んだ会議録の詳細画面。
+        - 実行: シナリオ作成フォームを表示する。
+        - 期待結果: 生成中のスピナー・不定プログレスバー用のUIが含まれる。
+        """
+        response = self.client.get(
+            reverse("kokkai:meeting_detail", args=[self.meeting.pk])
+        )
+
+        self.assertContains(response, "progress-bar-animated")
+        self.assertContains(response, "シナリオを生成中")
+        self.assertContains(response, 'value="create_scenario"')
+
 
 class ScenarioGameViewTests(TestCase):
     def setUp(self):
