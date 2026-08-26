@@ -291,6 +291,11 @@ class ScenarioServiceTests(TestCase):
         self.assertContains(response, "progress-bar-animated")
         self.assertContains(response, "シナリオを生成中")
         self.assertContains(response, 'value="create_scenario"')
+        self.assertContains(
+            response,
+            "会議録を題材に、あなたの役割としてどう対応するかを選ぶ教育用ロールプレイです。",
+        )
+        self.assertNotContains(response, "実在人物が実際に発言した内容ではありません。")
 
     def test_meeting_detail_collapses_source_speeches_before_scenario_exists(self):
         """
