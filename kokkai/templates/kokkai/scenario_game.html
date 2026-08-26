@@ -1,68 +1,249 @@
 {% extends 'kokkai/base.html' %}
 
+{% block extra_css %}
+<style>
+    .roleplay-shell {
+        max-width: 760px;
+        margin: 0 auto;
+    }
+
+    .roleplay-stage {
+        border: 1px solid rgba(13, 110, 253, .15);
+        border-radius: 1.25rem;
+        background: linear-gradient(145deg, #f8fbff 0%, #ffffff 65%);
+        box-shadow: 0 .75rem 2rem rgba(13, 110, 253, .08);
+    }
+
+    .roleplay-dialogue {
+        border-radius: 1rem;
+        background: #ffffff;
+        box-shadow: 0 .25rem 1rem rgba(33, 37, 41, .08);
+    }
+
+    .choice-deck {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .choice-card {
+        min-height: 190px;
+        border: 2px solid #cfe2ff;
+        border-radius: 1rem;
+        background: #ffffff;
+        color: #212529;
+        cursor: grab;
+        padding: 1.25rem;
+        text-align: left;
+        touch-action: none;
+        transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, opacity .2s ease;
+    }
+
+    .choice-card:hover,
+    .choice-card:focus-visible {
+        border-color: #0d6efd;
+        box-shadow: 0 .5rem 1.25rem rgba(13, 110, 253, .18);
+        outline: 0;
+        transform: translateY(-4px);
+    }
+
+    .choice-card.is-dragging {
+        cursor: grabbing;
+        transition: none;
+    }
+
+    .choice-card.is-submitting {
+        opacity: .55;
+        pointer-events: none;
+    }
+
+    .choice-card-number {
+        color: #0d6efd;
+        font-size: .8rem;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    .choice-card-text {
+        display: block;
+        font-size: 1.15rem;
+        font-weight: 600;
+        line-height: 1.55;
+        margin-top: .75rem;
+    }
+
+    .choice-card-hint {
+        color: #6c757d;
+        display: block;
+        font-size: .8rem;
+        margin-top: 1.25rem;
+    }
+
+    @media (max-width: 576px) {
+        .choice-deck {
+            grid-template-columns: 1fr;
+        }
+
+        .choice-card {
+            min-height: 150px;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-        <div>
-            <h1 class="h3 mb-1">{{ play.scenario.title }}</h1>
-            <p class="text-muted mb-0">担当: {{ play.selected_actor.name }}{% if play.selected_actor.role %}（{{ play.selected_actor.role }}）{% endif %}</p>
+    <div class="roleplay-shell">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+            <div>
+                <span class="badge text-bg-primary mb-2">会議録ロールプレイ</span>
+                <h1 class="h3 mb-1">{{ play.scenario.title }}</h1>
+                <p class="text-muted mb-0">担当: {{ play.selected_actor.name }}{% if play.selected_actor.role %}（{{ play.selected_actor.role }}）{% endif %}</p>
+            </div>
+            <span class="small text-muted text-nowrap">{{ play.next_turn_number }} / {{ total_turns }}</span>
         </div>
-        <span class="badge text-bg-secondary">ターン {{ play.next_turn_number }}</span>
-    </div>
 
-    <div class="alert alert-warning" role="alert">
-        この画面の会話と判定は、会議録を基に保存された教育用シミュレーションです。実在人物の発言そのものではありません。
-    </div>
-
-    {% if completed_turns %}
-    <details class="mb-4">
-        <summary>これまでの会話（{{ completed_turns|length }} ターン）</summary>
-        <div class="mt-3">
-            {% for turn in completed_turns %}
-            <article class="border-start border-3 ps-3 mb-3">
-                <strong>{{ turn.actor.name }}</strong>
-                <p class="mb-1" style="white-space: pre-wrap;">{{ turn.dialogue }}</p>
-            </article>
-            {% endfor %}
+        <div class="progress mb-4" role="progressbar" aria-label="ロールプレイの進行状況" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ turn_progress_percent }}">
+            <div class="progress-bar" style="width: {{ turn_progress_percent }}%"></div>
         </div>
-    </details>
-    {% endif %}
 
-    {% if current_turn %}
-    <article class="card mb-4">
-        <header class="card-header d-flex justify-content-between align-items-center">
-            <strong>{{ current_turn.actor.name }}</strong>
-            <span class="small text-muted">ターン {{ current_turn.turn_number }}</span>
-        </header>
-        <div class="card-body">
-            <p class="card-text fs-5" style="white-space: pre-wrap;">{{ current_turn.dialogue }}</p>
-            <aside class="border rounded bg-light p-3 mb-3">
-                <h2 class="h6">根拠となる会議録</h2>
-                <p class="mb-2" style="white-space: pre-wrap;">{{ current_turn.evidence_note }}</p>
-                <a href="{{ current_turn.evidence_speech.source_url|default:play.scenario.meeting.url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">一次ソースを開く</a>
-            </aside>
+        <p class="small text-muted mb-3">
+            会議録を基にしたシミュレーションです。カードをタップするか、左右にスワイプして返答を選びます。
+        </p>
 
-            <form method="post">
+        {% if current_turn %}
+        <section class="roleplay-stage p-3 p-md-4" aria-labelledby="current-turn-heading">
+            <div class="roleplay-dialogue p-3 p-md-4 mb-3">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                    <strong id="current-turn-heading">{{ current_turn.actor.name }}</strong>
+                    <span class="badge text-bg-light">ターン {{ current_turn.turn_number }}</span>
+                </div>
+                <p class="fs-5 mb-0" style="white-space: pre-wrap;">{{ current_turn.dialogue }}</p>
+            </div>
+
+            <details class="roleplay-evidence mb-3">
+                <summary class="small text-muted">根拠を確認する</summary>
+                <div class="bg-light rounded p-3 mt-2">
+                    <p class="small mb-2" style="white-space: pre-wrap;">{{ current_turn.evidence_note }}</p>
+                    <a href="{{ current_turn.evidence_speech.source_url|default:play.scenario.meeting.url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">一次ソースを開く</a>
+                </div>
+            </details>
+
+            <form method="post" id="roleplay-form">
                 {% csrf_token %}
                 {% if is_player_turn %}
+                <input type="hidden" name="action" value="answer">
                 <fieldset>
-                    <legend class="h5">あなたならどう答えますか？</legend>
-                    <div class="d-grid gap-2">
+                    <legend class="h5 mb-2">あなたなら、どう返す？</legend>
+                    <p class="small text-muted mb-3">選びたいカードをタップ、または左右にスワイプしてください。</p>
+                    <div class="choice-deck" id="choice-deck">
                         {% for choice in current_choices %}
-                        <button type="submit" name="choice_id" value="{{ choice.pk }}" class="btn btn-outline-primary text-start py-3">
-                            {{ forloop.counter }}. {{ choice.text }}
+                        <button type="submit" name="choice_id" value="{{ choice.pk }}" class="choice-card" data-choice-card>
+                            <span class="choice-card-number">回答 {{ forloop.counter }}</span>
+                            <span class="choice-card-text">{{ choice.text }}</span>
+                            <span class="choice-card-hint">タップ / スワイプで選択</span>
                         </button>
                         {% endfor %}
                     </div>
-                    <input type="hidden" name="action" value="answer">
                 </fieldset>
                 {% else %}
                 <input type="hidden" name="action" value="next">
-                <button type="submit" class="btn btn-primary">次の発言へ</button>
+                <button type="submit" class="btn btn-primary btn-lg w-100">次の展開へ</button>
                 {% endif %}
             </form>
-        </div>
-    </article>
-    {% endif %}
+        </section>
+        {% else %}
+        <div class="alert alert-info">このシナリオには進行できるターンがありません。</div>
+        {% endif %}
+
+        {% if completed_turns %}
+        <details class="mt-4">
+            <summary class="small text-muted">ここまでの展開を見る（{{ completed_turns|length }}ターン）</summary>
+            <div class="mt-3">
+                {% for turn in completed_turns %}
+                <article class="border-start border-3 ps-3 mb-3">
+                    <strong>{{ turn.actor.name }}</strong>
+                    <p class="mb-1" style="white-space: pre-wrap;">{{ turn.dialogue }}</p>
+                </article>
+                {% endfor %}
+            </div>
+        </details>
+        {% endif %}
+    </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("roleplay-form");
+        const cards = Array.from(document.querySelectorAll("[data-choice-card]"));
+
+        if (!form || !cards.length) {
+            return;
+        }
+
+        let submitting = false;
+
+        form.addEventListener("submit", function () {
+            submitting = true;
+            cards.forEach(function (card) {
+                card.classList.add("is-submitting");
+                card.disabled = true;
+            });
+        });
+
+        cards.forEach(function (card) {
+            let startX = 0;
+            let startY = 0;
+            let currentX = 0;
+            let dragging = false;
+
+            card.addEventListener("pointerdown", function (event) {
+                if (submitting) {
+                    return;
+                }
+                startX = event.clientX;
+                startY = event.clientY;
+                currentX = 0;
+                dragging = true;
+                card.classList.add("is-dragging");
+                card.setPointerCapture(event.pointerId);
+            });
+
+            card.addEventListener("pointermove", function (event) {
+                if (!dragging || submitting) {
+                    return;
+                }
+                currentX = event.clientX - startX;
+                const currentY = event.clientY - startY;
+                if (Math.abs(currentX) > 8 || Math.abs(currentY) > 8) {
+                    event.preventDefault();
+                }
+                card.style.transform = "translate(" + currentX + "px, " + (currentY * .15) + "px) rotate(" + (currentX * .04) + "deg)";
+            });
+
+            card.addEventListener("pointerup", function (event) {
+                if (!dragging || submitting) {
+                    return;
+                }
+                dragging = false;
+                card.classList.remove("is-dragging");
+                card.releasePointerCapture(event.pointerId);
+                if (Math.abs(currentX) < 80) {
+                    card.style.transform = "";
+                    return;
+                }
+                form.requestSubmit(card);
+            });
+
+            card.addEventListener("pointercancel", function () {
+                dragging = false;
+                card.classList.remove("is-dragging");
+                card.style.transform = "";
+            });
+        });
+    });
+</script>
 {% endblock %}

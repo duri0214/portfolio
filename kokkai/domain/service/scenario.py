@@ -385,6 +385,11 @@ class ScenarioService:
             for choice in normalized_choices[1:]:
                 if normalized_choices[0]["is_correct"] and choice["is_correct"]:
                     choice["is_correct"] = False
+            order_key = f"{actor_key}:{evidence_speech_order}"
+            if hashlib.sha256(order_key.encode()).digest()[0] % 2:
+                normalized_choices.reverse()
+            for choice_number, choice in enumerate(normalized_choices, start=1):
+                choice["choice_number"] = choice_number
             turns.append(
                 {
                     "turn_number": len(turns) + 1,

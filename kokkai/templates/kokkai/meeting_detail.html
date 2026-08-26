@@ -71,7 +71,12 @@
         </div>
     </section>
 
-    <div class="speeches">
+    {% if scenario %}
+    <details class="mt-4">
+        <summary class="text-muted">会議録の原文を確認する（シナリオの生成元）</summary>
+    {% endif %}
+
+    <div class="speeches mt-3">
         {% for speech in speeches %}
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between">
@@ -87,6 +92,9 @@
         </div>
         {% endfor %}
     </div>
+    {% if scenario %}
+    </details>
+    {% endif %}
 </div>
 {% endblock %}
 

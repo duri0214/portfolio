@@ -201,6 +201,22 @@ class ScenarioServiceTests(TestCase):
         self.assertContains(response, "シナリオを生成中")
         self.assertContains(response, 'value="create_scenario"')
 
+    def test_meeting_detail_collapses_source_speeches_after_scenario_exists(self):
+        """
+        シナリオ:
+        - 入力: シナリオを保存済みの会議録詳細画面。
+        - 処理: 詳細画面を表示する。
+        - 期待値: 原文は折りたたまれ、必要なときだけ確認できること。
+        """
+        self.service.get_or_create(self.meeting)
+
+        response = self.client.get(
+            reverse("kokkai:meeting_detail", args=[self.meeting.pk])
+        )
+
+        self.assertContains(response, "会議録の原文を確認する")
+        self.assertContains(response, "<details")
+
 
 class ScenarioGameViewTests(TestCase):
     def setUp(self):
@@ -307,6 +323,9 @@ class ScenarioGameViewTests(TestCase):
             play = ScenarioPlay.objects.get()
             game_url = reverse("kokkai:scenario_game", args=[play.play_id])
             self.client.post(game_url, {"action": "next"})
+            game_response = self.client.get(game_url)
+            self.assertContains(game_response, "choice-deck")
+            self.assertContains(game_response, "左右にスワイプ")
             response = self.client.post(
                 game_url,
                 {"action": "answer", "choice_id": self.correct_choice.pk},

@@ -193,6 +193,12 @@ class ScenarioGameView(DetailView):
         context["completed_turns"] = [
             turn for turn in turns if turn.turn_number < self.object.next_turn_number
         ]
+        context["total_turns"] = len(turns)
+        context["turn_progress_percent"] = (
+            min(100, int((self.object.next_turn_number - 1) / len(turns) * 100))
+            if turns
+            else 0
+        )
         context["current_turn"] = current_turn
         context["current_choices"] = (
             list(current_turn.choices.all()) if current_turn is not None else []
