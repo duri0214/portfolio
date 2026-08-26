@@ -6,8 +6,10 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import DetailView, ListView
 
+from .domain.repository.scenario_repository import ScenarioRepository
 from .domain.service.meeting_index import MeetingIndexService
 from .domain.service.pipeline import KokkaiPipeline
+from .domain.service.scenario import ScenarioGenerationError, ScenarioService
 from .models import Meeting
 
 
@@ -44,9 +46,7 @@ class IndexView(ListView):
         except (TypeError, ValueError):
             return self.DEFAULT_PAGE_SIZE
         return (
-            page_size
-            if page_size in self.PAGE_SIZE_OPTIONS
-            else self.DEFAULT_PAGE_SIZE
+            page_size if page_size in self.PAGE_SIZE_OPTIONS else self.DEFAULT_PAGE_SIZE
         )
 
     @staticmethod
@@ -115,4 +115,153 @@ class MeetingDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         context["speeches"] = self.object.speeches.all().order_by("speech_order")
         context["has_speeches"] = context["speeches"].exists()
+        availability = ScenarioService().get_availability(self.object)
+        context["scenario"] = availability.scenario
+        context["scenario_needs_regeneration"] = availability.needs_regeneration
         return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        action = request.POST.get("action")
+        service = ScenarioService()
+        try:
+            if action == "create_scenario":
+                scenario, created = service.get_or_create(self.object)
+                if created:
+                    messages.success(request, "シナリオを作成しました。")
+                else:
+                    messages.info(request, "保存済みのシナリオを再利用します。")
+            elif action == "regenerate_scenario":
+                scenario = service.regenerate(self.object)
+                messages.success(request, "新しいバージョンのシナリオを作成しました。")
+            else:
+                messages.error(request, "不正な操作です。")
+                return redirect("kokkai:meeting_detail", pk=self.object.pk)
+        except ScenarioGenerationError as error:
+            messages.error(request, f"シナリオを作成できませんでした: {error}")
+            return redirect("kokkai:meeting_detail", pk=self.object.pk)
+        return redirect("kokkai:scenario_actor_select", scenario_id=scenario.pk)
+
+
+class ScenarioActorSelectView(DetailView):
+    """保存済みシナリオの担当アクターを選択する画面。"""
+
+    template_name = "kokkai/scenario_actor_select.html"
+    context_object_name = "scenario"
+
+    def get_object(self, queryset=None):
+        return ScenarioRepository().get_scenario(self.kwargs["scenario_id"])
+
+    def post(self, request, *args, **kwargs):
+        scenario = self.get_object()
+        actor_id = request.POST.get("actor_id")
+        try:
+            play = ScenarioRepository().create_play(scenario, int(actor_id))
+        except (TypeError, ValueError):
+            messages.error(request, "担当する登場アクターを選択してください。")
+            return redirect("kokkai:scenario_actor_select", scenario_id=scenario.pk)
+        return redirect("kokkai:scenario_game", play_id=play.play_id)
+
+
+class ScenarioGameView(DetailView):
+    """保存済みターンだけを使って進行する二択ゲーム画面。"""
+
+    template_name = "kokkai/scenario_game.html"
+    context_object_name = "play"
+
+    def get_object(self, queryset=None):
+        return ScenarioRepository().get_play(self.kwargs["play_id"])
+
+    def get(self, request, *args, **kwargs):
+        play = self.get_object()
+        if play.is_completed:
+            return redirect("kokkai:scenario_result", play_id=play.play_id)
+        self.object = play
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        turns = list(self.object.scenario.turns.all())
+        current_turn = next(
+            (
+                turn
+                for turn in turns
+                if turn.turn_number == self.object.next_turn_number
+            ),
+            None,
+        )
+        context["completed_turns"] = [
+            turn for turn in turns if turn.turn_number < self.object.next_turn_number
+        ]
+        context["current_turn"] = current_turn
+        context["current_choices"] = (
+            list(current_turn.choices.all()) if current_turn is not None else []
+        )
+        context["is_player_turn"] = (
+            current_turn is not None
+            and current_turn.actor_id == self.object.selected_actor_id
+            and bool(context["current_choices"])
+        )
+        return context
+
+    def post(self, request, *args, **kwargs):
+        play = self.get_object()
+        if play.is_completed:
+            return redirect("kokkai:scenario_result", play_id=play.play_id)
+
+        current_turn = next(
+            (
+                turn
+                for turn in play.scenario.turns.all()
+                if turn.turn_number == play.next_turn_number
+            ),
+            None,
+        )
+        if current_turn is None:
+            return redirect("kokkai:scenario_result", play_id=play.play_id)
+
+        repository = ScenarioRepository()
+        action = request.POST.get("action")
+        choices = list(current_turn.choices.all())
+        try:
+            if action == "answer":
+                if current_turn.actor_id != play.selected_actor_id or not choices:
+                    raise ValueError(
+                        "This turn cannot be answered by the selected actor."
+                    )
+                repository.answer_play(
+                    play,
+                    current_turn.pk,
+                    int(request.POST.get("choice_id")),
+                )
+            elif action == "next":
+                if current_turn.actor_id == play.selected_actor_id and choices:
+                    raise ValueError("Choose one of the two answers before continuing.")
+                repository.advance_play(play)
+            else:
+                raise ValueError("Unknown game action.")
+        except (TypeError, ValueError):
+            messages.error(request, "選択肢を確認して、もう一度操作してください。")
+            return redirect("kokkai:scenario_game", play_id=play.play_id)
+
+        updated_play = repository.get_play(play.play_id)
+        if updated_play.is_completed:
+            return redirect("kokkai:scenario_result", play_id=play.play_id)
+        return redirect("kokkai:scenario_game", play_id=play.play_id)
+
+
+class ScenarioResultView(DetailView):
+    """保存済み選択結果と根拠発言を表示する最終判定画面。"""
+
+    template_name = "kokkai/scenario_result.html"
+    context_object_name = "play"
+
+    def get_object(self, queryset=None):
+        return ScenarioRepository().get_play(self.kwargs["play_id"])
+
+    def get(self, request, *args, **kwargs):
+        play = self.get_object()
+        if not play.is_completed:
+            return redirect("kokkai:scenario_game", play_id=play.play_id)
+        self.object = play
+        return super().get(request, *args, **kwargs)

@@ -58,6 +58,7 @@ class MeetingRepository:
                         speaker_affiliation=speech.speaker_group,
                         speech_text=speech.speech or "",
                         speech_order=speech_order,
+                        source_url=speech.speech_url,
                     )
                     for speech, speech_order in speeches
                 ]

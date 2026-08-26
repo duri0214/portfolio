@@ -26,6 +26,51 @@
     </div>
     {% endif %}
 
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }}" role="alert">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+
+    <section class="card mb-4" aria-labelledby="scenario-heading">
+        <div class="card-body">
+            <h3 id="scenario-heading" class="h5">会議録シナリオ</h3>
+            <p class="text-muted mb-3">
+                会議録を基にした教育用シミュレーションです。実在人物が実際に発言した内容ではありません。
+            </p>
+            {% if not has_speeches %}
+            <p class="mb-0">シナリオを作成するには、先に会議録本文を取り込んでください。</p>
+            {% elif scenario %}
+            <p>
+                <strong>{{ scenario.title }}</strong>
+                <span class="badge text-bg-secondary ms-2">v{{ scenario.version }}</span>
+                {% if scenario_needs_regeneration %}
+                <span class="badge text-bg-warning ms-1">要再生成</span>
+                {% else %}
+                <span class="badge text-bg-success ms-1">利用可能</span>
+                {% endif %}
+            </p>
+            {% if scenario_needs_regeneration %}
+            <p class="small text-muted">会議録本文または生成プロンプトが更新されています。再生成は明示操作時だけ実行します。</p>
+            {% else %}
+            <a href="{% url 'kokkai:scenario_actor_select' scenario.pk %}" class="btn btn-primary">シナリオを開始</a>
+            {% endif %}
+            <form method="post" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="regenerate_scenario">
+                <button type="submit" class="btn btn-outline-secondary">シナリオを再生成</button>
+            </form>
+            {% else %}
+            <p>まだシナリオは作成されていません。作成時にだけ会議録を構造化して保存します。</p>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_scenario">
+                <button type="submit" class="btn btn-primary">シナリオを作成</button>
+            </form>
+            {% endif %}
+        </div>
+    </section>
+
     <div class="speeches">
         {% for speech in speeches %}
         <div class="card mb-3">

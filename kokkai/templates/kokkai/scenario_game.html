@@ -1,0 +1,68 @@
+{% extends 'kokkai/base.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+        <div>
+            <h1 class="h3 mb-1">{{ play.scenario.title }}</h1>
+            <p class="text-muted mb-0">担当: {{ play.selected_actor.name }}{% if play.selected_actor.role %}（{{ play.selected_actor.role }}）{% endif %}</p>
+        </div>
+        <span class="badge text-bg-secondary">ターン {{ play.next_turn_number }}</span>
+    </div>
+
+    <div class="alert alert-warning" role="alert">
+        この画面の会話と判定は、会議録を基に保存された教育用シミュレーションです。実在人物の発言そのものではありません。
+    </div>
+
+    {% if completed_turns %}
+    <details class="mb-4">
+        <summary>これまでの会話（{{ completed_turns|length }} ターン）</summary>
+        <div class="mt-3">
+            {% for turn in completed_turns %}
+            <article class="border-start border-3 ps-3 mb-3">
+                <strong>{{ turn.actor.name }}</strong>
+                <p class="mb-1" style="white-space: pre-wrap;">{{ turn.dialogue }}</p>
+            </article>
+            {% endfor %}
+        </div>
+    </details>
+    {% endif %}
+
+    {% if current_turn %}
+    <article class="card mb-4">
+        <header class="card-header d-flex justify-content-between align-items-center">
+            <strong>{{ current_turn.actor.name }}</strong>
+            <span class="small text-muted">ターン {{ current_turn.turn_number }}</span>
+        </header>
+        <div class="card-body">
+            <p class="card-text fs-5" style="white-space: pre-wrap;">{{ current_turn.dialogue }}</p>
+            <aside class="border rounded bg-light p-3 mb-3">
+                <h2 class="h6">根拠となる会議録</h2>
+                <p class="mb-2" style="white-space: pre-wrap;">{{ current_turn.evidence_note }}</p>
+                <a href="{{ current_turn.evidence_speech.source_url|default:play.scenario.meeting.url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">一次ソースを開く</a>
+            </aside>
+
+            <form method="post">
+                {% csrf_token %}
+                {% if is_player_turn %}
+                <fieldset>
+                    <legend class="h5">あなたならどう答えますか？</legend>
+                    <div class="d-grid gap-2">
+                        {% for choice in current_choices %}
+                        <button type="submit" name="choice_id" value="{{ choice.pk }}" class="btn btn-outline-primary text-start py-3">
+                            {{ forloop.counter }}. {{ choice.text }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="action" value="answer">
+                </fieldset>
+                {% else %}
+                <input type="hidden" name="action" value="next">
+                <button type="submit" class="btn btn-primary">次の発言へ</button>
+                {% endif %}
+            </form>
+        </div>
+    </article>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'kokkai/base.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">会議録一覧</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'kokkai:meeting_detail' scenario.meeting.pk %}">{{ scenario.meeting.committee }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">役割選択</li>
+        </ol>
+    </nav>
+
+    <div class="alert alert-warning" role="alert">
+        <strong>会議録を基にしたシミュレーションです。</strong>
+        実在人物が実際に発言した内容として受け取らないでください。
+    </div>
+
+    <section class="mb-4">
+        <h1 class="h2">{{ scenario.title }}</h1>
+        <p class="lead">{{ scenario.background }}</p>
+        <p class="text-muted small mb-0">シナリオ v{{ scenario.version }} · 生成モデル: {{ scenario.generator_model }}</p>
+    </section>
+
+    <form method="post" class="card">
+        {% csrf_token %}
+        <div class="card-body">
+            <h2 class="h4">担当するアクターを選択</h2>
+            <p class="text-muted">会議に登場する {{ scenario.actors.count }} 人のアクターから1人を選びます。</p>
+            <div class="list-group mb-4">
+                {% for actor in scenario.actors.all %}
+                <label class="list-group-item list-group-item-action">
+                    <input class="form-check-input me-2" type="radio" name="actor_id" value="{{ actor.pk }}" required>
+                    <strong>{{ actor.name }}</strong>
+                    {% if actor.role %}<span class="ms-2">{{ actor.role }}</span>{% endif %}
+                    {% if actor.affiliation %}<span class="text-muted ms-2">{{ actor.affiliation }}</span>{% endif %}
+                    <span class="badge text-bg-light float-end">発言 {{ actor.speech_count }} 件</span>
+                </label>
+                {% endfor %}
+            </div>
+            <button type="submit" class="btn btn-primary">この役割で開始</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
