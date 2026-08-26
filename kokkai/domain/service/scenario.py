@@ -73,8 +73,9 @@ class OpenAIScenarioGenerator:
                         "与えられた一次資料に基づくシミュレーションであることを守ってください。"
                         "根拠にない事実を作らず、actor_key と evidence_speech_order は必ず"
                         "入力にある値を使ってください。各ターンには選択肢を必ず二つ作り、"
-                        "適切な選択を一つだけ指定してください。入力された全アクターに"
-                        "少なくとも一つのターンを割り当ててください。"
+                        "適切な選択を一つだけ指定してください。入力された全アクターを"
+                        "必ず登場させるのではなく、会議を進めるうえで重要なアクターを選んでください。"
+                        "選んだアクターには少なくとも一つのターンを割り当ててください。"
                         "Return valid json only."
                     ),
                 },
@@ -245,13 +246,17 @@ class ScenarioService:
         source_chunks = self._build_source_chunks(speeches, actors)
         generated = self.generator.generate(meeting, actors, source_chunks)
         payload = self._normalize_payload(generated, actors, speeches)
+        scenario_actor_keys = {turn["actor_key"] for turn in payload["turns"]}
+        scenario_actors = [
+            actor for actor in actors if actor["key"] in scenario_actor_keys
+        ]
         return self.repository.create_scenario(
             meeting=meeting,
             source_hash=source_hash,
             prompt_version=self.PROMPT_VERSION,
             generator_model=self.generator.model,
             payload=payload,
-            actors=actors,
+            actors=scenario_actors,
             speeches_by_order={speech.speech_order: speech for speech in speeches},
         )
 
@@ -402,11 +407,6 @@ class ScenarioService:
             )
         if not turns:
             raise ScenarioGenerationError("The scenario did not contain valid turns.")
-        if {turn["actor_key"] for turn in turns} != actor_keys:
-            raise ScenarioGenerationError(
-                "The scenario must include at least one turn for every actor."
-            )
-
         return {
             "title": str(generated.get("title") or "会議録シミュレーション").strip(),
             "background": str(generated.get("background") or "").strip(),

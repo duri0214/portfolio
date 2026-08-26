@@ -2,6 +2,9 @@ from dataclasses import dataclass
 from datetime import date, datetime
 
 
+MEETING_METADATA_SPEAKER_NAME = "会議録情報"
+
+
 @dataclass(frozen=True)
 class SpeechRecord:
     """

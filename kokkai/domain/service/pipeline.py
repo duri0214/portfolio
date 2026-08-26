@@ -8,7 +8,11 @@ from lib.llm.service.completion import OpenAILlmRagService
 from lib.llm.valueobject.completion import RagDocument
 
 from ..repository.meeting_repository import MeetingRepository
-from ..valueobject.meeting import MeetingRecord, SpeechRecord
+from ..valueobject.meeting import (
+    MEETING_METADATA_SPEAKER_NAME,
+    MeetingRecord,
+    SpeechRecord,
+)
 from .kokkai_api import KokkaiAPIClient
 
 
@@ -96,6 +100,8 @@ class KokkaiPipeline:
         rag_docs = []
         for agenda_title, agenda_speeches in agendas:
             for speech in agenda_speeches:
+                if speech.speaker == MEETING_METADATA_SPEAKER_NAME:
+                    continue
                 total_speech_order += 1
                 speeches.append((speech, total_speech_order))
                 if self.rag_service and speech.speech:

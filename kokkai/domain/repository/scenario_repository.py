@@ -17,6 +17,7 @@ from ...models import (
     ScenarioTurn,
     Speech,
 )
+from ..valueobject.meeting import MEETING_METADATA_SPEAKER_NAME
 
 
 class ScenarioRepository:
@@ -24,7 +25,11 @@ class ScenarioRepository:
 
     def get_meeting_speeches(self, meeting: Meeting) -> list[Speech]:
         """シナリオ生成に使う発言を時系列で取得する。"""
-        return list(meeting.speeches.all().order_by("speech_order", "pk"))
+        return list(
+            meeting.speeches.exclude(
+                speaker_name=MEETING_METADATA_SPEAKER_NAME
+            ).order_by("speech_order", "pk")
+        )
 
     def get_latest_scenario(self, meeting: Meeting) -> MeetingScenario | None:
         """会議録に紐づく最新の利用可能なシナリオを取得する。"""

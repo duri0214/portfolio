@@ -10,6 +10,7 @@ from .domain.repository.scenario_repository import ScenarioRepository
 from .domain.service.meeting_index import MeetingIndexService
 from .domain.service.pipeline import KokkaiPipeline
 from .domain.service.scenario import ScenarioGenerationError, ScenarioService
+from .domain.valueobject.meeting import MEETING_METADATA_SPEAKER_NAME
 from .models import Meeting
 
 
@@ -113,7 +114,9 @@ class MeetingDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["speeches"] = self.object.speeches.all().order_by("speech_order")
+        context["speeches"] = self.object.speeches.exclude(
+            speaker_name=MEETING_METADATA_SPEAKER_NAME
+        ).order_by("speech_order")
         context["has_speeches"] = context["speeches"].exists()
         availability = ScenarioService().get_availability(self.object)
         context["scenario"] = availability.scenario

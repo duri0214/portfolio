@@ -73,6 +73,15 @@ class FakeScenarioGenerator:
         }
 
 
+class PartialScenarioGenerator(FakeScenarioGenerator):
+    """重要なアクターだけを返すテスト用ジェネレーター。"""
+
+    def generate(self, meeting, actors, source_chunks):
+        generated = super().generate(meeting, actors, source_chunks)
+        generated["turns"] = generated["turns"][:1]
+        return generated
+
+
 class OpenAIScenarioGeneratorTests(SimpleTestCase):
     def test_long_meeting_chunks_are_summarized_and_aggregated_in_bounded_groups(self):
         """
@@ -168,6 +177,43 @@ class ScenarioServiceTests(TestCase):
         self.assertEqual(MeetingScenario.objects.count(), 2)
         self.assertEqual(first_scenario.version, 1)
         self.assertEqual(regenerated_scenario.version, 2)
+
+    def test_scenario_uses_only_actors_that_appear_in_generated_turns(self):
+        """
+        シナリオ:
+        - 入力: 会議録上の全アクターのうち、主要アクターだけを返す生成結果。
+        - 処理: シナリオを生成して保存する。
+        - 期待値: ターンのないアクターをプレイ対象にせず、生成が失敗しないこと。
+        """
+        service = ScenarioService(generator=PartialScenarioGenerator())
+
+        scenario, created = service.get_or_create(self.meeting)
+
+        self.assertTrue(created)
+        self.assertEqual(scenario.actors.count(), 1)
+        self.assertEqual(scenario.turns.count(), 1)
+
+    def test_meeting_metadata_record_is_not_used_for_scenario_or_display(self):
+        """
+        シナリオ:
+        - 入力: 実際の発言に加えて、国会APIの「会議録情報」メタデータ行がある会議録。
+        - 処理: シナリオ生成と会議詳細表示を行う。
+        - 期待値: メタデータ行をアクターや画面の会議録本文として扱わないこと。
+        """
+        Speech.objects.create(
+            meeting=self.meeting,
+            speaker_name="会議録情報",
+            speech_text="会議の日時などのメタデータ",
+            speech_order=0,
+        )
+
+        scenario, _ = self.service.get_or_create(self.meeting)
+        response = self.client.get(
+            reverse("kokkai:meeting_detail", args=[self.meeting.pk])
+        )
+
+        self.assertEqual(scenario.actors.count(), 2)
+        self.assertNotContains(response, "会議の日時などのメタデータ")
 
     def test_availability_marks_a_scenario_for_regeneration_after_speech_changes(self):
         """
