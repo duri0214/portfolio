@@ -437,7 +437,9 @@ class ScenarioGameViewTests(TestCase):
             self.assertContains(game_response, "choice-deck")
             self.assertContains(game_response, "クリックして返答を選びます")
             self.assertContains(game_response, "choice-card-flash")
-            self.assertContains(game_response, "HTMLFormElement.prototype.submit.call(form)")
+            self.assertContains(
+                game_response, "HTMLFormElement.prototype.submit.call(form)"
+            )
             self.assertNotContains(game_response, "スワイプ")
             self.assertContains(
                 game_response, "会議録の発言を要約・再構成したロールプレイです。"
