@@ -207,7 +207,7 @@ class OpenAIScenarioGeneratorTests(SimpleTestCase):
             "Request too large for tokens per min"
         )
 
-        with self.assertRaisesRegex(ScenarioGenerationError, "token limit"):
+        with self.assertRaisesRegex(ScenarioGenerationError, "tokens-per-minute"):
             generator._request_json_content(
                 client,
                 [{"role": "system", "content": "Return valid json only."}],

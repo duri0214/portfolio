@@ -220,10 +220,26 @@ class OpenAIScenarioGenerator:
                 self.model,
                 error,
             )
-            if "token" in str(error).lower():
+            error_text = str(error).lower()
+            if any(
+                marker in error_text
+                for marker in (
+                    "tokens per min",
+                    "tokens-per-minute",
+                    "token per minute",
+                )
+            ):
                 raise ScenarioGenerationError(
-                    "The scenario generator exceeded the token limit. "
-                    "Use a shorter meeting or a model with a higher limit."
+                    "The scenario generator exceeded the model's tokens-per-minute "
+                    "rate limit. Use a model with a higher rate limit or try again later."
+                ) from error
+            if any(
+                marker in error_text
+                for marker in ("context length", "maximum context", "context window")
+            ):
+                raise ScenarioGenerationError(
+                    "The scenario generator exceeded the model context window. "
+                    "Use a shorter meeting."
                 ) from error
             if getattr(error, "status_code", None) == 429:
                 raise ScenarioGenerationError(
