@@ -56,7 +56,7 @@ class ScenarioAvailability:
 class OpenAIScenarioGenerator:
     """会議全体の要約と、発言ごとの二択を生成するOpenAIアダプター。"""
 
-    model = "gpt-4o"
+    model = "gpt-4o-mini"
 
     def __init__(self, api_key: str | None = None) -> None:
         self.api_key = api_key if api_key is not None else os.getenv("OPENAI_API_KEY")

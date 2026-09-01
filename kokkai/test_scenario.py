@@ -107,6 +107,10 @@ class OpenAIScenarioGeneratorTests(SimpleTestCase):
 
         self.assertEqual(generated["background"], "会議全体の要約")
         client.chat.completions.create.assert_called_once()
+        self.assertEqual(
+            client.chat.completions.create.call_args.kwargs["model"],
+            "gpt-4o-mini",
+        )
         messages = client.chat.completions.create.call_args.kwargs["messages"]
         user_content = messages[1]["content"]
         self.assertLess(
