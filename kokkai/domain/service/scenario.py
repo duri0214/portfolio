@@ -24,6 +24,10 @@ logger = logging.getLogger(__name__)
 class ScenarioGenerationError(Exception):
     """シナリオ生成用データまたは生成結果が利用できない場合の例外。"""
 
+    def __init__(self, message: str, status_code: int = 502) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+
 
 class ScenarioGenerator(Protocol):
     """構造化された会議録からシナリオJSONを生成する境界。"""
@@ -231,7 +235,8 @@ class OpenAIScenarioGenerator:
             ):
                 raise ScenarioGenerationError(
                     "The scenario generator exceeded the model's tokens-per-minute "
-                    "rate limit. Use a model with a higher rate limit or try again later."
+                    "rate limit. Use a model with a higher rate limit or try again later.",
+                    status_code=429,
                 ) from error
             if any(
                 marker in error_text
@@ -239,11 +244,13 @@ class OpenAIScenarioGenerator:
             ):
                 raise ScenarioGenerationError(
                     "The scenario generator exceeded the model context window. "
-                    "Use a shorter meeting."
+                    "Use a shorter meeting.",
+                    status_code=413,
                 ) from error
             if getattr(error, "status_code", None) == 429:
                 raise ScenarioGenerationError(
-                    "The scenario generator is rate-limited. Please try again later."
+                    "The scenario generator is rate-limited. Please try again later.",
+                    status_code=429,
                 ) from error
             raise ScenarioGenerationError(
                 "The scenario generator request failed. Check the server log for details."

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from django.contrib import messages
 from django.db.models import Count
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.generic import DetailView, ListView
 
@@ -143,7 +143,12 @@ class MeetingDetailView(DetailView):
                 return redirect("kokkai:meeting_detail", pk=self.object.pk)
         except ScenarioGenerationError as error:
             messages.error(request, f"シナリオを作成できませんでした: {error}")
-            return redirect("kokkai:meeting_detail", pk=self.object.pk)
+            return render(
+                request,
+                self.template_name,
+                self.get_context_data(),
+                status=error.status_code,
+            )
         return redirect("kokkai:scenario_actor_select", scenario_id=scenario.pk)
 
 
@@ -227,7 +232,13 @@ class ScenarioGameView(DetailView):
             )
         except ScenarioGenerationError as error:
             messages.error(request, f"選択肢を生成できませんでした: {error}")
-            return redirect("kokkai:scenario_game", play_id=play.play_id)
+            self.object = play
+            return render(
+                request,
+                self.template_name,
+                self.get_context_data(),
+                status=error.status_code,
+            )
         except ScenarioPlayError:
             messages.error(request, "選択肢を確認して、もう一度操作してください。")
             return redirect("kokkai:scenario_game", play_id=play.play_id)

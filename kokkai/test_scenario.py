@@ -207,11 +207,15 @@ class OpenAIScenarioGeneratorTests(SimpleTestCase):
             "Request too large for tokens per min"
         )
 
-        with self.assertRaisesRegex(ScenarioGenerationError, "tokens-per-minute"):
+        with self.assertRaisesRegex(
+            ScenarioGenerationError, "tokens-per-minute"
+        ) as context:
             generator._request_json_content(
                 client,
                 [{"role": "system", "content": "Return valid json only."}],
             )
+
+        self.assertEqual(context.exception.status_code, 429)
 
 
 class ScenarioServiceTests(TestCase):
@@ -406,6 +410,28 @@ class ScenarioServiceTests(TestCase):
         self.assertContains(response, "会議録の原文を確認する")
         self.assertContains(response, "<details")
 
+    def test_meeting_detail_returns_rate_limit_without_redirecting(self):
+        """
+        Input: シナリオ生成時にOpenAIのトークンレート制限が発生する画面リクエスト。
+        Process: シナリオ作成フォームを送信する。
+        Expected: リダイレクトせずHTTP 429で元画面と原因を表示する。
+        """
+        with patch(
+            "kokkai.views.ScenarioService.get_or_create",
+            side_effect=ScenarioGenerationError(
+                "The scenario generator exceeded the model's tokens-per-minute rate limit.",
+                status_code=429,
+            ),
+        ):
+            response = self.client.post(
+                reverse("kokkai:meeting_detail", args=[self.meeting.pk]),
+                {"action": "create_scenario"},
+            )
+
+        self.assertEqual(response.status_code, 429)
+        self.assertNotIn("Location", response)
+        self.assertContains(response, "tokens-per-minute", status_code=429)
+
 
 class ScenarioGameViewTests(TestCase):
     def setUp(self):
@@ -544,3 +570,28 @@ class ScenarioGameViewTests(TestCase):
             result_response,
             "https://kokkai.ndl.go.jp/txt/121305254X00120240127/2",
         )
+
+    def test_game_returns_rate_limit_without_redirecting(self):
+        """
+        Input: 選択肢生成時にOpenAIのトークンレート制限が発生するプレイ。
+        Process: プレイヤー担当ターンを進める。
+        Expected: リダイレクトせずHTTP 429でゲーム画面と原因を表示する。
+        """
+        play = ScenarioPlay.objects.create(
+            scenario=self.scenario,
+            selected_actor=self.player_actor,
+        )
+        game_url = reverse("kokkai:scenario_game", args=[play.play_id])
+
+        with patch(
+            "kokkai.views.ScenarioPlayService.progress",
+            side_effect=ScenarioGenerationError(
+                "The scenario generator is rate-limited. Please try again later.",
+                status_code=429,
+            ),
+        ):
+            response = self.client.post(game_url, {"action": "next"})
+
+        self.assertEqual(response.status_code, 429)
+        self.assertNotIn("Location", response)
+        self.assertContains(response, "rate-limited", status_code=429)
