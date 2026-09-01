@@ -58,28 +58,6 @@ class ScenarioChoiceData:
 
 
 @dataclass(frozen=True)
-class ScenarioTurnData:
-    """
-    保存前のシナリオターンを表す値。
-
-    Attributes:
-        turn_number: シナリオ内の進行順。
-        actor_key: このターンを発話するアクターの一時キー。
-        dialogue: シミュレーション上の発話。
-        evidence_speech_order: 根拠となる元発言の順番。
-        evidence_note: 根拠発言との対応説明。
-        choices: 二択の選択肢。
-    """
-
-    turn_number: int
-    actor_key: str
-    dialogue: str
-    evidence_speech_order: int
-    evidence_note: str
-    choices: tuple[ScenarioChoiceData, ...]
-
-
-@dataclass(frozen=True)
 class ScenarioPayload:
     """
     保存前の会議録シナリオ全体を表す値。
@@ -91,7 +69,6 @@ class ScenarioPayload:
         failure_label: 失敗時の表示名。
         judgment_criteria: 成否の判定基準。
         passing_score: 成功に必要な正答率。
-        turns: 時系列のシナリオターン。
     """
 
     title: str
@@ -100,9 +77,3 @@ class ScenarioPayload:
     failure_label: str
     judgment_criteria: str
     passing_score: int
-    turns: tuple[ScenarioTurnData, ...]
-
-    @property
-    def actor_keys(self) -> frozenset[str]:
-        """ターンに登場するアクターキーの集合を返す。"""
-        return frozenset(turn.actor_key for turn in self.turns)

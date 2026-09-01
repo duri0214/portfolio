@@ -11,13 +11,14 @@
     </nav>
 
     <div class="alert alert-warning" role="alert">
-        <strong>会議録の発言を要約・再構成したロールプレイです。</strong>
-        担当する役割を選び、各場面でどう対応するかを考えます。
+        <strong>会議録全体の要約と、原文発言を議事録 No.順にたどるロールプレイです。</strong>
+        担当する役割の発言に到達したら、二択から返答を選びます。
     </div>
 
     <section class="mb-4">
         <h1 class="h2">{{ scenario.title }}</h1>
         <p class="lead">{{ scenario.background }}</p>
+        <p class="text-muted small">ゲーム開始時に会議録全体の要約を表示し、その後は議事録のNo.順に進みます。</p>
         <p class="text-muted small mb-0">シナリオ v{{ scenario.version }} · 生成モデル: {{ scenario.generator_model }}</p>
     </section>
 

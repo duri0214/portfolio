@@ -138,7 +138,7 @@ class ScenarioActor(models.Model):
 
 
 class ScenarioTurn(models.Model):
-    """シナリオの1ターンと、その根拠となる一次発言。"""
+    """全体要約または、その根拠となる一次発言に対応するシナリオの1ターン。"""
 
     scenario = models.ForeignKey(
         MeetingScenario,
@@ -147,11 +147,14 @@ class ScenarioTurn(models.Model):
         verbose_name="シナリオ",
     )
     turn_number = models.PositiveIntegerField("ターン番号")
+    is_overview = models.BooleanField("全体要約ターン", default=False)
     actor = models.ForeignKey(
         ScenarioActor,
         on_delete=models.PROTECT,
         related_name="turns",
         verbose_name="発言アクター",
+        null=True,
+        blank=True,
     )
     dialogue = models.TextField("会話文")
     evidence_speech = models.ForeignKey(
@@ -159,6 +162,8 @@ class ScenarioTurn(models.Model):
         on_delete=models.PROTECT,
         related_name="scenario_turns",
         verbose_name="根拠発言",
+        null=True,
+        blank=True,
     )
     evidence_note = models.TextField("根拠の説明")
 

@@ -80,5 +80,5 @@ class KokkaiPipeline:
         for speech in a_meeting.speech_records:
             if not speech.speech or speech.speaker == MEETING_METADATA_SPEAKER_NAME:
                 continue
-            speeches.append((speech, len(speeches) + 1))
+            speeches.append((speech, speech.speech_order))
         self.repository.replace_meeting_contents(a_meeting, speeches)

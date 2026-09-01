@@ -15,7 +15,6 @@ from ..valueobject.scenario import (
     ScenarioActorData,
     ScenarioChoiceData,
     ScenarioPayload,
-    ScenarioTurnData,
 )
 
 
@@ -34,7 +33,16 @@ class ScenarioGenerator(Protocol):
         actors: list[ScenarioActorData],
         source_chunks: list[str],
     ) -> dict[str, Any]:
-        """シナリオの構造化データを返す。"""
+        """会議全体の要約と、プレイに必要な判定メタデータを返す。"""
+
+    def generate_choices(
+        self,
+        meeting: Meeting,
+        actor: ScenarioActorData,
+        speech: Speech,
+        background: str,
+    ) -> dict[str, Any]:
+        """選択アクターの発言に対する二択を返す。"""
 
 
 @dataclass(frozen=True)
@@ -46,11 +54,9 @@ class ScenarioAvailability:
 
 
 class OpenAIScenarioGenerator:
-    """会議録を一度だけ構造化シナリオへ変換するOpenAIアダプター。"""
+    """会議全体の要約と、発言ごとの二択を生成するOpenAIアダプター。"""
 
     model = "gpt-4o"
-    CHUNK_SUMMARY_CHARACTERS = 4_000
-    MAX_CHUNKS_PER_AGGREGATION = 12
 
     def __init__(self, api_key: str | None = None) -> None:
         self.api_key = api_key if api_key is not None else os.getenv("OPENAI_API_KEY")
@@ -61,12 +67,11 @@ class OpenAIScenarioGenerator:
         actors: list[ScenarioActorData],
         source_chunks: list[str],
     ) -> dict[str, Any]:
-        """一次発言を根拠に、再生用のJSONシナリオを一度だけ生成する。"""
+        """会議録全体から、概要・判定メタデータだけを一度生成する。"""
         if not self.api_key:
             raise ScenarioGenerationError("OPENAI_API_KEY is not configured.")
 
         client = OpenAI(api_key=self.api_key)
-        source_chunks = self._summarize_source_chunks(client, source_chunks)
         content = self._request_json_content(
             client,
             [
@@ -76,11 +81,8 @@ class OpenAIScenarioGenerator:
                         "あなたは国会会議録を題材にした教育用シミュレーションゲームの"
                         "シナリオ編集者です。実在人物が実際に発言したかのようには書かず、"
                         "与えられた一次資料に基づくシミュレーションであることを守ってください。"
-                        "根拠にない事実を作らず、actor_key と evidence_speech_order は必ず"
-                        "入力にある値を使ってください。各ターンには選択肢を必ず二つ作り、"
-                        "適切な選択を一つだけ指定してください。入力された全アクターを"
-                        "必ず登場させるのではなく、会議を進めるうえで重要なアクターを選んでください。"
-                        "選んだアクターには少なくとも一つのターンを割り当ててください。"
+                        "会議録全体を読み、background と判定メタデータだけを作成してください。"
+                        "発言ごとのターンや選択肢はここでは作成せず、会議録にない事実も追加しないでください。"
                         "Return valid json only."
                     ),
                 },
@@ -88,7 +90,7 @@ class OpenAIScenarioGenerator:
                     "role": "user",
                     "content": json.dumps(
                         {
-                            "task": "会議録を役割選択・二択進行型ゲームシナリオにする",
+                            "task": "会議録全体の要約とゲームの判定メタデータを作る",
                             "meeting": {
                                 "min_id": meeting.min_id,
                                 "date": meeting.meeting_date.isoformat(),
@@ -106,26 +108,6 @@ class OpenAIScenarioGenerator:
                                 "failure_label": "string",
                                 "judgment_criteria": "string",
                                 "passing_score": "0-100 integer",
-                                "turns": [
-                                    {
-                                        "actor_key": "actor key from actors",
-                                        "dialogue": "simulation dialogue",
-                                        "evidence_speech_order": "source speech order",
-                                        "evidence_note": "why this source supports the turn",
-                                        "choices": [
-                                            {
-                                                "text": "choice text",
-                                                "is_correct": "boolean",
-                                                "rationale": "source-grounded rationale",
-                                            },
-                                            {
-                                                "text": "choice text",
-                                                "is_correct": "boolean",
-                                                "rationale": "source-grounded rationale",
-                                            },
-                                        ],
-                                    }
-                                ],
                             },
                         },
                         ensure_ascii=False,
@@ -133,6 +115,80 @@ class OpenAIScenarioGenerator:
                 },
             ],
         )
+        return self._parse_json_content(content)
+
+    def generate_choices(
+        self,
+        meeting: Meeting,
+        actor: ScenarioActorData,
+        speech: Speech,
+        background: str,
+    ) -> dict[str, Any]:
+        """選択アクターの発言に到達したときだけ、その場面の二択を生成する。"""
+        if not self.api_key:
+            raise ScenarioGenerationError("OPENAI_API_KEY is not configured.")
+
+        client = OpenAI(api_key=self.api_key)
+        content = self._request_json_content(
+            client,
+            [
+                {
+                    "role": "system",
+                    "content": (
+                        "あなたは国会会議録を題材にした教育用ロールプレイの出題者です。"
+                        "会議録を基にしたシミュレーションであることを守り、与えられた発言に"
+                        "対するプレイヤーの返答候補を二つだけ作ってください。"
+                        "適切な返答を一つだけ is_correct=true にし、根拠は発言内容に限定してください。"
+                        "Return valid json only."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": json.dumps(
+                        {
+                            "task": "この発言に対するプレイヤーの返答を二択にする",
+                            "meeting": {
+                                "min_id": meeting.min_id,
+                                "date": meeting.meeting_date.isoformat(),
+                                "house": meeting.house,
+                                "committee": meeting.committee,
+                                "meeting_number": meeting.meeting_number,
+                                "source_url": meeting.url,
+                            },
+                            "background": background,
+                            "actor": actor.to_prompt_value(),
+                            "speech": {
+                                "speech_order": speech.speech_order,
+                                "speaker_name": speech.speaker_name,
+                                "speaker_role": speech.speaker_role or "",
+                                "speaker_affiliation": speech.speaker_affiliation or "",
+                                "speech_text": speech.speech_text,
+                                "source_url": speech.source_url or meeting.url,
+                            },
+                            "output_schema": {
+                                "choices": [
+                                    {
+                                        "text": "choice text",
+                                        "is_correct": "boolean",
+                                        "rationale": "source-grounded rationale",
+                                    },
+                                    {
+                                        "text": "choice text",
+                                        "is_correct": "boolean",
+                                        "rationale": "source-grounded rationale",
+                                    },
+                                ]
+                            },
+                        },
+                        ensure_ascii=False,
+                    ),
+                },
+            ],
+        )
+        return self._parse_json_content(content)
+
+    @staticmethod
+    def _parse_json_content(content: str) -> dict[str, Any]:
         try:
             generated = json.loads(content)
         except json.JSONDecodeError as error:
@@ -144,40 +200,6 @@ class OpenAIScenarioGenerator:
                 "The scenario generator returned an invalid payload."
             )
         return generated
-
-    def _summarize_source_chunks(
-        self, client: OpenAI, source_chunks: list[str]
-    ) -> list[str]:
-        """長い会議録を小さな入力単位で要約し、段階的に集約する。"""
-        summaries = [
-            self._summarize_chunk(client, source_chunk)
-            for source_chunk in source_chunks
-        ]
-        while len(summaries) > self.MAX_CHUNKS_PER_AGGREGATION:
-            summaries = [
-                self._summarize_chunk(client, "\n\n".join(summary_group))
-                for summary_group in self._batched(summaries)
-            ]
-        return summaries
-
-    def _summarize_chunk(self, client: OpenAI, source_chunk: str) -> str:
-        """入力単位の発言順・アクター・根拠を失わない短い構造化要約を作る。"""
-        content = self._request_json_content(
-            client,
-            [
-                {
-                    "role": "system",
-                    "content": (
-                        "会議録の入力単位を、後段のゲームシナリオ生成に使う短い"
-                        "構造化要約へ変換してください。事実を追加せず、speech_order、"
-                        "actor_key、source_url を必ず残してください。"
-                        "Return valid json only."
-                    ),
-                },
-                {"role": "user", "content": source_chunk},
-            ],
-        )
-        return content[: self.CHUNK_SUMMARY_CHARACTERS]
 
     def _request_json_content(
         self, client: OpenAI, messages: list[dict[str, str]]
@@ -200,18 +222,11 @@ class OpenAIScenarioGenerator:
             )
         return content
 
-    def _batched(self, summaries: list[str]) -> list[list[str]]:
-        """集約用の要約を、プロンプト上限を超えない単位に分ける。"""
-        return [
-            summaries[index : index + self.MAX_CHUNKS_PER_AGGREGATION]
-            for index in range(0, len(summaries), self.MAX_CHUNKS_PER_AGGREGATION)
-        ]
-
 
 class ScenarioService:
     """シナリオカセットの生成・再利用と、会議録由来データの正規化を担う。"""
 
-    PROMPT_VERSION = "meeting-simulation-v1"
+    PROMPT_VERSION = "meeting-simulation-v2"
     SOURCE_CHUNK_CHARACTERS = 12_000
 
     def __init__(
@@ -262,16 +277,15 @@ class ScenarioService:
         actors = self._build_actors(speeches)
         source_chunks = self._build_source_chunks(speeches, actors)
         generated = self.generator.generate(meeting, actors, source_chunks)
-        payload = self._normalize_payload(generated, actors, speeches)
-        scenario_actors = [actor for actor in actors if actor.key in payload.actor_keys]
+        payload = self._normalize_payload(generated)
         return self.repository.create_scenario(
             meeting=meeting,
             source_hash=source_hash,
             prompt_version=self.PROMPT_VERSION,
             generator_model=self.generator.model,
             payload=payload,
-            actors=scenario_actors,
-            speeches_by_order={speech.speech_order: speech for speech in speeches},
+            actors=actors,
+            speeches=speeches,
         )
 
     @staticmethod
@@ -354,89 +368,13 @@ class ScenarioService:
         return chunks
 
     @staticmethod
-    def _normalize_payload(
-        generated: dict[str, Any],
-        actors: list[ScenarioActorData],
-        speeches: list[Speech],
-    ) -> ScenarioPayload:
-        actor_keys = {actor.key for actor in actors}
-        speech_orders = {speech.speech_order for speech in speeches}
-        raw_turns = generated.get("turns")
-        if not isinstance(raw_turns, list):
-            raise ScenarioGenerationError("The scenario does not contain turns.")
-
-        turns: list[ScenarioTurnData] = []
-        for raw_turn in raw_turns:
-            if not isinstance(raw_turn, dict):
-                continue
-            actor_key = raw_turn.get("actor_key")
-            evidence_speech_order = raw_turn.get("evidence_speech_order")
-            choices = raw_turn.get("choices")
-            dialogue = str(raw_turn.get("dialogue", "")).strip()
-            if (
-                actor_key not in actor_keys
-                or not isinstance(evidence_speech_order, int)
-                or evidence_speech_order not in speech_orders
-                or not isinstance(choices, list)
-                or len(choices) != 2
-                or not dialogue
-            ):
-                continue
-            normalized_choices: list[ScenarioChoiceData] = []
-            for choice_number, choice in enumerate(choices, start=1):
-                if (
-                    not isinstance(choice, dict)
-                    or not str(choice.get("text", "")).strip()
-                ):
-                    normalized_choices = []
-                    break
-                normalized_choices.append(
-                    ScenarioChoiceData(
-                        choice_number=choice_number,
-                        text=str(choice["text"]).strip(),
-                        is_correct=bool(choice.get("is_correct")),
-                        rationale=str(choice.get("rationale", "")).strip(),
-                    )
-                )
-            if not normalized_choices:
-                continue
-            correct_choice_index = next(
-                (
-                    index
-                    for index, choice in enumerate(normalized_choices)
-                    if choice.is_correct
-                ),
-                0,
-            )
-            normalized_choices = [
-                replace(choice, is_correct=index == correct_choice_index)
-                for index, choice in enumerate(normalized_choices)
-            ]
-            order_key = f"{actor_key}:{evidence_speech_order}"
-            if hashlib.sha256(order_key.encode()).digest()[0] % 2:
-                normalized_choices.reverse()
-            normalized_choices = [
-                replace(choice, choice_number=choice_number)
-                for choice_number, choice in enumerate(normalized_choices, start=1)
-            ]
-            turns.append(
-                ScenarioTurnData(
-                    turn_number=len(turns) + 1,
-                    actor_key=actor_key,
-                    dialogue=dialogue,
-                    evidence_speech_order=evidence_speech_order,
-                    evidence_note=(
-                        str(raw_turn.get("evidence_note", "")).strip()
-                        or "会議録の発言を根拠にしたターンです。"
-                    ),
-                    choices=tuple(normalized_choices),
-                )
-            )
-        if not turns:
-            raise ScenarioGenerationError("The scenario did not contain valid turns.")
+    def _normalize_payload(generated: dict[str, Any]) -> ScenarioPayload:
+        """全体要約の生成結果を保存用の値へ正規化する。"""
         return ScenarioPayload(
             title=str(generated.get("title") or "会議録シミュレーション").strip(),
-            background=str(generated.get("background") or "").strip(),
+            background=str(
+                generated.get("background") or "会議録全体を見渡した要約です。"
+            ).strip(),
             success_label=str(generated.get("success_label") or "成立").strip(),
             failure_label=str(generated.get("failure_label") or "不成立").strip(),
             judgment_criteria=str(
@@ -445,7 +383,48 @@ class ScenarioService:
             passing_score=ScenarioService._normalize_passing_score(
                 generated.get("passing_score")
             ),
-            turns=tuple(turns),
+        )
+
+    @staticmethod
+    def normalize_choices(
+        generated: dict[str, Any], actor_key: str, speech_order: int
+    ) -> tuple[ScenarioChoiceData, ...]:
+        """選択肢を二択・正解一つ・表示順付きの値へ正規化する。"""
+        raw_choices = generated.get("choices")
+        if not isinstance(raw_choices, list) or len(raw_choices) != 2:
+            raise ScenarioGenerationError(
+                "The choice generator did not return exactly two choices."
+            )
+
+        choices: list[ScenarioChoiceData] = []
+        for choice_number, choice in enumerate(raw_choices, start=1):
+            if not isinstance(choice, dict) or not str(choice.get("text", "")).strip():
+                raise ScenarioGenerationError(
+                    "The choice generator returned an invalid choice."
+                )
+            choices.append(
+                ScenarioChoiceData(
+                    choice_number=choice_number,
+                    text=str(choice["text"]).strip(),
+                    is_correct=bool(choice.get("is_correct")),
+                    rationale=str(choice.get("rationale", "")).strip(),
+                )
+            )
+
+        correct_choice_index = next(
+            (index for index, choice in enumerate(choices) if choice.is_correct),
+            0,
+        )
+        choices = [
+            replace(choice, is_correct=index == correct_choice_index)
+            for index, choice in enumerate(choices)
+        ]
+        order_key = f"{actor_key}:{speech_order}"
+        if hashlib.sha256(order_key.encode()).digest()[0] % 2:
+            choices.reverse()
+        return tuple(
+            replace(choice, choice_number=choice_number)
+            for choice_number, choice in enumerate(choices, start=1)
         )
 
     @staticmethod

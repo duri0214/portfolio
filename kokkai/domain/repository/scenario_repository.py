@@ -16,7 +16,11 @@ from ...models import (
     Speech,
 )
 from ..valueobject.meeting import MEETING_METADATA_SPEAKER_NAME
-from ..valueobject.scenario import ScenarioActorData, ScenarioPayload
+from ..valueobject.scenario import (
+    ScenarioActorData,
+    ScenarioChoiceData,
+    ScenarioPayload,
+)
 
 
 class ScenarioRepository:
@@ -73,9 +77,9 @@ class ScenarioRepository:
         generator_model: str,
         payload: ScenarioPayload,
         actors: Iterable[ScenarioActorData],
-        speeches_by_order: dict[int, Speech],
+        speeches: Iterable[Speech],
     ) -> MeetingScenario:
-        """新しいバージョンのシナリオ、アクター、ターン、二択をまとめて保存する。"""
+        """新しいバージョンのシナリオ、全アクター、全発言ターンを保存する。"""
         actor_list = list(actors)
         with transaction.atomic():
             latest_version = MeetingScenario.objects.filter(meeting=meeting).aggregate(
@@ -111,31 +115,33 @@ class ScenarioRepository:
                 (actor.name, actor.role, actor.affiliation): actor
                 for actor in ScenarioActor.objects.filter(scenario=scenario)
             }
-            actors_by_key = {
-                actor.key: saved_actors_by_identity[actor.identity]
-                for actor in actor_list
-            }
+            ScenarioTurn.objects.create(
+                scenario=scenario,
+                turn_number=1,
+                is_overview=True,
+                dialogue=payload.background,
+                evidence_note="会議録全体を見渡した要約です。",
+            )
 
-            for turn_data in payload.turns:
-                turn = ScenarioTurn.objects.create(
+            for turn_number, speech in enumerate(
+                sorted(speeches, key=lambda item: item.speech_order),
+                start=2,
+            ):
+                actor = saved_actors_by_identity[
+                    (
+                        speech.speaker_name,
+                        speech.speaker_role or "",
+                        speech.speaker_affiliation or "",
+                    )
+                ]
+                ScenarioTurn.objects.create(
                     scenario=scenario,
-                    turn_number=turn_data.turn_number,
-                    actor=actors_by_key[turn_data.actor_key],
-                    dialogue=turn_data.dialogue,
-                    evidence_speech=speeches_by_order[turn_data.evidence_speech_order],
-                    evidence_note=turn_data.evidence_note,
-                )
-                ScenarioChoice.objects.bulk_create(
-                    [
-                        ScenarioChoice(
-                            turn=turn,
-                            choice_number=choice.choice_number,
-                            text=choice.text,
-                            is_correct=choice.is_correct,
-                            rationale=choice.rationale,
-                        )
-                        for choice in turn_data.choices
-                    ]
+                    turn_number=turn_number,
+                    is_overview=False,
+                    actor=actor,
+                    dialogue=speech.speech_text,
+                    evidence_speech=speech,
+                    evidence_note=f"議事録 No.{speech.speech_order} の発言です。",
                 )
         return scenario
 
@@ -174,7 +180,7 @@ class ScenarioRepository:
     def get_turn(self, scenario_id: int, turn_number: int) -> ScenarioTurn | None:
         """指定したシナリオのターンと選択肢を取得する。"""
         return (
-            ScenarioTurn.objects.select_related("actor")
+            ScenarioTurn.objects.select_related("actor", "evidence_speech")
             .prefetch_related("choices")
             .filter(scenario_id=scenario_id, turn_number=turn_number)
             .first()
@@ -183,7 +189,25 @@ class ScenarioRepository:
     @staticmethod
     def get_turn_choices(turn: ScenarioTurn) -> list[ScenarioChoice]:
         """ターンに紐づく選択肢を表示順で取得する。"""
-        return list(turn.choices.all())
+        return list(ScenarioChoice.objects.filter(turn=turn).order_by("choice_number"))
+
+    @staticmethod
+    def create_turn_choices(
+        turn: ScenarioTurn, choices: Iterable[ScenarioChoiceData]
+    ) -> None:
+        """プレイ中に生成した二択をターンへ保存する。"""
+        ScenarioChoice.objects.bulk_create(
+            [
+                ScenarioChoice(
+                    turn=turn,
+                    choice_number=choice.choice_number,
+                    text=choice.text,
+                    is_correct=choice.is_correct,
+                    rationale=choice.rationale,
+                )
+                for choice in choices
+            ]
+        )
 
     @staticmethod
     def get_last_turn_number(scenario_id: int) -> int:

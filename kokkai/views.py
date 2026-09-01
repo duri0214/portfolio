@@ -168,7 +168,7 @@ class ScenarioActorSelectView(DetailView):
 
 
 class ScenarioGameView(DetailView):
-    """保存済みターンだけを使って進行する二択ゲーム画面。"""
+    """会議録の発言を順に表示し、担当アクターの発言だけ二択を遅延生成する画面。"""
 
     template_name = "kokkai/scenario_game.html"
     context_object_name = "play"
@@ -225,6 +225,9 @@ class ScenarioGameView(DetailView):
                 request.POST.get("action"),
                 request.POST.get("choice_id"),
             )
+        except ScenarioGenerationError as error:
+            messages.error(request, f"選択肢を生成できませんでした: {error}")
+            return redirect("kokkai:scenario_game", play_id=play.play_id)
         except ScenarioPlayError:
             messages.error(request, "選択肢を確認して、もう一度操作してください。")
             return redirect("kokkai:scenario_game", play_id=play.play_id)

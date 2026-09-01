@@ -3,6 +3,13 @@ from django.utils import timezone
 
 from ...models import MeetingScenario, ScenarioChoice, ScenarioPlay, ScenarioTurn
 from ..repository.scenario_repository import ScenarioRepository
+from ..valueobject.scenario import ScenarioActorData
+from .scenario import (
+    OpenAIScenarioGenerator,
+    ScenarioGenerationError,
+    ScenarioGenerator,
+    ScenarioService,
+)
 
 
 class ScenarioPlayError(ValueError):
@@ -12,8 +19,13 @@ class ScenarioPlayError(ValueError):
 class ScenarioPlayService:
     """保存済みシナリオの開始・回答・完了判定を一貫して進行する。"""
 
-    def __init__(self, repository: ScenarioRepository | None = None) -> None:
+    def __init__(
+        self,
+        repository: ScenarioRepository | None = None,
+        generator: ScenarioGenerator | None = None,
+    ) -> None:
         self.repository = repository or ScenarioRepository()
+        self.generator = generator or OpenAIScenarioGenerator()
 
     def start(self, scenario: MeetingScenario, actor_id: int) -> ScenarioPlay:
         """担当アクターを選択して新しいプレイを開始する。"""
@@ -29,18 +41,28 @@ class ScenarioPlayService:
                 turn = self.repository.get_turn(play.scenario_id, play.next_turn_number)
                 if turn is None:
                     self._complete(play)
-                else:
+                elif action == "answer":
+                    self._ensure_choices(play, turn)
                     choices = self.repository.get_turn_choices(turn)
-                    if action == "answer":
-                        self._answer(play, turn, choices, choice_id)
-                    elif action == "next":
-                        if turn.actor_id == play.selected_actor_id and choices:
-                            raise ScenarioPlayError(
-                                "Choose one of the two answers before continuing."
-                            )
-                        self._move_to_next_turn(play)
-                    else:
-                        raise ScenarioPlayError("Unknown game action.")
+                    self._answer(play, turn, choices, choice_id)
+                elif action == "next":
+                    choices = self.repository.get_turn_choices(turn)
+                    if turn.actor_id == play.selected_actor_id and choices:
+                        raise ScenarioPlayError(
+                            "Choose one of the two answers before continuing."
+                        )
+                    if turn.actor_id == play.selected_actor_id:
+                        raise ScenarioPlayError(
+                            "The choices for this turn are not ready yet."
+                        )
+                    self._move_to_next_turn(play)
+                    if not play.is_completed:
+                        next_turn = self.repository.get_turn(
+                            play.scenario_id, play.next_turn_number
+                        )
+                        self._ensure_choices(play, next_turn)
+                else:
+                    raise ScenarioPlayError("Unknown game action.")
 
         return self.repository.get_play(play_id)
 
@@ -72,6 +94,46 @@ class ScenarioPlayService:
             play.score += 1
         self.repository.save_play(play, ["answer_count", "score"])
         self._move_to_next_turn(play)
+        if not play.is_completed:
+            next_turn = self.repository.get_turn(
+                play.scenario_id, play.next_turn_number
+            )
+            self._ensure_choices(play, next_turn)
+
+    def _ensure_choices(self, play: ScenarioPlay, turn: ScenarioTurn | None) -> None:
+        """プレイヤー担当ターンにだけ未生成の二択を作る。"""
+        if (
+            turn is None
+            or turn.is_overview
+            or turn.actor_id != play.selected_actor_id
+            or self.repository.get_turn_choices(turn)
+        ):
+            return
+        if turn.evidence_speech is None or turn.actor is None:
+            raise ScenarioGenerationError(
+                "The player turn does not have source speech information."
+            )
+
+        actor = ScenarioActorData(
+            key=f"actor-{turn.actor_id}",
+            display_order=turn.actor.display_order,
+            name=turn.actor.name,
+            role=turn.actor.role,
+            affiliation=turn.actor.affiliation,
+            speech_count=turn.actor.speech_count,
+        )
+        generated = self.generator.generate_choices(
+            play.scenario.meeting,
+            actor,
+            turn.evidence_speech,
+            play.scenario.background,
+        )
+        choices = ScenarioService.normalize_choices(
+            generated,
+            actor.key,
+            turn.evidence_speech.speech_order,
+        )
+        self.repository.create_turn_choices(turn, choices)
 
     def _move_to_next_turn(self, play: ScenarioPlay) -> None:
         """最終ターンなら完了し、それ以外なら次のターン番号を保存する。"""

@@ -223,7 +223,7 @@ class KokkaiPipelineTests(TestCase):
         シナリオ:
         - 入力: 本文、会議録情報メタデータ、空本文を含む会議録取得結果。
         - 処理: 選択した会議録本文を取り込む。
-        - 期待値: 実発言だけを連番で保存し、埋め込み処理を呼ばないこと。
+        - 期待値: 実発言だけをXML由来のNo.で保存し、埋め込み処理を呼ばないこと。
         """
         selected_record = meeting_record()
         source_speech = selected_record.speech_records[0]
@@ -231,8 +231,12 @@ class KokkaiPipelineTests(TestCase):
             source_speech,
             speaker="会議録情報",
             speech="会議の日時などのメタデータ",
+            speech_order=0,
         )
-        empty_speech = replace(source_speech, speaker="空の発言", speech=None)
+        empty_speech = replace(
+            source_speech, speaker="空の発言", speech=None, speech_order=20
+        )
+        source_speech = replace(source_speech, speech_order=21)
         selected_record = replace(
             selected_record,
             speech_records=[metadata_speech, empty_speech, source_speech],
@@ -249,7 +253,7 @@ class KokkaiPipelineTests(TestCase):
 
         repository.replace_meeting_contents.assert_called_once_with(
             selected_record,
-            [(source_speech, 1)],
+            [(source_speech, 21)],
         )
 
 
