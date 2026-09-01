@@ -195,6 +195,24 @@ class OpenAIScenarioGeneratorTests(SimpleTestCase):
                 [{"role": "system", "content": "Return valid json only."}],
             )
 
+    def test_token_rate_limit_error_explains_the_cause(self):
+        """
+        Input: An OpenAI error mentioning the token rate limit.
+        Process: Convert the SDK exception into a domain exception.
+        Expected: The domain error explains that the token limit was exceeded.
+        """
+        generator = OpenAIScenarioGenerator(api_key="test-key")
+        client = Mock()
+        client.chat.completions.create.side_effect = OpenAIError(
+            "Request too large for tokens per min"
+        )
+
+        with self.assertRaisesRegex(ScenarioGenerationError, "token limit"):
+            generator._request_json_content(
+                client,
+                [{"role": "system", "content": "Return valid json only."}],
+            )
+
 
 class ScenarioServiceTests(TestCase):
     def setUp(self):

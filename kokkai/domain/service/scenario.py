@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 from collections import OrderedDict
 from dataclasses import dataclass, replace
@@ -16,6 +17,8 @@ from ..valueobject.scenario import (
     ScenarioChoiceData,
     ScenarioPayload,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ScenarioGenerationError(Exception):
@@ -212,8 +215,22 @@ class OpenAIScenarioGenerator:
                 messages=messages,
             )
         except OpenAIError as error:
+            logger.warning(
+                "Scenario generator request failed for model %s: %s",
+                self.model,
+                error,
+            )
+            if "token" in str(error).lower():
+                raise ScenarioGenerationError(
+                    "The scenario generator exceeded the token limit. "
+                    "Use a shorter meeting or a model with a higher limit."
+                ) from error
+            if getattr(error, "status_code", None) == 429:
+                raise ScenarioGenerationError(
+                    "The scenario generator is rate-limited. Please try again later."
+                ) from error
             raise ScenarioGenerationError(
-                "The scenario generator request failed."
+                "The scenario generator request failed. Check the server log for details."
             ) from error
         content = response.choices[0].message.content
         if not content:
