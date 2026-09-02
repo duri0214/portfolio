@@ -577,10 +577,14 @@ class ScenarioGameViewTests(TestCase):
             self.assertContains(first_response, "player-turn-marker is-next")
             self.assertEqual(
                 [
-                    (marker["turn_number"], marker["state"])
+                    (
+                        marker["turn_number"],
+                        marker["position"],
+                        marker["state"],
+                    )
                     for marker in first_response.context["player_turn_markers"]
                 ],
-                [(2, "is-next")],
+                [(2, 50.0, "is-next")],
             )
             self.assertNotContains(first_response, "会議録全体の要約です。")
             self.assertFalse(first_response.context["is_player_turn"])

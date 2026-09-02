@@ -267,7 +267,7 @@ class ScenarioGameView(DetailView):
             player_turn_markers.append(
                 {
                     "turn_number": turn.turn_number,
-                    "position": round((turn.turn_number - 0.5) / len(turns) * 100, 2),
+                    "position": round((turn.turn_number - 1) / len(turns) * 100, 2),
                     "state": state,
                 }
             )
