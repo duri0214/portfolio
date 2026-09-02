@@ -571,10 +571,21 @@ class ScenarioGameViewTests(TestCase):
             play = ScenarioPlay.objects.get()
             game_url = reverse("kokkai:scenario_game", args=[play.play_id])
             first_response = self.client.get(game_url)
+            self.assertContains(first_response, "シナリオ選択へ戻る")
+            self.assertContains(first_response, "会議録一覧へ戻る")
+            self.assertContains(
+                first_response,
+                reverse("kokkai:scenario_actor_select", args=[self.scenario.pk]),
+            )
+            self.assertContains(
+                first_response,
+                reverse("kokkai:index"),
+            )
             self.assertContains(first_response, "議事録 No.001")
             self.assertContains(first_response, "資料を提示します。")
             self.assertContains(first_response, "次はあなたの番です")
             self.assertContains(first_response, "player-turn-marker is-next")
+            self.assertContains(first_response, 'class="roleplay-progress-bar"')
             self.assertEqual(
                 [
                     (
