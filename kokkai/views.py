@@ -230,6 +230,17 @@ class ScenarioGameView(DetailView):
             ),
             None,
         )
+        player_turns = [
+            turn for turn in turns if turn.actor_id == self.object.selected_actor_id
+        ]
+        next_player_turn = next(
+            (
+                turn
+                for turn in player_turns
+                if turn.turn_number >= self.object.next_turn_number
+            ),
+            None,
+        )
         context["completed_turns"] = [
             turn for turn in turns if turn.turn_number < self.object.next_turn_number
         ]
@@ -240,6 +251,27 @@ class ScenarioGameView(DetailView):
             else 0
         )
         context["current_turn"] = current_turn
+        player_turn_markers = []
+        for turn in player_turns:
+            if turn.turn_number < self.object.next_turn_number:
+                state = "is-completed"
+            elif turn.turn_number == self.object.next_turn_number:
+                state = "is-current"
+            elif (
+                next_player_turn is not None
+                and turn.turn_number == next_player_turn.turn_number
+            ):
+                state = "is-next"
+            else:
+                state = "is-upcoming"
+            player_turn_markers.append(
+                {
+                    "turn_number": turn.turn_number,
+                    "position": round((turn.turn_number - 0.5) / len(turns) * 100, 2),
+                    "state": state,
+                }
+            )
+        context["player_turn_markers"] = player_turn_markers
         context["is_next_player_turn"] = (
             current_turn is not None
             and current_turn.actor_id != self.object.selected_actor_id

@@ -20,6 +20,74 @@
         box-shadow: 0 .25rem 1rem rgba(33, 37, 41, .08);
     }
 
+    .roleplay-progress-track {
+        position: relative;
+        padding: .35rem 0;
+    }
+
+    .roleplay-progress-track .progress {
+        height: .75rem;
+    }
+
+    .player-turn-marker {
+        background: #dc3545;
+        border: 2px solid #ffffff;
+        border-radius: 999px;
+        box-sizing: border-box;
+        height: 1.35rem;
+        left: 0;
+        position: absolute;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: .3rem;
+        z-index: 1;
+    }
+
+    .player-turn-marker.is-completed {
+        opacity: .5;
+    }
+
+    .player-turn-marker.is-current {
+        box-shadow: 0 0 .45rem rgba(220, 53, 69, .65);
+        height: 1.6rem;
+        width: .4rem;
+    }
+
+    .player-turn-marker.is-next {
+        animation: player-turn-marker-pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes player-turn-marker-pulse {
+        0%,
+        100% {
+            box-shadow: 0 0 0 rgba(220, 53, 69, 0);
+            opacity: .7;
+            transform: translate(-50%, -50%) scaleY(1);
+        }
+
+        50% {
+            box-shadow: 0 0 .65rem rgba(220, 53, 69, .75);
+            opacity: 1;
+            transform: translate(-50%, -50%) scaleY(1.2);
+        }
+    }
+
+    .roleplay-progress-legend {
+        color: #6c757d;
+        font-size: .75rem;
+        margin-top: .35rem;
+    }
+
+    .roleplay-progress-legend-marker {
+        background: #dc3545;
+        border-radius: 999px;
+        display: inline-block;
+        height: .85rem;
+        margin-right: .25rem;
+        vertical-align: -.2rem;
+        width: .25rem;
+    }
+
     .next-player-turn-notice {
         align-items: center;
         background: rgba(220, 53, 69, .05);
@@ -101,6 +169,10 @@
         .next-player-turn-notice {
             animation: none;
         }
+
+        .player-turn-marker.is-next {
+            animation: none;
+        }
     }
 
     .choice-card-number {
@@ -155,8 +227,16 @@
             <span class="small text-muted text-nowrap">{{ play.next_turn_number }} / {{ total_turns }}</span>
         </div>
 
-        <div class="progress mb-4" role="progressbar" aria-label="ロールプレイの進行状況" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ turn_progress_percent }}">
-            <div class="progress-bar" style="width: {{ turn_progress_percent }}%"></div>
+        <div class="roleplay-progress-track mb-4">
+            <div class="progress" role="progressbar" aria-label="ロールプレイの進行状況" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ turn_progress_percent }}">
+                <div class="progress-bar" style="width: {{ turn_progress_percent }}%"></div>
+            </div>
+            {% for marker in player_turn_markers %}
+            <span class="player-turn-marker {{ marker.state }}" style="left: {{ marker.position }}%;" aria-hidden="true"></span>
+            {% endfor %}
+            {% if player_turn_markers %}
+            <div class="roleplay-progress-legend"><span class="roleplay-progress-legend-marker"></span>赤い目印：あなたの番</div>
+            {% endif %}
         </div>
 
         {% if current_turn %}
