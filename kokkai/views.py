@@ -208,7 +208,17 @@ class ScenarioGameView(DetailView):
         play = self.get_object()
         if play.is_completed:
             return redirect("kokkai:scenario_result", play_id=play.play_id)
-        self.object = play
+        try:
+            self.object = ScenarioPlayService().prepare_current_turn(str(play.play_id))
+        except ScenarioGenerationError as error:
+            messages.error(request, f"選択肢を生成できませんでした: {error}")
+            self.object = play
+            return render(
+                request,
+                self.template_name,
+                self.get_context_data(),
+                status=error.status_code,
+            )
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):

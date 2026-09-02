@@ -197,7 +197,9 @@ class ScenarioRepository:
 
     @staticmethod
     def create_turn_choices(
-        turn: ScenarioTurn, choices: Iterable[ScenarioChoiceData]
+        turn: ScenarioTurn,
+        choices: Iterable[ScenarioChoiceData],
+        prompt_version: str,
     ) -> None:
         """プレイ中に生成した二択をターンへ保存する。"""
         ScenarioChoice.objects.bulk_create(
@@ -208,10 +210,16 @@ class ScenarioRepository:
                     text=choice.text,
                     is_correct=choice.is_correct,
                     rationale=choice.rationale,
+                    prompt_version=prompt_version,
                 )
                 for choice in choices
             ]
         )
+
+    @staticmethod
+    def delete_turn_choices(turn: ScenarioTurn) -> None:
+        """古いプロンプトで生成されたターンの二択を削除する。"""
+        ScenarioChoice.objects.filter(turn=turn).delete()
 
     @staticmethod
     def get_last_turn_number(scenario_id: int) -> int:

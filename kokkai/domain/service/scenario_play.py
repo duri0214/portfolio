@@ -31,6 +31,18 @@ class ScenarioPlayService:
         """担当アクターを選択して新しいプレイを開始する。"""
         return self.repository.create_play(scenario, actor_id)
 
+    def prepare_current_turn(self, play_id: str) -> ScenarioPlay:
+        """表示する担当ターンの二択を必要に応じて生成し、プレイを返す。"""
+        with transaction.atomic():
+            play = self.repository.get_locked_play(play_id)
+            if not play.is_completed:
+                turn = self.repository.get_turn(play.scenario_id, play.next_turn_number)
+                if turn is None:
+                    self._complete(play)
+                else:
+                    self._ensure_choices(play, turn)
+        return self.repository.get_play(play_id)
+
     def progress(
         self, play_id: str, action: str | None, choice_id: str | None
     ) -> ScenarioPlay:
@@ -109,12 +121,16 @@ class ScenarioPlayService:
 
     def _ensure_choices(self, play: ScenarioPlay, turn: ScenarioTurn | None) -> None:
         """プレイヤー担当ターンにだけ未生成の二択を作る。"""
-        if (
-            turn is None
-            or turn.actor_id != play.selected_actor_id
-            or self.repository.get_turn_choices(turn)
+        if turn is None or turn.actor_id != play.selected_actor_id:
+            return
+        choices = self.repository.get_turn_choices(turn)
+        if choices and all(
+            choice.prompt_version == ScenarioService.CHOICE_PROMPT_VERSION
+            for choice in choices
         ):
             return
+        if choices:
+            self.repository.delete_turn_choices(turn)
         if turn.evidence_speech is None or turn.actor is None:
             raise ScenarioGenerationError(
                 "The player turn does not have source speech information."
@@ -150,7 +166,9 @@ class ScenarioPlayService:
             actor.key,
             turn.evidence_speech.speech_order,
         )
-        self.repository.create_turn_choices(turn, choices)
+        self.repository.create_turn_choices(
+            turn, choices, ScenarioService.CHOICE_PROMPT_VERSION
+        )
 
     def _move_to_next_turn(self, play: ScenarioPlay) -> None:
         """最終ターンなら完了し、それ以外なら次のターン番号を保存する。"""

@@ -287,7 +287,9 @@ class OpenAIScenarioGenerator:
 class ScenarioService:
     """シナリオカセットの生成・再利用と、会議録由来データの正規化を担う。"""
 
-    PROMPT_VERSION = "meeting-simulation-v3"
+    # シナリオ本体は変更せず、遅延生成する選択肢のプロンプトだけを更新する。
+    PROMPT_VERSION = "meeting-simulation-v2"
+    CHOICE_PROMPT_VERSION = "meeting-simulation-v3"
     SOURCE_CHUNK_CHARACTERS = 12_000
 
     def __init__(

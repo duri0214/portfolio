@@ -187,6 +187,9 @@ class ScenarioChoice(models.Model):
     text = models.TextField("選択肢")
     is_correct = models.BooleanField("適切な選択")
     rationale = models.TextField("選択根拠")
+    prompt_version = models.CharField(
+        "選択肢プロンプトバージョン", max_length=64, null=True, blank=True
+    )
 
     class Meta:
         constraints = [
