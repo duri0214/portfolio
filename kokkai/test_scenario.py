@@ -571,7 +571,7 @@ class ScenarioGameViewTests(TestCase):
             play = ScenarioPlay.objects.get()
             game_url = reverse("kokkai:scenario_game", args=[play.play_id])
             first_response = self.client.get(game_url)
-            self.assertContains(first_response, "シナリオ選択へ戻る")
+            self.assertContains(first_response, "アクター選択へ戻る")
             self.assertContains(first_response, "会議録一覧へ戻る")
             self.assertContains(
                 first_response,
@@ -642,6 +642,30 @@ class ScenarioGameViewTests(TestCase):
             result_response,
             "https://kokkai.ndl.go.jp/txt/121305254X00120240127/2",
         )
+
+    def test_actor_selection_starts_a_fresh_play_from_first_turn(self):
+        previous_play = ScenarioPlay.objects.create(
+            scenario=self.scenario,
+            selected_actor=self.other_actor,
+            next_turn_number=2,
+        )
+        actor_select_url = reverse(
+            "kokkai:scenario_actor_select", args=[self.scenario.pk]
+        )
+
+        response = self.client.post(
+            actor_select_url, {"actor_id": self.player_actor.pk}
+        )
+
+        new_play = ScenarioPlay.objects.exclude(pk=previous_play.pk).get()
+        self.assertRedirects(
+            response,
+            reverse("kokkai:scenario_game", args=[new_play.play_id]),
+        )
+        self.assertEqual(new_play.selected_actor_id, self.player_actor.pk)
+        self.assertEqual(new_play.next_turn_number, 1)
+        previous_play.refresh_from_db()
+        self.assertEqual(previous_play.next_turn_number, 2)
 
     def test_game_returns_rate_limit_without_redirecting(self):
         """

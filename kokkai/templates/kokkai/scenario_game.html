@@ -223,7 +223,7 @@
         {% endif %}
 
         <div class="d-flex justify-content-end flex-wrap gap-2 mb-3">
-            <a href="{% url 'kokkai:scenario_actor_select' play.scenario.pk %}" class="btn btn-sm btn-outline-primary">シナリオ選択へ戻る</a>
+            <a href="{% url 'kokkai:scenario_actor_select' play.scenario.pk %}" class="btn btn-sm btn-outline-primary">アクター選択へ戻る</a>
             <a href="{% url 'kokkai:index' %}" class="btn btn-sm btn-outline-secondary">会議録一覧へ戻る</a>
         </div>
 
@@ -245,7 +245,7 @@
                 {% endfor %}
             </div>
             {% if player_turn_markers %}
-            <div class="roleplay-progress-legend"><span class="roleplay-progress-legend-marker"></span>赤い目印：あなたの番</div>
+            <div class="roleplay-progress-legend"><span class="roleplay-progress-legend-marker"></span>赤い目印：あなたの番の予定位置</div>
             {% endif %}
         </div>
 

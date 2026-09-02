@@ -151,7 +151,11 @@ class ScenarioRepository:
             actor = ScenarioActor.objects.get(pk=actor_id, scenario=scenario)
         except ScenarioActor.DoesNotExist as error:
             raise ValueError("The selected actor is invalid.") from error
-        return ScenarioPlay.objects.create(scenario=scenario, selected_actor=actor)
+        return ScenarioPlay.objects.create(
+            scenario=scenario,
+            selected_actor=actor,
+            next_turn_number=1,
+        )
 
     def get_play(self, play_id: str) -> ScenarioPlay:
         """ゲーム画面・結果画面に必要な関連データをまとめて取得する。"""
