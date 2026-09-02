@@ -29,6 +29,9 @@ class Meeting(models.Model):
     min_id = models.CharField("会議録ID", max_length=64)
     url = models.URLField("会議録URL")
     pdf_url = models.URLField("PDF URL", blank=True)
+    is_current_catalog = models.BooleanField(
+        "現在のカタログ", default=True, db_index=True
+    )
 
     created_at = models.DateTimeField("作成日時", auto_now_add=True)
 

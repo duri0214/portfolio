@@ -24,16 +24,16 @@ class IndexView(ListView):
     DEFAULT_PAGE_SIZE = 30
 
     def get_queryset(self):
-        queryset = Meeting.objects.all()
-        if self.request.GET.get("start_date") or self.request.GET.get("end_date"):
-            start_date, end_date = self._get_period(self.request.GET)
-            queryset = queryset.filter(meeting_date__range=(start_date, end_date))
-        return queryset.annotate(
-            speech_count=Count(
-                "speeches",
-                filter=~Q(speeches__speaker_name=MEETING_METADATA_SPEAKER_NAME),
+        return (
+            Meeting.objects.filter(is_current_catalog=True)
+            .annotate(
+                speech_count=Count(
+                    "speeches",
+                    filter=~Q(speeches__speaker_name=MEETING_METADATA_SPEAKER_NAME),
+                )
             )
-        ).order_by("-meeting_date", "committee", "meeting_number")
+            .order_by("-meeting_date", "committee", "meeting_number")
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

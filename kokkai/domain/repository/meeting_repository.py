@@ -23,10 +23,22 @@ class MeetingRepository:
                     "meeting_number": record.issue,
                     "url": record.meeting_url,
                     "pdf_url": record.pdf_url or "",
+                    "is_current_catalog": True,
                 },
             )
             meetings.append(meeting)
         return meetings
+
+    def replace_indexes(self, records: Iterable[MeetingIndexRecord]) -> list[Meeting]:
+        """
+        Replace the current catalog while preserving saved meeting contents.
+
+        Existing Meeting and Speech rows remain available for later reuse; only
+        the flag used by the catalog list is switched.
+        """
+        with transaction.atomic():
+            Meeting.objects.update(is_current_catalog=False)
+            return self.upsert_indexes(records)
 
     def replace_meeting_contents(
         self,
