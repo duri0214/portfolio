@@ -93,7 +93,6 @@ class MeetingScenario(models.Model):
         "状態", max_length=16, choices=Status.choices, default=Status.READY
     )
     title = models.CharField("シナリオタイトル", max_length=200)
-    background = models.TextField("背景")
     success_label = models.CharField("成功時の判定", max_length=64)
     failure_label = models.CharField("失敗時の判定", max_length=64)
     judgment_criteria = models.TextField("判定条件")

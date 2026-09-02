@@ -92,7 +92,6 @@ class ScenarioRepository:
                 prompt_version=prompt_version,
                 generator_model=generator_model,
                 title=payload.title,
-                background=payload.background,
                 success_label=payload.success_label,
                 failure_label=payload.failure_label,
                 judgment_criteria=payload.judgment_criteria,
@@ -119,7 +118,7 @@ class ScenarioRepository:
                 scenario=scenario,
                 turn_number=1,
                 is_overview=True,
-                dialogue=payload.background,
+                dialogue=payload.overview,
                 evidence_note="会議録全体を見渡した要約です。",
             )
 
@@ -144,6 +143,15 @@ class ScenarioRepository:
                     evidence_note=f"議事録 No.{speech.speech_order} の発言です。",
                 )
         return scenario
+
+    @staticmethod
+    def get_overview_dialogue(scenario_id: int) -> str | None:
+        """二択生成の文脈に使う会議全体要約を取得する。"""
+        return (
+            ScenarioTurn.objects.filter(scenario_id=scenario_id, is_overview=True)
+            .values_list("dialogue", flat=True)
+            .first()
+        )
 
     def create_play(self, scenario: MeetingScenario, actor_id: int) -> ScenarioPlay:
         """担当アクターを選んだ新規プレイを開始する。"""

@@ -64,7 +64,7 @@ class ScenarioPayload:
 
     Attributes:
         title: シナリオのタイトル。
-        background: シナリオの背景説明。
+        overview: 会議全体の要約。
         success_label: 成功時の表示名。
         failure_label: 失敗時の表示名。
         judgment_criteria: 成否の判定基準。
@@ -72,7 +72,7 @@ class ScenarioPayload:
     """
 
     title: str
-    background: str
+    overview: str
     success_label: str
     failure_label: str
     judgment_criteria: str

@@ -35,15 +35,15 @@ class FakeScenarioGenerator:
         self.calls.append((meeting, actors, source_chunks))
         return {
             "title": "予算委員会シミュレーション",
-            "background": "予算案を審議する会議を基にしたシミュレーションです。",
+            "overview": "予算案を審議する会議を基にしたシミュレーションです。",
             "success_label": "適切",
             "failure_label": "不適切",
             "judgment_criteria": "根拠発言に沿う選択を半数以上行うこと。",
             "passing_score": 50,
         }
 
-    def generate_choices(self, meeting, actor, speech, background):
-        self.choice_calls.append((meeting, actor, speech, background))
+    def generate_choices(self, meeting, actor, speech, overview):
+        self.choice_calls.append((meeting, actor, speech, overview))
         return {
             "choices": [
                 {
@@ -83,7 +83,7 @@ class OpenAIScenarioGeneratorTests(SimpleTestCase):
             choices=[
                 Mock(
                     message=Mock(
-                        content='{"background": "会議全体の要約", "passing_score": 50}'
+                        content='{"overview": "会議全体の要約", "passing_score": 50}'
                     )
                 )
             ]
@@ -105,7 +105,7 @@ class OpenAIScenarioGeneratorTests(SimpleTestCase):
         with patch("kokkai.domain.service.scenario.OpenAI", return_value=client):
             generated = generator.generate(meeting, [], source_chunks)
 
-        self.assertEqual(generated["background"], "会議全体の要約")
+        self.assertEqual(generated["overview"], "会議全体の要約")
         client.chat.completions.create.assert_called_once()
         self.assertEqual(
             client.chat.completions.create.call_args.kwargs["model"],
@@ -275,6 +275,10 @@ class ScenarioServiceTests(TestCase):
                 )
             ),
             [(1, True, None), (2, False, 1), (3, False, 2)],
+        )
+        self.assertEqual(
+            scenario.turns.get(is_overview=True).dialogue,
+            "予算案を審議する会議を基にしたシミュレーションです。",
         )
         self.assertIn("[speech_order: 1]", self.generator.calls[0][2][0])
 
@@ -465,7 +469,6 @@ class ScenarioGameViewTests(TestCase):
             prompt_version="meeting-simulation-v2",
             generator_model="test-scenario-model",
             title="保存済みシナリオ",
-            background="会議録を基にしたシミュレーションです。",
             success_label="成立",
             failure_label="不成立",
             judgment_criteria="根拠発言に沿って選択すること。",
@@ -531,6 +534,8 @@ class ScenarioGameViewTests(TestCase):
                 actor_select_response,
                 "ゲーム開始時に会議録全体の要約を表示し、その後は議事録のNo.順に進みます。",
             )
+            self.assertNotContains(actor_select_response, "会議録全体の要約です。")
+            self.assertNotContains(actor_select_response, "test-scenario-model")
             response = self.client.post(
                 actor_select_url, {"actor_id": self.player_actor.pk}
             )
@@ -563,6 +568,7 @@ class ScenarioGameViewTests(TestCase):
             )
             self.assertEqual(len(generator.choice_calls), 1)
             self.assertEqual(generator.choice_calls[0][2].speech_order, 2)
+            self.assertEqual(generator.choice_calls[0][3], "会議録全体の要約です。")
             correct_choice = ScenarioChoice.objects.get(
                 turn=self.player_turn, is_correct=True
             )
@@ -574,6 +580,10 @@ class ScenarioGameViewTests(TestCase):
         result_url = reverse("kokkai:scenario_result", args=[play.play_id])
         self.assertRedirects(response, result_url)
         result_response = self.client.get(result_url)
+        self.assertNotContains(
+            result_response,
+            "会議録全体の要約と原文発言を順にたどるロールプレイの結果です。",
+        )
         self.assertContains(result_response, "成立")
         self.assertContains(
             result_response,

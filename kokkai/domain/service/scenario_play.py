@@ -122,11 +122,16 @@ class ScenarioPlayService:
             affiliation=turn.actor.affiliation,
             speech_count=turn.actor.speech_count,
         )
+        overview = self.repository.get_overview_dialogue(play.scenario_id)
+        if not overview:
+            raise ScenarioGenerationError(
+                "The scenario does not have an overview turn."
+            )
         generated = self.generator.generate_choices(
             play.scenario.meeting,
             actor,
             turn.evidence_speech,
-            play.scenario.background,
+            overview,
         )
         choices = ScenarioService.normalize_choices(
             generated,

@@ -47,7 +47,7 @@ class ScenarioGenerator(Protocol):
         meeting: Meeting,
         actor: ScenarioActorData,
         speech: Speech,
-        background: str,
+        overview: str,
     ) -> dict[str, Any]:
         """選択アクターの発言に対する二択を返す。"""
 
@@ -88,7 +88,7 @@ class OpenAIScenarioGenerator:
                         "あなたは国会会議録を題材にした教育用シミュレーションゲームの"
                         "シナリオ編集者です。実在人物が実際に発言したかのようには書かず、"
                         "与えられた一次資料に基づくシミュレーションであることを守ってください。"
-                        "会議録全体を読み、background と判定メタデータだけを作成してください。"
+                        "会議録全体を読み、overview と判定メタデータだけを作成してください。"
                         "発言ごとのターンや選択肢はここでは作成せず、会議録にない事実も追加しないでください。"
                         "Return valid json only."
                     ),
@@ -110,7 +110,7 @@ class OpenAIScenarioGenerator:
                             "source_chunks": source_chunks,
                             "output_schema": {
                                 "title": "string",
-                                "background": "string",
+                                "overview": "string",
                                 "success_label": "string",
                                 "failure_label": "string",
                                 "judgment_criteria": "string",
@@ -129,7 +129,7 @@ class OpenAIScenarioGenerator:
         meeting: Meeting,
         actor: ScenarioActorData,
         speech: Speech,
-        background: str,
+        overview: str,
     ) -> dict[str, Any]:
         """選択アクターの発言に到達したときだけ、その場面の二択を生成する。"""
         if not self.api_key:
@@ -162,7 +162,7 @@ class OpenAIScenarioGenerator:
                                 "meeting_number": meeting.meeting_number,
                                 "source_url": meeting.url,
                             },
-                            "background": background,
+                            "overview": overview,
                             "actor": actor.to_prompt_value(),
                             "speech": {
                                 "speech_order": speech.speech_order,
@@ -412,8 +412,8 @@ class ScenarioService:
         """全体要約の生成結果を保存用の値へ正規化する。"""
         return ScenarioPayload(
             title=str(generated.get("title") or "会議録シミュレーション").strip(),
-            background=str(
-                generated.get("background") or "会議録全体を見渡した要約です。"
+            overview=str(
+                generated.get("overview") or "会議録全体を見渡した要約です。"
             ).strip(),
             success_label=str(generated.get("success_label") or "成立").strip(),
             failure_label=str(generated.get("failure_label") or "不成立").strip(),

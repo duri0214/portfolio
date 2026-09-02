@@ -40,11 +40,8 @@
             {% elif scenario %}
             <p>
                 <strong>{{ scenario.title }}</strong>
-                <span class="badge text-bg-secondary ms-2">v{{ scenario.version }}</span>
                 {% if scenario_needs_regeneration %}
                 <span class="badge text-bg-warning ms-1">要再生成</span>
-                {% else %}
-                <span class="badge text-bg-success ms-1">利用可能</span>
                 {% endif %}
             </p>
             {% if scenario_needs_regeneration %}
