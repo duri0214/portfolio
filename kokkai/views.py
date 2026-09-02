@@ -24,16 +24,16 @@ class IndexView(ListView):
     DEFAULT_PAGE_SIZE = 30
 
     def get_queryset(self):
-        return (
-            Meeting.objects.all()
-            .annotate(
-                speech_count=Count(
-                    "speeches",
-                    filter=~Q(speeches__speaker_name=MEETING_METADATA_SPEAKER_NAME),
-                )
+        queryset = Meeting.objects.all()
+        if self.request.GET.get("start_date") or self.request.GET.get("end_date"):
+            start_date, end_date = self._get_period(self.request.GET)
+            queryset = queryset.filter(meeting_date__range=(start_date, end_date))
+        return queryset.annotate(
+            speech_count=Count(
+                "speeches",
+                filter=~Q(speeches__speaker_name=MEETING_METADATA_SPEAKER_NAME),
             )
-            .order_by("-meeting_date", "committee", "meeting_number")
-        )
+        ).order_by("-meeting_date", "committee", "meeting_number")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -42,7 +42,7 @@ class IndexView(ListView):
         context["end_date"] = end_date
         context["page_size"] = self._get_page_size()
         context["page_size_options"] = self.PAGE_SIZE_OPTIONS
-        context["period_query"] = self._build_period_query(start_date, end_date)
+        context["period_query"] = self._period_query(self.request.GET)
         return context
 
     def get_paginate_by(self, queryset):
@@ -124,6 +124,8 @@ class IndexView(ListView):
 
     @classmethod
     def _period_query(cls, values):
+        if not values.get("start_date") and not values.get("end_date"):
+            return ""
         start_date, end_date = cls._get_period(values)
         return cls._build_period_query(start_date, end_date)
 

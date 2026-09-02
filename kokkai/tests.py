@@ -365,12 +365,12 @@ class IndexViewTests(TestCase):
             'href="/kokkai/?start_date=2024-01-01&amp;end_date=2024-01-31"',
         )
 
-    def test_index_shows_all_saved_catalog_entries_independent_of_search_period(self):
+    def test_index_shows_saved_catalog_entries_and_filters_explicit_search_period(self):
         """
         シナリオ:
         - 入力: 検索期間外を含む、異なる開催日のカタログ情報がDBに保存された一覧表示。
-        - 処理: 期間指定を一覧画面へ渡して会議録一覧を表示する。
-        - 期待値: 一覧は保存済みカタログを全件表示し、開始日・終了日は検索条件として独立すること。
+        - 処理: 期間指定なしの初期表示と、期間指定ありの検索表示を行う。
+        - 期待値: 初期表示は保存済みカタログを全件表示し、検索時だけ指定期間に絞り込むこと。
         """
         for meeting_date, committee in (
             (date(2024, 1, 26), "本会議"),
@@ -386,25 +386,21 @@ class IndexViewTests(TestCase):
                 url=f"https://example.com/meeting/{meeting_date:%Y%m%d}",
             )
 
-        response = self.client.get(
+        today = datetime.now().date()
+        response = self.client.get(reverse("kokkai:index"))
+
+        self.assertContains(response, "本会議 第1号")
+        self.assertContains(response, "予算委員会 第1号")
+        self.assertEqual(response.context["start_date"], today - timedelta(days=30))
+        self.assertEqual(response.context["end_date"], today)
+
+        filtered_response = self.client.get(
             reverse("kokkai:index"),
             {"start_date": "2024-01-01", "end_date": "2024-01-31"},
         )
 
-        self.assertEqual(response.context["start_date"], date(2024, 1, 1))
-        self.assertEqual(response.context["end_date"], date(2024, 1, 31))
-        self.assertContains(response, "本会議 第1号")
-        self.assertContains(response, "予算委員会 第1号")
-
-        today = datetime.now().date()
-        reopened_response = self.client.get(reverse("kokkai:index"))
-
-        self.assertContains(reopened_response, "本会議 第1号")
-        self.assertContains(reopened_response, "予算委員会 第1号")
-        self.assertEqual(
-            reopened_response.context["start_date"], today - timedelta(days=30)
-        )
-        self.assertEqual(reopened_response.context["end_date"], today)
+        self.assertContains(filtered_response, "本会議 第1号")
+        self.assertNotContains(filtered_response, "予算委員会 第1号")
 
     def test_index_does_not_count_catalog_metadata_as_meeting_contents(self):
         """

@@ -62,8 +62,10 @@
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
         <h3 class="mb-0">会議録一覧</h3>
         <form method="get" class="d-flex align-items-center gap-2 flex-nowrap">
+            {% if request.GET.start_date or request.GET.end_date %}
             <input type="hidden" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
             <input type="hidden" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+            {% endif %}
             <label for="page_size" class="form-label mb-0 text-nowrap">表示件数</label>
             <select id="page_size" name="page_size" class="form-select form-select-sm w-auto">
                 {% for option in page_size_options %}
@@ -103,7 +105,7 @@
                     <td>{{ meeting.meeting_date|date:"Y-m-d" }}</td>
                     <td>
                         {{ meeting.house }}<br>
-                        <a href="{% url 'kokkai:meeting_detail' meeting.pk %}?{{ period_query }}">{{ meeting.committee }} {{ meeting.meeting_number }}</a>
+                        <a href="{% url 'kokkai:meeting_detail' meeting.pk %}{% if period_query %}?{{ period_query }}{% endif %}">{{ meeting.committee }} {{ meeting.meeting_number }}</a>
                     </td>
                     <td>
                         <a href="{{ meeting.url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">会議録</a>
