@@ -291,6 +291,12 @@ class ScenarioService:
     PROMPT_VERSION = "meeting-simulation-v2"
     CHOICE_PROMPT_VERSION = "meeting-simulation-v3"
     SOURCE_CHUNK_CHARACTERS = 12_000
+    RESULT_SUCCESS_LABEL = "議事録に沿った回答でした"
+    RESULT_FAILURE_LABEL = "議事録どおりにはなりませんでした"
+    RESULT_JUDGMENT_CRITERIA = (
+        "このスコアは、選択した回答が議事録の発言内容に沿っていたかを示します。"
+        "政策の実施結果や国民生活への影響を判定するものではありません。"
+    )
 
     def __init__(
         self,
@@ -438,11 +444,9 @@ class ScenarioService:
             overview=str(
                 generated.get("overview") or "会議録全体を見渡した要約です。"
             ).strip(),
-            success_label=str(generated.get("success_label") or "成立").strip(),
-            failure_label=str(generated.get("failure_label") or "不成立").strip(),
-            judgment_criteria=str(
-                generated.get("judgment_criteria") or "根拠発言に沿った選択を行うこと。"
-            ).strip(),
+            success_label=ScenarioService.RESULT_SUCCESS_LABEL,
+            failure_label=ScenarioService.RESULT_FAILURE_LABEL,
+            judgment_criteria=ScenarioService.RESULT_JUDGMENT_CRITERIA,
             passing_score=ScenarioService._normalize_passing_score(
                 generated.get("passing_score")
             ),

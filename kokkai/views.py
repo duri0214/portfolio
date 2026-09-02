@@ -367,3 +367,11 @@ class ScenarioResultView(DetailView):
             return redirect("kokkai:scenario_game", play_id=play.play_id)
         self.object = play
         return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["result_label"] = ScenarioPlayService.result_label_for(self.object)
+        context["result_explanation"] = ScenarioPlayService.result_explanation_for(
+            self.object
+        )
+        return context

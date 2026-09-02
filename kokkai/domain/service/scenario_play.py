@@ -200,18 +200,34 @@ class ScenarioPlayService:
 
     def _complete(self, play: ScenarioPlay) -> None:
         """回答結果から最終判定を作成してプレイを完了する。"""
-        score_percentage = (
-            play.score / play.answer_count * 100 if play.answer_count else 0
-        )
-        is_success = score_percentage >= play.scenario.passing_score
-        play.result_label = (
-            play.scenario.success_label if is_success else play.scenario.failure_label
-        )
-        score_summary = (
-            f"正解数: {play.score}/{play.answer_count}（{score_percentage:.0f}%）"
-        )
-        play.result_explanation = f"{play.scenario.judgment_criteria}\n{score_summary}"
+        play.result_label = self.result_label_for(play)
+        play.result_explanation = self.result_explanation_for(play)
         play.completed_at = timezone.now()
         self.repository.save_play(
             play, ["result_label", "result_explanation", "completed_at"]
         )
+
+    @staticmethod
+    def _score_percentage(play: ScenarioPlay) -> float:
+        """プレイの回答数に対する議事録準拠の選択率を返す。"""
+        return play.score / play.answer_count * 100 if play.answer_count else 0
+
+    @classmethod
+    def result_label_for(cls, play: ScenarioPlay) -> str:
+        """政策効果ではなく、議事録に沿った回答かどうかのラベルを返す。"""
+        is_success = cls._score_percentage(play) >= play.scenario.passing_score
+        return (
+            ScenarioService.RESULT_SUCCESS_LABEL
+            if is_success
+            else ScenarioService.RESULT_FAILURE_LABEL
+        )
+
+    @classmethod
+    def result_explanation_for(cls, play: ScenarioPlay) -> str:
+        """議事録準拠のスコアであることと、その割合を説明する。"""
+        score_percentage = cls._score_percentage(play)
+        score_summary = (
+            f"議事録に沿った選択: {play.score}/{play.answer_count}（"
+            f"{score_percentage:.0f}%）"
+        )
+        return f"{ScenarioService.RESULT_JUDGMENT_CRITERIA}\n{score_summary}"

@@ -2,8 +2,9 @@ import json
 from datetime import date
 from unittest.mock import Mock, patch
 
-from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
+from django.test import SimpleTestCase, TestCase
+from django.utils import timezone
 from openai import OpenAIError
 
 from kokkai.domain.service.scenario import (
@@ -348,6 +349,23 @@ class ScenarioServiceTests(TestCase):
         self.assertTrue(created)
         self.assertEqual(scenario.passing_score, 50)
 
+    def test_scenario_result_metadata_uses_neutral_transcript_labels(self):
+        """
+        シナリオ:
+        - 入力: 政策効果を連想させるラベルと判定条件を含む生成結果。
+        - 処理: シナリオを生成して保存する。
+        - 期待値: 結果メタデータは議事録への準拠だけを示す固定文言になること。
+        """
+        scenario, created = self.service.get_or_create(self.meeting)
+
+        self.assertTrue(created)
+        self.assertEqual(scenario.success_label, ScenarioService.RESULT_SUCCESS_LABEL)
+        self.assertEqual(scenario.failure_label, ScenarioService.RESULT_FAILURE_LABEL)
+        self.assertEqual(
+            scenario.judgment_criteria,
+            ScenarioService.RESULT_JUDGMENT_CRITERIA,
+        )
+
     def test_meeting_metadata_record_is_not_used_for_scenario_or_display(self):
         """
         シナリオ:
@@ -663,11 +681,40 @@ class ScenarioGameViewTests(TestCase):
             result_response,
             "会議録全体の要約と原文発言を順にたどるロールプレイの結果です。",
         )
-        self.assertContains(result_response, "成立")
+        self.assertContains(result_response, ScenarioService.RESULT_SUCCESS_LABEL)
+        self.assertContains(result_response, "議事録に沿った選択: 1/1（100%）")
         self.assertContains(
             result_response,
             "https://kokkai.ndl.go.jp/txt/121305254X00120240127/2",
         )
+
+    def test_result_page_replaces_legacy_policy_outcome_label_with_neutral_score(self):
+        """
+        シナリオ:
+        - 入力: 政策結果を断定する旧形式の最終判定を持つ完了済みプレイ。
+        - 処理: 最終判定画面を表示する。
+        - 期待値: 保存済みの旧ラベルや判定条件を表示せず、議事録準拠のスコアを表示すること。
+        """
+        play = ScenarioPlay.objects.create(
+            scenario=self.scenario,
+            selected_actor=self.player_actor,
+            score=0,
+            answer_count=1,
+            result_label="政策の不備または未実施により国民生活が悪化する",
+            result_explanation="政策の実行可能性とその効果を評価する",
+            completed_at=timezone.now(),
+        )
+
+        response = self.client.get(
+            reverse("kokkai:scenario_result", args=[play.play_id])
+        )
+
+        self.assertContains(response, ScenarioService.RESULT_FAILURE_LABEL)
+        self.assertContains(response, "議事録に沿った選択: 0/1（0%）")
+        self.assertNotContains(
+            response, "政策の不備または未実施により国民生活が悪化する"
+        )
+        self.assertNotContains(response, "政策の実行可能性とその効果を評価する")
 
     def test_actor_selection_starts_a_fresh_play_from_first_turn(self):
         previous_play = ScenarioPlay.objects.create(
