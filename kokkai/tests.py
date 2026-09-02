@@ -365,12 +365,12 @@ class IndexViewTests(TestCase):
             'href="/kokkai/?start_date=2024-01-01&amp;end_date=2024-01-31"',
         )
 
-    def test_index_without_period_shows_the_saved_catalog_range(self):
+    def test_index_shows_all_saved_catalog_entries_independent_of_search_period(self):
         """
         シナリオ:
-        - 入力: 異なる開催日のカタログ情報がDBに保存され、URLに期間指定がない一覧表示。
-        - 処理: 会議録一覧を表示する。
-        - 期待値: 保存済みカタログの最古日から最新日までを、外部取得なしで表示すること。
+        - 入力: 検索期間外を含む、異なる開催日のカタログ情報がDBに保存された一覧表示。
+        - 処理: 期間指定を一覧画面へ渡して会議録一覧を表示する。
+        - 期待値: 一覧は保存済みカタログを全件表示し、開始日・終了日は検索条件として独立すること。
         """
         for meeting_date, committee in (
             (date(2024, 1, 26), "本会議"),
@@ -386,12 +386,20 @@ class IndexViewTests(TestCase):
                 url=f"https://example.com/meeting/{meeting_date:%Y%m%d}",
             )
 
-        response = self.client.get(reverse("kokkai:index"))
+        response = self.client.get(
+            reverse("kokkai:index"),
+            {"start_date": "2024-01-01", "end_date": "2024-01-31"},
+        )
 
-        self.assertEqual(response.context["start_date"], date(2024, 1, 26))
-        self.assertEqual(response.context["end_date"], date(2024, 2, 1))
+        self.assertEqual(response.context["start_date"], date(2024, 1, 1))
+        self.assertEqual(response.context["end_date"], date(2024, 1, 31))
         self.assertContains(response, "本会議 第1号")
         self.assertContains(response, "予算委員会 第1号")
+
+        reopened_response = self.client.get(reverse("kokkai:index"))
+
+        self.assertContains(reopened_response, "本会議 第1号")
+        self.assertContains(reopened_response, "予算委員会 第1号")
 
     def test_index_does_not_count_catalog_metadata_as_meeting_contents(self):
         """

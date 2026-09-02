@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 from django.contrib import messages
-from django.db.models import Count, Max, Min, Q
+from django.db.models import Count, Q
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.generic import DetailView, ListView
@@ -24,9 +24,8 @@ class IndexView(ListView):
     DEFAULT_PAGE_SIZE = 30
 
     def get_queryset(self):
-        start_date, end_date = self._get_display_period()
         return (
-            Meeting.objects.filter(meeting_date__range=(start_date, end_date))
+            Meeting.objects.all()
             .annotate(
                 speech_count=Count(
                     "speeches",
@@ -38,7 +37,7 @@ class IndexView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        start_date, end_date = self._get_display_period()
+        start_date, end_date = self._get_period(self.request.GET)
         context["start_date"] = start_date
         context["end_date"] = end_date
         context["page_size"] = self._get_page_size()
@@ -113,17 +112,6 @@ class IndexView(ListView):
         except ValueError:
             pass
         return start_date, end_date
-
-    def _get_display_period(self):
-        if self.request.GET.get("start_date") or self.request.GET.get("end_date"):
-            return self._get_period(self.request.GET)
-
-        saved_range = Meeting.objects.aggregate(
-            first_date=Min("meeting_date"), last_date=Max("meeting_date")
-        )
-        if saved_range["first_date"] and saved_range["last_date"]:
-            return saved_range["first_date"], saved_range["last_date"]
-        return self._get_period(self.request.GET)
 
     @staticmethod
     def _build_period_query(start_date, end_date):
