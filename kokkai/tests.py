@@ -1,5 +1,5 @@
 from dataclasses import replace
-from datetime import date
+from datetime import date, datetime, timedelta
 from unittest.mock import Mock, call, patch
 
 from django.test import SimpleTestCase, TestCase
@@ -396,10 +396,15 @@ class IndexViewTests(TestCase):
         self.assertContains(response, "本会議 第1号")
         self.assertContains(response, "予算委員会 第1号")
 
+        today = datetime.now().date()
         reopened_response = self.client.get(reverse("kokkai:index"))
 
         self.assertContains(reopened_response, "本会議 第1号")
         self.assertContains(reopened_response, "予算委員会 第1号")
+        self.assertEqual(
+            reopened_response.context["start_date"], today - timedelta(days=30)
+        )
+        self.assertEqual(reopened_response.context["end_date"], today)
 
     def test_index_does_not_count_catalog_metadata_as_meeting_contents(self):
         """
