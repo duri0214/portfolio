@@ -625,6 +625,9 @@ class ScenarioGameViewTests(TestCase):
             self.assertContains(first_response, "議事録 No.001")
             self.assertContains(first_response, "資料を提示します。")
             self.assertContains(first_response, "次はあなたの番です")
+            self.assertContains(first_response, "next-player-turn-notice")
+            self.assertNotContains(first_response, "next-player-turn-attention")
+            self.assertNotContains(first_response, "player-turn-marker-pulse")
             self.assertContains(first_response, "player-turn-marker is-next")
             self.assertContains(first_response, 'class="roleplay-progress-bar"')
             self.assertEqual(
@@ -865,6 +868,58 @@ class ScenarioGameViewTests(TestCase):
 
         play.refresh_from_db()
         self.assertEqual(play.next_turn_number, 3)
+
+    def test_game_can_skip_to_the_final_transcript_after_the_last_player_turn(self):
+        """
+        シナリオ:
+        - 入力: 最後の担当ターンを終え、後続に非担当アクターのターンが残るプレイ。
+        - 処理: 最終判定まで進むボタンを押してから、最後の展開へ進む。
+        - 期待値: 最終議事録No.まで一度に進み、次の操作で結果画面へ遷移すること。
+        """
+        ScenarioTurn.objects.create(
+            scenario=self.scenario,
+            turn_number=3,
+            actor=self.other_actor,
+            dialogue="終盤の発言です。",
+            evidence_speech=self.first_speech,
+            evidence_note="終盤の一次発言です。",
+        )
+        ScenarioTurn.objects.create(
+            scenario=self.scenario,
+            turn_number=4,
+            actor=self.other_actor,
+            dialogue="最後の発言です。",
+            evidence_speech=self.first_speech,
+            evidence_note="最後の一次発言です。",
+        )
+        play = ScenarioPlay.objects.create(
+            scenario=self.scenario,
+            selected_actor=self.player_actor,
+            next_turn_number=3,
+            score=1,
+            answer_count=1,
+        )
+        game_url = reverse("kokkai:scenario_game", args=[play.play_id])
+
+        response = self.client.get(game_url)
+
+        self.assertContains(response, "最終判定まで進む")
+        self.assertNotContains(response, "自分の直前の番まで進む")
+
+        response = self.client.post(game_url, {"action": "skip_to_final_turn"})
+
+        self.assertRedirects(response, game_url)
+        final_turn_response = self.client.get(game_url)
+        self.assertContains(final_turn_response, "4 / 4")
+        self.assertContains(final_turn_response, "最後の発言です。")
+        self.assertNotContains(final_turn_response, "最終判定まで進む")
+
+        response = self.client.post(game_url, {"action": "next"})
+
+        self.assertRedirects(
+            response,
+            reverse("kokkai:scenario_result", args=[play.play_id]),
+        )
 
     def test_game_returns_rate_limit_without_redirecting(self):
         """

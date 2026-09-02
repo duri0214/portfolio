@@ -251,6 +251,8 @@ class ScenarioGameView(DetailView):
         player_turns = [
             turn for turn in turns if turn.actor_id == self.object.selected_actor_id
         ]
+        last_turn = turns[-1] if turns else None
+        last_player_turn = player_turns[-1] if player_turns else None
         next_player_turn = next(
             (
                 turn
@@ -279,6 +281,14 @@ class ScenarioGameView(DetailView):
             and current_turn.actor_id != self.object.selected_actor_id
             and next_player_turn is not None
             and next_player_turn.turn_number > self.object.next_turn_number + 1
+        )
+        context["can_skip_to_final_turn"] = (
+            current_turn is not None
+            and current_turn.actor_id != self.object.selected_actor_id
+            and last_turn is not None
+            and last_player_turn is not None
+            and last_player_turn.turn_number < current_turn.turn_number
+            and current_turn.turn_number < last_turn.turn_number
         )
         player_turn_markers = []
         for turn in player_turns:
