@@ -55,10 +55,14 @@ class ScenarioPlayService:
                     self._complete(play)
                 elif action == "answer":
                     self._ensure_choices(play, turn)
-                    choices = self.repository.get_turn_choices(turn)
+                    choices = self.repository.get_turn_choices(
+                        turn, play, ScenarioService.CHOICE_PROMPT_VERSION
+                    )
                     self._answer(play, turn, choices, choice_id)
                 elif action == "next":
-                    choices = self.repository.get_turn_choices(turn)
+                    choices = self.repository.get_turn_choices(
+                        turn, play, ScenarioService.CHOICE_PROMPT_VERSION
+                    )
                     if turn.actor_id == play.selected_actor_id and choices:
                         raise ScenarioPlayError(
                             "Choose one of the two answers before continuing."
@@ -123,14 +127,11 @@ class ScenarioPlayService:
         """プレイヤー担当ターンにだけ未生成の二択を作る。"""
         if turn is None or turn.actor_id != play.selected_actor_id:
             return
-        choices = self.repository.get_turn_choices(turn)
-        if choices and all(
-            choice.prompt_version == ScenarioService.CHOICE_PROMPT_VERSION
-            for choice in choices
-        ):
-            return
+        choices = self.repository.get_turn_choices(
+            turn, play, ScenarioService.CHOICE_PROMPT_VERSION
+        )
         if choices:
-            self.repository.delete_turn_choices(turn)
+            return
         if turn.evidence_speech is None or turn.actor is None:
             raise ScenarioGenerationError(
                 "The player turn does not have source speech information."
@@ -167,7 +168,7 @@ class ScenarioPlayService:
             turn.evidence_speech.speech_order,
         )
         self.repository.create_turn_choices(
-            turn, choices, ScenarioService.CHOICE_PROMPT_VERSION
+            play, turn, choices, ScenarioService.CHOICE_PROMPT_VERSION
         )
 
     def _move_to_next_turn(self, play: ScenarioPlay) -> None:

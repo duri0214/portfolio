@@ -191,12 +191,22 @@ class ScenarioRepository:
         )
 
     @staticmethod
-    def get_turn_choices(turn: ScenarioTurn) -> list[ScenarioChoice]:
+    def get_turn_choices(
+        turn: ScenarioTurn,
+        play: ScenarioPlay | None = None,
+        prompt_version: str | None = None,
+    ) -> list[ScenarioChoice]:
         """ターンに紐づく選択肢を表示順で取得する。"""
-        return list(ScenarioChoice.objects.filter(turn=turn).order_by("choice_number"))
+        choices = ScenarioChoice.objects.filter(turn=turn)
+        if play is not None:
+            choices = choices.filter(play=play)
+        if prompt_version is not None:
+            choices = choices.filter(prompt_version=prompt_version)
+        return list(choices.order_by("choice_number"))
 
     @staticmethod
     def create_turn_choices(
+        play: ScenarioPlay,
         turn: ScenarioTurn,
         choices: Iterable[ScenarioChoiceData],
         prompt_version: str,
@@ -205,6 +215,7 @@ class ScenarioRepository:
         ScenarioChoice.objects.bulk_create(
             [
                 ScenarioChoice(
+                    play=play,
                     turn=turn,
                     choice_number=choice.choice_number,
                     text=choice.text,
@@ -215,11 +226,6 @@ class ScenarioRepository:
                 for choice in choices
             ]
         )
-
-    @staticmethod
-    def delete_turn_choices(turn: ScenarioTurn) -> None:
-        """古いプロンプトで生成されたターンの二択を削除する。"""
-        ScenarioChoice.objects.filter(turn=turn).delete()
 
     @staticmethod
     def get_last_turn_number(scenario_id: int) -> int:

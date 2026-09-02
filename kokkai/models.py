@@ -177,6 +177,14 @@ class ScenarioTurn(models.Model):
 class ScenarioChoice(models.Model):
     """ユーザー担当アクターのターンで選択する二択。"""
 
+    play = models.ForeignKey(
+        "ScenarioPlay",
+        on_delete=models.SET_NULL,
+        related_name="choices",
+        null=True,
+        blank=True,
+        verbose_name="プレイ",
+    )
     turn = models.ForeignKey(
         ScenarioTurn,
         on_delete=models.CASCADE,
@@ -194,7 +202,8 @@ class ScenarioChoice(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["turn", "choice_number"], name="unique_scenario_choice_number"
+                fields=["play", "turn", "choice_number", "prompt_version"],
+                name="unique_scenario_play_choice_version_number",
             )
         ]
         ordering = ["choice_number"]

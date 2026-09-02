@@ -18,6 +18,7 @@ from kokkai.models import (
     ScenarioActor,
     ScenarioChoice,
     ScenarioPlay,
+    ScenarioPlayAnswer,
     ScenarioTurn,
     Speech,
 )
@@ -693,7 +694,13 @@ class ScenarioGameViewTests(TestCase):
         self.assertEqual(previous_play.next_turn_number, 2)
 
     def test_game_regenerates_stale_choices_without_recreating_scenario(self):
-        ScenarioChoice.objects.create(
+        """
+        シナリオ:
+        - 入力: 過去の回答から参照されている旧版の選択肢と、新しいプレイ。
+        - 処理: 新しいプレイで担当ターンを開き、選択肢を遅延生成する。
+        - 期待値: 旧版を削除せず、新しいプレイ用の選択肢だけが生成される。
+        """
+        old_choice = ScenarioChoice.objects.create(
             turn=self.player_turn,
             choice_number=1,
             text="old cached question?",
@@ -706,6 +713,16 @@ class ScenarioGameViewTests(TestCase):
             text="old cached answer",
             is_correct=True,
             rationale="old rationale",
+        )
+        old_play = ScenarioPlay.objects.create(
+            scenario=self.scenario,
+            selected_actor=self.player_actor,
+            next_turn_number=3,
+        )
+        ScenarioPlayAnswer.objects.create(
+            play=old_play,
+            turn=self.player_turn,
+            choice=old_choice,
         )
         play = ScenarioPlay.objects.create(
             scenario=self.scenario,
@@ -726,10 +743,21 @@ class ScenarioGameViewTests(TestCase):
         self.assertEqual(len(generator.choice_calls), 1)
         self.assertEqual(MeetingScenario.objects.count(), 1)
         self.assertEqual(
+            ScenarioChoice.objects.filter(turn=self.player_turn).count(), 4
+        )
+        self.assertEqual(
+            ScenarioChoice.objects.filter(turn=self.player_turn, play=old_play).count(),
+            0,
+        )
+        self.assertEqual(
+            ScenarioChoice.objects.filter(turn=self.player_turn, play=play).count(),
+            2,
+        )
+        self.assertEqual(
             set(
-                ScenarioChoice.objects.filter(turn=self.player_turn).values_list(
-                    "prompt_version", flat=True
-                )
+                ScenarioChoice.objects.filter(
+                    turn=self.player_turn, play=play
+                ).values_list("prompt_version", flat=True)
             ),
             {ScenarioService.CHOICE_PROMPT_VERSION},
         )

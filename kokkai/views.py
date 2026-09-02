@@ -308,7 +308,13 @@ class ScenarioGameView(DetailView):
             and next_turn.actor_id == self.object.selected_actor_id
         )
         context["current_choices"] = (
-            list(current_turn.choices.all()) if current_turn is not None else []
+            ScenarioRepository().get_turn_choices(
+                current_turn,
+                self.object,
+                ScenarioService.CHOICE_PROMPT_VERSION,
+            )
+            if current_turn is not None
+            else []
         )
         context["is_player_turn"] = (
             current_turn is not None
