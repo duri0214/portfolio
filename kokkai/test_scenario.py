@@ -374,7 +374,7 @@ class ScenarioServiceTests(TestCase):
         self.assertContains(response, "progress-bar-animated")
         self.assertContains(response, "シナリオを生成中")
         self.assertContains(response, 'value="create_scenario"')
-        self.assertContains(
+        self.assertNotContains(
             response,
             "会議録全体を要約し、原文の発言を議事録 No.順にたどりながら、担当する役割としてどう対応するかを選ぶ教育用ロールプレイです。",
         )
@@ -522,6 +522,15 @@ class ScenarioGameViewTests(TestCase):
             "kokkai.domain.service.scenario_play.OpenAIScenarioGenerator",
             return_value=generator,
         ):
+            actor_select_response = self.client.get(actor_select_url)
+            self.assertNotContains(
+                actor_select_response,
+                "会議録全体の要約と、原文発言を議事録 No.順にたどるロールプレイです。",
+            )
+            self.assertNotContains(
+                actor_select_response,
+                "ゲーム開始時に会議録全体の要約を表示し、その後は議事録のNo.順に進みます。",
+            )
             response = self.client.post(
                 actor_select_url, {"actor_id": self.player_actor.pk}
             )
@@ -541,14 +550,14 @@ class ScenarioGameViewTests(TestCase):
             self.client.post(game_url, {"action": "next"})
             game_response = self.client.get(game_url)
             self.assertContains(game_response, "choice-deck")
-            self.assertContains(game_response, "クリックして返答を選びます")
+            self.assertContains(game_response, "クリックして選択")
             self.assertContains(game_response, "議事録 No.002")
             self.assertContains(game_response, "choice-card-flash")
             self.assertContains(
                 game_response, "HTMLFormElement.prototype.submit.call(form)"
             )
             self.assertNotContains(game_response, "スワイプ")
-            self.assertContains(
+            self.assertNotContains(
                 game_response,
                 "会議録全体の要約から始まり、原文の発言を議事録 No.順に表示します。",
             )
