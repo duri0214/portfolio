@@ -14,6 +14,13 @@
         <h1 class="h2">{{ scenario.title }}</h1>
     </section>
 
+    <section class="card mb-4">
+        <div class="card-body">
+            <h2 class="h4">会議全体の要約</h2>
+            <p class="lead mb-0" style="white-space: pre-wrap;">{{ scenario.overview }}</p>
+        </div>
+    </section>
+
     <form method="post" class="card">
         {% csrf_token %}
         <div class="card-body">

@@ -104,7 +104,6 @@ class ScenarioPlayService:
         """プレイヤー担当ターンにだけ未生成の二択を作る。"""
         if (
             turn is None
-            or turn.is_overview
             or turn.actor_id != play.selected_actor_id
             or self.repository.get_turn_choices(turn)
         ):
@@ -124,9 +123,7 @@ class ScenarioPlayService:
         )
         overview = self.repository.get_overview_dialogue(play.scenario_id)
         if not overview:
-            raise ScenarioGenerationError(
-                "The scenario does not have an overview turn."
-            )
+            raise ScenarioGenerationError("The scenario does not have an overview.")
         generated = self.generator.generate_choices(
             play.scenario.meeting,
             actor,

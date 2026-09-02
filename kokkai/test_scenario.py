@@ -267,17 +267,17 @@ class ScenarioServiceTests(TestCase):
         self.assertEqual(self.generator.choice_calls, [])
         self.assertEqual(MeetingScenario.objects.count(), 1)
         self.assertEqual(scenario.actors.count(), 2)
-        self.assertEqual(scenario.turns.count(), 3)
+        self.assertEqual(scenario.turns.count(), 2)
         self.assertEqual(
             list(
                 scenario.turns.values_list(
-                    "turn_number", "is_overview", "evidence_speech__speech_order"
+                    "turn_number", "evidence_speech__speech_order"
                 )
             ),
-            [(1, True, None), (2, False, 1), (3, False, 2)],
+            [(1, 1), (2, 2)],
         )
         self.assertEqual(
-            scenario.turns.get(is_overview=True).dialogue,
+            scenario.overview,
             "予算案を審議する会議を基にしたシミュレーションです。",
         )
         self.assertIn("[speech_order: 1]", self.generator.calls[0][2][0])
@@ -308,7 +308,7 @@ class ScenarioServiceTests(TestCase):
 
         self.assertTrue(created)
         self.assertEqual(scenario.actors.count(), 2)
-        self.assertEqual(scenario.turns.count(), 3)
+        self.assertEqual(scenario.turns.count(), 2)
         self.assertEqual(self.generator.choice_calls, [])
 
     def test_invalid_passing_score_falls_back_to_the_default(self):
@@ -469,6 +469,7 @@ class ScenarioGameViewTests(TestCase):
             prompt_version="meeting-simulation-v2",
             generator_model="test-scenario-model",
             title="保存済みシナリオ",
+            overview="会議録全体の要約です。",
             success_label="成立",
             failure_label="不成立",
             judgment_criteria="根拠発言に沿って選択すること。",
@@ -489,13 +490,6 @@ class ScenarioGameViewTests(TestCase):
         ScenarioTurn.objects.create(
             scenario=self.scenario,
             turn_number=1,
-            is_overview=True,
-            dialogue="会議録全体の要約です。",
-            evidence_note="会議録全体を見渡した要約です。",
-        )
-        ScenarioTurn.objects.create(
-            scenario=self.scenario,
-            turn_number=2,
             actor=self.other_actor,
             dialogue="資料を提示します。",
             evidence_speech=self.first_speech,
@@ -503,7 +497,7 @@ class ScenarioGameViewTests(TestCase):
         )
         self.player_turn = ScenarioTurn.objects.create(
             scenario=self.scenario,
-            turn_number=3,
+            turn_number=2,
             actor=self.player_actor,
             dialogue="根拠を確認します。",
             evidence_speech=self.second_speech,
@@ -513,9 +507,9 @@ class ScenarioGameViewTests(TestCase):
     def test_transcript_progresses_in_order_and_generates_choices_only_for_player(self):
         """
         シナリオ:
-        - 入力: 全体要約、他アクターのNo.1、担当アクターのNo.2を持つシナリオ。
+        - 入力: 全体要約と、他アクターのNo.1、担当アクターのNo.2を持つシナリオ。
         - 実行: No.順に進め、担当アクターの発言で二択を生成して回答する。
-        - 期待結果: 要約と発言が順番に表示され、二択生成は担当アクターの発言だけで1回行われる。
+        - 期待結果: 要約は役割選択画面に表示され、ゲームはNo.001から始まり、二択生成は担当アクターの発言だけで1回行われる。
         """
         actor_select_url = reverse(
             "kokkai:scenario_actor_select", args=[self.scenario.pk]
@@ -534,23 +528,19 @@ class ScenarioGameViewTests(TestCase):
                 actor_select_response,
                 "ゲーム開始時に会議録全体の要約を表示し、その後は議事録のNo.順に進みます。",
             )
-            self.assertNotContains(actor_select_response, "会議録全体の要約です。")
+            self.assertContains(actor_select_response, "会議録全体の要約です。")
             self.assertNotContains(actor_select_response, "test-scenario-model")
             response = self.client.post(
                 actor_select_url, {"actor_id": self.player_actor.pk}
             )
             play = ScenarioPlay.objects.get()
             game_url = reverse("kokkai:scenario_game", args=[play.play_id])
-            overview_response = self.client.get(game_url)
-            self.assertContains(overview_response, "会議全体の要約")
-            self.assertContains(overview_response, "全体要約")
-            self.assertEqual(generator.choice_calls, [])
-
-            self.client.post(game_url, {"action": "next"})
             first_response = self.client.get(game_url)
             self.assertContains(first_response, "議事録 No.001")
             self.assertContains(first_response, "資料を提示します。")
+            self.assertNotContains(first_response, "会議録全体の要約です。")
             self.assertFalse(first_response.context["is_player_turn"])
+            self.assertEqual(generator.choice_calls, [])
 
             self.client.post(game_url, {"action": "next"})
             game_response = self.client.get(game_url)

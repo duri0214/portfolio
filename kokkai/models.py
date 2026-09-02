@@ -93,6 +93,7 @@ class MeetingScenario(models.Model):
         "状態", max_length=16, choices=Status.choices, default=Status.READY
     )
     title = models.CharField("シナリオタイトル", max_length=200)
+    overview = models.TextField("会議全体の要約")
     success_label = models.CharField("成功時の判定", max_length=64)
     failure_label = models.CharField("失敗時の判定", max_length=64)
     judgment_criteria = models.TextField("判定条件")
@@ -140,7 +141,7 @@ class ScenarioActor(models.Model):
 
 
 class ScenarioTurn(models.Model):
-    """全体要約または、その根拠となる一次発言に対応するシナリオの1ターン。"""
+    """根拠となる一次発言に対応するシナリオの1ターン。"""
 
     scenario = models.ForeignKey(
         MeetingScenario,
@@ -149,14 +150,11 @@ class ScenarioTurn(models.Model):
         verbose_name="シナリオ",
     )
     turn_number = models.PositiveIntegerField("ターン番号")
-    is_overview = models.BooleanField("全体要約ターン", default=False)
     actor = models.ForeignKey(
         ScenarioActor,
         on_delete=models.PROTECT,
         related_name="turns",
         verbose_name="発言アクター",
-        null=True,
-        blank=True,
     )
     dialogue = models.TextField("会話文")
     evidence_speech = models.ForeignKey(
@@ -164,8 +162,6 @@ class ScenarioTurn(models.Model):
         on_delete=models.PROTECT,
         related_name="scenario_turns",
         verbose_name="根拠発言",
-        null=True,
-        blank=True,
     )
     evidence_note = models.TextField("根拠の説明")
 

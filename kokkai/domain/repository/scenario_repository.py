@@ -92,6 +92,7 @@ class ScenarioRepository:
                 prompt_version=prompt_version,
                 generator_model=generator_model,
                 title=payload.title,
+                overview=payload.overview,
                 success_label=payload.success_label,
                 failure_label=payload.failure_label,
                 judgment_criteria=payload.judgment_criteria,
@@ -114,17 +115,9 @@ class ScenarioRepository:
                 (actor.name, actor.role, actor.affiliation): actor
                 for actor in ScenarioActor.objects.filter(scenario=scenario)
             }
-            ScenarioTurn.objects.create(
-                scenario=scenario,
-                turn_number=1,
-                is_overview=True,
-                dialogue=payload.overview,
-                evidence_note="会議録全体を見渡した要約です。",
-            )
-
             for turn_number, speech in enumerate(
                 sorted(speeches, key=lambda item: item.speech_order),
-                start=2,
+                start=1,
             ):
                 actor = saved_actors_by_identity[
                     (
@@ -136,7 +129,6 @@ class ScenarioRepository:
                 ScenarioTurn.objects.create(
                     scenario=scenario,
                     turn_number=turn_number,
-                    is_overview=False,
                     actor=actor,
                     dialogue=speech.speech_text,
                     evidence_speech=speech,
@@ -148,8 +140,8 @@ class ScenarioRepository:
     def get_overview_dialogue(scenario_id: int) -> str | None:
         """二択生成の文脈に使う会議全体要約を取得する。"""
         return (
-            ScenarioTurn.objects.filter(scenario_id=scenario_id, is_overview=True)
-            .values_list("dialogue", flat=True)
+            MeetingScenario.objects.filter(pk=scenario_id)
+            .values_list("overview", flat=True)
             .first()
         )
 
