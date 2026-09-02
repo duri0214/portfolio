@@ -222,6 +222,14 @@ class ScenarioGameView(DetailView):
             ),
             None,
         )
+        next_turn = next(
+            (
+                turn
+                for turn in turns
+                if turn.turn_number == self.object.next_turn_number + 1
+            ),
+            None,
+        )
         context["completed_turns"] = [
             turn for turn in turns if turn.turn_number < self.object.next_turn_number
         ]
@@ -232,6 +240,12 @@ class ScenarioGameView(DetailView):
             else 0
         )
         context["current_turn"] = current_turn
+        context["is_next_player_turn"] = (
+            current_turn is not None
+            and current_turn.actor_id != self.object.selected_actor_id
+            and next_turn is not None
+            and next_turn.actor_id == self.object.selected_actor_id
+        )
         context["current_choices"] = (
             list(current_turn.choices.all()) if current_turn is not None else []
         )

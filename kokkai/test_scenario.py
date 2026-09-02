@@ -573,6 +573,7 @@ class ScenarioGameViewTests(TestCase):
             first_response = self.client.get(game_url)
             self.assertContains(first_response, "議事録 No.001")
             self.assertContains(first_response, "資料を提示します。")
+            self.assertContains(first_response, "次はあなたの番です")
             self.assertNotContains(first_response, "会議録全体の要約です。")
             self.assertFalse(first_response.context["is_player_turn"])
             self.assertEqual(generator.choice_calls, [])
@@ -584,6 +585,7 @@ class ScenarioGameViewTests(TestCase):
             self.assertNotContains(game_response, self.player_turn.dialogue)
             self.assertNotContains(game_response, "議事録 No.002")
             self.assertNotContains(game_response, "根拠を確認する")
+            self.assertNotContains(game_response, "次はあなたの番です")
             self.assertContains(game_response, "choice-card-flash")
             self.assertContains(
                 game_response, "HTMLFormElement.prototype.submit.call(form)"
