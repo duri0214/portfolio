@@ -692,6 +692,63 @@ class ScenarioGameViewTests(TestCase):
         previous_play.refresh_from_db()
         self.assertEqual(previous_play.next_turn_number, 2)
 
+    def test_game_can_skip_to_the_turn_before_player_turn(self):
+        self.player_turn.turn_number = 3
+        self.player_turn.save(update_fields=["turn_number"])
+        self.second_speech.speech_order = 3
+        self.second_speech.save(update_fields=["speech_order"])
+        middle_speech = Speech.objects.create(
+            meeting=self.meeting,
+            speaker_name="大臣B",
+            speech_text="途中の発言です。",
+            speech_order=2,
+            source_url="https://kokkai.ndl.go.jp/txt/121305254X00120240127/2",
+        )
+        ScenarioTurn.objects.create(
+            scenario=self.scenario,
+            turn_number=2,
+            actor=self.other_actor,
+            dialogue="途中の発言です。",
+            evidence_speech=middle_speech,
+            evidence_note="大臣の途中発言です。",
+        )
+        actor_select_url = reverse(
+            "kokkai:scenario_actor_select", args=[self.scenario.pk]
+        )
+        generator = FakeScenarioGenerator()
+
+        with patch(
+            "kokkai.domain.service.scenario_play.OpenAIScenarioGenerator",
+            return_value=generator,
+        ):
+            self.client.post(actor_select_url, {"actor_id": self.player_actor.pk})
+            play = ScenarioPlay.objects.get()
+            game_url = reverse("kokkai:scenario_game", args=[play.play_id])
+            first_response = self.client.get(game_url)
+            self.assertContains(first_response, "自分の直前の番まで進む")
+            self.assertNotContains(first_response, "回答 1")
+
+            response = self.client.post(
+                game_url, {"action": "skip_to_before_player_turn"}
+            )
+
+            self.assertRedirects(response, game_url)
+            game_response = self.client.get(game_url)
+            self.assertContains(game_response, "2 / 3")
+            self.assertNotContains(game_response, "回答 1")
+            self.assertContains(game_response, "途中の発言です。")
+
+            response = self.client.post(game_url, {"action": "next"})
+
+            self.assertRedirects(response, game_url)
+            game_response = self.client.get(game_url)
+            self.assertContains(game_response, "3 / 3")
+            self.assertContains(game_response, "回答 1")
+            self.assertEqual(generator.choice_calls[0][4], middle_speech)
+
+        play.refresh_from_db()
+        self.assertEqual(play.next_turn_number, 3)
+
     def test_game_returns_rate_limit_without_redirecting(self):
         """
         Input: 選択肢生成時にOpenAIのトークンレート制限が発生するプレイ。

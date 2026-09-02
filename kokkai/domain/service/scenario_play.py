@@ -61,6 +61,13 @@ class ScenarioPlayService:
                             play.scenario_id, play.next_turn_number
                         )
                         self._ensure_choices(play, next_turn)
+                elif action == "skip_to_before_player_turn":
+                    self._skip_to_before_player_turn(play)
+                    if not play.is_completed:
+                        next_turn = self.repository.get_turn(
+                            play.scenario_id, play.next_turn_number
+                        )
+                        self._ensure_choices(play, next_turn)
                 else:
                     raise ScenarioPlayError("Unknown game action.")
 
@@ -153,6 +160,24 @@ class ScenarioPlayService:
             return
         play.next_turn_number += 1
         self.repository.save_play(play, ["next_turn_number"])
+
+    def _skip_to_before_player_turn(self, play: ScenarioPlay) -> None:
+        """担当アクターの次のターン直前まで、非担当アクターのターンを進める。"""
+        while not play.is_completed:
+            turn = self.repository.get_turn(play.scenario_id, play.next_turn_number)
+            if turn is None:
+                self._complete(play)
+                return
+            next_turn = self.repository.get_turn(
+                play.scenario_id, play.next_turn_number + 1
+            )
+            if (
+                turn.actor_id == play.selected_actor_id
+                or next_turn is None
+                or next_turn.actor_id == play.selected_actor_id
+            ):
+                return
+            self._move_to_next_turn(play)
 
     def _complete(self, play: ScenarioPlay) -> None:
         """回答結果から最終判定を作成してプレイを完了する。"""

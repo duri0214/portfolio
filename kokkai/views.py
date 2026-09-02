@@ -264,6 +264,12 @@ class ScenarioGameView(DetailView):
             previous_turn is not None
             and previous_turn.actor_id != self.object.selected_actor_id
         )
+        context["can_skip_to_before_player_turn"] = (
+            current_turn is not None
+            and current_turn.actor_id != self.object.selected_actor_id
+            and next_player_turn is not None
+            and next_player_turn.turn_number > self.object.next_turn_number + 1
+        )
         player_turn_markers = []
         for turn in player_turns:
             if turn.turn_number < self.object.next_turn_number:
