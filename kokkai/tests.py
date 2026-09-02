@@ -265,7 +265,7 @@ class IndexViewTests(TestCase):
         - 処理: 対象期間を指定してロープレ用の会議録選択画面を表示する。
         - 期待値: 院名、会議名、PDFリンク、本文取得用の選択欄が表示されること。
         """
-        Meeting.objects.create(
+        meeting = Meeting.objects.create(
             meeting_date=date(2024, 1, 26),
             session_number=213,
             house="衆議院",
@@ -280,6 +280,7 @@ class IndexViewTests(TestCase):
             reverse("kokkai:index"),
             {"start_date": "2024-01-26", "end_date": "2024-01-26"},
         )
+        detail_url = reverse("kokkai:meeting_detail", args=[meeting.pk])
 
         self.assertNotContains(response, "<th>会議録ID</th>")
         self.assertContains(response, "国会会議録ロープレ")
@@ -290,6 +291,11 @@ class IndexViewTests(TestCase):
         self.assertNotContains(response, "シナリオに使う会議録")
         self.assertContains(response, "衆議院")
         self.assertContains(response, "本会議 第1号")
+        self.assertContains(response, "本文未取得")
+        self.assertContains(
+            response,
+            f'href="{detail_url}?start_date=2024-01-26&amp;end_date=2024-01-26"',
+        )
         self.assertContains(response, "期間内の会議録カタログを取得")
         self.assertContains(response, "会議録全量へのリンク")
         self.assertNotContains(response, "（結果を表示）")
@@ -331,6 +337,92 @@ class IndexViewTests(TestCase):
             content.index("期間内の会議録カタログを取得"),
             content.rindex("会議録全量へのリンク"),
         )
+
+    def test_meeting_detail_returns_to_the_selected_catalog_period(self):
+        """
+        シナリオ:
+        - 入力: 期間を指定して表示したカタログに含まれる会議録。
+        - 処理: 会議詳細を開き、一覧へ戻るリンクを確認する。
+        - 期待値: 一覧へ戻るリンクが、表示中の期間を引き継ぐこと。
+        """
+        meeting = Meeting.objects.create(
+            meeting_date=date(2024, 1, 26),
+            session_number=213,
+            house="衆議院",
+            committee="本会議",
+            meeting_number="第1号",
+            min_id="121305254X00120240126",
+            url="https://example.com/meeting/1",
+        )
+
+        response = self.client.get(
+            reverse("kokkai:meeting_detail", args=[meeting.pk]),
+            {"start_date": "2024-01-01", "end_date": "2024-01-31"},
+        )
+
+        self.assertContains(
+            response,
+            'href="/kokkai/?start_date=2024-01-01&amp;end_date=2024-01-31"',
+        )
+
+    def test_index_without_period_shows_the_saved_catalog_range(self):
+        """
+        シナリオ:
+        - 入力: 異なる開催日のカタログ情報がDBに保存され、URLに期間指定がない一覧表示。
+        - 処理: 会議録一覧を表示する。
+        - 期待値: 保存済みカタログの最古日から最新日までを、外部取得なしで表示すること。
+        """
+        for meeting_date, committee in (
+            (date(2024, 1, 26), "本会議"),
+            (date(2024, 2, 1), "予算委員会"),
+        ):
+            Meeting.objects.create(
+                meeting_date=meeting_date,
+                session_number=213,
+                house="衆議院",
+                committee=committee,
+                meeting_number="第1号",
+                min_id=f"121305254X001{meeting_date:%Y%m%d}",
+                url=f"https://example.com/meeting/{meeting_date:%Y%m%d}",
+            )
+
+        response = self.client.get(reverse("kokkai:index"))
+
+        self.assertEqual(response.context["start_date"], date(2024, 1, 26))
+        self.assertEqual(response.context["end_date"], date(2024, 2, 1))
+        self.assertContains(response, "本会議 第1号")
+        self.assertContains(response, "予算委員会 第1号")
+
+    def test_index_does_not_count_catalog_metadata_as_meeting_contents(self):
+        """
+        シナリオ:
+        - 入力: カタログ情報だけを持ち、会議録情報というメタデータ行が紐づく会議録。
+        - 処理: 指定期間の会議録一覧を表示する。
+        - 期待値: メタデータ行を本文として数えず、本文未取得と表示すること。
+        """
+        meeting = Meeting.objects.create(
+            meeting_date=date(2024, 1, 26),
+            session_number=213,
+            house="衆議院",
+            committee="本会議",
+            meeting_number="第1号",
+            min_id="121305254X00120240126",
+            url="https://example.com/meeting/1",
+        )
+        Speech.objects.create(
+            meeting=meeting,
+            speaker_name="会議録情報",
+            speech_text="会議の日時などのメタデータ",
+            speech_order=0,
+        )
+
+        response = self.client.get(
+            reverse("kokkai:index"),
+            {"start_date": "2024-01-26", "end_date": "2024-01-26"},
+        )
+
+        self.assertContains(response, "本文未取得")
+        self.assertNotContains(response, "本文取得済み")
 
     def test_index_paginates_meetings_with_native_page_size_options(self):
         """

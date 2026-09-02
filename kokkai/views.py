@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
+from urllib.parse import urlencode
 
 from django.contrib import messages
-from django.db.models import Count
+from django.db.models import Count, Max, Min, Q
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.generic import DetailView, ListView
@@ -23,20 +24,26 @@ class IndexView(ListView):
     DEFAULT_PAGE_SIZE = 30
 
     def get_queryset(self):
-        start_date, end_date = self._get_period(self.request.GET)
+        start_date, end_date = self._get_display_period()
         return (
             Meeting.objects.filter(meeting_date__range=(start_date, end_date))
-            .annotate(speech_count=Count("speeches"))
+            .annotate(
+                speech_count=Count(
+                    "speeches",
+                    filter=~Q(speeches__speaker_name=MEETING_METADATA_SPEAKER_NAME),
+                )
+            )
             .order_by("-meeting_date", "committee", "meeting_number")
         )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        start_date, end_date = self._get_period(self.request.GET)
+        start_date, end_date = self._get_display_period()
         context["start_date"] = start_date
         context["end_date"] = end_date
         context["page_size"] = self._get_page_size()
         context["page_size_options"] = self.PAGE_SIZE_OPTIONS
+        context["period_query"] = self._build_period_query(start_date, end_date)
         return context
 
     def get_paginate_by(self, queryset):
@@ -107,6 +114,31 @@ class IndexView(ListView):
             pass
         return start_date, end_date
 
+    def _get_display_period(self):
+        if self.request.GET.get("start_date") or self.request.GET.get("end_date"):
+            return self._get_period(self.request.GET)
+
+        saved_range = Meeting.objects.aggregate(
+            first_date=Min("meeting_date"), last_date=Max("meeting_date")
+        )
+        if saved_range["first_date"] and saved_range["last_date"]:
+            return saved_range["first_date"], saved_range["last_date"]
+        return self._get_period(self.request.GET)
+
+    @staticmethod
+    def _build_period_query(start_date, end_date):
+        return urlencode(
+            {
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+            }
+        )
+
+    @classmethod
+    def _period_query(cls, values):
+        start_date, end_date = cls._get_period(values)
+        return cls._build_period_query(start_date, end_date)
+
 
 class MeetingDetailView(DetailView):
     model = Meeting
@@ -122,6 +154,7 @@ class MeetingDetailView(DetailView):
         availability = ScenarioService().get_availability(self.object)
         context["scenario"] = availability.scenario
         context["scenario_needs_regeneration"] = availability.needs_regeneration
+        context["index_query"] = IndexView._period_query(self.request.GET)
         return context
 
     def post(self, request, *args, **kwargs):
