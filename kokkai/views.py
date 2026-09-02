@@ -139,7 +139,7 @@ class MeetingDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         context["speeches"] = self.object.speeches.exclude(
             speaker_name=MEETING_METADATA_SPEAKER_NAME
-        ).order_by("speech_order")
+        ).order_by("speech_order", "pk")
         context["has_speeches"] = context["speeches"].exists()
         availability = ScenarioService().get_availability(self.object)
         context["scenario"] = availability.scenario

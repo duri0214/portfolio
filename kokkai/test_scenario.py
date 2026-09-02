@@ -347,6 +347,41 @@ class ScenarioServiceTests(TestCase):
         self.assertEqual(scenario.actors.count(), 2)
         self.assertNotContains(response, "会議の日時などのメタデータ")
 
+    def test_meeting_detail_displays_visible_speech_numbers_sequentially(self):
+        """
+        シナリオ:
+        - 入力: 元の発言No.001がメタデータで、実際の発言がNo.002・No.003の会議録。
+        - 処理: 会議詳細画面でメタデータを除いた原文一覧を表示する。
+        - 期待結果: 表示上の発言番号はNo.001・No.002の連番になる。
+        """
+        self.meeting.speeches.filter(speaker_name="議員A").update(speech_order=2)
+        self.meeting.speeches.filter(speaker_name="大臣B").update(speech_order=3)
+        Speech.objects.create(
+            meeting=self.meeting,
+            speaker_name="会議録情報",
+            speech_text="会議の日時などのメタデータ",
+            speech_order=1,
+        )
+
+        response = self.client.get(
+            reverse("kokkai:meeting_detail", args=[self.meeting.pk])
+        )
+
+        self.assertContains(
+            response,
+            '<span class="badge bg-secondary me-2">001</span>',
+            count=1,
+        )
+        self.assertContains(
+            response,
+            '<span class="badge bg-secondary me-2">002</span>',
+            count=1,
+        )
+        self.assertNotContains(
+            response,
+            '<span class="badge bg-secondary me-2">003</span>',
+        )
+
     def test_availability_marks_a_scenario_for_regeneration_after_speech_changes(self):
         """
         シナリオ:
@@ -604,3 +639,23 @@ class ScenarioGameViewTests(TestCase):
         self.assertEqual(response.status_code, 429)
         self.assertNotIn("Location", response)
         self.assertContains(response, "rate-limited", status_code=429)
+
+    def test_game_displays_the_scenario_sequence_number_for_filtered_speech(self):
+        """
+        シナリオ:
+        - 入力: 元の会議録番号がNo.002だが、シナリオでは最初のターンになった発言。
+        - 処理: プレイ開始画面を表示する。
+        - 期待結果: 画面上の議事録番号はシナリオの連番No.001で表示する。
+        """
+        self.first_speech.speech_order = 2
+        self.first_speech.save(update_fields=["speech_order"])
+        play = ScenarioPlay.objects.create(
+            scenario=self.scenario,
+            selected_actor=self.player_actor,
+        )
+        game_url = reverse("kokkai:scenario_game", args=[play.play_id])
+
+        response = self.client.get(game_url)
+
+        self.assertContains(response, "議事録 No.001")
+        self.assertNotContains(response, "議事録 No.002")

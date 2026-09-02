@@ -74,7 +74,7 @@
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between">
                 <div>
-                    <span class="badge bg-secondary me-2">{{ speech.speech_order|stringformat:"03d" }}</span>
+                    <span class="badge bg-secondary me-2">{{ forloop.counter|stringformat:"03d" }}</span>
                     <strong>{{ speech.speaker_name }}</strong>
                 </div>
                 <span class="text-muted">{{ speech.speaker_role|default:"" }} {{ speech.speaker_affiliation|default:"" }}</span>

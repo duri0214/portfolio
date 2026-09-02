@@ -133,7 +133,7 @@
             <div class="roleplay-dialogue p-3 p-md-4 mb-3">
                 <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
                     <strong id="current-turn-heading">{{ current_turn.actor.name }}</strong>
-                    <span class="badge text-bg-light">議事録 No.{{ current_turn.evidence_speech.speech_order|stringformat:"03d" }}</span>
+                    <span class="badge text-bg-light">議事録 No.{{ current_turn.turn_number|stringformat:"03d" }}</span>
                 </div>
                 <p class="fs-5 mb-0" style="white-space: pre-wrap;">{{ current_turn.dialogue }}</p>
             </div>
@@ -181,7 +181,7 @@
                 {% for turn in completed_turns %}
                 <article class="border-start border-3 ps-3 mb-3">
                     <strong>{{ turn.actor.name }}</strong>
-                    <span class="small text-muted ms-2">No.{{ turn.evidence_speech.speech_order|stringformat:"03d" }}</span>
+                    <span class="small text-muted ms-2">No.{{ turn.turn_number|stringformat:"03d" }}</span>
                     <p class="mb-1" style="white-space: pre-wrap;">{{ turn.dialogue }}</p>
                 </article>
                 {% endfor %}
