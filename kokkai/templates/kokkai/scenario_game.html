@@ -20,6 +20,12 @@
         box-shadow: 0 .25rem 1rem rgba(33, 37, 41, .08);
     }
 
+    .roleplay-incoming-prompt {
+        border-left: .35rem solid #0d6efd;
+        border-radius: .75rem;
+        background: rgba(13, 110, 253, .05);
+    }
+
     .roleplay-progress-track {
         padding: .35rem 0;
     }
@@ -271,6 +277,16 @@
 
             {% if is_next_player_turn %}
             <div class="next-player-turn-notice mb-3" role="status">次はあなたの番です</div>
+            {% endif %}
+
+            {% if is_player_turn and previous_turn %}
+            <div class="roleplay-incoming-prompt p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                    <strong>{% if is_response_to_other_actor %}相手からの発言{% else %}直前の発言{% endif %}</strong>
+                    <span class="small text-muted text-nowrap">{{ previous_turn.actor.name }} / 議事録 No.{{ previous_turn.turn_number|stringformat:"03d" }}</span>
+                </div>
+                <p class="mb-0" style="white-space: pre-wrap;">{{ previous_turn.dialogue }}</p>
+            </div>
             {% endif %}
 
             <form method="post" id="roleplay-form">

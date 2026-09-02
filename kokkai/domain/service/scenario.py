@@ -48,8 +48,9 @@ class ScenarioGenerator(Protocol):
         actor: ScenarioActorData,
         speech: Speech,
         overview: str,
+        preceding_speech: Speech | None = None,
     ) -> dict[str, Any]:
-        """選択アクターの発言に対する二択を返す。"""
+        """直前の発言に対する選択アクターの返答を二択で返す。"""
 
 
 @dataclass(frozen=True)
@@ -130,8 +131,9 @@ class OpenAIScenarioGenerator:
         actor: ScenarioActorData,
         speech: Speech,
         overview: str,
+        preceding_speech: Speech | None = None,
     ) -> dict[str, Any]:
-        """選択アクターの発言に到達したときだけ、その場面の二択を生成する。"""
+        """直前の発言への返答として、その場面の二択を生成する。"""
         if not self.api_key:
             raise ScenarioGenerationError("OPENAI_API_KEY is not configured.")
 
@@ -143,8 +145,14 @@ class OpenAIScenarioGenerator:
                     "role": "system",
                     "content": (
                         "あなたは国会会議録を題材にした教育用ロールプレイの出題者です。"
-                        "会議録を基にしたシミュレーションであることを守り、与えられた発言に"
-                        "対するプレイヤーの返答候補を二つだけ作ってください。"
+                        "プレイヤーは actor の立場で、preceding_speech に対して返答します。"
+                        "preceding_speech が質問や依頼なら、選択肢は actor の回答にしてください。"
+                        "その場合、質問を質問で返したり、相手に問いかける文にしたりしないでください。"
+                        "reference_speech は actor が実際に行った元発言で、正解の内容を判断するための"
+                        "非表示の根拠です。reference_speech 自体への返答ではなく、actor が"
+                        "preceding_speech に返す発言を作ってください。"
+                        "preceding_speech がない場合は、actor の最初の発言として reference_speech に沿う"
+                        "自然な発言を作ってください。"
                         "適切な返答を一つだけ is_correct=true にし、根拠は発言内容に限定してください。"
                         "Return valid json only."
                     ),
@@ -153,7 +161,7 @@ class OpenAIScenarioGenerator:
                     "role": "user",
                     "content": json.dumps(
                         {
-                            "task": "この発言に対するプレイヤーの返答を二択にする",
+                            "task": "直前の発言に対する選択アクターの返答を二択にする",
                             "meeting": {
                                 "min_id": meeting.min_id,
                                 "date": meeting.meeting_date.isoformat(),
@@ -164,14 +172,12 @@ class OpenAIScenarioGenerator:
                             },
                             "overview": overview,
                             "actor": actor.to_prompt_value(),
-                            "speech": {
-                                "speech_order": speech.speech_order,
-                                "speaker_name": speech.speaker_name,
-                                "speaker_role": speech.speaker_role or "",
-                                "speaker_affiliation": speech.speaker_affiliation or "",
-                                "speech_text": speech.speech_text,
-                                "source_url": speech.source_url or meeting.url,
-                            },
+                            "preceding_speech": self._speech_to_prompt_value(
+                                preceding_speech, meeting
+                            ),
+                            "reference_speech": self._speech_to_prompt_value(
+                                speech, meeting
+                            ),
                             "output_schema": {
                                 "choices": [
                                     {
@@ -193,6 +199,21 @@ class OpenAIScenarioGenerator:
             ],
         )
         return self._parse_json_content(content)
+
+    @staticmethod
+    def _speech_to_prompt_value(
+        speech: Speech | None, meeting: Meeting
+    ) -> dict[str, Any] | None:
+        if speech is None:
+            return None
+        return {
+            "speech_order": speech.speech_order,
+            "speaker_name": speech.speaker_name,
+            "speaker_role": speech.speaker_role or "",
+            "speaker_affiliation": speech.speaker_affiliation or "",
+            "speech_text": speech.speech_text,
+            "source_url": speech.source_url or meeting.url,
+        }
 
     @staticmethod
     def _parse_json_content(content: str) -> dict[str, Any]:
@@ -266,7 +287,7 @@ class OpenAIScenarioGenerator:
 class ScenarioService:
     """シナリオカセットの生成・再利用と、会議録由来データの正規化を担う。"""
 
-    PROMPT_VERSION = "meeting-simulation-v2"
+    PROMPT_VERSION = "meeting-simulation-v3"
     SOURCE_CHUNK_CHARACTERS = 12_000
 
     def __init__(

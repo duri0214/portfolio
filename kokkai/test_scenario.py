@@ -1,3 +1,4 @@
+import json
 from datetime import date
 from unittest.mock import Mock, patch
 
@@ -42,8 +43,8 @@ class FakeScenarioGenerator:
             "passing_score": 50,
         }
 
-    def generate_choices(self, meeting, actor, speech, overview):
-        self.choice_calls.append((meeting, actor, speech, overview))
+    def generate_choices(self, meeting, actor, speech, overview, preceding_speech=None):
+        self.choice_calls.append((meeting, actor, speech, overview, preceding_speech))
         return {
             "choices": [
                 {
@@ -119,12 +120,12 @@ class OpenAIScenarioGeneratorTests(SimpleTestCase):
         )
         self.assertNotIn('"turns"', user_content)
 
-    def test_generate_choices_uses_only_the_current_actor_speech(self):
+    def test_generate_choices_uses_the_preceding_speech_as_the_reply_context(self):
         """
         シナリオ:
-        - 入力: 会議全体の要約と、選択アクターの現在の発言。
+        - 入力: 会議全体の要約、直前の発言、選択アクターの現在の発言。
         - 実行: 発言単位の二択生成を呼び出す。
-        - 期待値: 現在の発言を根拠にした二択を1回だけ要求する。
+        - 期待値: 直前の発言を返答先、現在の発言を正解判定用の根拠として1回だけ要求する。
         """
         generator = OpenAIScenarioGenerator(api_key="test-key")
         client = Mock()
@@ -163,10 +164,23 @@ class OpenAIScenarioGeneratorTests(SimpleTestCase):
             speech_order=21,
             source_url="https://example.com/meeting/21",
         )
+        preceding_speech = Speech(
+            meeting=meeting,
+            speaker_name="質問者B",
+            speaker_role="委員",
+            speaker_affiliation="会派B",
+            speech_text="政府備蓄米の買戻しについて、具体的な手続きを教えていただけますか？",
+            speech_order=20,
+            source_url="https://example.com/meeting/20",
+        )
 
         with patch("kokkai.domain.service.scenario.OpenAI", return_value=client):
             generated = generator.generate_choices(
-                meeting, actor, speech, "会議全体の要約"
+                meeting,
+                actor,
+                speech,
+                "会議全体の要約",
+                preceding_speech=preceding_speech,
             )
 
         self.assertEqual(len(generated["choices"]), 2)
@@ -174,9 +188,17 @@ class OpenAIScenarioGeneratorTests(SimpleTestCase):
         user_content = client.chat.completions.create.call_args.kwargs["messages"][1][
             "content"
         ]
-        self.assertIn("speech_order", user_content)
-        self.assertIn("21", user_content)
-        self.assertIn("資料の根拠を確認します。", user_content)
+        prompt = json.loads(user_content)
+        self.assertEqual(
+            prompt["preceding_speech"]["speech_text"],
+            preceding_speech.speech_text,
+        )
+        self.assertEqual(prompt["reference_speech"]["speech_text"], speech.speech_text)
+        system_content = client.chat.completions.create.call_args.kwargs["messages"][0][
+            "content"
+        ]
+        self.assertIn("質問や依頼なら、選択肢は actor の回答", system_content)
+        self.assertIn("質問を質問で返したり", system_content)
 
     def test_openai_request_error_is_converted_to_scenario_generation_error(self):
         """
@@ -605,6 +627,8 @@ class ScenarioGameViewTests(TestCase):
             game_response = self.client.get(game_url)
             self.assertContains(game_response, "choice-deck")
             self.assertContains(game_response, "クリックして選択")
+            self.assertContains(game_response, "相手からの発言")
+            self.assertContains(game_response, "資料を提示します。")
             self.assertNotContains(game_response, self.player_turn.dialogue)
             self.assertNotContains(game_response, "議事録 No.002")
             self.assertNotContains(game_response, "根拠を確認する")
@@ -622,6 +646,7 @@ class ScenarioGameViewTests(TestCase):
             self.assertEqual(len(generator.choice_calls), 1)
             self.assertEqual(generator.choice_calls[0][2].speech_order, 2)
             self.assertEqual(generator.choice_calls[0][3], "会議録全体の要約です。")
+            self.assertEqual(generator.choice_calls[0][4], self.first_speech)
             correct_choice = ScenarioChoice.objects.get(
                 turn=self.player_turn, is_correct=True
             )

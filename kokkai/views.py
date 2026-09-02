@@ -230,6 +230,14 @@ class ScenarioGameView(DetailView):
             ),
             None,
         )
+        previous_turn = next(
+            (
+                turn
+                for turn in turns
+                if turn.turn_number == self.object.next_turn_number - 1
+            ),
+            None,
+        )
         player_turns = [
             turn for turn in turns if turn.actor_id == self.object.selected_actor_id
         ]
@@ -251,6 +259,11 @@ class ScenarioGameView(DetailView):
             else 0
         )
         context["current_turn"] = current_turn
+        context["previous_turn"] = previous_turn
+        context["is_response_to_other_actor"] = (
+            previous_turn is not None
+            and previous_turn.actor_id != self.object.selected_actor_id
+        )
         player_turn_markers = []
         for turn in player_turns:
             if turn.turn_number < self.object.next_turn_number:
