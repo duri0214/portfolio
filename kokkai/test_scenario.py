@@ -544,7 +544,7 @@ class ScenarioGameViewTests(TestCase):
         シナリオ:
         - 入力: 全体要約と、他アクターのNo.1、担当アクターのNo.2を持つシナリオ。
         - 実行: No.順に進め、担当アクターの発言で二択を生成して回答する。
-        - 期待結果: 要約は役割選択画面に表示され、ゲームはNo.001から始まり、二択生成は担当アクターの発言だけで1回行われる。
+        - 期待結果: 要約は役割選択画面に表示され、ゲームはNo.001から始まり、担当アクターの元発言は回答前に表示せず、二択生成は担当アクターの発言だけで1回行われる。
         """
         actor_select_url = reverse(
             "kokkai:scenario_actor_select", args=[self.scenario.pk]
@@ -581,7 +581,9 @@ class ScenarioGameViewTests(TestCase):
             game_response = self.client.get(game_url)
             self.assertContains(game_response, "choice-deck")
             self.assertContains(game_response, "クリックして選択")
-            self.assertContains(game_response, "議事録 No.002")
+            self.assertNotContains(game_response, self.player_turn.dialogue)
+            self.assertNotContains(game_response, "議事録 No.002")
+            self.assertNotContains(game_response, "根拠を確認する")
             self.assertContains(game_response, "choice-card-flash")
             self.assertContains(
                 game_response, "HTMLFormElement.prototype.submit.call(form)"

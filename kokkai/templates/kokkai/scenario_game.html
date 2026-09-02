@@ -129,7 +129,8 @@
         </div>
 
         {% if current_turn %}
-        <section class="roleplay-stage p-3 p-md-4" aria-labelledby="current-turn-heading">
+        <section class="roleplay-stage p-3 p-md-4" {% if is_player_turn %}aria-labelledby="answer-heading"{% else %}aria-labelledby="current-turn-heading"{% endif %}>
+            {% if not is_player_turn %}
             <div class="roleplay-dialogue p-3 p-md-4 mb-3">
                 <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
                     <strong id="current-turn-heading">{{ current_turn.actor.name }}</strong>
@@ -145,13 +146,14 @@
                     <a href="{{ current_turn.evidence_speech.source_url|default:play.scenario.meeting.url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">一次ソースを開く</a>
                 </div>
             </details>
+            {% endif %}
 
             <form method="post" id="roleplay-form">
                 {% csrf_token %}
                 {% if is_player_turn %}
                 <input type="hidden" name="action" value="answer">
                 <fieldset>
-                    <legend class="h5 mb-2">あなたなら、どう返す？</legend>
+                    <legend id="answer-heading" class="h5 mb-2">あなたなら、どう返す？</legend>
                     <p class="small text-muted mb-3">選びたいカードをクリックしてください。選択したカードが短く点滅してから次へ進みます。</p>
                     <div class="choice-deck" id="choice-deck">
                         {% for choice in current_choices %}
