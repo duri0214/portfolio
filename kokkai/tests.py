@@ -323,9 +323,9 @@ class IndexViewTests(TestCase):
     def test_index_displays_selectable_meeting_metadata(self):
         """
         シナリオ:
-        - 入力: PDF URLを含む、本文未取得の会議録メタデータ。
+        - 入力: PDF URLを含む、本文未取り込みの会議録メタデータ。
         - 処理: 対象期間を指定してロープレ用の会議録選択画面を表示する。
-        - 期待値: 院名、会議名、PDFリンク、本文取得用の選択欄が表示されること。
+        - 期待値: 院名、会議名、PDFリンク、本文取り込み用の選択欄が表示されること。
         """
         meeting = Meeting.objects.create(
             meeting_date=date(2024, 1, 26),
@@ -353,7 +353,7 @@ class IndexViewTests(TestCase):
         self.assertNotContains(response, "シナリオに使う会議録")
         self.assertContains(response, "衆議院")
         self.assertContains(response, "本会議 第1号")
-        self.assertContains(response, "本文未取得")
+        self.assertContains(response, "本文未取り込み")
         self.assertContains(
             response,
             f'href="{detail_url}?start_date=2024-01-26&amp;end_date=2024-01-26"',
@@ -373,20 +373,20 @@ class IndexViewTests(TestCase):
         self.assertNotContains(response, 'id="index-loading"')
         self.assertNotContains(response, "rowspan=")
         self.assertContains(
-            response, "会議録一覧から、ロープレに使いたい会議録を選択します"
+            response, "一覧から、ロープレに使いたい会議録にチェックを入れます"
         )
         self.assertContains(
             response,
-            "期間を指定し、「カタログを取得」を押します。（期間の目安がつかない場合は、「会議録全量へのリンク」から開催状況を確認します。）",
+            "期間を指定し、「カタログを取得」を押します。会議情報の一覧が表示されます。",
         )
         self.assertNotContains(response, "<li>期間の目安がつかない場合は")
         self.assertContains(
             response,
-            "「本文を取得」を押すと、選択した会議録の本文を取得・保存します",
+            "「本文を取り込む」を押すと、選択した会議録の発言本文を保存します。PDFは参照リンクから確認できます。",
         )
-        self.assertNotContains(response, "選択した会議録の本文を取得</button>")
+        self.assertNotContains(response, "選択した会議録の本文を取り込む</button>")
         self.assertContains(
-            response, "取得済みの会議録を再選択すると、本文を再取得できます"
+            response, "本文取り込み済みの会議録を再選択すると、本文を取り込み直せます。"
         )
         self.assertNotContains(
             response, "カタログの更新は、既に保存した発言やChromaのデータを削除しません"
@@ -469,7 +469,7 @@ class IndexViewTests(TestCase):
         シナリオ:
         - 入力: カタログ情報だけを持ち、会議録情報というメタデータ行が紐づく会議録。
         - 処理: 指定期間の会議録一覧を表示する。
-        - 期待値: メタデータ行を本文として数えず、本文未取得と表示すること。
+        - 期待値: メタデータ行を本文として数えず、本文未取り込みと表示すること。
         """
         meeting = Meeting.objects.create(
             meeting_date=date(2024, 1, 26),
@@ -492,8 +492,10 @@ class IndexViewTests(TestCase):
             {"start_date": "2024-01-26", "end_date": "2024-01-26"},
         )
 
-        self.assertContains(response, "本文未取得")
-        self.assertNotContains(response, "本文取得済み")
+        self.assertContains(response, "本文未取り込み")
+        self.assertNotContains(
+            response, 'class="badge text-bg-success">本文取り込み済み</span>'
+        )
 
     def test_index_paginates_meetings_with_native_page_size_options(self):
         """
@@ -620,5 +622,5 @@ class IndexViewTests(TestCase):
             follow=True,
         )
 
-        self.assertContains(response, "全文を取得する会議録を選択してください。")
+        self.assertContains(response, "本文を取り込む会議録を選択してください。")
         pipeline_class.assert_not_called()

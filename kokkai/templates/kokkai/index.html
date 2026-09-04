@@ -22,10 +22,10 @@
         <i class="bi bi-info-circle-fill me-2"></i>
         <strong>使い方:</strong>
         <ol class="mb-0 mt-2">
-            <li>期間を指定し、「カタログを取得」を押します。（期間の目安がつかない場合は、「会議録全量へのリンク」から開催状況を確認します。）</li>
-            <li>会議録一覧から、ロープレに使いたい会議録を選択します。</li>
-            <li>「本文を取得」を押すと、選択した会議録の本文を取得・保存します。</li>
-            <li>取得済みの会議録を再選択すると、本文を再取得できます。</li>
+            <li>期間を指定し、「カタログを取得」を押します。会議情報の一覧が表示されます。</li>
+            <li>一覧から、ロープレに使いたい会議録にチェックを入れます。</li>
+            <li>「本文を取り込む」を押すと、選択した会議録の発言本文を保存します。PDFは参照リンクから確認できます。</li>
+            <li>本文取り込み済みの会議録を再選択すると、本文を取り込み直せます。</li>
         </ol>
     </div>
 
@@ -75,7 +75,7 @@
             <button type="submit" class="btn btn-sm btn-outline-secondary text-nowrap">適用</button>
         </form>
     </div>
-    <p class="small text-muted">一覧に表示されている行はカタログ（会議情報）取得済みです。「本文」欄は発言本文の取得状態を示します。</p>
+    <p class="small text-muted">一覧にはカタログ（会議情報）が表示されます。「本文の状態」欄は、ロープレに使う発言本文の取り込み状態を示します。会議録とPDFは参照リンクです。</p>
 
     <form method="post">
         {% csrf_token %}
@@ -83,7 +83,7 @@
         <input type="hidden" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
         <input type="hidden" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
         <div class="d-flex justify-content-end mb-3">
-            <button type="submit" class="btn btn-primary">本文を取得</button>
+            <button type="submit" class="btn btn-primary">本文を取り込む</button>
         </div>
         <div class="table-responsive">
         <table class="table table-striped align-middle">
@@ -93,7 +93,7 @@
                     <th>日付</th>
                     <th>会議情報</th>
                     <th>参照URL</th>
-                    <th>本文</th>
+                    <th>本文の状態</th>
                 </tr>
             </thead>
             <tbody>
@@ -115,9 +115,9 @@
                     </td>
                     <td>
                         {% if meeting.speech_count %}
-                        <span class="badge text-bg-success">本文取得済み</span>
+                        <span class="badge text-bg-success">本文取り込み済み</span>
                         {% else %}
-                        <span class="badge text-bg-secondary">本文未取得</span>
+                        <span class="badge text-bg-secondary">本文未取り込み</span>
                         {% endif %}
                     </td>
                 </tr>

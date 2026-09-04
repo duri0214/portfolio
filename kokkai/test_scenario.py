@@ -463,7 +463,7 @@ class ScenarioServiceTests(TestCase):
     def test_meeting_detail_collapses_source_speeches_before_scenario_exists(self):
         """
         シナリオ:
-        - 入力: まだシナリオを作成していない本文取得済み会議録。
+        - 入力: まだシナリオを作成していない本文取り込み済み会議録。
         - 処理: 会議詳細画面を表示する。
         - 期待値: 原文は初期表示で折りたたまれ、必要なときだけ確認できること。
         """
