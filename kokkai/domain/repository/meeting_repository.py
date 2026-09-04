@@ -32,15 +32,12 @@ class MeetingRepository:
         """
         保存する会議録を検索結果で置き換える。
 
-        同じ会議録IDの既存データは再利用し、検索結果にない会議録を削除する。
+        既存の会議録を削除すると、紐づく本文・シナリオもカスケード削除される。
+        その後、検索結果だけを保存する。
         """
         records = list(records)
-        issue_ids = [record.issue_id for record in records]
         with transaction.atomic():
-            if issue_ids:
-                Meeting.objects.exclude(min_id__in=issue_ids).delete()
-            else:
-                Meeting.objects.all().delete()
+            Meeting.objects.all().delete()
             return self.upsert_indexes(records)
 
     def replace_meeting_contents(

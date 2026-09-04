@@ -149,14 +149,14 @@ class ScenarioTurn(models.Model):
     turn_number = models.PositiveIntegerField("ターン番号")
     actor = models.ForeignKey(
         ScenarioActor,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name="turns",
         verbose_name="発言アクター",
     )
     dialogue = models.TextField("会話文")
     evidence_speech = models.ForeignKey(
         Speech,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name="scenario_turns",
         verbose_name="根拠発言",
     )
@@ -214,13 +214,13 @@ class ScenarioPlay(models.Model):
     )
     scenario = models.ForeignKey(
         MeetingScenario,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name="plays",
         verbose_name="シナリオ",
     )
     selected_actor = models.ForeignKey(
         ScenarioActor,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name="plays",
         verbose_name="担当アクター",
     )
@@ -248,13 +248,13 @@ class ScenarioPlayAnswer(models.Model):
     )
     turn = models.ForeignKey(
         ScenarioTurn,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name="play_answers",
         verbose_name="ターン",
     )
     choice = models.ForeignKey(
         ScenarioChoice,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name="play_answers",
         verbose_name="選択肢",
     )

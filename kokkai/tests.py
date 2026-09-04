@@ -16,7 +16,16 @@ from kokkai.domain.valueobject.meeting import (
     MeetingSearchResult,
     SpeechRecord,
 )
-from kokkai.models import Meeting, Speech
+from kokkai.models import (
+    Meeting,
+    MeetingScenario,
+    ScenarioActor,
+    ScenarioChoice,
+    ScenarioPlay,
+    ScenarioPlayAnswer,
+    ScenarioTurn,
+    Speech,
+)
 
 
 def meeting_index_record(issue_id: str = "121305254X00120240126") -> MeetingIndexRecord:
@@ -192,12 +201,12 @@ class MeetingRepositoryTests(TestCase):
         self.assertTrue(Speech.objects.filter(pk=speech.pk).exists())
         self.assertEqual(speech.meeting_id, meeting.pk)
 
-    def test_replace_meetings_reuses_existing_and_deletes_stale_meetings(self):
+    def test_replace_meetings_deletes_existing_contents_before_rebuilding_catalog(self):
         """
         シナリオ:
         - 入力: 発言本文を持つ既存カタログと、新しい検索結果のカタログ情報。
         - 処理: replace_meetings を呼び出して検索結果を洗い替える。
-        - 期待値: 同じ会議録は再利用され、検索結果にない会議録は削除されること。
+        - 期待値: 既存の会議録と発言を削除し、新しい結果だけを保存すること。
         """
         existing_meeting = Meeting.objects.create(
             meeting_date=date(2024, 1, 1),
@@ -214,24 +223,14 @@ class MeetingRepositoryTests(TestCase):
             speech_text="保存済みの発言",
             speech_order=1,
         )
-        stale_meeting = Meeting.objects.create(
-            meeting_date=date(2024, 1, 1),
-            session_number=212,
-            house="衆議院",
-            committee="旧委員会",
-            meeting_number="第9号",
-            min_id="121305254X00220240101",
-            url="https://example.com/stale",
-        )
 
         MeetingRepository().replace_meetings([meeting_index_record()])
 
-        existing_meeting.refresh_from_db()
         self.assertEqual(Meeting.objects.count(), 1)
-        self.assertEqual(existing_meeting.meeting_date, date(2024, 1, 26))
-        self.assertEqual(existing_meeting.committee, "本会議")
-        self.assertFalse(Meeting.objects.filter(pk=stale_meeting.pk).exists())
-        self.assertTrue(Speech.objects.filter(pk=speech.pk).exists())
+        new_meeting = Meeting.objects.get(min_id=meeting_index_record().issue_id)
+        self.assertEqual(new_meeting.meeting_date, date(2024, 1, 26))
+        self.assertEqual(new_meeting.committee, "本会議")
+        self.assertFalse(Speech.objects.filter(pk=speech.pk).exists())
 
     def test_replace_meetings_with_no_records_clears_existing_meetings(self):
         """
@@ -254,6 +253,82 @@ class MeetingRepositoryTests(TestCase):
 
         self.assertFalse(Meeting.objects.filter(pk=meeting.pk).exists())
         self.assertEqual(Meeting.objects.count(), 0)
+
+    def test_replace_meetings_cascades_existing_scenario_data(self):
+        """
+        シナリオ:
+        - 入力: 発言・シナリオ・プレイまで保存された既存会議録。
+        - 処理: replace_meetings に空の検索結果を渡す。
+        - 期待値: 会議録の洗替えに伴い、紐づくデータも削除されること。
+        """
+        meeting = Meeting.objects.create(
+            meeting_date=date(2024, 1, 1),
+            session_number=212,
+            house="衆議院",
+            committee="旧委員会",
+            meeting_number="第9号",
+            min_id="121305254X00120240101",
+            url="https://example.com/old",
+        )
+        speech = Speech.objects.create(
+            meeting=meeting,
+            speaker_name="発言者",
+            speech_text="保存済みの発言",
+            speech_order=1,
+        )
+        scenario = MeetingScenario.objects.create(
+            meeting=meeting,
+            version=1,
+            source_hash="a" * 64,
+            prompt_version="test",
+            generator_model="test",
+            title="テストシナリオ",
+            overview="会議録全体の要約",
+            success_label="成功",
+            failure_label="失敗",
+            judgment_criteria="根拠に沿う",
+        )
+        actor = ScenarioActor.objects.create(
+            scenario=scenario,
+            display_order=1,
+            name="発言者",
+        )
+        turn = ScenarioTurn.objects.create(
+            scenario=scenario,
+            turn_number=1,
+            actor=actor,
+            dialogue="発言内容",
+            evidence_speech=speech,
+            evidence_note="根拠",
+        )
+        play = ScenarioPlay.objects.create(
+            scenario=scenario,
+            selected_actor=actor,
+        )
+        choice = ScenarioChoice.objects.create(
+            play=play,
+            turn=turn,
+            choice_number=1,
+            text="選択肢",
+            is_correct=True,
+            rationale="根拠",
+        )
+        answer = ScenarioPlayAnswer.objects.create(
+            play=play,
+            turn=turn,
+            choice=choice,
+        )
+
+        MeetingRepository().replace_meetings([])
+
+        self.assertFalse(Meeting.objects.filter(pk=meeting.pk).exists())
+        self.assertFalse(Speech.objects.filter(pk=speech.pk).exists())
+        self.assertFalse(MeetingScenario.objects.filter(pk=scenario.pk).exists())
+        self.assertFalse(ScenarioActor.objects.filter(pk=actor.pk).exists())
+        self.assertFalse(ScenarioTurn.objects.filter(pk=turn.pk).exists())
+        self.assertFalse(ScenarioPlay.objects.filter(pk=play.pk).exists())
+        self.assertFalse(ScenarioChoice.objects.filter(pk=choice.pk).exists())
+        self.assertFalse(ScenarioPlayAnswer.objects.filter(pk=answer.pk).exists())
 
 
 class KokkaiPipelineTests(TestCase):
