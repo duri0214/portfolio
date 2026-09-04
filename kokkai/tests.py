@@ -164,6 +164,32 @@ class MeetingIndexServiceTests(SimpleTestCase):
         client.search_meetings.assert_not_called()
         mock_sleep.assert_called_once_with(MeetingIndexService.REQUEST_INTERVAL_SECONDS)
 
+    @patch("kokkai.domain.service.meeting_index.sleep")
+    def test_create_index_stops_when_page_position_does_not_advance(self, mock_sleep):
+        """
+        シナリオ:
+        - 入力: 次ページ位置が現在位置と同じ会議録メタデータAPI。
+        - 処理: create_index を呼び出す。
+        - 期待値: 同じページを再取得せず、保存して終了すること。
+        """
+        record = meeting_index_record()
+        client = Mock()
+        client.search_meeting_indexes.return_value = MeetingIndexSearchResult(
+            1, 1, 1, 1, [record]
+        )
+        repository = Mock()
+
+        indexed_count = MeetingIndexService(client, repository).create_index(
+            date(2024, 1, 26), date(2024, 1, 26)
+        )
+
+        self.assertEqual(indexed_count, 1)
+        client.search_meeting_indexes.assert_called_once_with(
+            date(2024, 1, 26), date(2024, 1, 26), 1
+        )
+        repository.rebuild_meetings.assert_called_once_with([record])
+        mock_sleep.assert_not_called()
+
 
 class MeetingRepositoryTests(TestCase):
     def test_rebuild_meetings_deletes_existing_contents_before_rebuilding_catalog(self):

@@ -20,18 +20,21 @@ class MeetingIndexService:
 
     def create_index(self, start_date: date, end_date: date) -> int:
         """指定期間の全ページを取得し、保存した会議録メタデータ件数を返す。"""
-        start_record = 1
+        start_record: int | None = 1
         records = []
 
-        while True:
+        while start_record is not None:
             result = self.client.search_meeting_indexes(
                 start_date, end_date, start_record
             )
             records.extend(result.meeting_index_records)
 
             next_record_position = result.next_record_position
-            if not next_record_position or next_record_position <= start_record:
-                self.repository.rebuild_meetings(records)
-                return len(records)
-            sleep(self.REQUEST_INTERVAL_SECONDS)
-            start_record = next_record_position
+            if next_record_position and next_record_position > start_record:
+                sleep(self.REQUEST_INTERVAL_SECONDS)
+                start_record = next_record_position
+            else:
+                start_record = None
+
+        self.repository.rebuild_meetings(records)
+        return len(records)
