@@ -22,7 +22,7 @@ from lib.llm.valueobject.completion import (
     RagResponse,
     ChatResult,
 )
-from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig
+from lib.llm.valueobject.config import ModelName, OpenAIGptConfig, GeminiConfig
 
 # .env ファイルを読み込む
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -439,7 +439,7 @@ class OpenAILlmRagService(LlmService):
         persist_directory: str | None = None,
         collection_name: str = "portfolio_rag",
         n_results: int = 3,
-        embedding_model: str = "text-embedding-3-small",
+        embedding_model: str = ModelName.TEXT_EMBEDDING_3_SMALL,
         system_template: str | None = None,
     ) -> None:
         """

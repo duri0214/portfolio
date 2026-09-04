@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from lib.geo.valueobject.coord import GoogleMapsCoord
-from lib.llm.valueobject.config import ModelDefaults, ModelName
+from lib.llm.valueobject.config import ModelDefaults
 from shopping.domain.dataprovider.google_maps_review_analysis import (
     GoogleMapsReviewAnalysisClient,
 )
@@ -248,7 +248,7 @@ class StorePlanningReviewServiceTest(TestCase):
             one_line_summary="古いサマリー",
             issue="古い課題",
             location_insight="古い立地示唆",
-            model_name=ModelName.GPT_5_MINI,
+            model_name=ModelDefaults.SHOPPING_REVIEW.model,
             prompt_version="old-prompt",
         )
         target_location = StorePlanningTargetLocation(

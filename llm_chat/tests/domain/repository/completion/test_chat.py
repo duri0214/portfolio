@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
 from lib.llm.valueobject.completion import RoleType
-from lib.llm.valueobject.config import ModelName
+from lib.llm.valueobject.config import ModelDefaults
 from llm_chat.models import ChatLogs
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
@@ -23,11 +23,11 @@ class ChatModelAndRepositoryTest(TestCase):
             user=self.user,
             role=RoleType.USER.value,
             content="Hello",
-            model_name=ModelName.GPT_4O,
+            model_name=ModelDefaults.LLM_CHAT.model,
         )
         dto = log.to_message_dto()
         self.assertEqual(dto.content, "Hello")
-        self.assertEqual(dto.model_name, ModelName.GPT_4O)
+        self.assertEqual(dto.model_name, ModelDefaults.LLM_CHAT.model)
         self.assertEqual(dto.use_case_type, UseCaseType.OPENAI_GPT)
 
     def test_repository_insert_and_find(self):
@@ -42,7 +42,7 @@ class ChatModelAndRepositoryTest(TestCase):
             user=self.user,
             role=RoleType.ASSISTANT,
             content="AI response",
-            model_name=ModelName.GPT_4O,
+            model_name=ModelDefaults.LLM_CHAT.model,
             use_case_type=UseCaseType.RIDDLE,
         )
         ChatLogRepository.insert(dto)

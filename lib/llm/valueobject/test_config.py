@@ -19,7 +19,18 @@ class ModelConfigTest(TestCase):
         self.assertEqual(ModelName.GPT_5_6_SOL, "gpt-5.6-sol")
         self.assertEqual(ModelName.GPT_5_6_TERRA, "gpt-5.6-terra")
         self.assertEqual(ModelName.GPT_5_6_LUNA, "gpt-5.6-luna")
-        self.assertEqual(ModelName.GPT_5_6, "gpt-5.6")
+
+    def test_embedding_model_name_is_available(self):
+        """
+        シナリオ:
+        - 入力: 共通Embeddingモデル名。
+        - 処理: 埋め込み処理が利用するモデルIDを参照する。
+        - 期待値: OpenAI APIへ渡すEmbeddingモデルIDが取得できる。
+        """
+        self.assertEqual(
+            ModelName.TEXT_EMBEDDING_3_SMALL,
+            "text-embedding-3-small",
+        )
 
     def test_defaults_use_one_text_model_per_use_case(self):
         """

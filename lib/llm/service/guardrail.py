@@ -14,6 +14,7 @@ from lib.llm.valueobject.guardrail import (
     SemanticGuardResult,
     SemanticGuardException,
 )
+from lib.llm.valueobject.config import ModelName
 from config.settings import BASE_DIR
 
 logger = logging.getLogger(__name__)
@@ -243,7 +244,7 @@ class SemanticGuardService(BaseGuardRailService):
         persist_directory: str | None = None,
         forbidden_words_collection_name: str = "forbidden_words",
         rag_collection_name: str = "portfolio_rag",
-        embedding_model: str = "text-embedding-3-small",
+        embedding_model: str = ModelName.TEXT_EMBEDDING_3_SMALL,
     ):
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         if not self.api_key:

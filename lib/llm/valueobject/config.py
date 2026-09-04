@@ -10,11 +10,6 @@ class ApiConfig(ABC):
 
 
 OpenAiModel = Literal[
-    "gpt-4o",
-    "gpt-4o-mini",
-    "gpt-5",
-    "gpt-5-mini",
-    "gpt-5.6",
     "gpt-5.6-sol",
     "gpt-5.6-terra",
     "gpt-5.6-luna",
@@ -23,6 +18,7 @@ OpenAiModel = Literal[
     "whisper-1",
 ]
 GeminiModel = Literal["gemini-2.0-flash", "gemini-2.5-flash"]
+EmbeddingModel = Literal["text-embedding-3-small"]
 ReasoningEffort = Literal["none", "low", "medium", "high", "xhigh", "max"]
 CompletionApi = Literal["chat_completions", "responses"]
 
@@ -31,27 +27,9 @@ CompletionApi = Literal["chat_completions", "responses"]
 class ModelName:
     """外部LLMプロバイダーが提供するモデル名を一元管理する値オブジェクト。
 
-    Attributes:
-        GPT_4O: 既存のGPT-4o。過去ログの識別と個別互換性のために保持する。
-        GPT_4O_MINI: 既存のGPT-4o-mini。過去ログと明示指定の互換性のために保持する。
-        GPT_5: 既存のGPT-5。過去ログの識別と個別互換性のために保持する。
-        GPT_5_MINI: 既存のGPT-5-mini。過去ログの識別と個別互換性のために保持する。
-        GPT_5_6: GPT-5.6のエイリアス。Solへルーティングされるため既定値には使用しない。
-        GPT_5_6_SOL: GPT-5.6系の品質・推論重視モデル。
-        GPT_5_6_TERRA: GPT-5.6系の品質とコストのバランスを取るモデル。
-        GPT_5_6_LUNA: GPT-5.6系の低コスト・大量処理向けモデル。
-        GPT_IMAGE_1_MINI: 画像生成専用モデル。
-        TTS_1: 音声合成専用モデル。
-        WHISPER_1: 音声認識専用モデル。
-        GEMINI_2_0_FLASH: Gemini 2.0 Flashモデル。
-        GEMINI_2_5_FLASH: Gemini 2.5 Flashモデル。
+    現在利用するモデルと、画像・音声・Embeddingなどの専用モデルを定義する。
     """
 
-    GPT_4O: OpenAiModel = "gpt-4o"
-    GPT_4O_MINI: OpenAiModel = "gpt-4o-mini"
-    GPT_5: OpenAiModel = "gpt-5"
-    GPT_5_MINI: OpenAiModel = "gpt-5-mini"
-    GPT_5_6: OpenAiModel = "gpt-5.6"
     GPT_5_6_SOL: OpenAiModel = "gpt-5.6-sol"
     GPT_5_6_TERRA: OpenAiModel = "gpt-5.6-terra"
     GPT_5_6_LUNA: OpenAiModel = "gpt-5.6-luna"
@@ -60,6 +38,7 @@ class ModelName:
     WHISPER_1: OpenAiModel = "whisper-1"
     GEMINI_2_0_FLASH: GeminiModel = "gemini-2.0-flash"
     GEMINI_2_5_FLASH: GeminiModel = "gemini-2.5-flash"
+    TEXT_EMBEDDING_3_SMALL: EmbeddingModel = "text-embedding-3-small"
 
 
 @dataclass(frozen=True)

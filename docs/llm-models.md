@@ -2,15 +2,16 @@
 
 ## 方針
 
-本番のテキスト生成モデルは `lib/llm/valueobject/config.py` の
-`ModelDefaults.TEXT_MODEL` から参照する。Portfolioではモデル運用を単純にするため、
-テキスト生成系の全用途を `gpt-5.6-luna` に統一する。用途別のプロファイル名は、
-呼び出し箇所の責務とAPI・推論設定を識別するために残すが、モデルの分散には使わない。
+本番のOpenAI系テキスト生成モデルは `lib/llm/valueobject/config.py` の
+`ModelDefaults.TEXT_MODEL` から参照する。用途別プロファイルは、呼び出し箇所の責務と
+API・推論設定を表すために残し、モデルIDの分散には使わない。
 
-GPT-5.6系のAPI仕様は、OpenAI公式ドキュメントで確認したモデルID・推論設定・
-API経路を前提とする。
-`gpt-5.6`エイリアスはSolへルーティングされるため、共通VOにはエイリアスと
-Sol/Terra/Lunaの明示IDを定義する。現行の既定値はLunaのみを使う。
+現行の既定値は `gpt-5.6-luna` である。`gpt-5.6-sol` と `gpt-5.6-terra` は
+比較・将来候補として明示的なモデルIDだけを共通VOに定義する。`gpt-5.6` の
+エイリアスは共通設定では使わない。
+
+Geminiは別プロバイダーのモデルであり、OpenAIのLunaに相当するモデルIDは設定しない。
+Geminiを使う経路では、Gemini側のモデル名をそのまま指定する。
 
 - [GPT-5.6モデルガイド](https://developers.openai.com/api/docs/guides/latest-model?model=gpt-5.6)
 - [GPT-5.6 Luna](https://developers.openai.com/api/docs/models/gpt-5.6-luna)
@@ -21,19 +22,21 @@ Sol/Terra/Lunaの明示IDを定義する。現行の既定値はLunaのみを使
 
 | モデル | Portfolioでの扱い | 採用理由 | API・設定 |
 | --- | --- | --- | --- |
-| `gpt-5.6-luna` | 全テキスト生成の現行モデル | 必要なAPI機能を備え、コストと運用を単純化できる | Chat Completions / Responses、必要箇所のみ`low` |
-| `gpt-5.6-terra` | 共通VOに定義する比較・将来候補 | 型安全な選択肢として残し、将来の評価に利用できる | Chat Completions / Responses |
-| `gpt-5.6-sol` | 共通VOに定義する比較・将来候補 | 型安全な選択肢として残し、将来の評価に利用できる | Chat Completions / Responses |
+| `gpt-5.6-luna` | 全OpenAI系テキスト生成の現行モデル | コストと運用を単純化できる | Chat Completions / Responses、必要箇所のみ`low` |
+| `gpt-5.6-terra` | 共通VOに定義する比較・将来候補 | 明示的なモデルIDとして評価に利用できる | Chat Completions / Responses |
+| `gpt-5.6-sol` | 共通VOに定義する比較・将来候補 | 明示的なモデルIDとして評価に利用できる | Chat Completions / Responses |
+| `gemini-2.0-flash` / `gemini-2.5-flash` | Gemini経路専用 | プロバイダー固有のモデルを維持する | Gemini OpenAI互換エンドポイント |
 
-公式仕様上、LunaはChat CompletionsとResponses、Function calling、Structured outputs、
-Streamingに対応する。AgentのTool利用を含め、既存の呼び出し経路を変更せずに統一できる。
+LunaはChat CompletionsとResponses、Function calling、Structured outputs、Streamingに
+対応するため、既存の呼び出し経路を変更せずに統一できる。
 
-画像・音声・Embeddingはテキストモデルとは別用途であり、今回変更しない。
+画像・音声・Embeddingはテキストモデルとは別用途であり、モデルの実体は今回変更しない。
+モデル名の重複を避けるため、Embeddingの既定値だけは共通VOから参照する。
 
 - 画像: `gpt-image-1-mini`
 - 音声合成: `tts-1`
 - 音声認識: `whisper-1`
-- Embedding: `text-embedding-3-small`
+- Embedding: `ModelName.TEXT_EMBEDDING_3_SMALL`（`text-embedding-3-small`）
 
 ## 用途別既定値
 
@@ -65,8 +68,8 @@ Kokkaiプロファイルの `reasoning_effort=low` も同じリクエストへ�
 モデルIDと一致させる。MSCIレポートは過去レコードを更新せず、今回追加したnullableの
 `model_name` へ新規生成分だけを記録する。
 
-Sol/Terraや旧モデルの定義は、型安全な比較・履歴互換のために共通VOへ残すが、
-現行の既定値やヘルスチェック対象には含めない。
+過去の保存値はデータベース上の文字列として保持されるため、現在のモデル定義から旧モデルを
+再登録する必要はない。旧モデルを使う履歴の表示・読み出しも、保存済み文字列をそのまま扱う。
 
 ## 評価手順
 

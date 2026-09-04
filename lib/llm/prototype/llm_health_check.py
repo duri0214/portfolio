@@ -345,7 +345,7 @@ class AvailabilityValidator(BaseValidator):
                 os.getenv("AZURE_OPENAI_API_KEY"),
                 azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
             ),
-            [ModelName.GPT_4O, "gpt-35-turbo"],
+            [ModelDefaults.TEXT_MODEL],
             skip_msg="API Key or Endpoint not provided.",
         )
 

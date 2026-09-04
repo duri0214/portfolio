@@ -3,7 +3,7 @@ from unittest.mock import patch, MagicMock
 import os
 import json
 from lib.llm.prototype.llm_health_check import LLMHealthCheck, Status, CheckResult
-from lib.llm.valueobject.config import ModelDefaults, ModelName
+from lib.llm.valueobject.config import ModelDefaults
 
 
 class TestLLMHealthCheck(unittest.TestCase):
@@ -158,7 +158,7 @@ class TestLLMHealthCheck(unittest.TestCase):
         azure_comp = self._assert_status(
             summary, "Model Permission/Availability (AzureOpenAI)", Status.WARNING
         )
-        self.assertIn("Missing: gpt-4o", azure_comp["message"])
+        self.assertIn(f"Missing: {ModelDefaults.TEXT_MODEL}", azure_comp["message"])
 
     def test_json_output(self):
         """
