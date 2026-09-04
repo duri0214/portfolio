@@ -1,0 +1,48 @@
+{% extends 'kokkai/base.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'kokkai:meeting_detail' play.scenario.meeting.pk %}">会議詳細</a></li>
+            <li class="breadcrumb-item active" aria-current="page">最終判定</li>
+        </ol>
+    </nav>
+
+    <section class="card mb-4">
+        <div class="card-body text-center py-5">
+            <p class="text-muted">{{ play.scenario.title }}</p>
+            <h1 class="display-5">{{ result_label }}</h1>
+            <p class="lead" style="white-space: pre-wrap;">{{ result_explanation }}</p>
+        </div>
+    </section>
+
+    <section>
+        <h2 class="h4">あなたの選択と根拠</h2>
+        <div class="list-group">
+            {% for answer in play.answers.all %}
+            <article class="list-group-item">
+                <div class="d-flex justify-content-between gap-3">
+                    <strong>ターン {{ answer.turn.turn_number }}: {{ answer.turn.actor.name }}</strong>
+                    {% if answer.choice.is_correct %}
+                    <span class="badge text-bg-success">根拠に沿った選択</span>
+                    {% else %}
+                    <span class="badge text-bg-secondary">別の選択</span>
+                    {% endif %}
+                </div>
+                <p class="mb-1 mt-2">{{ answer.choice.text }}</p>
+                <p class="small text-muted mb-2">{{ answer.choice.rationale }}</p>
+                <a href="{{ answer.turn.evidence_speech.source_url|default:play.scenario.meeting.url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">根拠発言を開く</a>
+            </article>
+            {% empty %}
+            <p class="text-muted">この役割に選択ターンはありませんでした。</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <div class="mt-4">
+        <a href="{% url 'kokkai:scenario_actor_select' play.scenario.pk %}" class="btn btn-primary">別の役割で再プレイ</a>
+        <a href="{% url 'kokkai:meeting_detail' play.scenario.meeting.pk %}" class="btn btn-outline-secondary">会議詳細へ戻る</a>
+    </div>
+</div>
+{% endblock %}

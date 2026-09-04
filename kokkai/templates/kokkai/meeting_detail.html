@@ -4,7 +4,7 @@
 <div class="container">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">会議録一覧</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}{% if index_query %}?{{ index_query }}{% endif %}">会議録一覧</a></li>
             <li class="breadcrumb-item active" aria-current="page">{{ meeting.meeting_date|date:"Y-m-d" }} {{ meeting.committee }}</li>
         </ol>
     </nav>
@@ -26,12 +26,55 @@
     </div>
     {% endif %}
 
-    <div class="speeches">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }}" role="alert">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+
+    <section class="card mb-4" aria-labelledby="scenario-heading">
+        <div class="card-body">
+            <h3 id="scenario-heading" class="h5">会議録シナリオ</h3>
+            {% if not has_speeches %}
+            <p class="mb-0">シナリオを作成するには、先に会議録本文を取り込んでください。</p>
+            {% elif scenario %}
+            <p>
+                <strong>{{ scenario.title }}</strong>
+                {% if scenario_needs_regeneration %}
+                <span class="badge text-bg-warning ms-1">要再生成</span>
+                {% endif %}
+            </p>
+            {% if scenario_needs_regeneration %}
+            <p class="small text-muted">会議録本文または生成プロンプトが更新されています。再生成は明示操作時だけ実行します。</p>
+            {% else %}
+            <a href="{% url 'kokkai:scenario_actor_select' scenario.pk %}" class="btn btn-primary">シナリオを開始</a>
+            {% endif %}
+            <form method="post" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="regenerate_scenario">
+                <button type="submit" class="btn btn-outline-secondary">シナリオを再生成</button>
+            </form>
+            {% else %}
+            <p>まだシナリオは作成されていません。作成時にだけ会議録を構造化して保存します。</p>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_scenario">
+                <button type="submit" class="btn btn-primary">シナリオを作成</button>
+            </form>
+            {% endif %}
+        </div>
+    </section>
+
+    {% if has_speeches %}
+    <details class="mt-4">
+        <summary class="text-muted">会議録の原文を確認する{% if scenario %}（シナリオの生成元）{% endif %}</summary>
+
+    <div class="speeches mt-3">
         {% for speech in speeches %}
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between">
                 <div>
-                    <span class="badge bg-secondary me-2">{{ forloop.counter0|stringformat:"03d" }}</span>
+                    <span class="badge bg-secondary me-2">{{ forloop.counter|stringformat:"03d" }}</span>
                     <strong>{{ speech.speaker_name }}</strong>
                 </div>
                 <span class="text-muted">{{ speech.speaker_role|default:"" }} {{ speech.speaker_affiliation|default:"" }}</span>
@@ -42,5 +85,54 @@
         </div>
         {% endfor %}
     </div>
+    </details>
+    {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const generationForms = Array.from(document.querySelectorAll("form")).filter(function (form) {
+            return form.querySelector(
+                'input[name="action"][value="create_scenario"], input[name="action"][value="regenerate_scenario"]'
+            );
+        });
+
+        generationForms.forEach(function (form) {
+            form.addEventListener("submit", function (event) {
+                if (form.dataset.submitting === "true") {
+                    event.preventDefault();
+                    return;
+                }
+                form.dataset.submitting = "true";
+
+                const button = form.querySelector('button[type="submit"]');
+                if (button) {
+                    button.disabled = true;
+                    button.setAttribute("aria-busy", "true");
+                    button.textContent = "";
+
+                    const spinner = document.createElement("span");
+                    spinner.className = "spinner-border spinner-border-sm me-2";
+                    spinner.setAttribute("role", "status");
+                    spinner.setAttribute("aria-hidden", "true");
+                    button.appendChild(spinner);
+                    button.appendChild(document.createTextNode("シナリオを生成中…"));
+                }
+
+                const progress = document.createElement("div");
+                progress.className = "scenario-generation-progress mt-3";
+                progress.setAttribute("role", "status");
+                progress.setAttribute("aria-live", "polite");
+                progress.innerHTML =
+                    '<div class="small text-muted mb-2">会議録を解析してシナリオを生成しています。長い会議録では数分かかることがあります。</div>' +
+                    '<div class="progress" role="progressbar" aria-label="シナリオ生成中" aria-valuemin="0" aria-valuemax="100">' +
+                    '<div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>' +
+                    '</div>';
+                form.insertAdjacentElement("afterend", progress);
+            });
+        });
+    });
+</script>
 {% endblock %}

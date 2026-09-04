@@ -3,8 +3,8 @@ from datetime import date
 import requests
 
 from ..valueobject.meeting import (
-    MeetingIndexRecord,
-    MeetingIndexSearchResult,
+    MeetingCatalogRecord,
+    MeetingCatalogPage,
     MeetingRecord,
     MeetingSearchResult,
     SpeechRecord,
@@ -15,9 +15,9 @@ class KokkaiAPIClient:
     MEETING_LIST_URL = "https://kokkai.ndl.go.jp/api/meeting_list"
     MEETING_URL = "https://kokkai.ndl.go.jp/api/meeting"
 
-    def search_meeting_indexes(
+    def search_meeting_catalog(
         self, start_date: date, end_date: date, start_record: int = 1
-    ) -> MeetingIndexSearchResult:
+    ) -> MeetingCatalogPage:
         """指定期間の会議録メタデータだけを取得する。"""
         params = {
             "from": start_date.strftime("%Y-%m-%d"),
@@ -27,8 +27,8 @@ class KokkaiAPIClient:
             "recordPacking": "json",
         }
         data = self._request(self.MEETING_LIST_URL, params)
-        meeting_index_records = [
-            MeetingIndexRecord(
+        meeting_catalog_records = [
+            MeetingCatalogRecord(
                 issue_id=record["issueID"],
                 image_kind=record["imageKind"],
                 search_object=record["searchObject"],
@@ -43,12 +43,9 @@ class KokkaiAPIClient:
             )
             for record in data.get("meetingRecord", [])
         ]
-        return MeetingIndexSearchResult(
-            number_of_records=data.get("numberOfRecords", 0),
-            number_of_return_records=data.get("numberOfReturn", 0),
-            start_record=data.get("startRecord", 1),
+        return MeetingCatalogPage(
+            records=meeting_catalog_records,
             next_record_position=data.get("nextRecordPosition"),
-            meeting_index_records=meeting_index_records,
         )
 
     def search_meetings(
