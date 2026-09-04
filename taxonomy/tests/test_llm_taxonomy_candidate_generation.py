@@ -3,6 +3,7 @@ from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
+from lib.llm.valueobject.config import ModelDefaults
 from taxonomy.domain.service.llm_taxonomy_candidate_generation import (
     LLMTaxonomyCandidateGenerationError,
     LLMTaxonomyCandidateGenerationService,
@@ -62,7 +63,9 @@ class LLMTaxonomyCandidateGenerationServiceTest(TestCase):
         self.assertEqual("Catalogue of Life", cleaned["source_name"])
         self.assertEqual("https://www.catalogueoflife.org/", cleaned["source_url"])
         self.assertEqual(255, len(cleaned["external_taxon_id"]))
-        self.assertIn("model=gpt-5-mini", cleaned["llm_note"])
+        self.assertIn(
+            f"model={ModelDefaults.TAXONOMY_CANDIDATE.model}", cleaned["llm_note"]
+        )
 
     def test_clean_candidate_data_ignores_invalid_optional_source_url(self):
         """

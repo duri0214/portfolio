@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 from unittest.mock import patch
 
+from lib.llm.valueobject.config import ModelName
 from shopping.models import (
     Product,
     Store,
@@ -426,7 +427,7 @@ class TestView(TestCase):
             one_line_summary="落ち着いた雰囲気が評価されている。",
             issue="席が狭い",
             location_insight="近隣では滞在快適性に改善余地がある",
-            model_name="gpt-5-mini",
+            model_name=ModelName.GPT_5_MINI,
             prompt_version="test-prompt",
         )
 

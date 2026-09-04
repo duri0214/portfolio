@@ -11,7 +11,7 @@ from janome.tokenizer import Tokenizer
 from lib.llm.valueobject.completion import RoleType
 from pypdf import PdfReader
 
-from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
+from lib.llm.valueobject.config import ModelDefaults, OpenAIGptConfig
 from llm_chat.domain.repository.completion.rokunohe_minutes import (
     RokunoheMinutesRagRepository,
 )
@@ -199,7 +199,7 @@ class RokunoheMinutesRagService(BaseChatService):
         model_name: 六戸町会議録RAG回答生成に使用するLLMモデル名。
     """
 
-    model_name = ModelName.GPT_5_MINI
+    model_name = ModelDefaults.ROKUNOHE_MINUTES_RAG.model
     initial_summary_prompt = (
         "取り込み済みの六戸町会議録を横断して、分析の入口になる初回サマリーを作成してください。"
         "主要テーマ、直近の傾向、深掘りに向く質問例を日本語で簡潔に箇条書きしてください。"
@@ -215,10 +215,10 @@ class RokunoheMinutesRagService(BaseChatService):
                 テスト時はモックRepositoryを渡し、本番時は未指定のままOpenAI設定から生成します。
         """
         super().__init__(model_name=self.model_name)
-        self.config = OpenAIGptConfig(
+        self.config = OpenAIGptConfig.from_profile(
+            ModelDefaults.ROKUNOHE_MINUTES_RAG,
             api_key=os.getenv("OPENAI_API_KEY") or "",
             max_tokens=4000,
-            model=self.model_name,
         )
         self.repository = repository or RokunoheMinutesRagRepository(
             api_key=self.config.api_key,

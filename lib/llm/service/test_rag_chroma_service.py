@@ -2,6 +2,7 @@ import os
 import unittest
 from unittest.mock import MagicMock, patch
 from lib.llm.service.completion import OpenAILlmRagService
+from lib.llm.valueobject.config import ModelDefaults
 
 
 class TestOpenAILlmRagService(unittest.TestCase):
@@ -11,7 +12,7 @@ class TestOpenAILlmRagService(unittest.TestCase):
 
     def setUp(self):
         self.api_key = "sk-dummy-key"
-        self.model = "gpt-4o-mini"
+        self.model = ModelDefaults.LLM_RAG.model
 
         # OpenAI API のモック
         self.patcher_openai = patch("lib.llm.service.completion.OpenAI")

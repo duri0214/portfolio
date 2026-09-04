@@ -2,7 +2,7 @@ import os
 from zoneinfo import ZoneInfo
 
 from django.utils import timezone
-from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
+from lib.llm.valueobject.config import ModelDefaults, OpenAIGptConfig
 from pypdf import PdfReader
 
 from llm_chat.domain.repository.completion.rag import (
@@ -118,14 +118,14 @@ class OpenAIRagService(BaseChatService):
         model_name: OpenAI RAG回答生成に使用するLLMモデル名。
     """
 
-    model_name = ModelName.GPT_5_MINI
+    model_name = ModelDefaults.LLM_RAG.model
 
     def __init__(self, repository: OpenAIRagVectorRepository | None = None):
         super().__init__(model_name=self.model_name)
-        self.config = OpenAIGptConfig(
+        self.config = OpenAIGptConfig.from_profile(
+            ModelDefaults.LLM_RAG,
             api_key=os.getenv("OPENAI_API_KEY") or "",
             max_tokens=4000,
-            model=self.model_name,
         )
         self.repository = repository
 

@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 
 from lib.llm.valueobject.completion import ChatResult, RoleType
-from lib.llm.valueobject.config import OpenAIGptConfig
+from lib.llm.valueobject.config import ModelDefaults, OpenAIGptConfig
 from llm_chat.domain.use_case.completion.riddle import RiddleUseCase
 from llm_chat.domain.valueobject.completion.riddle import (
     Gender,
@@ -18,7 +18,11 @@ from llm_chat.models import RiddleQuestion
 class RiddleSessionStateTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="test_user")
-        self.config = OpenAIGptConfig(api_key="test", model="gpt-4o", max_tokens=1000)
+        self.config = OpenAIGptConfig(
+            api_key="test",
+            model=ModelDefaults.LLM_RIDDLE.model,
+            max_tokens=1000,
+        )
         self.gender = Gender(GenderType.MAN)
 
         # テスト用の問題を3つ登録

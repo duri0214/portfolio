@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 
 from lib.llm.valueobject.completion import RoleType
-from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
+from lib.llm.valueobject.config import ModelDefaults, OpenAIGptConfig
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.chat import ChatService
 from llm_chat.domain.service.completion.riddle import RiddleService
@@ -48,7 +48,7 @@ class RiddleUseCaseTest(TestCase):
             user=self.user,
             role=RoleType.USER,
             content="なぞなぞスタート",
-            model_name=ModelName.GPT_5_MINI,
+            model_name=ModelDefaults.LLM_RIDDLE.model,
             use_case_type=UseCaseType.RIDDLE,
         )
         # 初回：システムメッセージ（非保存）と初回ユーザーメッセージ（保存）
@@ -131,7 +131,7 @@ class RiddleUseCaseTest(TestCase):
         )
 
         config = OpenAIGptConfig(
-            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+            api_key="fake", max_tokens=100, model=ModelDefaults.LLM_RIDDLE.model
         )
         use_case = RiddleUseCase(config)
 
@@ -167,7 +167,7 @@ class RiddleUseCaseTest(TestCase):
         )
 
         config = OpenAIGptConfig(
-            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+            api_key="fake", max_tokens=100, model=ModelDefaults.LLM_RIDDLE.model
         )
         use_case = RiddleUseCase(config)
 
@@ -205,7 +205,7 @@ class RiddleUseCaseTest(TestCase):
         ]
 
         config = OpenAIGptConfig(
-            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+            api_key="fake", max_tokens=100, model=ModelDefaults.LLM_RIDDLE.model
         )
         use_case = RiddleUseCase(config)
 
@@ -245,7 +245,7 @@ class RiddleUseCaseTest(TestCase):
         )
 
         config = OpenAIGptConfig(
-            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+            api_key="fake", max_tokens=100, model=ModelDefaults.LLM_RIDDLE.model
         )
         use_case = RiddleUseCase(config)
 
@@ -279,7 +279,7 @@ class RiddleUseCaseTest(TestCase):
         """
         mock_retrieve.return_value = MagicMock(answer="それは人間ですか？")
         config = OpenAIGptConfig(
-            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+            api_key="fake", max_tokens=100, model=ModelDefaults.LLM_RIDDLE.model
         )
         use_case = RiddleUseCase(config)
         result = use_case.execute(self.user, "スタート", gender=Gender(GenderType.MAN))
@@ -298,7 +298,7 @@ class RiddleUseCaseTest(TestCase):
         """
         mock_retrieve.return_value = MagicMock(answer="なぞなぞを始めます。")
         config = OpenAIGptConfig(
-            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+            api_key="fake", max_tokens=100, model=ModelDefaults.LLM_RIDDLE.model
         )
         use_case = RiddleUseCase(config)
 
@@ -330,7 +330,7 @@ class RiddleUseCaseTest(TestCase):
         """
         mock_retrieve.return_value = MagicMock(answer="正解です。次は2問目です。")
         config = OpenAIGptConfig(
-            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+            api_key="fake", max_tokens=100, model=ModelDefaults.LLM_RIDDLE.model
         )
         use_case = RiddleUseCase(config)
 
@@ -355,7 +355,7 @@ class RiddleUseCaseTest(TestCase):
         """
         RiddleQuestion.objects.all().delete()
         config = OpenAIGptConfig(
-            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+            api_key="fake", max_tokens=100, model=ModelDefaults.LLM_RIDDLE.model
         )
         use_case = RiddleUseCase(config)
 
@@ -374,7 +374,7 @@ class RiddleUseCaseTest(TestCase):
             user=self.user,
             role=RoleType.USER,
             content="なぞなぞスタート",
-            model_name=ModelName.GPT_5_MINI,
+            model_name=ModelDefaults.LLM_RIDDLE.model,
             use_case_type=UseCaseType.RIDDLE,
         )
         with self.assertRaisesRegex(ValueError, "gender is required for RiddleUseCase"):
@@ -388,7 +388,7 @@ class RiddleUseCaseTest(TestCase):
         [期待値] ValueError が発生すること
         """
         config = OpenAIGptConfig(
-            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+            api_key="fake", max_tokens=100, model=ModelDefaults.LLM_RIDDLE.model
         )
         use_case = RiddleUseCase(config)
         with self.assertRaisesRegex(ValueError, "gender is required for RiddleUseCase"):
@@ -403,7 +403,7 @@ class RiddleUseCaseTest(TestCase):
         3. 期待値: ValueError が発生し、再開を促すメッセージが返されること。
         """
         config = OpenAIGptConfig(
-            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+            api_key="fake", max_tokens=100, model=ModelDefaults.LLM_RIDDLE.model
         )
         use_case = RiddleUseCase(config)
         gender = Gender(GenderType.MAN)

@@ -5,6 +5,7 @@ from unittest.mock import patch, MagicMock
 from django.core.management import call_command
 from django.test import TestCase
 
+from lib.llm.valueobject.config import ModelDefaults
 from usa_research.models import MsciCountryWeightReport
 
 
@@ -60,6 +61,7 @@ class MsciUpdateIdempotencyTest(TestCase):
         self.assertEqual(MsciCountryWeightReport.objects.count(), 1)
         record = MsciCountryWeightReport.objects.first()
         self.assertEqual(record.report_date, datetime.date(2024, 5, 1))
+        self.assertEqual(record.model_name, ModelDefaults.USA_RESEARCH.model)
         self.assertIn("Successfully processed", self.out.getvalue())
 
     @patch("usa_research.management.commands.daily_update_msci_weights.requests.head")

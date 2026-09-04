@@ -24,7 +24,7 @@ class ChatLogs(models.Model):
         user (ForeignKey): メッセージに関連付けられた Django の User インスタンス。
         role (CharField): メッセージの役割（SYSTEM, USER, ASSISTANT）。
         content (TextField): メッセージの本文（テキストまたは生成物のURL）。
-        model_name (CharField): 使用された LLM のモデル名（例: gpt-4o, gpt-image-1-mini）。
+        model_name (CharField): 使用された LLM のモデル名（例: gpt-5.6-terra, gpt-image-1-mini）。
         use_case_type (CharField): 使用されたユースケースタイプ（例: OpenAIGpt, Riddle, OpenAIImage）。
             ステートレスなHTTP通信において、過去の履歴から「なぞなぞ継続中か」や
             「どのユースケースを使用したか」をサーバー側で確実かつ永続的に判定するために保持します。

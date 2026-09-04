@@ -12,7 +12,7 @@ from django.utils import timezone
 from openai import RateLimitError
 
 from lib.llm.valueobject.completion import RoleType
-from lib.llm.valueobject.config import ModelName
+from lib.llm.valueobject.config import ModelDefaults, ModelName
 from llm_chat.domain.service.completion.riddle import RiddleService
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.models import ChatLogs, RiddleQuestion
@@ -108,7 +108,7 @@ class ViewLogicTest(TestCase):
             user=self.user,
             role=RoleType.ASSISTANT.value,
             content="なぞなぞです",
-            model_name=ModelName.GPT_5_MINI,
+            model_name=ModelDefaults.LLM_RIDDLE.model,
             use_case_type=UseCaseType.RIDDLE,
             created_at=timezone.now(),
         )
@@ -121,7 +121,7 @@ class ViewLogicTest(TestCase):
             user=self.user,
             role=RoleType.ASSISTANT.value,
             content=f"正解です！ {RiddleService.RIDDLE_END_MESSAGE}",
-            model_name=ModelName.GPT_5_MINI,
+            model_name=ModelDefaults.LLM_RIDDLE.model,
             use_case_type=UseCaseType.RIDDLE,
             created_at=timezone.now(),
         )
@@ -133,7 +133,7 @@ class ViewLogicTest(TestCase):
             user=self.user,
             role=RoleType.USER.value,
             content="Streaming request",
-            model_name=ModelName.GPT_5_MINI,
+            model_name=ModelDefaults.LLM_STREAMING.model,
             use_case_type=UseCaseType.OPENAI_GPT_STREAMING,
             created_at=timezone.now(),
         )
@@ -145,7 +145,7 @@ class ViewLogicTest(TestCase):
             user=self.user,
             role=RoleType.USER.value,
             content="RAG query",
-            model_name=ModelName.GPT_5_MINI,
+            model_name=ModelDefaults.LLM_RAG.model,
             use_case_type=UseCaseType.OPENAI_RAG,
             created_at=timezone.now(),
         )
@@ -157,7 +157,7 @@ class ViewLogicTest(TestCase):
             user=self.user,
             role=RoleType.ASSISTANT.value,
             content="なぞなぞです",
-            model_name=ModelName.GPT_5_MINI,
+            model_name=ModelDefaults.LLM_RIDDLE.model,
             use_case_type=UseCaseType.RIDDLE,
             created_at=timezone.now() + timedelta(seconds=1),
         )
@@ -180,14 +180,14 @@ class ViewLogicTest(TestCase):
             user=self.user,
             role=RoleType.USER.value,
             content="通常チャット",
-            model_name=ModelName.GPT_5_MINI,
+            model_name=ModelDefaults.LLM_STREAMING.model,
             use_case_type=UseCaseType.OPENAI_GPT_STREAMING,
         )
         ChatLogs.objects.create(
             user=self.user,
             role=RoleType.USER.value,
             content="六戸町会議録の質問",
-            model_name=ModelName.GPT_5_MINI,
+            model_name=ModelDefaults.ROKUNOHE_MINUTES_RAG.model,
             use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
         )
 
@@ -218,7 +218,7 @@ class ViewLogicTest(TestCase):
             user=self.user,
             role=RoleType.USER.value,
             content="六戸町会議録の質問",
-            model_name=ModelName.GPT_5_MINI,
+            model_name=ModelDefaults.ROKUNOHE_MINUTES_RAG.model,
             use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
         )
 

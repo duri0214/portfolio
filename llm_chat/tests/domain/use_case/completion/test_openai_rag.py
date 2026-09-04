@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 
 from lib.llm.valueobject.completion import RoleType
+from lib.llm.valueobject.config import ModelDefaults
 from llm_chat.domain.service.completion.rag import OpenAIRagPdfImportService
 from llm_chat.domain.use_case.completion.rag import OpenAIRagUseCase
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
@@ -97,7 +98,7 @@ class OpenAIRagUseCaseTest(TestCase):
             user=user,
             role=RoleType.ASSISTANT,
             content="回答",
-            model_name="gpt-5-mini",
+            model_name=ModelDefaults.LLM_RAG.model,
             use_case_type=UseCaseType.OPENAI_RAG,
         )
 
@@ -107,7 +108,7 @@ class OpenAIRagUseCaseTest(TestCase):
         ), patch(
             "llm_chat.domain.use_case.completion.rag.OpenAIRagService"
         ) as service_mock:
-            service_mock.return_value.model_name = "gpt-5-mini"
+            service_mock.return_value.model_name = ModelDefaults.LLM_RAG.model
             service_mock.return_value.generate.return_value = assistant_message
 
             result = OpenAIRagUseCase().execute(

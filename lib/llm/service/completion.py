@@ -126,7 +126,10 @@ class LlmCompletionService(LlmService):
         return OpenAI(**client_params)
 
     def retrieve_answer(
-        self, chat_history: list[Message], max_messages: int = 5
+        self,
+        chat_history: list[Message],
+        max_messages: int = 5,
+        response_format: dict[str, Any] | None = None,
     ) -> ChatResult:
         """
         チャット履歴から回答を取得し、構造化された ChatResult として返します。
@@ -134,6 +137,8 @@ class LlmCompletionService(LlmService):
         Args:
             chat_history (list[Message]): チャット履歴メッセージのリスト
             max_messages (int, optional): 保持する最大メッセージ件数。デフォルト値は5。
+            response_format (dict[str, Any] | None, optional): OpenAIへ渡す応答形式。
+                JSON出力など、呼び出し側が構造化出力を要求する場合に指定します。
 
         Returns:
             ChatResult: 構造化されたチャット完了レスポンス
@@ -144,9 +149,16 @@ class LlmCompletionService(LlmService):
         if not cut_down_history:
             raise ValueError("Chat history cannot be empty")
 
+        request_kwargs: dict[str, Any] = {}
+        if response_format is not None:
+            request_kwargs["response_format"] = response_format
+        if isinstance(self.config, OpenAIGptConfig) and self.config.reasoning_effort:
+            request_kwargs["reasoning_effort"] = self.config.reasoning_effort
+
         response = self.client.chat.completions.create(
             model=self.config.model,
             messages=[x.to_dict() for x in cut_down_history],
+            **request_kwargs,
         )
 
         content = response.choices[0].message.content or ""
@@ -217,6 +229,12 @@ class LlmCompletionStreamingService(LlmService):
             model=self.config.model,
             messages=[x.to_dict() for x in cut_down_history],
             stream=True,
+            **(
+                {"reasoning_effort": self.config.reasoning_effort}
+                if isinstance(self.config, OpenAIGptConfig)
+                and self.config.reasoning_effort
+                else {}
+            ),
         )
         for chunk in stream:
             delta_content = chunk.choices[0].delta.content

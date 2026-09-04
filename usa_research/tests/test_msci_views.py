@@ -3,6 +3,7 @@ import datetime
 from django.test import TestCase, Client
 from django.urls import reverse
 
+from lib.llm.valueobject.config import ModelDefaults
 from usa_research.models import MsciCountryWeightReport
 
 
@@ -19,6 +20,7 @@ class MsciReportViewTest(TestCase):
             report_date=datetime.date(2024, 5, 1),
             summary_md="Summary 2024-05-01",
             pdf_url="http://example.com/20240501.pdf",
+            model_name=ModelDefaults.USA_RESEARCH.model,
         )
 
     def test_index_view_shows_latest_report_by_default(self):
@@ -28,6 +30,19 @@ class MsciReportViewTest(TestCase):
         self.assertEqual(response.context["msci_report"], self.report2)
         self.assertContains(response, "2024/05/01")
         self.assertContains(response, "Summary 2024-05-01")
+        self.assertContains(response, ModelDefaults.USA_RESEARCH.model)
+
+    def test_index_view_shows_fallback_for_historical_report_without_model_name(self):
+        """
+        シナリオ:
+        - 入力: 旧形式のMSCIレポート履歴と、モデル名付きの新規レポート。
+        - 処理: 旧形式のレポートを日付指定で表示する。
+        - 期待値: 旧履歴はモデル名を補完せず、未記録表示になること。
+        """
+        response = self.client.get(reverse("usa:index") + "?report_date=2024-04-01")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "履歴モデル未記録")
 
     def test_index_view_shows_selected_report(self):
         # クエリパラメータで過去の日付を指定
