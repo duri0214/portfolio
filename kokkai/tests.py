@@ -148,7 +148,7 @@ class MeetingIndexServiceTests(SimpleTestCase):
                 call(date(2024, 1, 26), date(2024, 1, 26), 2),
             ],
         )
-        repository.replace_indexes.assert_called_once_with(
+        repository.replace_current_catalog.assert_called_once_with(
             [first_record, second_record]
         )
         client.fetch_meeting.assert_not_called()
@@ -192,11 +192,11 @@ class MeetingRepositoryTests(TestCase):
         self.assertTrue(Speech.objects.filter(pk=speech.pk).exists())
         self.assertEqual(speech.meeting_id, meeting.pk)
 
-    def test_replace_indexes_switches_catalog_without_deleting_speeches(self):
+    def test_replace_current_catalog_without_deleting_speeches(self):
         """
         シナリオ:
         - 入力: 発言本文を持つ既存カタログと、新しい検索結果のカタログ情報。
-        - 処理: replace_indexes を呼び出して現在のカタログを洗い替える。
+        - 処理: replace_current_catalog を呼び出して現在のカタログを洗い替える。
         - 期待値: 新しい結果だけが現在の一覧対象になり、既存の発言本文は保持されること。
         """
         old_meeting = Meeting.objects.create(
@@ -216,7 +216,7 @@ class MeetingRepositoryTests(TestCase):
         )
         new_record = meeting_index_record("121305254X00220240126")
 
-        MeetingRepository().replace_indexes([new_record])
+        MeetingRepository().replace_current_catalog([new_record])
 
         old_meeting.refresh_from_db()
         new_meeting = Meeting.objects.get(min_id=new_record.issue_id)

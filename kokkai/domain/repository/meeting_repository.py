@@ -29,12 +29,13 @@ class MeetingRepository:
             meetings.append(meeting)
         return meetings
 
-    def replace_indexes(self, records: Iterable[MeetingIndexRecord]) -> list[Meeting]:
+    def replace_current_catalog(
+        self, records: Iterable[MeetingIndexRecord]
+    ) -> list[Meeting]:
         """
-        Replace the current catalog while preserving saved meeting contents.
+        会議録の現在カタログを検索結果で置き換える。
 
-        Existing Meeting and Speech rows remain available for later reuse; only
-        the flag used by the catalog list is switched.
+        既存の会議録と発言は削除せず、一覧表示対象のフラグだけを切り替える。
         """
         with transaction.atomic():
             Meeting.objects.update(is_current_catalog=False)
