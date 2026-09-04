@@ -358,12 +358,14 @@ class KokkaiPipelineTests(TestCase):
         client.fetch_meeting.assert_called_once_with(selected_record.issue_id)
         repository.replace_meeting_contents.assert_called_once()
 
-    def test_import_excludes_metadata_and_empty_speeches_without_embedding(self):
+    def test_import_excludes_metadata_and_empty_speeches_and_uses_attendance_source(
+        self,
+    ):
         """
         シナリオ:
         - 入力: 本文、会議録情報メタデータ、空本文を含む会議録取得結果。
         - 処理: 選択した会議録本文を取り込む。
-        - 期待値: 実発言だけをXML由来のNo.で保存し、埋め込み処理を呼ばないこと。
+        - 期待値: 実発言だけをXML由来のNo.で保存し、出席者情報がないため参加者を作成せず、埋め込み処理を呼ばないこと。
         """
         selected_record = meeting_record()
         source_speech = selected_record.speech_records[0]
@@ -394,8 +396,7 @@ class KokkaiPipelineTests(TestCase):
         repository.replace_meeting_contents.assert_called_once()
         call_args = repository.replace_meeting_contents.call_args.args
         self.assertEqual(call_args[:2], (selected_record, [(source_speech, 21)]))
-        self.assertEqual(len(call_args[2]), 1)
-        self.assertEqual(call_args[2][0].name, source_speech.speaker)
+        self.assertEqual(call_args[2], [])
 
 
 class IndexViewTests(TestCase):

@@ -153,7 +153,7 @@ class MeetingDetailView(DetailView):
             self.object
         )
         context["has_participants"] = (
-            context["participant_summary"].participant_count > 0
+            context["participant_summary"].attendance_count > 0
         )
         availability = ScenarioService().get_availability(self.object)
         context["scenario"] = availability.scenario

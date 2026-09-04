@@ -71,7 +71,7 @@ class Speech(models.Model):
 
 class MeetingParticipant(models.Model):
     """
-    会議録の出席者と発言者を突合した会議参加者。
+    会議録の出席者を母集団とし、発言情報を付加した会議参加者。
 
     Attributes:
         meeting: 所属する会議録。
@@ -103,7 +103,6 @@ class MeetingParticipant(models.Model):
         PUBLIC_WITNESS = "public_witness", "公述人"
         STAFF = "staff", "事務局等"
         OTHER = "other", "その他"
-        SPEAKER_ONLY = "speaker_only", "発言者（出席情報未確認）"
 
     meeting = models.ForeignKey(
         Meeting,

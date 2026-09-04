@@ -88,6 +88,20 @@ def participant_meeting_record() -> MeetingRecord:
             update_time="2024-01-26T00:00:00",
             speech_url=f"https://kokkai.ndl.go.jp/txt/{issue_id}/3",
         ),
+        SpeechRecord(
+            speech_id=f"{issue_id}_004",
+            speaker="上野賢一郎",
+            speaker_yomi="うえのけんいちろう",
+            speaker_group="会派A",
+            speaker_position="理事",
+            speaker_role=None,
+            speech="答弁します。",
+            speech_order=4,
+            start_page=1,
+            create_time="2024-01-26T00:00:00",
+            update_time="2024-01-26T00:00:00",
+            speech_url=f"https://kokkai.ndl.go.jp/txt/{issue_id}/4",
+        ),
     ]
     return MeetingRecord(
         issue_id=issue_id,
@@ -106,12 +120,12 @@ def participant_meeting_record() -> MeetingRecord:
 
 
 class MeetingParticipantExtractorTests(SimpleTestCase):
-    def test_extracts_attendees_and_speakers_without_mixing_their_status(self):
+    def test_uses_attendees_as_the_participant_source_of_truth(self):
         """
         シナリオ:
         - 入力: 出席者一覧メタデータと、複数回発言した人物・発言者のみの人物を含む会議録。
         - 処理: 会議録参加者抽出サービスを実行する。
-        - 期待値: 敬称と空白を除いた氏名で突合し、出席のみ・発言あり・出席情報未確認を区別する。
+        - 期待値: 出席者一覧だけを参加者とし、発言者のみの人物は追加しない。
         """
         participants = MeetingParticipantExtractor().extract(
             participant_meeting_record()
@@ -127,7 +141,6 @@ class MeetingParticipantExtractorTests(SimpleTestCase):
                 "石橋林太郎",
                 "水野敦",
                 "三浦明",
-                "石破茂",
             ],
         )
         chair = participants[0]
@@ -143,8 +156,9 @@ class MeetingParticipantExtractorTests(SimpleTestCase):
         self.assertFalse(participants[5].has_spoken)
         self.assertEqual(participants[6].attendance_type, "government_reference")
         self.assertFalse(participants[6].has_spoken)
-        self.assertEqual(participants[7].attendance_type, "speaker_only")
-        self.assertTrue(participants[7].has_spoken)
+        self.assertTrue(participants[1].has_spoken)
+        self.assertEqual(participants[1].speech_count, 1)
+        self.assertNotIn("石破茂", [participant.name for participant in participants])
 
     def test_normalizes_honorifics_and_full_width_spaces(self):
         """
@@ -233,7 +247,7 @@ class MeetingParticipantRepositoryTests(TestCase):
         repository.replace_for_meeting(self.meeting, self.participants)
 
         self.assertEqual(
-            MeetingParticipant.objects.filter(meeting=self.meeting).count(), 8
+            MeetingParticipant.objects.filter(meeting=self.meeting).count(), 7
         )
         self.assertEqual(
             MeetingParticipantEvidence.objects.filter(
@@ -253,7 +267,7 @@ class MeetingParticipantRepositoryTests(TestCase):
     def test_actor_candidates_prioritize_speakers_and_speech_count(self):
         """
         シナリオ:
-        - 入力: 発言あり・出席のみ・発言者のみの参加者を保存した会議録。
+        - 入力: 発言あり・出席のみの参加者を保存した会議録。
         - 処理: シナリオ連携用のアクター候補を取得する。
         - 期待値: 発言者を先に並べ、発言数の多い人物を優先する。
         """
@@ -264,11 +278,11 @@ class MeetingParticipantRepositoryTests(TestCase):
         candidates = ParticipantQueryService().get_actor_candidates(self.meeting)
 
         self.assertEqual(
-            [candidate.name for candidate in candidates[:2]], ["藤丸敏", "石破茂"]
+            [candidate.name for candidate in candidates[:2]], ["藤丸敏", "上野賢一郎"]
         )
-        self.assertTrue(candidates[0].has_spoken)
+        self.assertTrue(all(candidate.has_spoken for candidate in candidates[:2]))
         self.assertEqual(candidates[0].speech_count, 2)
-        self.assertFalse(candidates[-2].has_spoken)
+        self.assertNotIn("石破茂", [candidate.name for candidate in candidates])
 
     def test_list_participants_prioritizes_speakers_and_speech_count(self):
         """
@@ -285,7 +299,7 @@ class MeetingParticipantRepositoryTests(TestCase):
 
         self.assertEqual(
             [participant.name for participant in participants[:2]],
-            ["藤丸敏", "石破茂"],
+            ["藤丸敏", "上野賢一郎"],
         )
         self.assertTrue(all(participant.has_spoken for participant in participants[:2]))
         self.assertFalse(participants[2].has_spoken)
@@ -293,9 +307,9 @@ class MeetingParticipantRepositoryTests(TestCase):
     def test_participant_summary_counts_attendance_and_speakers_separately(self):
         """
         シナリオ:
-        - 入力: 出席欄の7人と、出席欄にない発言者1人を含む会議録。
+        - 入力: 出席欄の7人と、出席者2人・出席者でない1人の発言を含む会議録。
         - 処理: 会議参加者の集計を取得する。
-        - 期待値: 出席者数と同名除外済み発言者数を別々に数え、統合人数も返す。
+        - 期待値: 出席者数と、出席者のうち発言した人数を別々に数える。
         """
         MeetingParticipantRepository().replace_for_meeting(
             self.meeting, self.participants
@@ -307,7 +321,6 @@ class MeetingParticipantRepositoryTests(TestCase):
         self.assertEqual(summary.committee_member_count, 5)
         self.assertEqual(summary.non_committee_attendance_count, 2)
         self.assertEqual(summary.speaker_count, 2)
-        self.assertEqual(summary.participant_count, 8)
 
     def test_meeting_detail_displays_participant_status_and_evidence(self):
         """
@@ -331,6 +344,6 @@ class MeetingParticipantRepositoryTests(TestCase):
         self.assertContains(response, "その他出席者数: 2人")
         self.assertContains(response, "出席者総数: 7人")
         self.assertContains(response, "ユニーク発言者数: 2人")
-        self.assertContains(response, "統合参加者数: 8人")
+        self.assertNotContains(response, "統合参加者数")
         self.assertContains(response, "会議録ID: 121305254X00120240126")
         self.assertContains(response, "出典")

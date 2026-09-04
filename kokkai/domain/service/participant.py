@@ -142,7 +142,6 @@ class _ParticipantBuilder:
         has_spoken: 発言記録があるかどうか。
         speech_count: 発言記録の件数。
         attendance_order: 出席者欄での順番。
-        first_speech_order: 最初の発言順。
         source_text: 代表して表示する元テキスト。
         evidences: 紐づいた根拠一覧。
         evidence_keys: 重複根拠を除くためのキー。
@@ -150,7 +149,7 @@ class _ParticipantBuilder:
 
     name: str
     name_yomi: str | None = None
-    attendance_type: str = ParticipantAttendanceType.SPEAKER_ONLY
+    attendance_type: str = ParticipantAttendanceType.OTHER
     attendance_role: str = ""
     speaker_position: str = ""
     speaker_role: str = ""
@@ -158,17 +157,16 @@ class _ParticipantBuilder:
     has_spoken: bool = False
     speech_count: int = 0
     attendance_order: int | None = None
-    first_speech_order: int | None = None
     source_text: str = ""
     evidences: list[ParticipantEvidenceData] = field(default_factory=list)
     evidence_keys: set[tuple[str, str, str]] = field(default_factory=set)
 
 
 class MeetingParticipantExtractor:
-    """会議録情報と発言記録から、会議参加者を決定的に抽出する。"""
+    """会議録情報の出席者を母集団とし、発言記録を付加して参加者を抽出する。"""
 
     def extract(self, record: MeetingRecord) -> list[ParticipantData]:
-        """会議録の出席者と発言者を氏名で突合し、参加者一覧を返す。"""
+        """出席者一覧を正とし、同じ氏名の出席者へ発言情報だけを付加して返す。"""
 
         builders: dict[str, _ParticipantBuilder] = {}
         attendance_entries = self._extract_attendance_entries(record)
@@ -177,7 +175,6 @@ class MeetingParticipantExtractor:
             builder = builders.setdefault(entry.name, _ParticipantBuilder(entry.name))
             if builder.attendance_order is None:
                 builder.attendance_order = order
-            if builder.attendance_type == ParticipantAttendanceType.SPEAKER_ONLY:
                 builder.attendance_type = entry.attendance_type
             if not builder.attendance_role or entry.attendance_role != "出席委員":
                 builder.attendance_role = entry.attendance_role
@@ -205,9 +202,9 @@ class MeetingParticipantExtractor:
             name = normalize_person_name(speech.speaker)
             if not name:
                 continue
-            builder = builders.setdefault(name, _ParticipantBuilder(name))
-            if builder.first_speech_order is None:
-                builder.first_speech_order = speech.speech_order
+            builder = builders.get(name)
+            if builder is None:
+                continue
             builder.has_spoken = True
             builder.speech_count += 1
             builder.name_yomi = (
@@ -242,12 +239,7 @@ class MeetingParticipantExtractor:
         sorted_builders = sorted(
             builders.values(),
             key=lambda builder: (
-                0 if builder.attendance_order is not None else 1,
-                (
-                    builder.attendance_order
-                    if builder.attendance_order is not None
-                    else builder.first_speech_order or 0
-                ),
+                builder.attendance_order,
                 builder.name,
             ),
         )

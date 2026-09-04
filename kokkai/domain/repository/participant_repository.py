@@ -101,11 +101,10 @@ class MeetingParticipantRepository:
         ).count()
         attendance_count = attendance_participants.count()
         return ParticipantSummaryData(
-            participant_count=participants.count(),
             attendance_count=attendance_count,
             committee_member_count=committee_member_count,
             non_committee_attendance_count=attendance_count - committee_member_count,
-            speaker_count=participants.filter(has_spoken=True).count(),
+            speaker_count=attendance_participants.filter(has_spoken=True).count(),
         )
 
     def get_actor_candidates(self, meeting: Meeting) -> list[ParticipantActorData]:
