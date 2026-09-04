@@ -198,7 +198,7 @@ class MeetingParticipantExtractorTests(SimpleTestCase):
             <= {participant.name for participant in participants}
         )
 
-    def test_uses_attendance_position_when_speech_position_is_missing(self):
+    def test_does_not_infer_role_when_speech_position_is_missing(self):
         record = participant_meeting_record()
         metadata = replace(
             record.speech_records[0],
@@ -215,9 +215,9 @@ class MeetingParticipantExtractorTests(SimpleTestCase):
         chair = MeetingParticipantExtractor().extract(record)[0]
 
         self.assertEqual(chair.name, "坂本哲志")
-        self.assertEqual(chair.speaker_position, "委員長")
-        self.assertEqual(chair.role, "委員長")
-        self.assertEqual(chair.evidences[0].speaker_position, "委員長")
+        self.assertEqual(chair.speaker_position, "")
+        self.assertEqual(chair.role, "")
+        self.assertEqual(chair.evidences[0].speaker_position, "")
 
     def test_preserves_surnames_when_multiple_attendees_share_a_line(self):
         record = participant_meeting_record()
@@ -233,7 +233,7 @@ class MeetingParticipantExtractorTests(SimpleTestCase):
             [participant.name for participant in participants], ["東徹", "福田徹"]
         )
 
-    def test_inherits_minister_position_from_the_previous_attendance_line(self):
+    def test_does_not_infer_role_from_attendance_headings(self):
         record = participant_meeting_record()
         metadata = replace(
             record.speech_records[0],
@@ -249,11 +249,7 @@ class MeetingParticipantExtractorTests(SimpleTestCase):
         participant = MeetingParticipantExtractor().extract(record)[0]
 
         self.assertEqual(participant.name, "城内実")
-        self.assertEqual(
-            participant.attendance_position,
-            "国務大臣",
-        )
-        self.assertEqual(participant.role, "国務大臣")
+        self.assertEqual(participant.role, "")
 
     def test_omits_parenthetical_details_from_speech_position(self):
         record = participant_meeting_record()

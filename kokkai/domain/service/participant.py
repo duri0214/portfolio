@@ -55,9 +55,6 @@ class MeetingParticipantExtractor:
                     source_speech_order=entry.source_speech_order,
                 ),
             )
-            builder.attendance_position = (
-                builder.attendance_position or entry.speaker_position
-            )
             self._add_evidence(
                 builder,
                 ParticipantEvidenceData(
@@ -67,7 +64,7 @@ class MeetingParticipantExtractor:
                     source_url=entry.source_url,
                     source_text=entry.source_text,
                     speech_order=entry.source_speech_order,
-                    speaker_position=entry.speaker_position,
+                    speaker_position="",
                     speaker_role="",
                     affiliation="",
                 ),
@@ -112,9 +109,7 @@ class MeetingParticipantExtractor:
             ParticipantData(
                 name=builder.name,
                 name_yomi=builder.name_yomi,
-                attendance_position=builder.attendance_position,
-                speaker_position=builder.speaker_position
-                or builder.attendance_position,
+                speaker_position=builder.speaker_position,
                 speaker_role=builder.speaker_role,
                 affiliation=builder.affiliation,
                 has_spoken=builder.has_spoken,
@@ -153,7 +148,6 @@ class MeetingParticipantExtractor:
             return []
 
         entries: list[ParticipantExtractionData] = []
-        inherited_position = ""
         is_attendance_section = False
         for raw_line in metadata_speech.speech.splitlines():
             line = raw_line.strip()
@@ -165,24 +159,13 @@ class MeetingParticipantExtractor:
                 if "出席" not in line:
                     continue
                 is_attendance_section = True
-            line_entries = self._parse_attendance_line(
-                line, metadata_speech, inherited_position
-            )
-            entries.extend(line_entries)
-            if line_entries:
-                continue
-
-            if line.startswith(("（", "(")):
-                continue
-            position = self._attendance_position(line)
-            inherited_position = position if position.endswith("臣") else ""
+            entries.extend(self._parse_attendance_line(line, metadata_speech))
         return entries
 
     @staticmethod
     def _parse_attendance_line(
         line: str,
         metadata_speech: SpeechRecord,
-        inherited_position: str = "",
     ) -> list[ParticipantExtractionData]:
         entries: list[ParticipantExtractionData] = []
         previous_end = 0
@@ -190,9 +173,6 @@ class MeetingParticipantExtractor:
             token = line[previous_end : match.start()]
             name = MeetingParticipantExtractor._attendance_name(token)
             if name:
-                position = MeetingParticipantExtractor._attendance_position(token)
-                if token.lstrip().startswith(("（", "(")) or not position:
-                    position = inherited_position
                 entries.append(
                     ParticipantExtractionData(
                         name=name,
@@ -201,27 +181,11 @@ class MeetingParticipantExtractor:
                         source_speech_id=metadata_speech.speech_id,
                         source_url=metadata_speech.speech_url,
                         source_speech_order=metadata_speech.speech_order,
-                        speaker_position=position,
+                        speaker_position="",
                     )
                 )
             previous_end = match.end()
         return entries
-
-    @staticmethod
-    def _attendance_position(value: str) -> str:
-        """出席欄で氏名の前に明記された役職を取り出す。"""
-
-        normalized = unicodedata.normalize("NFKC", value).strip()
-        annotation = re.match(r"^[（(]([^）)]*)[）)]", normalized)
-        if annotation:
-            return normalize_text(annotation.group(1))
-
-        parts = re.split(r"[\s　]+", normalized, maxsplit=1)
-        if len(parts) == 1 and normalized.endswith(_ATTENDANCE_POSITION_SUFFIXES):
-            return normalize_text(normalized)
-        if len(parts) < 2 or not parts[0].endswith(_ATTENDANCE_POSITION_SUFFIXES):
-            return ""
-        return normalize_text(parts[0])
 
     @staticmethod
     def _attendance_name(value: str) -> str:

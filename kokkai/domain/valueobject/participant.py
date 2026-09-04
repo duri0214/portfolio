@@ -50,7 +50,6 @@ class ParticipantExtractionData:
     source_url: str
     source_speech_order: int
     name_yomi: str | None = None
-    attendance_position: str = ""
     speaker_position: str = ""
     speaker_role: str = ""
     affiliation: str = ""
@@ -66,7 +65,6 @@ class ParticipantData:
 
     name: str
     name_yomi: str | None
-    attendance_position: str
     speaker_position: str
     speaker_role: str
     affiliation: str
@@ -79,10 +77,9 @@ class ParticipantData:
 
     @property
     def role(self) -> str:
-        """構造化された発言時の役職を優先し、なければ出席欄を使う。"""
+        """構造化された発言時の役職を表示する。"""
 
-        speech_role = join_roles(self.speaker_position, self.speaker_role)
-        return speech_role or join_roles(self.attendance_position)
+        return join_roles(self.speaker_position, self.speaker_role)
 
 
 @dataclass(frozen=True)
