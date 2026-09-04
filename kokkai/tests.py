@@ -382,11 +382,11 @@ class IndexViewTests(TestCase):
         self.assertNotContains(response, "<li>期間の目安がつかない場合は")
         self.assertContains(
             response,
-            "「本文を取り込む」を押すと、選択した会議録の発言本文を保存します。PDFは参照リンクから確認できます。",
+            "「本文をデータベースに取り込む」を押すと、選択した会議録の発言本文を保存します。PDFは参照リンクから確認できます。",
         )
         self.assertContains(
             response,
-            '<button type="submit" class="btn btn-primary">本文を取り込む</button>',
+            '<button type="submit" class="btn btn-primary">本文をデータベースに取り込む</button>',
         )
         self.assertContains(
             response, "本文取り込み済みの会議録を再選択すると、本文を取り込み直せます。"
@@ -625,5 +625,8 @@ class IndexViewTests(TestCase):
             follow=True,
         )
 
-        self.assertContains(response, "本文を取り込む会議録を選択してください。")
+        self.assertContains(
+            response,
+            "本文をデータベースに取り込む会議録を選択してください。",
+        )
         pipeline_class.assert_not_called()

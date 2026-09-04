@@ -84,11 +84,14 @@ class IndexView(ListView):
         elif action == "fetch_selected":
             meeting_ids = request.POST.getlist("meeting_ids")
             if not meeting_ids:
-                messages.warning(request, "本文を取り込む会議録を選択してください。")
+                messages.warning(
+                    request, "本文をデータベースに取り込む会議録を選択してください。"
+                )
             else:
                 imported_count = KokkaiPipeline().import_selected_meetings(meeting_ids)
                 messages.success(
-                    request, f"{imported_count}件の会議録本文を取り込みました。"
+                    request,
+                    f"{imported_count}件の会議録本文をデータベースに取り込みました。",
                 )
         else:
             messages.error(request, "実行内容を選択してください。")
