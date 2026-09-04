@@ -16,6 +16,7 @@ from ..valueobject.participant import (
 
 _HONORIFIC_PATTERN = re.compile(r"君(?=$|[\s　、,。])")
 _ATTENDANCE_END_MARKERS = ("委員の異動", "本日の会議")
+_ATTENDANCE_POSITION_SUFFIXES = ("長", "事", "員", "臣", "官", "人")
 
 
 def normalize_person_name(value: str | None) -> str:
@@ -54,6 +55,9 @@ class MeetingParticipantExtractor:
                     source_speech_order=entry.source_speech_order,
                 ),
             )
+            builder.attendance_position = (
+                builder.attendance_position or entry.speaker_position
+            )
             self._add_evidence(
                 builder,
                 ParticipantEvidenceData(
@@ -63,7 +67,7 @@ class MeetingParticipantExtractor:
                     source_url=entry.source_url,
                     source_text=entry.source_text,
                     speech_order=entry.source_speech_order,
-                    speaker_position="",
+                    speaker_position=entry.speaker_position,
                     speaker_role="",
                     affiliation="",
                 ),
@@ -108,7 +112,8 @@ class MeetingParticipantExtractor:
             ParticipantData(
                 name=builder.name,
                 name_yomi=builder.name_yomi,
-                speaker_position=builder.speaker_position,
+                speaker_position=builder.speaker_position
+                or builder.attendance_position,
                 speaker_role=builder.speaker_role,
                 affiliation=builder.affiliation,
                 has_spoken=builder.has_spoken,
@@ -168,9 +173,8 @@ class MeetingParticipantExtractor:
         entries: list[ParticipantExtractionData] = []
         previous_end = 0
         for match in _HONORIFIC_PATTERN.finditer(line):
-            name = MeetingParticipantExtractor._attendance_name(
-                line[previous_end : match.start()]
-            )
+            token = line[previous_end : match.start()]
+            name = MeetingParticipantExtractor._attendance_name(token)
             if name:
                 entries.append(
                     ParticipantExtractionData(
@@ -180,10 +184,27 @@ class MeetingParticipantExtractor:
                         source_speech_id=metadata_speech.speech_id,
                         source_url=metadata_speech.speech_url,
                         source_speech_order=metadata_speech.speech_order,
+                        speaker_position=MeetingParticipantExtractor._attendance_position(
+                            token
+                        ),
                     )
                 )
             previous_end = match.end()
         return entries
+
+    @staticmethod
+    def _attendance_position(value: str) -> str:
+        """出席欄で氏名の前に明記された役職を取り出す。"""
+
+        normalized = unicodedata.normalize("NFKC", value).strip()
+        annotation = re.match(r"^[（(]([^）)]*)[）)]", normalized)
+        if annotation:
+            return normalize_text(annotation.group(1))
+
+        parts = re.split(r"[\s　]+", normalized, maxsplit=1)
+        if len(parts) < 2 or not parts[0].endswith(_ATTENDANCE_POSITION_SUFFIXES):
+            return ""
+        return normalize_text(parts[0])
 
     @staticmethod
     def _attendance_name(value: str) -> str:

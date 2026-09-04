@@ -35,6 +35,7 @@ class ParticipantExtractionData:
     source_url: str
     source_speech_order: int
     name_yomi: str | None = None
+    attendance_position: str = ""
     speaker_position: str = ""
     speaker_role: str = ""
     affiliation: str = ""

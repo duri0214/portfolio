@@ -198,6 +198,26 @@ class MeetingParticipantExtractorTests(SimpleTestCase):
             <= {participant.name for participant in participants}
         )
 
+    def test_uses_attendance_position_when_speech_position_is_missing(self):
+        record = participant_meeting_record()
+        metadata = replace(
+            record.speech_records[0],
+            speech="出席委員\n委員長　坂本　哲志君\n",
+        )
+        chair_speech = replace(
+            record.speech_records[1],
+            speaker="坂本哲志",
+            speaker_position=None,
+            speaker_role=None,
+        )
+        record = replace(record, speech_records=[metadata, chair_speech])
+
+        chair = MeetingParticipantExtractor().extract(record)[0]
+
+        self.assertEqual(chair.name, "坂本哲志")
+        self.assertEqual(chair.speaker_position, "委員長")
+        self.assertEqual(chair.evidences[0].speaker_position, "委員長")
+
 
 class MeetingParticipantRepositoryTests(TestCase):
     def setUp(self):
