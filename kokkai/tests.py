@@ -384,7 +384,10 @@ class IndexViewTests(TestCase):
             response,
             "「本文を取り込む」を押すと、選択した会議録の発言本文を保存します。PDFは参照リンクから確認できます。",
         )
-        self.assertNotContains(response, "選択した会議録の本文を取り込む</button>")
+        self.assertContains(
+            response,
+            '<button type="submit" class="btn btn-primary">本文を取り込む</button>',
+        )
         self.assertContains(
             response, "本文取り込み済みの会議録を再選択すると、本文を取り込み直せます。"
         )
