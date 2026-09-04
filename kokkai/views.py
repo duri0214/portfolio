@@ -147,10 +147,14 @@ class MeetingDetailView(DetailView):
             speaker_name=MEETING_METADATA_SPEAKER_NAME
         ).order_by("speech_order", "pk")
         context["has_speeches"] = context["speeches"].exists()
-        context["participants"] = ParticipantQueryService().list_participants(
+        participant_service = ParticipantQueryService()
+        context["participants"] = participant_service.list_participants(self.object)
+        context["participant_summary"] = participant_service.get_participant_summary(
             self.object
         )
-        context["has_participants"] = context["participants"].exists()
+        context["has_participants"] = (
+            context["participant_summary"].participant_count > 0
+        )
         availability = ScenarioService().get_availability(self.object)
         context["scenario"] = availability.scenario
         context["scenario_needs_regeneration"] = availability.needs_regeneration

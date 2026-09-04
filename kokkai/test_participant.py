@@ -36,7 +36,7 @@ def participant_meeting_record() -> MeetingRecord:
             "　　　（デジタル庁審議官）　　　三浦　　明君\n"
             "　　　　―――――――――――――\n"
             "委員の異動\n"
-            "　　　安藤たかお君"
+            "　　　異動のみ議員君"
         ),
         speech_order=0,
         start_page=1,
@@ -223,6 +223,23 @@ class MeetingParticipantRepositoryTests(TestCase):
         self.assertEqual(candidates[0].speech_count, 2)
         self.assertFalse(candidates[-2].has_spoken)
 
+    def test_participant_summary_counts_attendance_and_speakers_separately(self):
+        """
+        シナリオ:
+        - 入力: 出席欄の7人と、出席欄にない発言者1人を含む会議録。
+        - 処理: 会議参加者の集計を取得する。
+        - 期待値: 出席者数と同名除外済み発言者数を別々に数え、統合人数も返す。
+        """
+        MeetingParticipantRepository().replace_for_meeting(
+            self.meeting, self.participants
+        )
+
+        summary = ParticipantQueryService().get_participant_summary(self.meeting)
+
+        self.assertEqual(summary.attendance_count, 7)
+        self.assertEqual(summary.speaker_count, 2)
+        self.assertEqual(summary.participant_count, 8)
+
     def test_meeting_detail_displays_participant_status_and_evidence(self):
         """
         シナリオ:
@@ -241,5 +258,8 @@ class MeetingParticipantRepositoryTests(TestCase):
         self.assertContains(response, "会議参加者")
         self.assertContains(response, "出席のみ")
         self.assertContains(response, "発言あり")
+        self.assertContains(response, "出席者数: 7人")
+        self.assertContains(response, "発言者数: 2人")
+        self.assertContains(response, "統合参加者数: 8人")
         self.assertContains(response, "会議録ID: 121305254X00120240126")
         self.assertContains(response, "出典")

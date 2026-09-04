@@ -3,7 +3,11 @@ from collections.abc import Iterable
 from django.db import transaction
 
 from ...models import Meeting, MeetingParticipant, MeetingParticipantEvidence
-from ..valueobject.participant import ParticipantActorData, ParticipantData
+from ..valueobject.participant import (
+    ParticipantActorData,
+    ParticipantData,
+    ParticipantSummaryData,
+)
 
 
 class MeetingParticipantRepository:
@@ -79,6 +83,19 @@ class MeetingParticipantRepository:
             MeetingParticipant.objects.filter(meeting=meeting)
             .prefetch_related("evidences")
             .order_by("display_order", "pk")
+        )
+
+    def get_summary_for_meeting(self, meeting: Meeting) -> ParticipantSummaryData:
+        """出席欄と発言記録を別々に数えた会議参加者の集計を返す。"""
+
+        participants = MeetingParticipant.objects.filter(meeting=meeting)
+        attendance_participants = participants.filter(
+            evidences__source_type=MeetingParticipantEvidence.SourceType.ATTENDANCE
+        ).distinct()
+        return ParticipantSummaryData(
+            participant_count=participants.count(),
+            attendance_count=attendance_participants.count(),
+            speaker_count=participants.filter(has_spoken=True).count(),
         )
 
     def get_actor_candidates(self, meeting: Meeting) -> list[ParticipantActorData]:

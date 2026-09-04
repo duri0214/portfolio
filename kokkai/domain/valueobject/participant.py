@@ -117,6 +117,22 @@ class ParticipantData:
 
 
 @dataclass(frozen=True)
+class ParticipantSummaryData:
+    """
+    会議単位で集計した参加者数。出席者と発言者は別の集合として扱う。
+
+    Attributes:
+        participant_count: 出席者と発言者を正規化氏名で統合した人数。
+        attendance_count: 会議録情報の出席者一覧に載る、重複排除後の人数。
+        speaker_count: 発言記録に載る、同名を重複排除した発言者数。
+    """
+
+    participant_count: int
+    attendance_count: int
+    speaker_count: int
+
+
+@dataclass(frozen=True)
 class ParticipantActorData:
     """
     シナリオのアクター候補として利用する参加者の読み取り値。
