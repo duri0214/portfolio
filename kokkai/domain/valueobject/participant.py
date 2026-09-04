@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass, field
 from enum import StrEnum
 
@@ -9,12 +10,15 @@ class ParticipantSourceType(StrEnum):
     SPEECH = "speech"
 
 
+_ROLE_ANNOTATION_PATTERN = re.compile(r"[（(][^）)]*[）)]")
+
+
 def join_roles(*roles: str | None) -> str:
     """重複を除いた役職を表示用の文字列へまとめる。"""
 
     unique_roles: list[str] = []
     for role in roles:
-        normalized = (role or "").strip()
+        normalized = _ROLE_ANNOTATION_PATTERN.sub("", role or "").strip()
         if normalized and normalized not in unique_roles:
             unique_roles.append(normalized)
     return " / ".join(unique_roles)

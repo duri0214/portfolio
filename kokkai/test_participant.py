@@ -251,11 +251,27 @@ class MeetingParticipantExtractorTests(SimpleTestCase):
         self.assertEqual(participant.name, "城内実")
         self.assertEqual(
             participant.attendance_position,
-            "国務大臣 / 日本成長戦略担当 / 経済財政政策担当",
+            "国務大臣",
         )
-        self.assertEqual(
-            participant.role, "国務大臣 / 日本成長戦略担当 / 経済財政政策担当"
+        self.assertEqual(participant.role, "国務大臣")
+
+    def test_omits_parenthetical_details_from_speech_position(self):
+        record = participant_meeting_record()
+        metadata = replace(
+            record.speech_records[0],
+            speech="出席委員\n委員長　坂本　哲志君\n",
         )
+        chair_speech = replace(
+            record.speech_records[1],
+            speaker="坂本哲志",
+            speaker_position="内閣府特命担当大臣（経済財政政策・規制改革）",
+            speaker_role=None,
+        )
+        record = replace(record, speech_records=[metadata, chair_speech])
+
+        chair = MeetingParticipantExtractor().extract(record)[0]
+
+        self.assertEqual(chair.role, "委員長 / 内閣府特命担当大臣")
 
     def test_displays_attendance_and_speech_positions_together(self):
         record = participant_meeting_record()

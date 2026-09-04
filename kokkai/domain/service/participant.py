@@ -11,7 +11,6 @@ from ..valueobject.participant import (
     ParticipantEvidenceData,
     ParticipantExtractionData,
     ParticipantSourceType,
-    join_roles,
 )
 
 
@@ -155,7 +154,6 @@ class MeetingParticipantExtractor:
 
         entries: list[ParticipantExtractionData] = []
         inherited_position = ""
-        pending_annotation = ""
         is_attendance_section = False
         for raw_line in metadata_speech.speech.splitlines():
             line = raw_line.strip()
@@ -168,21 +166,16 @@ class MeetingParticipantExtractor:
                     continue
                 is_attendance_section = True
             line_entries = self._parse_attendance_line(
-                line, metadata_speech, inherited_position, pending_annotation
+                line, metadata_speech, inherited_position
             )
             entries.extend(line_entries)
             if line_entries:
-                pending_annotation = ""
                 continue
 
             if line.startswith(("（", "(")):
-                pending_annotation = join_roles(
-                    pending_annotation, self._attendance_position(line)
-                )
                 continue
             position = self._attendance_position(line)
             inherited_position = position if position.endswith("臣") else ""
-            pending_annotation = ""
         return entries
 
     @staticmethod
@@ -190,7 +183,6 @@ class MeetingParticipantExtractor:
         line: str,
         metadata_speech: SpeechRecord,
         inherited_position: str = "",
-        pending_annotation: str = "",
     ) -> list[ParticipantExtractionData]:
         entries: list[ParticipantExtractionData] = []
         previous_end = 0
@@ -199,12 +191,8 @@ class MeetingParticipantExtractor:
             name = MeetingParticipantExtractor._attendance_name(token)
             if name:
                 position = MeetingParticipantExtractor._attendance_position(token)
-                if token.lstrip().startswith(("（", "(")):
-                    position = join_roles(
-                        inherited_position, pending_annotation, position
-                    )
-                elif not position:
-                    position = join_roles(inherited_position, pending_annotation)
+                if token.lstrip().startswith(("（", "(")) or not position:
+                    position = inherited_position
                 entries.append(
                     ParticipantExtractionData(
                         name=name,
