@@ -4,10 +4,20 @@ from django.db import transaction
 
 from ...models import Meeting, Speech
 from ..valueobject.meeting import MeetingCatalogRecord, MeetingRecord, SpeechRecord
+from ..valueobject.participant import ParticipantData
+from .participant_repository import MeetingParticipantRepository
 
 
 class MeetingRepository:
     """会議録メタデータと発言の永続化を担当する。"""
+
+    def __init__(
+        self,
+        participant_repository: MeetingParticipantRepository | None = None,
+    ) -> None:
+        self.participant_repository = (
+            participant_repository or MeetingParticipantRepository()
+        )
 
     def rebuild_meetings(self, records: Iterable[MeetingCatalogRecord]) -> int:
         """
@@ -39,8 +49,9 @@ class MeetingRepository:
         self,
         record: MeetingRecord,
         speeches: Iterable[tuple[SpeechRecord, int]],
+        participants: Iterable[ParticipantData] = (),
     ) -> Meeting:
-        """選択された会議録だけの本文と発言を更新する。"""
+        """選択された会議録の本文・発言・参加者を更新する。"""
         with transaction.atomic():
             meeting, created = Meeting.objects.update_or_create(
                 min_id=record.issue_id,
@@ -70,4 +81,5 @@ class MeetingRepository:
                     for speech, speech_order in speeches
                 ]
             )
+            self.participant_repository.refresh_for_meeting(meeting, participants)
         return meeting

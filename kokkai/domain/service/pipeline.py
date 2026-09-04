@@ -6,6 +6,7 @@ from ..valueobject.meeting import (
     MeetingRecord,
 )
 from .kokkai_api import KokkaiAPIClient
+from .participant import MeetingParticipantExtractor
 
 
 class KokkaiPipeline:
@@ -20,9 +21,13 @@ class KokkaiPipeline:
         self,
         client: KokkaiAPIClient | None = None,
         repository: MeetingRepository | None = None,
+        participant_extractor: MeetingParticipantExtractor | None = None,
     ) -> None:
         self.client = client or KokkaiAPIClient()
         self.repository = repository or MeetingRepository()
+        self.participant_extractor = (
+            participant_extractor or MeetingParticipantExtractor()
+        )
 
     def process_and_save_meetings(self, start_date: date, end_date: date):
         """互換性のため、指定期間の会議録本文をすべて取得・保存する。"""
@@ -81,4 +86,5 @@ class KokkaiPipeline:
             if not speech.speech or speech.speaker == MEETING_METADATA_SPEAKER_NAME:
                 continue
             speeches.append((speech, speech.speech_order))
-        self.repository.replace_meeting_contents(a_meeting, speeches)
+        participants = self.participant_extractor.extract(a_meeting)
+        self.repository.replace_meeting_contents(a_meeting, speeches, participants)

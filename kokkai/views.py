@@ -10,6 +10,7 @@ from django.views.generic import DetailView, ListView
 from .domain.repository.scenario_repository import ScenarioRepository
 from .domain.service.meeting_catalog import MeetingCatalogService
 from .domain.service.pipeline import KokkaiPipeline
+from .domain.service.participant_query import ParticipantQueryService
 from .domain.service.scenario import ScenarioGenerationError, ScenarioService
 from .domain.service.scenario_play import ScenarioPlayError, ScenarioPlayService
 from .domain.valueobject.meeting import MEETING_METADATA_SPEAKER_NAME
@@ -146,6 +147,14 @@ class MeetingDetailView(DetailView):
             speaker_name=MEETING_METADATA_SPEAKER_NAME
         ).order_by("speech_order", "pk")
         context["has_speeches"] = context["speeches"].exists()
+        participant_service = ParticipantQueryService()
+        context["participants"] = participant_service.list_participants(self.object)
+        context["participant_summary"] = participant_service.get_participant_summary(
+            self.object
+        )
+        context["has_participants"] = (
+            context["participant_summary"].attendance_count > 0
+        )
         availability = ScenarioService().get_availability(self.object)
         context["scenario"] = availability.scenario
         context["scenario_needs_regeneration"] = availability.needs_regeneration

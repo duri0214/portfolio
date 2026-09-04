@@ -2,6 +2,8 @@ import uuid
 
 from django.db import models
 
+from .domain.valueobject.participant import join_roles
+
 
 class Meeting(models.Model):
     """
@@ -67,6 +69,107 @@ class Speech(models.Model):
     speech_order = models.IntegerField("発言順")
     source_url = models.URLField("発言URL", blank=True)
     created_at = models.DateTimeField("作成日時", auto_now_add=True)
+
+
+class MeetingParticipant(models.Model):
+    """
+    会議録の出席者を母集団とし、発言情報を付加した会議参加者。
+
+    Attributes:
+        meeting: 所属する会議録。
+        display_order: 会議録の出席者欄を基準にした表示順。
+        name: 敬称と空白を除去した正規化氏名。
+        name_yomi: 公式 API が返す氏名のよみ。
+        speaker_position: 発言時の肩書き。
+        speaker_role: 発言時の役割。
+        affiliation: 発言時の所属会派。
+        has_spoken: 発言記録が1件以上あるかどうか。
+        speech_count: 発言記録の件数。
+        source_meeting_id: 抽出元の公式会議録 ID。
+        source_url: 抽出元の公式会議録 URL。
+        source_text: 参加者に最初に紐づいた抽出元テキスト。
+        created_at: 登録日時。
+        updated_at: 更新日時。
+    """
+
+    meeting = models.ForeignKey(
+        Meeting,
+        on_delete=models.CASCADE,
+        related_name="participants",
+        verbose_name="会議録",
+    )
+    display_order = models.PositiveIntegerField("表示順")
+    name = models.CharField("氏名", max_length=128)
+    name_yomi = models.CharField("氏名よみ", max_length=128, blank=True)
+    speaker_position = models.CharField("発言時の肩書き", max_length=128, blank=True)
+    speaker_role = models.CharField("発言時の役割", max_length=128, blank=True)
+    affiliation = models.CharField("発言時の所属", max_length=128, blank=True)
+    has_spoken = models.BooleanField("発言有無", default=False)
+    speech_count = models.PositiveIntegerField("発言数", default=0)
+    source_meeting_id = models.CharField("根拠会議録ID", max_length=64)
+    source_url = models.URLField("根拠会議録URL", blank=True)
+    source_text = models.TextField("抽出元テキスト", blank=True)
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["meeting", "name"], name="unique_meeting_participant_name"
+            )
+        ]
+        ordering = ["display_order", "pk"]
+
+    @property
+    def role(self) -> str:
+        """構造化された発言時の役職を表示する。"""
+
+        return join_roles(self.speaker_position, self.speaker_role)
+
+
+class MeetingParticipantEvidence(models.Model):
+    """
+    参加者を公式会議録の出席欄または発言へ追跡する根拠。
+
+    Attributes:
+        participant: 根拠が示す会議参加者。
+        source_type: 出席者一覧または発言記録の種別。
+        source_meeting_id: 公式 API の会議録 ID。
+        source_speech_id: 公式 API の発言 ID。
+        source_url: 会議録または発言の公式 URL。
+        source_text: 参加者抽出に使った元テキスト。
+        speech_order: 発言記録の発言順。出席者一覧では0番。
+        speaker_position: 発言時の肩書き。
+        speaker_role: 発言時の役割。
+        affiliation: 発言時の所属会派。
+        created_at: 登録日時。
+    """
+
+    class SourceType(models.TextChoices):
+        ATTENDANCE = "attendance", "出席者一覧"
+        SPEECH = "speech", "発言記録"
+
+    participant = models.ForeignKey(
+        MeetingParticipant,
+        on_delete=models.CASCADE,
+        related_name="evidences",
+        verbose_name="会議参加者",
+    )
+    source_type = models.CharField(
+        "根拠種別", max_length=16, choices=SourceType.choices
+    )
+    source_meeting_id = models.CharField("根拠会議録ID", max_length=64)
+    source_speech_id = models.CharField("根拠発言ID", max_length=64, blank=True)
+    source_url = models.URLField("根拠URL", blank=True)
+    source_text = models.TextField("抽出元テキスト")
+    speech_order = models.PositiveIntegerField("発言順", null=True, blank=True)
+    speaker_position = models.CharField("発言時の肩書き", max_length=128, blank=True)
+    speaker_role = models.CharField("発言時の役割", max_length=128, blank=True)
+    affiliation = models.CharField("発言時の所属", max_length=128, blank=True)
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+
+    class Meta:
+        ordering = ["source_type", "speech_order", "pk"]
 
 
 class MeetingScenario(models.Model):
