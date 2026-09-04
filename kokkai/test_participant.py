@@ -219,6 +219,20 @@ class MeetingParticipantExtractorTests(SimpleTestCase):
         self.assertEqual(chair.role, "委員長")
         self.assertEqual(chair.evidences[0].speaker_position, "委員長")
 
+    def test_preserves_surnames_when_multiple_attendees_share_a_line(self):
+        record = participant_meeting_record()
+        metadata = replace(
+            record.speech_records[0],
+            speech="出席委員\n東　徹君　福田　徹君\n",
+        )
+        record = replace(record, speech_records=[metadata])
+
+        participants = MeetingParticipantExtractor().extract(record)
+
+        self.assertEqual(
+            [participant.name for participant in participants], ["東徹", "福田徹"]
+        )
+
     def test_displays_attendance_and_speech_positions_together(self):
         record = participant_meeting_record()
         metadata = replace(

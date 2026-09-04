@@ -212,11 +212,14 @@ class MeetingParticipantExtractor:
         """出席欄の「君」直前の表記から氏名部分を取り出す。"""
 
         normalized = unicodedata.normalize("NFKC", value)
-        has_annotation = bool(re.search(r"[（(][^）)]*[）)]", normalized))
-        normalized = re.sub(r"[（(][^）)]*[）)]", "", normalized).strip()
-        if has_annotation:
-            return normalize_person_name(normalized)
-        return normalize_person_name(re.split(r"[\s　]+", normalized, maxsplit=1)[-1])
+        annotation = re.match(r"^[\s　]*[（(][^）)]*[）)][\s　]*", normalized)
+        if annotation:
+            normalized = normalized[annotation.end() :]
+        else:
+            parts = re.split(r"[\s　]+", normalized.strip(), maxsplit=1)
+            if len(parts) > 1 and parts[0].endswith(_ATTENDANCE_POSITION_SUFFIXES):
+                normalized = parts[1]
+        return normalize_person_name(normalized)
 
     @staticmethod
     def _add_evidence(
