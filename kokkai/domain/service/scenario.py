@@ -29,6 +29,10 @@ class ScenarioGenerationError(Exception):
         self.status_code = status_code
 
 
+class InvalidScenarioChoiceError(ScenarioGenerationError):
+    """選択肢がプレイヤーの返答ではなく質問形式になっている場合のエラー。"""
+
+
 class ScenarioGenerator(Protocol):
     """構造化された会議録からシナリオJSONを生成する境界。"""
 
@@ -148,6 +152,7 @@ class OpenAIScenarioGenerator:
                         "プレイヤーは actor の立場で、preceding_speech に対して返答します。"
                         "preceding_speech が質問や依頼なら、選択肢は actor の回答にしてください。"
                         "その場合、質問を質問で返したり、相手に問いかける文にしたりしないでください。"
+                        "選択肢は説明・主張・提案で終わらせ、疑問符（？/?）や「ですか」「ますか」などの疑問形を使わないでください。"
                         "reference_speech は actor が実際に行った元発言で、正解の内容を判断するための"
                         "非表示の根拠です。reference_speech 自体への返答ではなく、actor が"
                         "preceding_speech に返す発言を作ってください。"
@@ -289,7 +294,7 @@ class ScenarioService:
 
     # シナリオ本体は変更せず、遅延生成する選択肢のプロンプトだけを更新する。
     PROMPT_VERSION = "meeting-simulation-v2"
-    CHOICE_PROMPT_VERSION = "meeting-simulation-v4"
+    CHOICE_PROMPT_VERSION = "meeting-simulation-v5"
     SOURCE_CHUNK_CHARACTERS = 12_000
     RESULT_SUCCESS_LABEL = "議事録に沿った回答でした"
     RESULT_FAILURE_LABEL = "議事録どおりにはなりませんでした"
@@ -469,10 +474,15 @@ class ScenarioService:
                 raise ScenarioGenerationError(
                     "The choice generator returned an invalid choice."
                 )
+            text = str(choice["text"]).strip()
+            if ScenarioService._is_question_text(text):
+                raise InvalidScenarioChoiceError(
+                    "The choice generator returned a question instead of a reply."
+                )
             choices.append(
                 ScenarioChoiceData(
                     choice_number=choice_number,
-                    text=str(choice["text"]).strip(),
+                    text=text,
                     is_correct=bool(choice.get("is_correct")),
                     rationale=str(choice.get("rationale", "")).strip(),
                 )
@@ -492,6 +502,17 @@ class ScenarioService:
         return tuple(
             replace(choice, choice_number=choice_number)
             for choice_number, choice in enumerate(choices, start=1)
+        )
+
+    @staticmethod
+    def _is_question_text(text: str) -> bool:
+        normalized = text.strip().rstrip("。.!！?？")
+        return (
+            "?" in text
+            or "？" in text
+            or normalized.endswith(
+                ("ですか", "ますか", "ませんか", "でしょうか", "だろうか")
+            )
         )
 
     @staticmethod

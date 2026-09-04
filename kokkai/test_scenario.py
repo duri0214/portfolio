@@ -63,6 +63,36 @@ class FakeScenarioGenerator:
         }
 
 
+class QuestionThenValidScenarioGenerator(FakeScenarioGenerator):
+    """Returns an invalid question once, then a valid reply for retry coverage."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.return_question = True
+
+    def generate_choices(self, meeting, actor, speech, overview, preceding_speech=None):
+        if not self.return_question:
+            return super().generate_choices(
+                meeting, actor, speech, overview, preceding_speech
+            )
+        self.return_question = False
+        self.choice_calls.append((meeting, actor, speech, overview, preceding_speech))
+        return {
+            "choices": [
+                {
+                    "text": "What do you think?",
+                    "is_correct": False,
+                    "rationale": "stale question",
+                },
+                {
+                    "text": "具体的な施策を説明します。",
+                    "is_correct": True,
+                    "rationale": "valid reply",
+                },
+            ]
+        }
+
+
 class InvalidScoreScenarioGenerator(FakeScenarioGenerator):
     """数値ではない合格点を返すテスト用ジェネレーター。"""
 
@@ -201,6 +231,7 @@ class OpenAIScenarioGeneratorTests(SimpleTestCase):
         ]
         self.assertIn("質問や依頼なら、選択肢は actor の回答", system_content)
         self.assertIn("質問を質問で返したり", system_content)
+        self.assertIn("疑問符", system_content)
 
     def test_openai_request_error_is_converted_to_scenario_generation_error(self):
         """
@@ -711,6 +742,33 @@ class ScenarioGameViewTests(TestCase):
         self.assertContains(response, "nextButton.disabled = true;")
         self.assertContains(response, 'actionInput.name = "action";')
         self.assertContains(response, "actionInput.value = nextButton.value;")
+
+    def test_game_does_not_display_a_question_choice_after_retrying_generation(self):
+        """
+        Scenario:
+        - Given: 初回の選択肢生成が質問形式を返すプレイヤーターン
+        - When: ゲーム画面を開いて選択肢を準備する
+        - Then: 質問形式を破棄して再生成した返答形式だけを表示する
+        """
+        play = ScenarioPlay.objects.create(
+            scenario=self.scenario,
+            selected_actor=self.player_actor,
+            next_turn_number=2,
+        )
+        generator = QuestionThenValidScenarioGenerator()
+
+        with patch(
+            "kokkai.domain.service.scenario_play.OpenAIScenarioGenerator",
+            return_value=generator,
+        ):
+            response = self.client.get(
+                reverse("kokkai:scenario_game", args=[play.play_id])
+            )
+
+        self.assertContains(response, "choice-deck")
+        self.assertNotContains(response, "What do you think?")
+        self.assertEqual(len(generator.choice_calls), 2)
+        self.assertEqual(ScenarioChoice.objects.filter(play=play).count(), 2)
 
     def test_result_page_replaces_legacy_policy_outcome_label_with_neutral_score(self):
         """

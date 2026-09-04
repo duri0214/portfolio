@@ -5,6 +5,7 @@ from ...models import MeetingScenario, ScenarioChoice, ScenarioPlay, ScenarioTur
 from ..repository.scenario_repository import ScenarioRepository
 from ..valueobject.scenario import ScenarioActorData
 from .scenario import (
+    InvalidScenarioChoiceError,
     OpenAIScenarioGenerator,
     ScenarioGenerationError,
     ScenarioGenerator,
@@ -160,20 +161,30 @@ class ScenarioPlayService:
             if turn.turn_number > 1
             else None
         )
-        generated = self.generator.generate_choices(
-            play.scenario.meeting,
-            actor,
-            turn.evidence_speech,
-            overview,
-            preceding_speech=(
-                preceding_turn.evidence_speech if preceding_turn else None
-            ),
-        )
-        choices = ScenarioService.normalize_choices(
-            generated,
-            actor.key,
-            turn.evidence_speech.speech_order,
-        )
+
+        def generate_choices():
+            return self.generator.generate_choices(
+                play.scenario.meeting,
+                actor,
+                turn.evidence_speech,
+                overview,
+                preceding_speech=(
+                    preceding_turn.evidence_speech if preceding_turn else None
+                ),
+            )
+
+        try:
+            choices = ScenarioService.normalize_choices(
+                generate_choices(),
+                actor.key,
+                turn.evidence_speech.speech_order,
+            )
+        except InvalidScenarioChoiceError:
+            choices = ScenarioService.normalize_choices(
+                generate_choices(),
+                actor.key,
+                turn.evidence_speech.speech_order,
+            )
         self.repository.create_turn_choices(
             play, turn, choices, ScenarioService.CHOICE_PROMPT_VERSION
         )
