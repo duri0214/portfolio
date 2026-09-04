@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.views.generic import DetailView, ListView
 
 from .domain.repository.scenario_repository import ScenarioRepository
-from .domain.service.meeting_index import MeetingIndexService
+from .domain.service.meeting_catalog import MeetingCatalogService
 from .domain.service.pipeline import KokkaiPipeline
 from .domain.service.scenario import ScenarioGenerationError, ScenarioService
 from .domain.service.scenario_play import ScenarioPlayError, ScenarioPlayService
@@ -74,9 +74,11 @@ class IndexView(ListView):
             return redirect("kokkai:index")
 
         action = request.POST.get("action")
-        if action == "create_index":
-            indexed_count = MeetingIndexService().create_index(start_date, end_date)
-            if not indexed_count:
+        if action == "rebuild_meeting_catalog":
+            catalog_count = MeetingCatalogService().rebuild_meeting_catalog(
+                start_date, end_date
+            )
+            if not catalog_count:
                 messages.info(
                     request,
                     "指定期間に議事録はありません。期間を変更して再度お試しください。",

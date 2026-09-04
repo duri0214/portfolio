@@ -7,11 +7,11 @@ from django.urls import reverse
 
 from kokkai.domain.repository.meeting_repository import MeetingRepository
 from kokkai.domain.service.kokkai_api import KokkaiAPIClient
-from kokkai.domain.service.meeting_index import MeetingIndexService
+from kokkai.domain.service.meeting_catalog import MeetingCatalogService
 from kokkai.domain.service.pipeline import KokkaiPipeline
 from kokkai.domain.valueobject.meeting import (
-    MeetingIndexRecord,
-    MeetingIndexSearchResult,
+    MeetingCatalogRecord,
+    MeetingCatalogSearchResult,
     MeetingRecord,
     MeetingSearchResult,
     SpeechRecord,
@@ -28,8 +28,10 @@ from kokkai.models import (
 )
 
 
-def meeting_index_record(issue_id: str = "121305254X00120240126") -> MeetingIndexRecord:
-    return MeetingIndexRecord(
+def meeting_catalog_record(
+    issue_id: str = "121305254X00120240126",
+) -> MeetingCatalogRecord:
+    return MeetingCatalogRecord(
         issue_id=issue_id,
         image_kind="会議録",
         search_object=0,
@@ -77,12 +79,12 @@ def meeting_record(issue_id: str = "121305254X00120240126") -> MeetingRecord:
 
 class KokkaiAPIClientTests(SimpleTestCase):
     @patch("kokkai.domain.service.kokkai_api.requests.get")
-    def test_search_meeting_indexes_uses_lightweight_endpoint(self, mock_get):
+    def test_search_meeting_catalog_uses_lightweight_endpoint(self, mock_get):
         """
         シナリオ:
         - 入力: 1件の会議録メタデータを返す会議単位簡易出力API。
-        - 処理: 指定期間で search_meeting_indexes を呼び出す。
-        - 期待値: meeting_list を最大100件の設定で呼び、発言本文を持たない索引値を返すこと。
+        - 処理: 指定期間で search_meeting_catalog を呼び出す。
+        - 期待値: meeting_list を最大100件の設定で呼び、発言本文を持たないカタログ値を返すこと。
         """
         mock_response = Mock()
         mock_response.json.return_value = {
@@ -108,12 +110,12 @@ class KokkaiAPIClientTests(SimpleTestCase):
         }
         mock_get.return_value = mock_response
 
-        result = KokkaiAPIClient().search_meeting_indexes(
+        result = KokkaiAPIClient().search_meeting_catalog(
             date(2024, 1, 26), date(2024, 1, 26)
         )
 
         self.assertEqual(result.number_of_records, 1)
-        self.assertEqual(result.meeting_index_records, [meeting_index_record()])
+        self.assertEqual(result.meeting_catalog_records, [meeting_catalog_record()])
         mock_get.assert_called_once_with(
             KokkaiAPIClient.MEETING_LIST_URL,
             params={
@@ -127,32 +129,34 @@ class KokkaiAPIClientTests(SimpleTestCase):
         )
 
 
-class MeetingIndexServiceTests(SimpleTestCase):
-    @patch("kokkai.domain.service.meeting_index.sleep")
-    def test_create_index_saves_all_pages_without_content_import(self, mock_sleep):
+class MeetingCatalogServiceTests(SimpleTestCase):
+    @patch("kokkai.domain.service.meeting_catalog.sleep")
+    def test_rebuild_meeting_catalog_saves_all_pages_without_content_import(
+        self, mock_sleep
+    ):
         """
         シナリオ:
         - 入力: 2ページに分かれた会議録メタデータとモックのリポジトリ。
-        - 処理: create_index を呼び出す。
+        - 処理: rebuild_meeting_catalog を呼び出す。
         - 期待値: 全ページのメタデータだけを保存し、保存件数2を返すこと。
         """
-        first_record = meeting_index_record()
-        second_record = meeting_index_record("121305254X00220240126")
+        first_record = meeting_catalog_record()
+        second_record = meeting_catalog_record("121305254X00220240126")
         client = Mock()
-        client.search_meeting_indexes.side_effect = [
-            MeetingIndexSearchResult(2, 1, 1, 2, [first_record]),
-            MeetingIndexSearchResult(2, 1, 2, None, [second_record]),
+        client.search_meeting_catalog.side_effect = [
+            MeetingCatalogSearchResult(2, 1, 1, 2, [first_record]),
+            MeetingCatalogSearchResult(2, 1, 2, None, [second_record]),
         ]
         repository = Mock()
         repository.rebuild_meetings.return_value = 2
 
-        indexed_count = MeetingIndexService(client, repository).create_index(
-            date(2024, 1, 26), date(2024, 1, 26)
-        )
+        catalog_count = MeetingCatalogService(
+            client, repository
+        ).rebuild_meeting_catalog(date(2024, 1, 26), date(2024, 1, 26))
 
-        self.assertEqual(indexed_count, 2)
+        self.assertEqual(catalog_count, 2)
         self.assertEqual(
-            client.search_meeting_indexes.call_args_list,
+            client.search_meeting_catalog.call_args_list,
             [
                 call(date(2024, 1, 26), date(2024, 1, 26), 1),
                 call(date(2024, 1, 26), date(2024, 1, 26), 2),
@@ -163,30 +167,34 @@ class MeetingIndexServiceTests(SimpleTestCase):
         )
         client.fetch_meeting.assert_not_called()
         client.search_meetings.assert_not_called()
-        mock_sleep.assert_called_once_with(MeetingIndexService.REQUEST_INTERVAL_SECONDS)
+        mock_sleep.assert_called_once_with(
+            MeetingCatalogService.REQUEST_INTERVAL_SECONDS
+        )
 
-    @patch("kokkai.domain.service.meeting_index.sleep")
-    def test_create_index_stops_when_page_position_does_not_advance(self, mock_sleep):
+    @patch("kokkai.domain.service.meeting_catalog.sleep")
+    def test_rebuild_meeting_catalog_stops_when_page_position_does_not_advance(
+        self, mock_sleep
+    ):
         """
         シナリオ:
         - 入力: 次ページ位置が現在位置と同じ会議録メタデータAPI。
-        - 処理: create_index を呼び出す。
+        - 処理: rebuild_meeting_catalog を呼び出す。
         - 期待値: 同じページを再取得せず、保存して終了すること。
         """
-        record = meeting_index_record()
+        record = meeting_catalog_record()
         client = Mock()
-        client.search_meeting_indexes.return_value = MeetingIndexSearchResult(
+        client.search_meeting_catalog.return_value = MeetingCatalogSearchResult(
             1, 1, 1, 1, [record]
         )
         repository = Mock()
         repository.rebuild_meetings.return_value = 1
 
-        indexed_count = MeetingIndexService(client, repository).create_index(
-            date(2024, 1, 26), date(2024, 1, 26)
-        )
+        catalog_count = MeetingCatalogService(
+            client, repository
+        ).rebuild_meeting_catalog(date(2024, 1, 26), date(2024, 1, 26))
 
-        self.assertEqual(indexed_count, 1)
-        client.search_meeting_indexes.assert_called_once_with(
+        self.assertEqual(catalog_count, 1)
+        client.search_meeting_catalog.assert_called_once_with(
             date(2024, 1, 26), date(2024, 1, 26), 1
         )
         repository.rebuild_meetings.assert_called_once_with([record])
@@ -217,11 +225,11 @@ class MeetingRepositoryTests(TestCase):
             speech_order=1,
         )
 
-        indexed_count = MeetingRepository().rebuild_meetings([meeting_index_record()])
+        catalog_count = MeetingRepository().rebuild_meetings([meeting_catalog_record()])
 
-        self.assertEqual(indexed_count, 1)
+        self.assertEqual(catalog_count, 1)
         self.assertEqual(Meeting.objects.count(), 1)
-        new_meeting = Meeting.objects.get(min_id=meeting_index_record().issue_id)
+        new_meeting = Meeting.objects.get(min_id=meeting_catalog_record().issue_id)
         self.assertEqual(new_meeting.meeting_date, date(2024, 1, 26))
         self.assertEqual(new_meeting.committee, "本会議")
         self.assertFalse(Speech.objects.filter(pk=speech.pk).exists())
@@ -243,9 +251,9 @@ class MeetingRepositoryTests(TestCase):
             url="https://example.com/old",
         )
 
-        indexed_count = MeetingRepository().rebuild_meetings([])
+        catalog_count = MeetingRepository().rebuild_meetings([])
 
-        self.assertEqual(indexed_count, 0)
+        self.assertEqual(catalog_count, 0)
         self.assertFalse(Meeting.objects.filter(pk=meeting.pk).exists())
         self.assertEqual(Meeting.objects.count(), 0)
 
@@ -623,20 +631,22 @@ class IndexViewTests(TestCase):
         )
         self.assertEqual(sixty_page.context["paginator"].per_page, 60)
 
-    @patch("kokkai.views.MeetingIndexService")
-    def test_create_index_with_no_results_shows_period_guidance(self, service_class):
+    @patch("kokkai.views.MeetingCatalogService")
+    def test_rebuild_meeting_catalog_with_no_results_shows_period_guidance(
+        self, service_class
+    ):
         """
         シナリオ:
-        - 入力: 指定期間の索引作成が0件を返す画面リクエスト。
-        - 処理: 索引作成フォームを送信する。
+        - 入力: 指定期間のカタログ再構築が0件を返す画面リクエスト。
+        - 処理: カタログ再構築フォームを送信する。
         - 期待値: 全文取得処理を行わず、期間変更を案内するメッセージを表示すること。
         """
-        service_class.return_value.create_index.return_value = 0
+        service_class.return_value.rebuild_meeting_catalog.return_value = 0
 
         response = self.client.post(
             reverse("kokkai:index"),
             {
-                "action": "create_index",
+                "action": "rebuild_meeting_catalog",
                 "start_date": "2024-01-01",
                 "end_date": "2024-01-01",
             },
@@ -646,32 +656,34 @@ class IndexViewTests(TestCase):
         self.assertContains(
             response, "指定期間に議事録はありません。期間を変更して再度お試しください。"
         )
-        service_class.return_value.create_index.assert_called_once_with(
+        service_class.return_value.rebuild_meeting_catalog.assert_called_once_with(
             date(2024, 1, 1), date(2024, 1, 1)
         )
 
-    @patch("kokkai.views.MeetingIndexService")
-    def test_create_index_success_does_not_show_completion_flash(self, service_class):
+    @patch("kokkai.views.MeetingCatalogService")
+    def test_rebuild_meeting_catalog_success_does_not_show_completion_flash(
+        self, service_class
+    ):
         """
         シナリオ:
-        - 入力: 指定期間の索引作成が674件を返す画面リクエスト。
-        - 処理: 索引作成フォームを送信する。
+        - 入力: 指定期間のカタログ再構築が674件を返す画面リクエスト。
+        - 処理: カタログ再構築フォームを送信する。
         - 期待値: 完了件数のフラッシュメッセージを表示せず、一覧だけを更新すること。
         """
-        service_class.return_value.create_index.return_value = 674
+        service_class.return_value.rebuild_meeting_catalog.return_value = 674
 
         response = self.client.post(
             reverse("kokkai:index"),
             {
-                "action": "create_index",
+                "action": "rebuild_meeting_catalog",
                 "start_date": "2024-01-01",
                 "end_date": "2024-01-31",
             },
             follow=True,
         )
 
-        self.assertNotContains(response, "674件の会議録メタデータを索引化しました。")
-        service_class.return_value.create_index.assert_called_once_with(
+        self.assertNotContains(response, "674件の会議録カタログを再構築しました。")
+        service_class.return_value.rebuild_meeting_catalog.assert_called_once_with(
             date(2024, 1, 1), date(2024, 1, 31)
         )
 

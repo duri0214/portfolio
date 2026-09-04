@@ -12,7 +12,7 @@ class KokkaiPipeline:
     """
     選択された会議録の全文を発言単位で保存する。
 
-    会議録メタデータの索引化は MeetingIndexService が担当する。
+    会議録カタログの再構築は MeetingCatalogService が担当する。
     Embedding登録はシナリオ作成の主経路ではないため、この取り込みでは行わない。
     """
 
@@ -74,7 +74,7 @@ class KokkaiPipeline:
         """
         会議録1件の発言をDBへ保存する。
 
-        索引更新ではこのメソッドを呼ばないため、発言の置き換えは発生しない。
+        カタログ再構築ではこのメソッドを呼ばないため、発言の置き換えは発生しない。
         """
         speeches = []
         for speech in a_meeting.speech_records:

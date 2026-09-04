@@ -3,13 +3,13 @@ from collections.abc import Iterable
 from django.db import transaction
 
 from ...models import Meeting, Speech
-from ..valueobject.meeting import MeetingIndexRecord, MeetingRecord, SpeechRecord
+from ..valueobject.meeting import MeetingCatalogRecord, MeetingRecord, SpeechRecord
 
 
 class MeetingRepository:
     """会議録メタデータと発言の永続化を担当する。"""
 
-    def rebuild_meetings(self, records: Iterable[MeetingIndexRecord]) -> int:
+    def rebuild_meetings(self, records: Iterable[MeetingCatalogRecord]) -> int:
         """
         検索結果から会議録カタログを再構築する。
 

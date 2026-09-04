@@ -5,8 +5,8 @@ from ..repository.meeting_repository import MeetingRepository
 from .kokkai_api import KokkaiAPIClient
 
 
-class MeetingIndexService:
-    """会議本文を取得せず、指定期間の会議録メタデータだけを索引化する。"""
+class MeetingCatalogService:
+    """会議本文を取得せず、指定期間の会議録カタログを再構築する。"""
 
     REQUEST_INTERVAL_SECONDS = 2
 
@@ -18,16 +18,16 @@ class MeetingIndexService:
         self.client = client or KokkaiAPIClient()
         self.repository = repository or MeetingRepository()
 
-    def create_index(self, start_date: date, end_date: date) -> int:
-        """指定期間の全ページを取得し、保存した会議録メタデータ件数を返す。"""
+    def rebuild_meeting_catalog(self, start_date: date, end_date: date) -> int:
+        """指定期間の全ページを取得し、会議録カタログを再構築する。"""
         start_record: int | None = 1
         records = []
 
         while start_record is not None:
-            result = self.client.search_meeting_indexes(
+            result = self.client.search_meeting_catalog(
                 start_date, end_date, start_record
             )
-            records.extend(result.meeting_index_records)
+            records.extend(result.meeting_catalog_records)
 
             next_record_position = result.next_record_position
             if next_record_position and next_record_position > start_record:
