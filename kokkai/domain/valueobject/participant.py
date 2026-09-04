@@ -124,11 +124,15 @@ class ParticipantSummaryData:
     Attributes:
         participant_count: 出席者と発言者を正規化氏名で統合した人数。
         attendance_count: 会議録情報の出席者一覧に載る、重複排除後の人数。
+        committee_member_count: 「出席委員」欄に載る人数。委員長と理事を含む。
+        non_committee_attendance_count: 出席者一覧に載るが、出席委員ではない人数。
         speaker_count: 発言記録に載る、同名を重複排除した発言者数。
     """
 
     participant_count: int
     attendance_count: int
+    committee_member_count: int
+    non_committee_attendance_count: int
     speaker_count: int
 
 

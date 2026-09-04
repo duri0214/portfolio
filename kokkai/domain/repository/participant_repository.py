@@ -92,9 +92,19 @@ class MeetingParticipantRepository:
         attendance_participants = participants.filter(
             evidences__source_type=MeetingParticipantEvidence.SourceType.ATTENDANCE
         ).distinct()
+        committee_member_count = attendance_participants.filter(
+            attendance_type__in=(
+                MeetingParticipant.AttendanceType.CHAIR,
+                MeetingParticipant.AttendanceType.DIRECTOR,
+                MeetingParticipant.AttendanceType.COMMITTEE_MEMBER,
+            )
+        ).count()
+        attendance_count = attendance_participants.count()
         return ParticipantSummaryData(
             participant_count=participants.count(),
-            attendance_count=attendance_participants.count(),
+            attendance_count=attendance_count,
+            committee_member_count=committee_member_count,
+            non_committee_attendance_count=attendance_count - committee_member_count,
             speaker_count=participants.filter(has_spoken=True).count(),
         )
 

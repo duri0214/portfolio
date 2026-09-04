@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import date
 
 from django.test import SimpleTestCase, TestCase
@@ -157,6 +158,52 @@ class MeetingParticipantExtractorTests(SimpleTestCase):
             normalize_person_name("（内閣府政策統括官）　水野　敦君"), "水野敦"
         )
 
+    def test_normalizes_government_and_staff_titles_in_attendance_lines(self):
+        """
+        シナリオ:
+        - 入力: 大臣、国務大臣、国家公安委員会委員長、専門員の出席欄。
+        - 処理: 会議録参加者抽出サービスを実行する。
+        - 期待値: 肩書きを氏名へ混在させず、出席種別と役職を保持する。
+        """
+        record = participant_meeting_record()
+        metadata = record.speech_records[0]
+        metadata = replace(
+            metadata,
+            speech=metadata.speech.replace(
+                "　　　政府参考人\n",
+                "　　　内閣総理大臣　　　　　高市　早苗君\n"
+                "　　　総務大臣　　　　　　　林　　芳正君\n"
+                "　　　財務副大臣　　　　　　中谷　真一君\n"
+                "　　　国務大臣\n"
+                "　　　（国家公安委員会委員長）　あかま二郎君\n"
+                "　　　予算委員会専門員　　　　藤井　宏治君\n"
+                "　　　政府参考人\n",
+                1,
+            ),
+        )
+        record = replace(record, speech_records=[metadata, *record.speech_records[1:]])
+
+        participants = MeetingParticipantExtractor().extract(record)
+        participants_by_name = {
+            participant.name: participant for participant in participants
+        }
+
+        self.assertEqual(
+            participants_by_name["高市早苗"].attendance_type,
+            "government_official",
+        )
+        self.assertEqual(participants_by_name["林芳正"].attendance_role, "総務大臣")
+        self.assertEqual(
+            participants_by_name["中谷真一"].attendance_type,
+            "government_official",
+        )
+        self.assertEqual(
+            participants_by_name["あかま二郎"].attendance_role,
+            "国家公安委員会委員長",
+        )
+        self.assertEqual(participants_by_name["藤井宏治"].attendance_type, "staff")
+        self.assertNotIn("総務大臣林芳正", participants_by_name)
+
 
 class MeetingParticipantRepositoryTests(TestCase):
     def setUp(self):
@@ -237,6 +284,8 @@ class MeetingParticipantRepositoryTests(TestCase):
         summary = ParticipantQueryService().get_participant_summary(self.meeting)
 
         self.assertEqual(summary.attendance_count, 7)
+        self.assertEqual(summary.committee_member_count, 5)
+        self.assertEqual(summary.non_committee_attendance_count, 2)
         self.assertEqual(summary.speaker_count, 2)
         self.assertEqual(summary.participant_count, 8)
 
@@ -258,8 +307,10 @@ class MeetingParticipantRepositoryTests(TestCase):
         self.assertContains(response, "会議参加者")
         self.assertContains(response, "出席のみ")
         self.assertContains(response, "発言あり")
-        self.assertContains(response, "出席者数: 7人")
-        self.assertContains(response, "発言者数: 2人")
+        self.assertContains(response, "出席委員数: 5人")
+        self.assertContains(response, "その他出席者数: 2人")
+        self.assertContains(response, "出席者総数: 7人")
+        self.assertContains(response, "ユニーク発言者数: 2人")
         self.assertContains(response, "統合参加者数: 8人")
         self.assertContains(response, "会議録ID: 121305254X00120240126")
         self.assertContains(response, "出典")
