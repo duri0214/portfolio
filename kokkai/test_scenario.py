@@ -812,6 +812,52 @@ class ScenarioGameViewTests(TestCase):
             {ScenarioService.CHOICE_PROMPT_VERSION},
         )
 
+    def test_game_regenerates_choices_from_an_old_prompt_version(self):
+        """既存プレイの古いプロンプト版の選択肢を再利用しない。"""
+        play = ScenarioPlay.objects.create(
+            scenario=self.scenario,
+            selected_actor=self.player_actor,
+            next_turn_number=2,
+        )
+        ScenarioChoice.objects.create(
+            play=play,
+            turn=self.player_turn,
+            choice_number=1,
+            text="stale cached question?",
+            is_correct=False,
+            rationale="stale rationale",
+            prompt_version="meeting-simulation-v3",
+        )
+        ScenarioChoice.objects.create(
+            play=play,
+            turn=self.player_turn,
+            choice_number=2,
+            text="stale cached answer",
+            is_correct=True,
+            rationale="stale rationale",
+            prompt_version="meeting-simulation-v3",
+        )
+        game_url = reverse("kokkai:scenario_game", args=[play.play_id])
+        generator = FakeScenarioGenerator()
+
+        with patch(
+            "kokkai.domain.service.scenario_play.OpenAIScenarioGenerator",
+            return_value=generator,
+        ):
+            response = self.client.get(game_url)
+
+        self.assertContains(response, "choice-deck")
+        self.assertNotContains(response, "stale cached question?")
+        self.assertEqual(len(generator.choice_calls), 1)
+        self.assertEqual(
+            set(
+                ScenarioChoice.objects.filter(play=play).values_list(
+                    "prompt_version", flat=True
+                )
+            ),
+            {"meeting-simulation-v3", ScenarioService.CHOICE_PROMPT_VERSION},
+        )
+
     def test_game_can_skip_to_the_turn_before_player_turn(self):
         self.player_turn.turn_number = 3
         self.player_turn.save(update_fields=["turn_number"])

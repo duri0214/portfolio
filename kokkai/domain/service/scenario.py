@@ -289,7 +289,7 @@ class ScenarioService:
 
     # シナリオ本体は変更せず、遅延生成する選択肢のプロンプトだけを更新する。
     PROMPT_VERSION = "meeting-simulation-v2"
-    CHOICE_PROMPT_VERSION = "meeting-simulation-v3"
+    CHOICE_PROMPT_VERSION = "meeting-simulation-v4"
     SOURCE_CHUNK_CHARACTERS = 12_000
     RESULT_SUCCESS_LABEL = "議事録に沿った回答でした"
     RESULT_FAILURE_LABEL = "議事録どおりにはなりませんでした"
