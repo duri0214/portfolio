@@ -237,15 +237,25 @@ class MeetingParticipantExtractorTests(SimpleTestCase):
         record = participant_meeting_record()
         metadata = replace(
             record.speech_records[0],
-            speech="出席委員\n国務大臣\n（経済財政政策担当）　城内　実君\n",
+            speech=(
+                "出席委員\n"
+                "国務大臣\n"
+                "（日本成長戦略担当）\n"
+                "（経済財政政策担当）　城内　実君\n"
+            ),
         )
         record = replace(record, speech_records=[metadata])
 
         participant = MeetingParticipantExtractor().extract(record)[0]
 
         self.assertEqual(participant.name, "城内実")
-        self.assertEqual(participant.attendance_position, "国務大臣 / 経済財政政策担当")
-        self.assertEqual(participant.role, "国務大臣 / 経済財政政策担当")
+        self.assertEqual(
+            participant.attendance_position,
+            "国務大臣 / 日本成長戦略担当 / 経済財政政策担当",
+        )
+        self.assertEqual(
+            participant.role, "国務大臣 / 日本成長戦略担当 / 経済財政政策担当"
+        )
 
     def test_displays_attendance_and_speech_positions_together(self):
         record = participant_meeting_record()
