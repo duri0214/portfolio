@@ -80,7 +80,11 @@ class MeetingParticipantRepository:
         """会議の表示順で、根拠を先読みした参加者一覧を返す。"""
 
         return (
-            MeetingParticipant.objects.filter(meeting=meeting)
+            MeetingParticipant.objects.filter(
+                meeting=meeting,
+                evidences__source_type=MeetingParticipantEvidence.SourceType.ATTENDANCE,
+            )
+            .distinct()
             .prefetch_related("evidences")
             .order_by("-has_spoken", "-speech_count", "display_order", "pk")
         )
@@ -110,8 +114,13 @@ class MeetingParticipantRepository:
     def get_actor_candidates(self, meeting: Meeting) -> list[ParticipantActorData]:
         """発言者を優先した、シナリオ用アクター候補を返す。"""
 
-        participants = MeetingParticipant.objects.filter(meeting=meeting).order_by(
-            "-has_spoken", "-speech_count", "display_order", "pk"
+        participants = (
+            MeetingParticipant.objects.filter(
+                meeting=meeting,
+                evidences__source_type=MeetingParticipantEvidence.SourceType.ATTENDANCE,
+            )
+            .distinct()
+            .order_by("-has_spoken", "-speech_count", "display_order", "pk")
         )
         return [
             ParticipantActorData(
