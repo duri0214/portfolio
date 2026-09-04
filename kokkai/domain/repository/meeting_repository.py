@@ -23,10 +23,23 @@ class MeetingRepository:
                     "meeting_number": record.issue,
                     "url": record.meeting_url,
                     "pdf_url": record.pdf_url or "",
+                    "is_current_catalog": True,
                 },
             )
             meetings.append(meeting)
         return meetings
+
+    def replace_current_catalog(
+        self, records: Iterable[MeetingIndexRecord]
+    ) -> list[Meeting]:
+        """
+        会議録の現在カタログを検索結果で置き換える。
+
+        既存の会議録と発言は削除せず、一覧表示対象のフラグだけを切り替える。
+        """
+        with transaction.atomic():
+            Meeting.objects.update(is_current_catalog=False)
+            return self.upsert_indexes(records)
 
     def replace_meeting_contents(
         self,
