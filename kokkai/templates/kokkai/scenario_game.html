@@ -327,6 +327,12 @@
                 return;
             }
 
+            const actionInput = document.createElement("input");
+            actionInput.type = "hidden";
+            actionInput.name = "action";
+            actionInput.value = nextButton.value;
+            form.appendChild(actionInput);
+
             nextButton.disabled = true;
             nextButton.setAttribute("aria-busy", "true");
             const label = nextButton.textContent;

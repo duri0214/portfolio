@@ -709,6 +709,8 @@ class ScenarioGameViewTests(TestCase):
         self.assertContains(response, "data-next-turn-button")
         self.assertContains(response, "spinner-border spinner-border-sm me-2")
         self.assertContains(response, "nextButton.disabled = true;")
+        self.assertContains(response, 'actionInput.name = "action";')
+        self.assertContains(response, "actionInput.value = nextButton.value;")
 
     def test_result_page_replaces_legacy_policy_outcome_label_with_neutral_score(self):
         """
