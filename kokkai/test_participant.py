@@ -144,17 +144,12 @@ class MeetingParticipantExtractorTests(SimpleTestCase):
             ],
         )
         chair = participants[0]
-        self.assertEqual(chair.attendance_type, "chair")
-        self.assertEqual(chair.attendance_role, "委員長")
         self.assertTrue(chair.has_spoken)
         self.assertEqual(chair.speech_count, 2)
         self.assertEqual(chair.speaker_position, "委員長")
         self.assertEqual(chair.affiliation, "会派A")
-        self.assertEqual(participants[4].attendance_type, "committee_member")
         self.assertFalse(participants[4].has_spoken)
-        self.assertEqual(participants[5].attendance_type, "government_reference")
         self.assertFalse(participants[5].has_spoken)
-        self.assertEqual(participants[6].attendance_type, "government_reference")
         self.assertFalse(participants[6].has_spoken)
         self.assertTrue(participants[1].has_spoken)
         self.assertEqual(participants[1].speech_count, 1)
@@ -172,12 +167,12 @@ class MeetingParticipantExtractorTests(SimpleTestCase):
             normalize_person_name("（内閣府政策統括官）　水野　敦君"), "水野敦"
         )
 
-    def test_normalizes_government_and_staff_titles_in_attendance_lines(self):
+    def test_extracts_attendees_terminated_by_kun_without_role_rules(self):
         """
         シナリオ:
-        - 入力: 大臣、国務大臣、国家公安委員会委員長、専門員の出席欄。
+        - 入力: 様々な役職名を含む出席欄。
         - 処理: 会議録参加者抽出サービスを実行する。
-        - 期待値: 肩書きを氏名へ混在させず、出席種別と役職を保持する。
+        - 期待値: 役職の列挙なしに「君」で終わる出席者を抽出する。
         """
         record = participant_meeting_record()
         metadata = record.speech_records[0]
@@ -198,25 +193,10 @@ class MeetingParticipantExtractorTests(SimpleTestCase):
         record = replace(record, speech_records=[metadata, *record.speech_records[1:]])
 
         participants = MeetingParticipantExtractor().extract(record)
-        participants_by_name = {
-            participant.name: participant for participant in participants
-        }
-
-        self.assertEqual(
-            participants_by_name["高市早苗"].attendance_type,
-            "government_official",
+        self.assertTrue(
+            {"高市早苗", "林芳正", "中谷真一", "あかま二郎", "藤井宏治"}
+            <= {participant.name for participant in participants}
         )
-        self.assertEqual(participants_by_name["林芳正"].attendance_role, "総務大臣")
-        self.assertEqual(
-            participants_by_name["中谷真一"].attendance_type,
-            "government_official",
-        )
-        self.assertEqual(
-            participants_by_name["あかま二郎"].attendance_role,
-            "国家公安委員会委員長",
-        )
-        self.assertEqual(participants_by_name["藤井宏治"].attendance_type, "staff")
-        self.assertNotIn("総務大臣林芳正", participants_by_name)
 
 
 class MeetingParticipantRepositoryTests(TestCase):
@@ -234,7 +214,7 @@ class MeetingParticipantRepositoryTests(TestCase):
             participant_meeting_record()
         )
 
-    def test_replace_for_meeting_is_idempotent_and_preserves_evidence(self):
+    def test_refresh_for_meeting_is_idempotent_and_preserves_evidence(self):
         """
         シナリオ:
         - 入力: 同じ会議録から抽出した参加者一覧を2回保存する。
@@ -243,8 +223,8 @@ class MeetingParticipantRepositoryTests(TestCase):
         """
         repository = MeetingParticipantRepository()
 
-        repository.replace_for_meeting(self.meeting, self.participants)
-        repository.replace_for_meeting(self.meeting, self.participants)
+        repository.refresh_for_meeting(self.meeting, self.participants)
+        repository.refresh_for_meeting(self.meeting, self.participants)
 
         self.assertEqual(
             MeetingParticipant.objects.filter(meeting=self.meeting).count(), 7
@@ -271,7 +251,7 @@ class MeetingParticipantRepositoryTests(TestCase):
         - 処理: シナリオ連携用のアクター候補を取得する。
         - 期待値: 発言者を先に並べ、発言数の多い人物を優先する。
         """
-        MeetingParticipantRepository().replace_for_meeting(
+        MeetingParticipantRepository().refresh_for_meeting(
             self.meeting, self.participants
         )
 
@@ -291,7 +271,7 @@ class MeetingParticipantRepositoryTests(TestCase):
         - 処理: 会議詳細用の参加者一覧を取得する。
         - 期待値: 発言者を先頭にし、発言回数の多い順で表示する。
         """
-        MeetingParticipantRepository().replace_for_meeting(
+        MeetingParticipantRepository().refresh_for_meeting(
             self.meeting, self.participants
         )
 
@@ -311,15 +291,13 @@ class MeetingParticipantRepositoryTests(TestCase):
         - 処理: 会議参加者の集計を取得する。
         - 期待値: 出席者数と、出席者のうち発言した人数を別々に数える。
         """
-        MeetingParticipantRepository().replace_for_meeting(
+        MeetingParticipantRepository().refresh_for_meeting(
             self.meeting, self.participants
         )
 
         summary = ParticipantQueryService().get_participant_summary(self.meeting)
 
         self.assertEqual(summary.attendance_count, 7)
-        self.assertEqual(summary.committee_member_count, 5)
-        self.assertEqual(summary.non_committee_attendance_count, 2)
         self.assertEqual(summary.speaker_count, 2)
 
     def test_meeting_detail_displays_participant_status_and_evidence(self):
@@ -329,7 +307,7 @@ class MeetingParticipantRepositoryTests(TestCase):
         - 処理: 会議詳細画面を表示する。
         - 期待値: 出席のみ・発言数・根拠会議録IDと出典リンクを確認できる。
         """
-        MeetingParticipantRepository().replace_for_meeting(
+        MeetingParticipantRepository().refresh_for_meeting(
             self.meeting, self.participants
         )
 
@@ -340,8 +318,6 @@ class MeetingParticipantRepositoryTests(TestCase):
         self.assertContains(response, "会議参加者")
         self.assertContains(response, "出席のみ")
         self.assertContains(response, "発言あり")
-        self.assertContains(response, "出席委員数: 5人")
-        self.assertContains(response, "その他出席者数: 2人")
         self.assertContains(response, "出席者総数: 7人")
         self.assertContains(response, "ユニーク発言者数: 2人")
         self.assertNotContains(response, "統合参加者数")

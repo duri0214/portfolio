@@ -13,7 +13,7 @@ from ..valueobject.participant import (
 class MeetingParticipantRepository:
     """会議参加者と、参加者から公式会議録へ戻る根拠を永続化する。"""
 
-    def replace_for_meeting(
+    def refresh_for_meeting(
         self, meeting: Meeting, participants: Iterable[ParticipantData]
     ) -> list[MeetingParticipant]:
         """会議単位で参加者と根拠を洗い替え、保存済み参加者を返す。"""
@@ -28,8 +28,6 @@ class MeetingParticipantRepository:
                         display_order=display_order,
                         name=participant.name,
                         name_yomi=participant.name_yomi or "",
-                        attendance_type=participant.attendance_type,
-                        attendance_role=participant.attendance_role,
                         speaker_position=participant.speaker_position,
                         speaker_role=participant.speaker_role,
                         affiliation=participant.affiliation,
@@ -96,18 +94,9 @@ class MeetingParticipantRepository:
         attendance_participants = participants.filter(
             evidences__source_type=MeetingParticipantEvidence.SourceType.ATTENDANCE
         ).distinct()
-        committee_member_count = attendance_participants.filter(
-            attendance_type__in=(
-                MeetingParticipant.AttendanceType.CHAIR,
-                MeetingParticipant.AttendanceType.DIRECTOR,
-                MeetingParticipant.AttendanceType.COMMITTEE_MEMBER,
-            )
-        ).count()
         attendance_count = attendance_participants.count()
         return ParticipantSummaryData(
             attendance_count=attendance_count,
-            committee_member_count=committee_member_count,
-            non_committee_attendance_count=attendance_count - committee_member_count,
             speaker_count=attendance_participants.filter(has_spoken=True).count(),
         )
 
@@ -127,8 +116,6 @@ class MeetingParticipantRepository:
                 participant_id=participant.pk,
                 name=participant.name,
                 name_yomi=participant.name_yomi or None,
-                attendance_type=participant.attendance_type,
-                attendance_role=participant.attendance_role,
                 speaker_position=participant.speaker_position,
                 speaker_role=participant.speaker_role,
                 affiliation=participant.affiliation,

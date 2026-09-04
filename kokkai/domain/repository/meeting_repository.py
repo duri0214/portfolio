@@ -81,5 +81,5 @@ class MeetingRepository:
                     for speech, speech_order in speeches
                 ]
             )
-            self.participant_repository.replace_for_meeting(meeting, participants)
+            self.participant_repository.refresh_for_meeting(meeting, participants)
         return meeting

@@ -78,8 +78,6 @@ class MeetingParticipant(models.Model):
         display_order: 会議録の出席者欄を基準にした表示順。
         name: 敬称と空白を除去した正規化氏名。
         name_yomi: 公式 API が返す氏名のよみ。
-        attendance_type: 出席者欄から判定した参加区分。
-        attendance_role: 出席者欄に記載された役職。
         speaker_position: 発言時の肩書き。
         speaker_role: 発言時の役割。
         affiliation: 発言時の所属会派。
@@ -92,18 +90,6 @@ class MeetingParticipant(models.Model):
         updated_at: 更新日時。
     """
 
-    class AttendanceType(models.TextChoices):
-        CHAIR = "chair", "委員長"
-        DIRECTOR = "director", "理事"
-        COMMITTEE_MEMBER = "committee_member", "出席委員"
-        GOVERNMENT_OFFICIAL = "government_official", "国務大臣等"
-        GOVERNMENT_REFERENCE = "government_reference", "政府参考人"
-        REFERENCE = "reference", "参考人"
-        WITNESS = "witness", "証人"
-        PUBLIC_WITNESS = "public_witness", "公述人"
-        STAFF = "staff", "事務局等"
-        OTHER = "other", "その他"
-
     meeting = models.ForeignKey(
         Meeting,
         on_delete=models.CASCADE,
@@ -113,13 +99,6 @@ class MeetingParticipant(models.Model):
     display_order = models.PositiveIntegerField("表示順")
     name = models.CharField("氏名", max_length=128)
     name_yomi = models.CharField("氏名よみ", max_length=128, blank=True)
-    attendance_type = models.CharField(
-        "出席種別",
-        max_length=32,
-        choices=AttendanceType.choices,
-        default=AttendanceType.OTHER,
-    )
-    attendance_role = models.CharField("出席時の役職", max_length=128, blank=True)
     speaker_position = models.CharField("発言時の肩書き", max_length=128, blank=True)
     speaker_role = models.CharField("発言時の役割", max_length=128, blank=True)
     affiliation = models.CharField("発言時の所属", max_length=128, blank=True)
@@ -143,7 +122,7 @@ class MeetingParticipant(models.Model):
     def role(self) -> str:
         """表示用に、発言時の役職を優先して返す。"""
 
-        return self.speaker_position or self.speaker_role or self.attendance_role
+        return self.speaker_position or self.speaker_role
 
 
 class MeetingParticipantEvidence(models.Model):
