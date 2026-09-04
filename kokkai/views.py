@@ -25,7 +25,7 @@ class IndexView(ListView):
 
     def get_queryset(self):
         return (
-            Meeting.objects.filter(is_current_catalog=True)
+            Meeting.objects.all()
             .annotate(
                 speech_count=Count(
                     "speeches",

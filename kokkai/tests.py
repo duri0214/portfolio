@@ -148,7 +148,7 @@ class MeetingIndexServiceTests(SimpleTestCase):
                 call(date(2024, 1, 26), date(2024, 1, 26), 2),
             ],
         )
-        repository.replace_current_catalog.assert_called_once_with(
+        repository.replace_meetings.assert_called_once_with(
             [first_record, second_record]
         )
         client.fetch_meeting.assert_not_called()
@@ -192,45 +192,53 @@ class MeetingRepositoryTests(TestCase):
         self.assertTrue(Speech.objects.filter(pk=speech.pk).exists())
         self.assertEqual(speech.meeting_id, meeting.pk)
 
-    def test_replace_current_catalog_without_deleting_speeches(self):
+    def test_replace_meetings_reuses_existing_and_deletes_stale_meetings(self):
         """
         シナリオ:
         - 入力: 発言本文を持つ既存カタログと、新しい検索結果のカタログ情報。
-        - 処理: replace_current_catalog を呼び出して現在のカタログを洗い替える。
-        - 期待値: 新しい結果だけが現在の一覧対象になり、既存の発言本文は保持されること。
+        - 処理: replace_meetings を呼び出して検索結果を洗い替える。
+        - 期待値: 同じ会議録は再利用され、検索結果にない会議録は削除されること。
         """
-        old_meeting = Meeting.objects.create(
+        existing_meeting = Meeting.objects.create(
             meeting_date=date(2024, 1, 1),
             session_number=212,
             house="衆議院",
             committee="旧委員会",
             meeting_number="第9号",
-            min_id="121305254X00120240101",
+            min_id="121305254X00120240126",
             url="https://example.com/old",
         )
         speech = Speech.objects.create(
-            meeting=old_meeting,
+            meeting=existing_meeting,
             speaker_name="既存発言者",
             speech_text="保存済みの発言",
             speech_order=1,
         )
-        new_record = meeting_index_record("121305254X00220240126")
+        stale_meeting = Meeting.objects.create(
+            meeting_date=date(2024, 1, 1),
+            session_number=212,
+            house="衆議院",
+            committee="旧委員会",
+            meeting_number="第9号",
+            min_id="121305254X00220240101",
+            url="https://example.com/stale",
+        )
 
-        MeetingRepository().replace_current_catalog([new_record])
+        MeetingRepository().replace_meetings([meeting_index_record()])
 
-        old_meeting.refresh_from_db()
-        new_meeting = Meeting.objects.get(min_id=new_record.issue_id)
-        self.assertFalse(old_meeting.is_current_catalog)
-        self.assertTrue(new_meeting.is_current_catalog)
-        self.assertEqual(Meeting.objects.filter(is_current_catalog=True).count(), 1)
+        existing_meeting.refresh_from_db()
+        self.assertEqual(Meeting.objects.count(), 1)
+        self.assertEqual(existing_meeting.meeting_date, date(2024, 1, 26))
+        self.assertEqual(existing_meeting.committee, "本会議")
+        self.assertFalse(Meeting.objects.filter(pk=stale_meeting.pk).exists())
         self.assertTrue(Speech.objects.filter(pk=speech.pk).exists())
 
-    def test_replace_current_catalog_with_no_records_hides_existing_meetings(self):
+    def test_replace_meetings_with_no_records_clears_existing_meetings(self):
         """
         シナリオ:
         - 入力: 保存済みの会議録と、検索に成功したが0件だった結果。
-        - 処理: replace_current_catalog に空の検索結果を渡す。
-        - 期待値: 保存済みの会議録は残し、現在の一覧対象だけを0件にすること。
+        - 処理: replace_meetings に空の検索結果を渡す。
+        - 期待値: 保存済みの会議録を削除し、一覧を0件にすること。
         """
         meeting = Meeting.objects.create(
             meeting_date=date(2024, 1, 1),
@@ -242,12 +250,10 @@ class MeetingRepositoryTests(TestCase):
             url="https://example.com/old",
         )
 
-        MeetingRepository().replace_current_catalog([])
+        MeetingRepository().replace_meetings([])
 
-        meeting.refresh_from_db()
-        self.assertTrue(Meeting.objects.filter(pk=meeting.pk).exists())
-        self.assertFalse(meeting.is_current_catalog)
-        self.assertEqual(Meeting.objects.filter(is_current_catalog=True).count(), 0)
+        self.assertFalse(Meeting.objects.filter(pk=meeting.pk).exists())
+        self.assertEqual(Meeting.objects.count(), 0)
 
 
 class KokkaiPipelineTests(TestCase):
@@ -421,16 +427,16 @@ class IndexViewTests(TestCase):
             'href="/kokkai/?start_date=2024-01-01&amp;end_date=2024-01-31"',
         )
 
-    def test_index_shows_current_catalog_entries_independent_of_search_period(self):
+    def test_index_shows_saved_meetings_independent_of_search_period(self):
         """
         シナリオ:
         - 入力: 検索期間外を含む、異なる開催日のカタログ情報がDBに保存された一覧表示。
         - 処理: 期間指定なしの初期表示と、期間指定ありの一覧表示を行う。
-        - 期待値: 現在のカタログを表示し、開始日・終了日は取得条件として独立すること。
+        - 期待値: 保存済みの会議録を表示し、開始日・終了日は取得条件として独立すること。
         """
-        for meeting_date, committee, is_current_catalog in (
-            (date(2024, 1, 26), "本会議", True),
-            (date(2024, 2, 1), "予算委員会", False),
+        for meeting_date, committee in (
+            (date(2024, 1, 26), "本会議"),
+            (date(2024, 2, 1), "予算委員会"),
         ):
             Meeting.objects.create(
                 meeting_date=meeting_date,
@@ -440,14 +446,13 @@ class IndexViewTests(TestCase):
                 meeting_number="第1号",
                 min_id=f"121305254X001{meeting_date:%Y%m%d}",
                 url=f"https://example.com/meeting/{meeting_date:%Y%m%d}",
-                is_current_catalog=is_current_catalog,
             )
 
         today = datetime.now().date()
         response = self.client.get(reverse("kokkai:index"))
 
         self.assertContains(response, "本会議 第1号")
-        self.assertNotContains(response, "予算委員会 第1号")
+        self.assertContains(response, "予算委員会 第1号")
         self.assertEqual(response.context["start_date"], today - timedelta(days=30))
         self.assertEqual(response.context["end_date"], today)
 
@@ -457,7 +462,7 @@ class IndexViewTests(TestCase):
         )
 
         self.assertContains(searched_response, "本会議 第1号")
-        self.assertNotContains(searched_response, "予算委員会 第1号")
+        self.assertContains(searched_response, "予算委員会 第1号")
 
     def test_index_does_not_count_catalog_metadata_as_meeting_contents(self):
         """

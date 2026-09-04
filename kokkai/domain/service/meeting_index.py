@@ -31,7 +31,7 @@ class MeetingIndexService:
 
             next_record_position = result.next_record_position
             if not next_record_position or next_record_position <= start_record:
-                self.repository.replace_current_catalog(records)
+                self.repository.replace_meetings(records)
                 return len(records)
             sleep(self.REQUEST_INTERVAL_SECONDS)
             start_record = next_record_position
