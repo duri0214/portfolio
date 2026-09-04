@@ -9,6 +9,17 @@ class ParticipantSourceType(StrEnum):
     SPEECH = "speech"
 
 
+def join_roles(*roles: str | None) -> str:
+    """重複を除いた役職を表示用の文字列へまとめる。"""
+
+    unique_roles: list[str] = []
+    for role in roles:
+        normalized = (role or "").strip()
+        if normalized and normalized not in unique_roles:
+            unique_roles.append(normalized)
+    return " / ".join(unique_roles)
+
+
 @dataclass(frozen=True)
 class ParticipantEvidenceData:
     """参加者を会議録へ追跡するための根拠データ。"""
@@ -51,6 +62,7 @@ class ParticipantData:
 
     name: str
     name_yomi: str | None
+    attendance_position: str
     speaker_position: str
     speaker_role: str
     affiliation: str
@@ -63,9 +75,13 @@ class ParticipantData:
 
     @property
     def role(self) -> str:
-        """表示用に、発言時の役職を優先して返す。"""
+        """表示用に、出席時と発言時の役職を重複なく併記する。"""
 
-        return self.speaker_position or self.speaker_role
+        return join_roles(
+            self.attendance_position,
+            self.speaker_position,
+            self.speaker_role,
+        )
 
 
 @dataclass(frozen=True)
@@ -91,6 +107,6 @@ class ParticipantActorData:
 
     @property
     def role(self) -> str:
-        """表示用に、発言時の役職を優先して返す。"""
+        """表示用に、発言時の役職を重複なく併記する。"""
 
-        return self.speaker_position or self.speaker_role
+        return join_roles(self.speaker_position, self.speaker_role)

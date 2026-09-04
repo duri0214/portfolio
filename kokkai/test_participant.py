@@ -216,7 +216,27 @@ class MeetingParticipantExtractorTests(SimpleTestCase):
 
         self.assertEqual(chair.name, "坂本哲志")
         self.assertEqual(chair.speaker_position, "委員長")
+        self.assertEqual(chair.role, "委員長")
         self.assertEqual(chair.evidences[0].speaker_position, "委員長")
+
+    def test_displays_attendance_and_speech_positions_together(self):
+        record = participant_meeting_record()
+        metadata = replace(
+            record.speech_records[0],
+            speech="出席委員\n委員長　坂本　哲志君\n",
+        )
+        chair_speech = replace(
+            record.speech_records[1],
+            speaker="坂本哲志",
+            speaker_position="議員",
+            speaker_role=None,
+        )
+        record = replace(record, speech_records=[metadata, chair_speech])
+
+        chair = MeetingParticipantExtractor().extract(record)[0]
+
+        self.assertEqual(chair.speaker_position, "議員")
+        self.assertEqual(chair.role, "委員長 / 議員")
 
 
 class MeetingParticipantRepositoryTests(TestCase):
@@ -233,6 +253,29 @@ class MeetingParticipantRepositoryTests(TestCase):
         self.participants = MeetingParticipantExtractor().extract(
             participant_meeting_record()
         )
+
+    def test_model_role_combines_attendance_and_speech_positions(self):
+        record = participant_meeting_record()
+        metadata = replace(
+            record.speech_records[0],
+            speech="出席委員\n委員長　坂本　哲志君\n",
+        )
+        chair_speech = replace(
+            record.speech_records[1],
+            speaker="坂本哲志",
+            speaker_position="議員",
+            speaker_role=None,
+        )
+        record = replace(record, speech_records=[metadata, chair_speech])
+        participants = MeetingParticipantExtractor().extract(record)
+
+        MeetingParticipantRepository().refresh_for_meeting(self.meeting, participants)
+
+        chair = MeetingParticipant.objects.get(
+            meeting=self.meeting,
+            name="坂本哲志",
+        )
+        self.assertEqual(chair.role, "委員長 / 議員")
 
     def test_refresh_for_meeting_is_idempotent_and_preserves_evidence(self):
         """

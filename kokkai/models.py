@@ -2,6 +2,8 @@ import uuid
 
 from django.db import models
 
+from .domain.valueobject.participant import join_roles
+
 
 class Meeting(models.Model):
     """
@@ -120,9 +122,16 @@ class MeetingParticipant(models.Model):
 
     @property
     def role(self) -> str:
-        """表示用に、発言時の役職を優先して返す。"""
+        """表示用に、出席時と発言時の役職を重複なく併記する。"""
 
-        return self.speaker_position or self.speaker_role
+        attendance_positions = [
+            evidence.speaker_position
+            for evidence in self.evidences.all()
+            if evidence.source_type == MeetingParticipantEvidence.SourceType.ATTENDANCE
+        ]
+        return join_roles(
+            *attendance_positions, self.speaker_position, self.speaker_role
+        )
 
 
 class MeetingParticipantEvidence(models.Model):

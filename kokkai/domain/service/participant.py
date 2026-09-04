@@ -112,6 +112,7 @@ class MeetingParticipantExtractor:
             ParticipantData(
                 name=builder.name,
                 name_yomi=builder.name_yomi,
+                attendance_position=builder.attendance_position,
                 speaker_position=builder.speaker_position
                 or builder.attendance_position,
                 speaker_role=builder.speaker_role,
