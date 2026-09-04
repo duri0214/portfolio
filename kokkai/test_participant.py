@@ -319,7 +319,7 @@ class MeetingParticipantRepositoryTests(TestCase):
         self.assertContains(response, "出席のみ")
         self.assertContains(response, "発言あり")
         self.assertContains(response, "出席者総数: 7人")
-        self.assertContains(response, "ユニーク発言者数: 2人")
+        self.assertContains(response, "発言者数: 2人")
         self.assertNotContains(response, "統合参加者数")
         self.assertContains(response, "会議録ID: 121305254X00120240126")
         self.assertContains(response, "出典")
