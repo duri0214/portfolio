@@ -80,35 +80,37 @@ class LlmModelProfile:
 
 
 class ModelDefaults:
-    """本番のLLM呼び出しごとに選択したGPT-5.6系の既定プロファイル。
+    """本番のテキスト生成を統一するGPT-5.6 Lunaの既定プロファイル。
 
     Attributes:
-        KOKKAI_SCENARIO: 会議録シナリオの要約・選択肢生成。コスト制約を優先してLunaを使う。
-        USA_RESEARCH: MSCIレポート要約。金融文書の読み取りとコストのバランスでTerraを使う。
-        LLM_CHAT: 通常チャット。応答品質とコストのバランスでTerraを使う。
-        LLM_RIDDLE: なぞなぞ対話。会話品質を優先してTerraを使う。
-        LLM_STREAMING: ストリーミングチャット。低遅延を優先してLunaを使う。
-        LLM_RAG: PDF RAG回答。検索文脈の整理と品質のバランスでTerraを使う。
-        ROKUNOHE_MINUTES_RAG: 六戸町会議録RAG。長文根拠の整理と品質のバランスでTerraを使う。
-        SHOPPING_REVIEW: Google Mapsレビュー分析。大量処理のコストを優先してLunaを使う。
-        TAXONOMY_CANDIDATE: 分類候補生成。JSON遵守と候補品質のバランスでTerraを使う。
-        AI_AGENT: Tool選択を伴うAgent。推論品質を優先してSolを使い、Agents SDKのResponses経路を利用する。
+        TEXT_MODEL: Portfolioで利用するテキスト生成モデル。全用途でLunaへ統一する。
+        KOKKAI_SCENARIO: 会議録シナリオの要約・選択肢生成。JSON出力のため推論量をlowにする。
+        USA_RESEARCH: MSCIレポート要約。共通テキストモデルを利用する。
+        LLM_CHAT: 通常チャット。共通テキストモデルを利用する。
+        LLM_RIDDLE: なぞなぞ対話。共通テキストモデルを利用する。
+        LLM_STREAMING: ストリーミングチャット。共通テキストモデルを利用する。
+        LLM_RAG: PDF RAG回答。共通テキストモデルを利用する。
+        ROKUNOHE_MINUTES_RAG: 六戸町会議録RAG。共通テキストモデルを利用する。
+        SHOPPING_REVIEW: Google Mapsレビュー分析。共通テキストモデルを利用する。
+        TAXONOMY_CANDIDATE: 分類候補生成。共通テキストモデルを利用する。
+        AI_AGENT: Tool選択を伴うAgent。共通テキストモデルをResponses経路で利用する。
     """
 
+    TEXT_MODEL: OpenAiModel = ModelName.GPT_5_6_LUNA
     KOKKAI_SCENARIO = LlmModelProfile(
-        model=ModelName.GPT_5_6_LUNA,
+        model=TEXT_MODEL,
         reasoning_effort="low",
     )
-    USA_RESEARCH = LlmModelProfile(model=ModelName.GPT_5_6_TERRA)
-    LLM_CHAT = LlmModelProfile(model=ModelName.GPT_5_6_TERRA)
-    LLM_RIDDLE = LlmModelProfile(model=ModelName.GPT_5_6_TERRA)
-    LLM_STREAMING = LlmModelProfile(model=ModelName.GPT_5_6_LUNA)
-    LLM_RAG = LlmModelProfile(model=ModelName.GPT_5_6_TERRA)
-    ROKUNOHE_MINUTES_RAG = LlmModelProfile(model=ModelName.GPT_5_6_TERRA)
-    SHOPPING_REVIEW = LlmModelProfile(model=ModelName.GPT_5_6_LUNA)
-    TAXONOMY_CANDIDATE = LlmModelProfile(model=ModelName.GPT_5_6_TERRA)
+    USA_RESEARCH = LlmModelProfile(model=TEXT_MODEL)
+    LLM_CHAT = LlmModelProfile(model=TEXT_MODEL)
+    LLM_RIDDLE = LlmModelProfile(model=TEXT_MODEL)
+    LLM_STREAMING = LlmModelProfile(model=TEXT_MODEL)
+    LLM_RAG = LlmModelProfile(model=TEXT_MODEL)
+    ROKUNOHE_MINUTES_RAG = LlmModelProfile(model=TEXT_MODEL)
+    SHOPPING_REVIEW = LlmModelProfile(model=TEXT_MODEL)
+    TAXONOMY_CANDIDATE = LlmModelProfile(model=TEXT_MODEL)
     AI_AGENT = LlmModelProfile(
-        model=ModelName.GPT_5_6_SOL,
+        model=TEXT_MODEL,
         api="responses",
         reasoning_effort="low",
     )

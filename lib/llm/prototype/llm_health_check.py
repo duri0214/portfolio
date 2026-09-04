@@ -7,13 +7,11 @@ from typing import Any
 
 from openai import OpenAI, AzureOpenAI, APIError
 
-from lib.llm.valueobject.config import ModelName
+from lib.llm.valueobject.config import ModelDefaults, ModelName
 
 
 OPENAI_TARGET_MODELS = [
-    ModelName.GPT_5_6_SOL,
-    ModelName.GPT_5_6_TERRA,
-    ModelName.GPT_5_6_LUNA,
+    ModelDefaults.TEXT_MODEL,
     ModelName.GPT_IMAGE_1_MINI,
 ]
 

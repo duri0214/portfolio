@@ -21,17 +21,30 @@ class ModelConfigTest(TestCase):
         self.assertEqual(ModelName.GPT_5_6_LUNA, "gpt-5.6-luna")
         self.assertEqual(ModelName.GPT_5_6, "gpt-5.6")
 
-    def test_defaults_keep_model_selection_per_use_case(self):
+    def test_defaults_use_one_text_model_per_use_case(self):
         """
         シナリオ:
         - 入力: 本番用途別の共通モデルプロファイル。
-        - 処理: Kokkai、通常チャット、Agentの既定値を比較する。
-        - 期待値: 全用途を単一モデルへ寄せず、API種別とstructured outputs対応も確認できる。
+        - 処理: 各用途の既定モデルとAgentのAPI種別を確認する。
+        - 期待値: Portfolioのテキスト生成モデルがLunaへ統一され、API種別とstructured outputs対応も確認できる。
         """
         self.assertIsInstance(ModelDefaults.KOKKAI_SCENARIO, LlmModelProfile)
-        self.assertEqual(ModelDefaults.KOKKAI_SCENARIO.model, ModelName.GPT_5_6_LUNA)
-        self.assertEqual(ModelDefaults.LLM_CHAT.model, ModelName.GPT_5_6_TERRA)
-        self.assertEqual(ModelDefaults.AI_AGENT.model, ModelName.GPT_5_6_SOL)
+        profiles = (
+            ModelDefaults.KOKKAI_SCENARIO,
+            ModelDefaults.USA_RESEARCH,
+            ModelDefaults.LLM_CHAT,
+            ModelDefaults.LLM_RIDDLE,
+            ModelDefaults.LLM_STREAMING,
+            ModelDefaults.LLM_RAG,
+            ModelDefaults.ROKUNOHE_MINUTES_RAG,
+            ModelDefaults.SHOPPING_REVIEW,
+            ModelDefaults.TAXONOMY_CANDIDATE,
+            ModelDefaults.AI_AGENT,
+        )
+        self.assertTrue(
+            all(profile.model == ModelDefaults.TEXT_MODEL for profile in profiles)
+        )
+        self.assertEqual(ModelDefaults.TEXT_MODEL, ModelName.GPT_5_6_LUNA)
         self.assertEqual(ModelDefaults.AI_AGENT.api, "responses")
         self.assertTrue(ModelDefaults.KOKKAI_SCENARIO.supports_structured_outputs)
 
