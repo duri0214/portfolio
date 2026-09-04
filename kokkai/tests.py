@@ -157,7 +157,7 @@ class MeetingIndexServiceTests(SimpleTestCase):
                 call(date(2024, 1, 26), date(2024, 1, 26), 2),
             ],
         )
-        repository.replace_meetings.assert_called_once_with(
+        repository.rebuild_meetings.assert_called_once_with(
             [first_record, second_record]
         )
         client.fetch_meeting.assert_not_called()
@@ -166,11 +166,11 @@ class MeetingIndexServiceTests(SimpleTestCase):
 
 
 class MeetingRepositoryTests(TestCase):
-    def test_replace_meetings_deletes_existing_contents_before_rebuilding_catalog(self):
+    def test_rebuild_meetings_deletes_existing_contents_before_rebuilding_catalog(self):
         """
         シナリオ:
         - 入力: 発言本文を持つ既存カタログと、新しい検索結果のカタログ情報。
-        - 処理: replace_meetings を呼び出して検索結果を洗い替える。
+        - 処理: rebuild_meetings を呼び出して検索結果を洗い替える。
         - 期待値: 既存の会議録と発言を削除し、新しい結果だけを保存すること。
         """
         existing_meeting = Meeting.objects.create(
@@ -189,7 +189,7 @@ class MeetingRepositoryTests(TestCase):
             speech_order=1,
         )
 
-        MeetingRepository().replace_meetings([meeting_index_record()])
+        MeetingRepository().rebuild_meetings([meeting_index_record()])
 
         self.assertEqual(Meeting.objects.count(), 1)
         new_meeting = Meeting.objects.get(min_id=meeting_index_record().issue_id)
@@ -197,11 +197,11 @@ class MeetingRepositoryTests(TestCase):
         self.assertEqual(new_meeting.committee, "本会議")
         self.assertFalse(Speech.objects.filter(pk=speech.pk).exists())
 
-    def test_replace_meetings_with_no_records_clears_existing_meetings(self):
+    def test_rebuild_meetings_with_no_records_clears_existing_meetings(self):
         """
         シナリオ:
         - 入力: 保存済みの会議録と、検索に成功したが0件だった結果。
-        - 処理: replace_meetings に空の検索結果を渡す。
+        - 処理: rebuild_meetings に空の検索結果を渡す。
         - 期待値: 保存済みの会議録を削除し、一覧を0件にすること。
         """
         meeting = Meeting.objects.create(
@@ -214,16 +214,16 @@ class MeetingRepositoryTests(TestCase):
             url="https://example.com/old",
         )
 
-        MeetingRepository().replace_meetings([])
+        MeetingRepository().rebuild_meetings([])
 
         self.assertFalse(Meeting.objects.filter(pk=meeting.pk).exists())
         self.assertEqual(Meeting.objects.count(), 0)
 
-    def test_replace_meetings_cascades_existing_scenario_data(self):
+    def test_rebuild_meetings_cascades_existing_scenario_data(self):
         """
         シナリオ:
         - 入力: 発言・シナリオ・プレイまで保存された既存会議録。
-        - 処理: replace_meetings に空の検索結果を渡す。
+        - 処理: rebuild_meetings に空の検索結果を渡す。
         - 期待値: 会議録の洗替えに伴い、紐づくデータも削除されること。
         """
         meeting = Meeting.objects.create(
@@ -284,7 +284,7 @@ class MeetingRepositoryTests(TestCase):
             choice=choice,
         )
 
-        MeetingRepository().replace_meetings([])
+        MeetingRepository().rebuild_meetings([])
 
         self.assertFalse(Meeting.objects.filter(pk=meeting.pk).exists())
         self.assertFalse(Speech.objects.filter(pk=speech.pk).exists())

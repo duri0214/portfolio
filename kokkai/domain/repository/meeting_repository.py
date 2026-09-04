@@ -9,14 +9,13 @@ from ..valueobject.meeting import MeetingIndexRecord, MeetingRecord, SpeechRecor
 class MeetingRepository:
     """会議録メタデータと発言の永続化を担当する。"""
 
-    def replace_meetings(self, records: Iterable[MeetingIndexRecord]) -> list[Meeting]:
+    def rebuild_meetings(self, records: Iterable[MeetingIndexRecord]) -> list[Meeting]:
         """
-        保存する会議録を検索結果で置き換える。
+        検索結果から会議録カタログを再構築する。
 
         既存の会議録を削除すると、紐づく本文・シナリオもカスケード削除される。
         その後、検索結果だけを保存する。
         """
-        records = list(records)
         with transaction.atomic():
             Meeting.objects.all().delete()
             return Meeting.objects.bulk_create(
