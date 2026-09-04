@@ -271,9 +271,9 @@ class MeetingParticipantExtractorTests(SimpleTestCase):
 
         chair = MeetingParticipantExtractor().extract(record)[0]
 
-        self.assertEqual(chair.role, "委員長 / 内閣府特命担当大臣")
+        self.assertEqual(chair.role, "内閣府特命担当大臣")
 
-    def test_displays_attendance_and_speech_positions_together(self):
+    def test_prefers_structured_speech_position_over_attendance_position(self):
         record = participant_meeting_record()
         metadata = replace(
             record.speech_records[0],
@@ -290,7 +290,7 @@ class MeetingParticipantExtractorTests(SimpleTestCase):
         chair = MeetingParticipantExtractor().extract(record)[0]
 
         self.assertEqual(chair.speaker_position, "議員")
-        self.assertEqual(chair.role, "委員長 / 議員")
+        self.assertEqual(chair.role, "議員")
 
 
 class MeetingParticipantRepositoryTests(TestCase):
@@ -308,7 +308,7 @@ class MeetingParticipantRepositoryTests(TestCase):
             participant_meeting_record()
         )
 
-    def test_model_role_combines_attendance_and_speech_positions(self):
+    def test_model_role_prefers_structured_speech_position(self):
         record = participant_meeting_record()
         metadata = replace(
             record.speech_records[0],
@@ -329,7 +329,7 @@ class MeetingParticipantRepositoryTests(TestCase):
             meeting=self.meeting,
             name="坂本哲志",
         )
-        self.assertEqual(chair.role, "委員長 / 議員")
+        self.assertEqual(chair.role, "議員")
 
     def test_refresh_for_meeting_is_idempotent_and_preserves_evidence(self):
         """

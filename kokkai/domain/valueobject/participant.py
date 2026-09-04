@@ -79,13 +79,10 @@ class ParticipantData:
 
     @property
     def role(self) -> str:
-        """表示用に、出席時と発言時の役職を重複なく併記する。"""
+        """構造化された発言時の役職を優先し、なければ出席欄を使う。"""
 
-        return join_roles(
-            self.attendance_position,
-            self.speaker_position,
-            self.speaker_role,
-        )
+        speech_role = join_roles(self.speaker_position, self.speaker_role)
+        return speech_role or join_roles(self.attendance_position)
 
 
 @dataclass(frozen=True)

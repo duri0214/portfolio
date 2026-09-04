@@ -122,16 +122,15 @@ class MeetingParticipant(models.Model):
 
     @property
     def role(self) -> str:
-        """表示用に、出席時と発言時の役職を重複なく併記する。"""
+        """構造化された発言時の役職を優先し、なければ出席欄を使う。"""
 
         attendance_positions = [
             evidence.speaker_position
             for evidence in self.evidences.all()
             if evidence.source_type == MeetingParticipantEvidence.SourceType.ATTENDANCE
         ]
-        return join_roles(
-            *attendance_positions, self.speaker_position, self.speaker_role
-        )
+        speech_role = join_roles(self.speaker_position, self.speaker_role)
+        return speech_role or join_roles(*attendance_positions)
 
 
 class MeetingParticipantEvidence(models.Model):
