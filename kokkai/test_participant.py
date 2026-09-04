@@ -270,6 +270,26 @@ class MeetingParticipantRepositoryTests(TestCase):
         self.assertEqual(candidates[0].speech_count, 2)
         self.assertFalse(candidates[-2].has_spoken)
 
+    def test_list_participants_prioritizes_speakers_and_speech_count(self):
+        """
+        シナリオ:
+        - 入力: 出席者と、複数回・1回発言した参加者を含む会議録。
+        - 処理: 会議詳細用の参加者一覧を取得する。
+        - 期待値: 発言者を先頭にし、発言回数の多い順で表示する。
+        """
+        MeetingParticipantRepository().replace_for_meeting(
+            self.meeting, self.participants
+        )
+
+        participants = list(ParticipantQueryService().list_participants(self.meeting))
+
+        self.assertEqual(
+            [participant.name for participant in participants[:2]],
+            ["藤丸敏", "石破茂"],
+        )
+        self.assertTrue(all(participant.has_spoken for participant in participants[:2]))
+        self.assertFalse(participants[2].has_spoken)
+
     def test_participant_summary_counts_attendance_and_speakers_separately(self):
         """
         シナリオ:

@@ -82,7 +82,7 @@ class MeetingParticipantRepository:
         return (
             MeetingParticipant.objects.filter(meeting=meeting)
             .prefetch_related("evidences")
-            .order_by("display_order", "pk")
+            .order_by("-has_spoken", "-speech_count", "display_order", "pk")
         )
 
     def get_summary_for_meeting(self, meeting: Meeting) -> ParticipantSummaryData:
