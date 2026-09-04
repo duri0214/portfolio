@@ -134,20 +134,14 @@ class MeetingCatalogRecord:
 
 
 @dataclass(frozen=True)
-class MeetingCatalogSearchResult:
+class MeetingCatalogPage:
     """
-    会議単位簡易出力APIの検索結果。
+    会議録カタログAPIの1ページ分。
 
     Attributes:
-        number_of_records: 検索結果の総件数。
-        number_of_return_records: 今回返却された件数。
-        start_record: 取得開始位置。
+        records: 本文を含まない会議録メタデータ一覧。
         next_record_position: 次ページの開始位置。
-        meeting_catalog_records: 本文を含まない会議録メタデータ一覧。
     """
 
-    number_of_records: int
-    number_of_return_records: int
-    start_record: int
+    records: list[MeetingCatalogRecord]
     next_record_position: int | None
-    meeting_catalog_records: list[MeetingCatalogRecord]

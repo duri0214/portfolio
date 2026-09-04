@@ -27,7 +27,7 @@ class MeetingCatalogService:
             result = self.client.search_meeting_catalog(
                 start_date, end_date, start_record
             )
-            records.extend(result.meeting_catalog_records)
+            records.extend(result.records)
 
             next_record_position = result.next_record_position
             if next_record_position and next_record_position > start_record:

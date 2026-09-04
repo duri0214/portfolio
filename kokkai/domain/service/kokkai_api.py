@@ -4,7 +4,7 @@ import requests
 
 from ..valueobject.meeting import (
     MeetingCatalogRecord,
-    MeetingCatalogSearchResult,
+    MeetingCatalogPage,
     MeetingRecord,
     MeetingSearchResult,
     SpeechRecord,
@@ -17,7 +17,7 @@ class KokkaiAPIClient:
 
     def search_meeting_catalog(
         self, start_date: date, end_date: date, start_record: int = 1
-    ) -> MeetingCatalogSearchResult:
+    ) -> MeetingCatalogPage:
         """指定期間の会議録メタデータだけを取得する。"""
         params = {
             "from": start_date.strftime("%Y-%m-%d"),
@@ -43,12 +43,9 @@ class KokkaiAPIClient:
             )
             for record in data.get("meetingRecord", [])
         ]
-        return MeetingCatalogSearchResult(
-            number_of_records=data.get("numberOfRecords", 0),
-            number_of_return_records=data.get("numberOfReturn", 0),
-            start_record=data.get("startRecord", 1),
+        return MeetingCatalogPage(
+            records=meeting_catalog_records,
             next_record_position=data.get("nextRecordPosition"),
-            meeting_catalog_records=meeting_catalog_records,
         )
 
     def search_meetings(

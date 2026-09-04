@@ -11,7 +11,7 @@ from kokkai.domain.service.meeting_catalog import MeetingCatalogService
 from kokkai.domain.service.pipeline import KokkaiPipeline
 from kokkai.domain.valueobject.meeting import (
     MeetingCatalogRecord,
-    MeetingCatalogSearchResult,
+    MeetingCatalogPage,
     MeetingRecord,
     MeetingSearchResult,
     SpeechRecord,
@@ -114,8 +114,8 @@ class KokkaiAPIClientTests(SimpleTestCase):
             date(2024, 1, 26), date(2024, 1, 26)
         )
 
-        self.assertEqual(result.number_of_records, 1)
-        self.assertEqual(result.meeting_catalog_records, [meeting_catalog_record()])
+        self.assertEqual(result.records, [meeting_catalog_record()])
+        self.assertIsNone(result.next_record_position)
         mock_get.assert_called_once_with(
             KokkaiAPIClient.MEETING_LIST_URL,
             params={
@@ -144,8 +144,8 @@ class MeetingCatalogServiceTests(SimpleTestCase):
         second_record = meeting_catalog_record("121305254X00220240126")
         client = Mock()
         client.search_meeting_catalog.side_effect = [
-            MeetingCatalogSearchResult(2, 1, 1, 2, [first_record]),
-            MeetingCatalogSearchResult(2, 1, 2, None, [second_record]),
+            MeetingCatalogPage(records=[first_record], next_record_position=2),
+            MeetingCatalogPage(records=[second_record], next_record_position=None),
         ]
         repository = Mock()
         repository.rebuild_meetings.return_value = 2
@@ -183,8 +183,8 @@ class MeetingCatalogServiceTests(SimpleTestCase):
         """
         record = meeting_catalog_record()
         client = Mock()
-        client.search_meeting_catalog.return_value = MeetingCatalogSearchResult(
-            1, 1, 1, 1, [record]
+        client.search_meeting_catalog.return_value = MeetingCatalogPage(
+            records=[record], next_record_position=1
         )
         repository = Mock()
         repository.rebuild_meetings.return_value = 1
