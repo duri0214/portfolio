@@ -225,6 +225,30 @@ class MeetingRepositoryTests(TestCase):
         self.assertEqual(Meeting.objects.filter(is_current_catalog=True).count(), 1)
         self.assertTrue(Speech.objects.filter(pk=speech.pk).exists())
 
+    def test_replace_current_catalog_with_no_records_hides_existing_meetings(self):
+        """
+        シナリオ:
+        - 入力: 保存済みの会議録と、検索に成功したが0件だった結果。
+        - 処理: replace_current_catalog に空の検索結果を渡す。
+        - 期待値: 保存済みの会議録は残し、現在の一覧対象だけを0件にすること。
+        """
+        meeting = Meeting.objects.create(
+            meeting_date=date(2024, 1, 1),
+            session_number=212,
+            house="衆議院",
+            committee="旧委員会",
+            meeting_number="第9号",
+            min_id="121305254X00120240101",
+            url="https://example.com/old",
+        )
+
+        MeetingRepository().replace_current_catalog([])
+
+        meeting.refresh_from_db()
+        self.assertTrue(Meeting.objects.filter(pk=meeting.pk).exists())
+        self.assertFalse(meeting.is_current_catalog)
+        self.assertEqual(Meeting.objects.filter(is_current_catalog=True).count(), 0)
+
 
 class KokkaiPipelineTests(TestCase):
     def test_import_selected_meetings_fetches_only_selected_ids(self):
