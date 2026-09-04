@@ -391,10 +391,11 @@ class KokkaiPipelineTests(TestCase):
             [selected_record.issue_id]
         )
 
-        repository.replace_meeting_contents.assert_called_once_with(
-            selected_record,
-            [(source_speech, 21)],
-        )
+        repository.replace_meeting_contents.assert_called_once()
+        call_args = repository.replace_meeting_contents.call_args.args
+        self.assertEqual(call_args[:2], (selected_record, [(source_speech, 21)]))
+        self.assertEqual(len(call_args[2]), 1)
+        self.assertEqual(call_args[2][0].name, source_speech.speaker)
 
 
 class IndexViewTests(TestCase):

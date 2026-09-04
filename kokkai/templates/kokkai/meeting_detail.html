@@ -65,6 +65,81 @@
         </div>
     </section>
 
+    {% if has_participants %}
+    <section class="card mb-4" aria-labelledby="participant-heading">
+        <div class="card-body">
+            <h3 id="participant-heading" class="h5">会議参加者</h3>
+            <p class="small text-muted">
+                公式APIの会議録情報にある出席者と、発言記録の発言者を氏名で突合しています。
+                発言のない出席者はアクター候補と区別して表示します。
+            </p>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">氏名</th>
+                            <th scope="col">出席</th>
+                            <th scope="col">発言</th>
+                            <th scope="col">役職・所属</th>
+                            <th scope="col">根拠</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for participant in participants %}
+                        <tr>
+                            <td>
+                                <strong>{{ participant.name }}</strong>
+                                {% if participant.name_yomi %}
+                                <div class="small text-muted">{{ participant.name_yomi }}</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge text-bg-light">{{ participant.get_attendance_type_display }}</span>
+                                {% if participant.attendance_role and participant.attendance_role != participant.get_attendance_type_display %}
+                                <div class="small text-muted mt-1">{{ participant.attendance_role }}</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if participant.has_spoken %}
+                                <span class="badge text-bg-success">発言あり</span>
+                                <div class="small text-muted">{{ participant.speech_count }}件</div>
+                                {% else %}
+                                <span class="badge text-bg-secondary">出席のみ</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if participant.role %}{{ participant.role }}{% else %}未確認{% endif %}
+                                {% if participant.affiliation %}
+                                <div class="small text-muted">{{ participant.affiliation }}</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <details>
+                                    <summary>確認する</summary>
+                                    <div class="small mt-2">
+                                        <div>会議録ID: {{ participant.source_meeting_id }}</div>
+                                        {% for evidence in participant.evidences.all %}
+                                        <div class="border-top mt-2 pt-2">
+                                            <span class="badge text-bg-light">{{ evidence.get_source_type_display }}</span>
+                                            {% if evidence.source_speech_id %} {{ evidence.source_speech_id }}{% endif %}
+                                            {% if evidence.source_url %}
+                                            <a href="{{ evidence.source_url }}" target="_blank" rel="noopener">出典</a>
+                                            {% endif %}
+                                            <div class="text-muted mt-1" style="white-space: pre-wrap;">{{ evidence.source_text|truncatechars:240 }}</div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </details>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
     {% if has_speeches %}
     <details class="mt-4">
         <summary class="text-muted">会議録の原文を確認する{% if scenario %}（シナリオの生成元）{% endif %}</summary>
