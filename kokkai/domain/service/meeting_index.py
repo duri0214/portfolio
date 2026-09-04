@@ -36,5 +36,4 @@ class MeetingIndexService:
             else:
                 start_record = None
 
-        self.repository.rebuild_meetings(records)
-        return len(records)
+        return self.repository.rebuild_meetings(records)

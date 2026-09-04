@@ -9,7 +9,7 @@ from ..valueobject.meeting import MeetingIndexRecord, MeetingRecord, SpeechRecor
 class MeetingRepository:
     """会議録メタデータと発言の永続化を担当する。"""
 
-    def rebuild_meetings(self, records: Iterable[MeetingIndexRecord]) -> list[Meeting]:
+    def rebuild_meetings(self, records: Iterable[MeetingIndexRecord]) -> int:
         """
         検索結果から会議録カタログを再構築する。
 
@@ -18,7 +18,7 @@ class MeetingRepository:
         """
         with transaction.atomic():
             Meeting.objects.all().delete()
-            return Meeting.objects.bulk_create(
+            Meeting.objects.bulk_create(
                 [
                     Meeting(
                         meeting_date=record.date_obj,
@@ -33,6 +33,7 @@ class MeetingRepository:
                     for record in records
                 ]
             )
+            return Meeting.objects.count()
 
     def replace_meeting_contents(
         self,

@@ -144,6 +144,7 @@ class MeetingIndexServiceTests(SimpleTestCase):
             MeetingIndexSearchResult(2, 1, 2, None, [second_record]),
         ]
         repository = Mock()
+        repository.rebuild_meetings.return_value = 2
 
         indexed_count = MeetingIndexService(client, repository).create_index(
             date(2024, 1, 26), date(2024, 1, 26)
@@ -178,6 +179,7 @@ class MeetingIndexServiceTests(SimpleTestCase):
             1, 1, 1, 1, [record]
         )
         repository = Mock()
+        repository.rebuild_meetings.return_value = 1
 
         indexed_count = MeetingIndexService(client, repository).create_index(
             date(2024, 1, 26), date(2024, 1, 26)
@@ -215,8 +217,9 @@ class MeetingRepositoryTests(TestCase):
             speech_order=1,
         )
 
-        MeetingRepository().rebuild_meetings([meeting_index_record()])
+        indexed_count = MeetingRepository().rebuild_meetings([meeting_index_record()])
 
+        self.assertEqual(indexed_count, 1)
         self.assertEqual(Meeting.objects.count(), 1)
         new_meeting = Meeting.objects.get(min_id=meeting_index_record().issue_id)
         self.assertEqual(new_meeting.meeting_date, date(2024, 1, 26))
@@ -240,8 +243,9 @@ class MeetingRepositoryTests(TestCase):
             url="https://example.com/old",
         )
 
-        MeetingRepository().rebuild_meetings([])
+        indexed_count = MeetingRepository().rebuild_meetings([])
 
+        self.assertEqual(indexed_count, 0)
         self.assertFalse(Meeting.objects.filter(pk=meeting.pk).exists())
         self.assertEqual(Meeting.objects.count(), 0)
 
