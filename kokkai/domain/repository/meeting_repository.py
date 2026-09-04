@@ -9,25 +9,6 @@ from ..valueobject.meeting import MeetingIndexRecord, MeetingRecord, SpeechRecor
 class MeetingRepository:
     """会議録メタデータと発言の永続化を担当する。"""
 
-    def upsert_indexes(self, records: Iterable[MeetingIndexRecord]) -> list[Meeting]:
-        """会議録メタデータを更新し、既存の発言は変更しない。"""
-        meetings = []
-        for record in records:
-            meeting, _ = Meeting.objects.update_or_create(
-                min_id=record.issue_id,
-                defaults={
-                    "meeting_date": record.date_obj,
-                    "session_number": record.session,
-                    "house": record.name_of_house,
-                    "committee": record.name_of_meeting,
-                    "meeting_number": record.issue,
-                    "url": record.meeting_url,
-                    "pdf_url": record.pdf_url or "",
-                },
-            )
-            meetings.append(meeting)
-        return meetings
-
     def replace_meetings(self, records: Iterable[MeetingIndexRecord]) -> list[Meeting]:
         """
         保存する会議録を検索結果で置き換える。
@@ -38,7 +19,21 @@ class MeetingRepository:
         records = list(records)
         with transaction.atomic():
             Meeting.objects.all().delete()
-            return self.upsert_indexes(records)
+            return Meeting.objects.bulk_create(
+                [
+                    Meeting(
+                        meeting_date=record.date_obj,
+                        session_number=record.session,
+                        house=record.name_of_house,
+                        committee=record.name_of_meeting,
+                        meeting_number=record.issue,
+                        min_id=record.issue_id,
+                        url=record.meeting_url,
+                        pdf_url=record.pdf_url or "",
+                    )
+                    for record in records
+                ]
+            )
 
     def replace_meeting_contents(
         self,

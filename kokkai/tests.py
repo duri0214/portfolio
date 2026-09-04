@@ -166,41 +166,6 @@ class MeetingIndexServiceTests(SimpleTestCase):
 
 
 class MeetingRepositoryTests(TestCase):
-    def test_upsert_indexes_updates_metadata_without_deleting_speeches(self):
-        """
-        シナリオ:
-        - 入力: 発言を持つ既存会議録と、同じ会議録IDの更新済みメタデータ。
-        - 処理: upsert_indexes を呼び出す。
-        - 期待値: 会議録は1件のまま更新され、既存発言は削除されないこと。
-        """
-        meeting = Meeting.objects.create(
-            meeting_date=date(2024, 1, 1),
-            session_number=212,
-            house="参議院",
-            committee="旧会議名",
-            meeting_number="第9号",
-            min_id="121305254X00120240126",
-            url="https://example.com/old",
-        )
-        speech = Speech.objects.create(
-            meeting=meeting,
-            speaker_name="既存発言者",
-            speech_text="保存済みの発言",
-            speech_order=1,
-        )
-
-        MeetingRepository().upsert_indexes([meeting_index_record()])
-
-        meeting.refresh_from_db()
-        self.assertEqual(Meeting.objects.count(), 1)
-        self.assertEqual(meeting.meeting_date, date(2024, 1, 26))
-        self.assertEqual(meeting.committee, "本会議")
-        self.assertEqual(
-            meeting.pdf_url, "https://kokkai.ndl.go.jp/img/121305254X00120240126"
-        )
-        self.assertTrue(Speech.objects.filter(pk=speech.pk).exists())
-        self.assertEqual(speech.meeting_id, meeting.pk)
-
     def test_replace_meetings_deletes_existing_contents_before_rebuilding_catalog(self):
         """
         シナリオ:
