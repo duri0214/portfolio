@@ -11,6 +11,7 @@ from ..valueobject.participant import (
     ParticipantEvidenceData,
     ParticipantExtractionData,
     ParticipantSourceType,
+    join_roles,
 )
 
 
@@ -153,6 +154,7 @@ class MeetingParticipantExtractor:
             return []
 
         entries: list[ParticipantExtractionData] = []
+        inherited_position = ""
         is_attendance_section = False
         for raw_line in metadata_speech.speech.splitlines():
             line = raw_line.strip()
@@ -164,12 +166,22 @@ class MeetingParticipantExtractor:
                 if "出席" not in line:
                     continue
                 is_attendance_section = True
-            entries.extend(self._parse_attendance_line(line, metadata_speech))
+            line_entries = self._parse_attendance_line(
+                line, metadata_speech, inherited_position
+            )
+            entries.extend(line_entries)
+            if line_entries:
+                continue
+
+            if line.startswith(("（", "(")):
+                continue
+            position = self._attendance_position(line)
+            inherited_position = position if position.endswith("臣") else ""
         return entries
 
     @staticmethod
     def _parse_attendance_line(
-        line: str, metadata_speech: SpeechRecord
+        line: str, metadata_speech: SpeechRecord, inherited_position: str = ""
     ) -> list[ParticipantExtractionData]:
         entries: list[ParticipantExtractionData] = []
         previous_end = 0
@@ -177,6 +189,11 @@ class MeetingParticipantExtractor:
             token = line[previous_end : match.start()]
             name = MeetingParticipantExtractor._attendance_name(token)
             if name:
+                position = MeetingParticipantExtractor._attendance_position(token)
+                if inherited_position and token.lstrip().startswith(("（", "(")):
+                    position = join_roles(inherited_position, position)
+                elif not position:
+                    position = inherited_position
                 entries.append(
                     ParticipantExtractionData(
                         name=name,
@@ -185,9 +202,7 @@ class MeetingParticipantExtractor:
                         source_speech_id=metadata_speech.speech_id,
                         source_url=metadata_speech.speech_url,
                         source_speech_order=metadata_speech.speech_order,
-                        speaker_position=MeetingParticipantExtractor._attendance_position(
-                            token
-                        ),
+                        speaker_position=position,
                     )
                 )
             previous_end = match.end()
@@ -203,6 +218,8 @@ class MeetingParticipantExtractor:
             return normalize_text(annotation.group(1))
 
         parts = re.split(r"[\s　]+", normalized, maxsplit=1)
+        if len(parts) == 1 and normalized.endswith(_ATTENDANCE_POSITION_SUFFIXES):
+            return normalize_text(normalized)
         if len(parts) < 2 or not parts[0].endswith(_ATTENDANCE_POSITION_SUFFIXES):
             return ""
         return normalize_text(parts[0])
