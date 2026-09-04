@@ -691,6 +691,25 @@ class ScenarioGameViewTests(TestCase):
             "https://kokkai.ndl.go.jp/txt/121305254X00120240127/2",
         )
 
+    def test_next_turn_button_contains_loading_feedback(self):
+        """
+        Scenario:
+        - Given: プレイヤー以外のターンを表示するゲーム画面
+        - When: 「次の展開へ」ボタンの送信処理を確認する
+        - Then: ボタン内で待機中を示すスピナーを表示できるUIが含まれる
+        """
+        play = ScenarioPlay.objects.create(
+            scenario=self.scenario,
+            selected_actor=self.player_actor,
+            next_turn_number=1,
+        )
+
+        response = self.client.get(reverse("kokkai:scenario_game", args=[play.play_id]))
+
+        self.assertContains(response, "data-next-turn-button")
+        self.assertContains(response, "spinner-border spinner-border-sm me-2")
+        self.assertContains(response, "nextButton.disabled = true;")
+
     def test_result_page_replaces_legacy_policy_outcome_label_with_neutral_score(self):
         """
         シナリオ:

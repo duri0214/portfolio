@@ -274,7 +274,7 @@
                 {% if can_skip_to_final_turn %}
                 <button type="submit" name="action" value="skip_to_final_turn" class="btn btn-outline-primary btn-lg w-100 mb-2">最終判定まで進む</button>
                 {% endif %}
-                <button type="submit" name="action" value="next" class="btn btn-primary btn-lg w-100">次の展開へ</button>
+                <button type="submit" name="action" value="next" class="btn btn-primary btn-lg w-100" data-next-turn-button>次の展開へ</button>
                 {% endif %}
             </form>
         </section>
@@ -306,20 +306,43 @@
         const form = document.getElementById("roleplay-form");
         const cards = Array.from(document.querySelectorAll("[data-choice-card]"));
         const selectionStatus = document.getElementById("choice-selection-status");
+        const nextButton = form
+            ? form.querySelector("[data-next-turn-button]")
+            : null;
 
-        if (!form || !cards.length) {
+        if (!form) {
             return;
         }
 
         let submitting = false;
 
-        form.addEventListener("submit", function () {
+        form.addEventListener("submit", function (event) {
             submitting = true;
             cards.forEach(function (card) {
                 card.classList.add("is-submitting");
                 card.disabled = true;
             });
+
+            if (!nextButton || event.submitter !== nextButton) {
+                return;
+            }
+
+            nextButton.disabled = true;
+            nextButton.setAttribute("aria-busy", "true");
+            const label = nextButton.textContent;
+            nextButton.textContent = "";
+
+            const spinner = document.createElement("span");
+            spinner.className = "spinner-border spinner-border-sm me-2";
+            spinner.setAttribute("role", "status");
+            spinner.setAttribute("aria-hidden", "true");
+            nextButton.appendChild(spinner);
+            nextButton.appendChild(document.createTextNode(label));
         });
+
+        if (!cards.length) {
+            return;
+        }
 
         cards.forEach(function (card) {
             card.addEventListener("click", function (event) {
