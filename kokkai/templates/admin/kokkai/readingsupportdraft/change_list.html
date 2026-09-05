@@ -1,0 +1,6 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+<li><a href="{% url 'admin:kokkai_readingsupportdraft_generate' %}">Web情報から候補を作成</a></li>
+{{ block.super }}
+{% endblock %}

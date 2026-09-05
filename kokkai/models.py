@@ -1,8 +1,11 @@
 import uuid
 
+from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from .domain.valueobject.participant import join_roles
+from .domain.valueobject.reading_support import normalize_surface
 
 
 class Meeting(models.Model):
@@ -369,3 +372,158 @@ class ScenarioPlayAnswer(models.Model):
                 fields=["play", "turn"], name="unique_play_turn_answer"
             )
         ]
+
+
+class ReadingSupportEntry(models.Model):
+    """会議録本文へ適用する用語または読み補正を管理する辞書エントリ。"""
+
+    class EntryType(models.TextChoices):
+        TERM = "term", "用語"
+        READING_OVERRIDE = "reading_override", "読み補正"
+
+    entry_type = models.CharField(
+        "種別",
+        max_length=32,
+        choices=EntryType.choices,
+        default=EntryType.TERM,
+    )
+    surface = models.CharField("表記", max_length=255)
+    normalized_surface = models.CharField(
+        "正規化表記", max_length=255, unique=True, editable=False
+    )
+    reading = models.CharField("読み", max_length=255)
+    description = models.TextField("説明", blank=True)
+    category = models.CharField("カテゴリ", max_length=64, blank=True)
+    source_url = models.URLField("出典URL", blank=True)
+    is_active = models.BooleanField("有効", default=True)
+    created_at = models.DateTimeField("登録日時", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    class Meta:
+        ordering = ["surface", "pk"]
+        indexes = [
+            models.Index(
+                fields=["is_active", "entry_type"],
+                name="kokkai_reading_active_type_idx",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.surface} ({self.get_entry_type_display()})"
+
+    def clean(self) -> None:
+        """用語と読み補正の必須項目を検証する。"""
+        self.surface = (self.surface or "").strip()
+        self.reading = (self.reading or "").strip()
+        self.description = (self.description or "").strip()
+        self.category = (self.category or "").strip()
+        self.source_url = (self.source_url or "").strip()
+        self.normalized_surface = normalize_surface(self.surface)
+
+        errors: dict[str, str] = {}
+        if not self.surface:
+            errors["surface"] = "表記を入力してください。"
+        if not self.normalized_surface:
+            errors["surface"] = "表記を入力してください。"
+        if not self.reading:
+            errors["reading"] = "読みを入力してください。"
+        if self.entry_type == self.EntryType.TERM:
+            if not self.description:
+                errors["description"] = "用語には説明が必要です。"
+            if not self.source_url:
+                errors["source_url"] = "用語には出典URLが必要です。"
+        if errors:
+            raise ValidationError(errors)
+
+        duplicate_query = type(self).objects.filter(
+            normalized_surface=self.normalized_surface
+        )
+        if self.pk:
+            duplicate_query = duplicate_query.exclude(pk=self.pk)
+        if duplicate_query.exists():
+            raise ValidationError({"surface": "同じ表記の辞書エントリが既にあります。"})
+
+    def save(self, *args, **kwargs):
+        """保存時にも正規化表記を同期する。"""
+        self.surface = (self.surface or "").strip()
+        self.reading = (self.reading or "").strip()
+        self.description = (self.description or "").strip()
+        self.category = (self.category or "").strip()
+        self.source_url = (self.source_url or "").strip()
+        self.normalized_surface = normalize_surface(self.surface)
+        return super().save(*args, **kwargs)
+
+
+class ReadingSupportDraft(models.Model):
+    """Web情報からGPTが作成した辞書候補の下書き。"""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "確認待ち"
+        IMPORTED = "imported", "登録済み"
+        REJECTED = "rejected", "却下"
+
+    source_url = models.URLField("入力URL", blank=True)
+    source_text = models.TextField("入力本文")
+    model_name = models.CharField("生成モデル", max_length=64, blank=True)
+    status = models.CharField(
+        "状態", max_length=16, choices=Status.choices, default=Status.PENDING
+    )
+    error_message = models.TextField("エラー", blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="kokkai_reading_support_drafts",
+        verbose_name="作成者",
+    )
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+
+    def __str__(self) -> str:
+        return f"辞書候補下書き #{self.pk}"
+
+
+class ReadingSupportDraftCandidate(models.Model):
+    """辞書へ登録する前に管理者が確認・修正する候補。"""
+
+    draft = models.ForeignKey(
+        ReadingSupportDraft,
+        on_delete=models.CASCADE,
+        related_name="candidates",
+        verbose_name="下書き",
+    )
+    entry_type = models.CharField(
+        "種別",
+        max_length=32,
+        choices=ReadingSupportEntry.EntryType.choices,
+        default=ReadingSupportEntry.EntryType.TERM,
+    )
+    surface = models.CharField("表記", max_length=255)
+    reading = models.CharField("読み", max_length=255, blank=True)
+    description = models.TextField("説明", blank=True)
+    category = models.CharField("カテゴリ", max_length=64, blank=True)
+    source_url = models.URLField("出典URL", blank=True)
+    needs_review = models.BooleanField("要確認", default=True)
+    is_approved = models.BooleanField("登録承認", default=False)
+    is_registered = models.BooleanField("登録済み", default=False, editable=False)
+    review_note = models.TextField("確認メモ", blank=True)
+    registered_entry = models.ForeignKey(
+        ReadingSupportEntry,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="draft_candidates",
+        verbose_name="登録先",
+    )
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    class Meta:
+        ordering = ["pk"]
+
+    def __str__(self) -> str:
+        return self.surface or f"候補 #{self.pk}"

@@ -24,7 +24,22 @@ class ReadingSupportServiceTests(SimpleTestCase):
     """読み仮名と登録用語の解析結果を検証する。"""
 
     def setUp(self):
-        self.service = ReadingSupportService()
+        self.service = ReadingSupportService(
+            dictionary=ReadingSupportDictionary(
+                terms=(
+                    TermDefinition(
+                        surface="FOIP",
+                        reading="フォイップ",
+                        description="Free and Open Indo-Pacific（自由で開かれたインド太平洋）の略称です。",
+                        category="政策・略語",
+                        source_url="https://www.meti.go.jp/policy/external_economy/trade/foip/index.html",
+                    ),
+                ),
+                reading_overrides=(
+                    ReadingOverride(surface="お諮り", reading="おはかり"),
+                ),
+            )
+        )
 
     def test_annotation_preserves_text_and_corrects_os_hakari_reading(self):
         """

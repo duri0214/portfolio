@@ -1,15 +1,15 @@
 import re
 from collections.abc import Iterable
 
-import jaconv
 from janome.tokenizer import Tokenizer
 
+from ..repository.reading_support_repository import ReadingSupportRepository
 from ..valueobject.reading_support import (
-    READING_SUPPORT_DICTIONARY,
     ReadingSupportDictionary,
     SpeechAnnotation,
     SpeechTextSegment,
     TermDefinition,
+    normalize_surface,
 )
 
 
@@ -31,19 +31,21 @@ class ReadingSupportService:
         tokenizer: 本文を形態素へ分割するJanomeのトークナイザー。
         dictionary: 用語定義と読み補正をまとめた読み仮名支援辞書。
         _KANJI_LIKE_PATTERN: 漢字等を含む読み仮名候補を検出する正規表現。
-        _WHITESPACE_PATTERN: 表記の正規化で空白を除去する正規表現。
     """
 
     _KANJI_LIKE_PATTERN = re.compile(r"[一-龯々〆ヵヶ]")
-    _WHITESPACE_PATTERN = re.compile(r"\s+")
 
     def __init__(
         self,
         tokenizer: Tokenizer | None = None,
-        dictionary: ReadingSupportDictionary = READING_SUPPORT_DICTIONARY,
+        dictionary: ReadingSupportDictionary | None = None,
     ) -> None:
         self.tokenizer = tokenizer or Tokenizer()
-        self.dictionary = dictionary
+        self.dictionary = (
+            dictionary
+            if dictionary is not None
+            else ReadingSupportRepository().get_dictionary()
+        )
 
     def annotate(self, text: str) -> SpeechAnnotation:
         """本文を原文順のセグメントへ分け、読み仮名と登録用語を付加する。"""
@@ -145,8 +147,7 @@ class ReadingSupportService:
 
     @classmethod
     def _normalize(cls, value: str) -> str:
-        normalized = jaconv.normalize(value)
-        return cls._WHITESPACE_PATTERN.sub("", normalized).casefold()
+        return normalize_surface(value)
 
     @classmethod
     def _normalize_with_positions(cls, value: str) -> tuple[str, list[int]]:

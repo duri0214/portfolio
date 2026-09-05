@@ -1,0 +1,16 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Web情報から辞書候補を作成</h1>
+    <p>生成結果は確認待ちの下書きとして保存されます。管理者が内容を修正して承認するまで辞書へ反映されません。</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="submit-row">
+            <input type="submit" value="候補を作成" class="default">
+            <a href="{% url 'admin:kokkai_readingsupportdraft_changelist' %}" class="button">戻る</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

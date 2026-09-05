@@ -1,4 +1,7 @@
+import re
 from dataclasses import dataclass
+
+import jaconv
 
 
 @dataclass(frozen=True)
@@ -49,6 +52,18 @@ class ReadingSupportDictionary:
     reading_overrides: tuple[ReadingOverride, ...]
 
 
+_WHITESPACE_PATTERN = re.compile(r"\s+")
+
+
+def normalize_surface(value: str) -> str:
+    """表記の全角・半角、大小文字、空白を検出用に正規化する。"""
+    normalized = jaconv.normalize(value or "")
+    return _WHITESPACE_PATTERN.sub("", normalized).casefold()
+
+
+READING_SUPPORT_DICTIONARY = ReadingSupportDictionary(terms=(), reading_overrides=())
+
+
 @dataclass(frozen=True)
 class SpeechTextSegment:
     """
@@ -82,21 +97,3 @@ class SpeechAnnotation:
     def has_support(self) -> bool:
         """読み仮名または登録用語の表示対象が含まれるかを返す。"""
         return any(segment.reading or segment.term for segment in self.segments)
-
-
-FOIP_TERM = TermDefinition(
-    surface="FOIP",
-    reading="フォイップ",
-    description=(
-        "Free and Open Indo-Pacific（自由で開かれたインド太平洋）の略称で、"
-        "法の支配に基づく自由で開かれた地域の実現を目指す外交上の概念です。"
-    ),
-    category="政策・略語",
-    source_url="https://www.meti.go.jp/policy/external_economy/trade/foip/index.html",
-)
-
-
-READING_SUPPORT_DICTIONARY = ReadingSupportDictionary(
-    terms=(FOIP_TERM,),
-    reading_overrides=(ReadingOverride(surface="お諮り", reading="おはかり"),),
-)
