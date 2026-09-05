@@ -1,0 +1,57 @@
+{% extends 'kokkai/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+        <ol class="breadcrumb mb-0 small">
+            <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">会議録一覧</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'kokkai:reading_support_management' %}">読み仮名支援辞書</a></li>
+            <li class="breadcrumb-item active" aria-current="page">CSV取り込み</li>
+        </ol>
+    </nav>
+
+    <h1 class="h2 mb-2">読み仮名支援辞書 CSV取り込み</h1>
+    <p class="text-muted">UTF-8 CSVを検証し、エラーがなければ辞書へ一括登録します。</p>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }}" role="alert">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="card mb-4">
+        {% csrf_token %}
+        <div class="card-body">
+            {{ form.non_field_errors }}
+            {% for field in form %}
+            <div class="mb-3{% if field.field.widget.input_type == 'checkbox' %} form-check{% endif %}">
+                {% if field.field.widget.input_type == 'checkbox' %}
+                {{ field }}
+                <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {% else %}
+                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% endif %}
+                {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+        <div class="card-footer d-flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-primary">取り込む</button>
+            <a href="{% url 'kokkai:reading_support_management' %}" class="btn btn-secondary">戻る</a>
+        </div>
+    </form>
+
+    {% if result and result.errors %}
+    <div class="alert alert-danger" role="alert">
+        <h2 class="h5">取り込みエラー</h2>
+        <ul class="mb-0">
+            {% for error in result.errors %}
+            <li>{{ error.line_number }}行目: {{ error.message }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

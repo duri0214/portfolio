@@ -1,13 +1,19 @@
 from django.core.exceptions import ValidationError
-from django.core.files.uploadedfile import SimpleUploadedFile
+from unittest.mock import patch
+
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 
 from kokkai.domain.service.reading_support import ReadingSupportService
 from kokkai.domain.service.reading_support_draft import ReadingSupportDraftService
 from kokkai.domain.service.reading_support_import import ReadingSupportCsvImporter
-from kokkai.models import ReadingSupportEntry
+from kokkai.models import (
+    ReadingSupportDraft,
+    ReadingSupportDraftCandidate,
+    ReadingSupportEntry,
+)
 
 
 class ReadingSupportEntryTests(TestCase):
@@ -192,26 +198,210 @@ class ReadingSupportDraftServiceTests(TestCase):
         self.assertEqual(draft.status, draft.Status.IMPORTED)
 
 
-class ReadingSupportAdminTests(TestCase):
-    """管理画面からCSV取り込み画面へ到達できることを確認する。"""
+class ReadingSupportManagementViewTests(TestCase):
+    """KOKKAI内の辞書管理画面と管理者権限を確認する。"""
 
     def setUp(self):
-        self.user = User.objects.create_superuser(
+        self.admin_user = User.objects.create_superuser(
             username="reading-support-admin",
             email="admin@example.com",
             password="test-password",
         )
-        self.client.force_login(self.user)
+        self.regular_user = User.objects.create_user(
+            username="reading-support-user",
+            password="test-password",
+        )
 
-    def test_csv_import_admin_view_imports_uploaded_file(self):
+    def test_index_keeps_management_buttons_visible_but_disabled_for_guests(self):
         """
         シナリオ:
-        - 入力: 管理者が辞書CSV取り込み画面へCSVをアップロードする。
-        - 処理: 管理画面のカスタム取り込みViewを実行する。
-        - 期待値: 画面が成功し、辞書エントリが保存される。
+        - 入力: 未ログインの利用者がKOKKAI会議録一覧を表示する。
+        - 処理: 辞書管理に関する操作群を確認する。
+        - 期待値: ボタンは非表示にならずdisabledで表示され、管理者権限が必要だと分かる。
         """
+        response = self.client.get(reverse("kokkai:index"))
+
+        for label in (
+            "辞書を管理",
+            "CSV取り込み",
+            "候補下書き",
+            "Web情報から候補を作成",
+        ):
+            self.assertContains(
+                response,
+                f'<button type="button" class="btn btn-outline-secondary" disabled>{label}</button>',
+                html=False,
+            )
+        self.assertContains(response, "管理者権限が必要です。")
+        self.assertNotContains(response, "/admin/")
+
+    def test_index_links_management_buttons_to_kokkai_pages_for_superuser(self):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーがKOKKAI会議録一覧を表示する。
+        - 処理: 管理機能の操作群を確認する。
+        - 期待値: 辞書、CSV、候補一覧、候補作成の各KOKKAI画面へのリンクが表示される。
+        """
+        self.client.force_login(self.admin_user)
+
+        response = self.client.get(reverse("kokkai:index"))
+
+        for view_name in (
+            "kokkai:reading_support_management",
+            "kokkai:reading_support_csv_import",
+            "kokkai:reading_support_draft_list",
+            "kokkai:reading_support_draft_generate",
+        ):
+            self.assertContains(response, f'href="{reverse(view_name)}"')
+        self.assertNotContains(response, "管理者権限が必要です。")
+
+    def test_management_pages_require_a_superuser(self):
+        """
+        シナリオ:
+        - 入力: 通常ユーザーがKOKKAI内の辞書管理画面へ直接アクセスする。
+        - 処理: 辞書一覧、CSV取り込み、候補一覧をGETする。
+        - 期待値: いずれも403を返し、管理者権限なしで機能を実行できない。
+        """
+        self.client.force_login(self.regular_user)
+
+        for view_name in (
+            "kokkai:reading_support_management",
+            "kokkai:reading_support_csv_import",
+            "kokkai:reading_support_draft_list",
+            "kokkai:reading_support_draft_generate",
+        ):
+            response = self.client.get(reverse(view_name))
+            self.assertEqual(response.status_code, 403)
+
+    def test_management_pages_render_inside_the_kokkai_app(self):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーがKOKKAI内の辞書管理関連画面を表示する。
+        - 処理: 辞書一覧、CSV取り込み、候補一覧、候補作成を順にGETする。
+        - 期待値: すべての画面がKOKKAIの共通レイアウトで200を返す。
+        """
+        self.client.force_login(self.admin_user)
+
+        for view_name in (
+            "kokkai:reading_support_management",
+            "kokkai:reading_support_csv_import",
+            "kokkai:reading_support_draft_list",
+            "kokkai:reading_support_draft_generate",
+        ):
+            response = self.client.get(reverse(view_name))
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, "会議録一覧")
+
+    def test_entry_form_creates_a_dictionary_entry(self):
+        """
+        シナリオ:
+        - 入力: 管理者がKOKKAI内の辞書エントリ追加画面へ用語情報を入力する。
+        - 処理: 辞書エントリ追加フォームを送信する。
+        - 期待値: 辞書一覧へ戻り、入力した用語が有効な状態で保存される。
+        """
+        self.client.force_login(self.admin_user)
+
         response = self.client.post(
-            reverse("admin:kokkai_readingsupportentry_csv_import"),
+            reverse("kokkai:reading_support_entry_create"),
+            {
+                "entry_type": "term",
+                "surface": "確認用語",
+                "reading": "カクニンヨウゴ",
+                "description": "確認用の説明",
+                "category": "確認",
+                "source_url": "https://example.com/check",
+                "is_active": "on",
+            },
+        )
+
+        self.assertRedirects(response, reverse("kokkai:reading_support_management"))
+        entry = ReadingSupportEntry.objects.get(surface="確認用語")
+        self.assertTrue(entry.is_active)
+
+    @patch("kokkai.views.ReadingSupportDraftService")
+    def test_draft_generation_view_redirects_to_the_created_draft(self, service_class):
+        """
+        シナリオ:
+        - 入力: 管理者がKOKKAI内の候補作成画面へ本文を入力する。
+        - 処理: GPT候補作成サービスを呼び出す。
+        - 期待値: 作成された下書きの確認画面へ遷移する。
+        """
+        self.client.force_login(self.admin_user)
+        draft = ReadingSupportDraft.objects.create(source_text="確認用本文")
+        service_class.return_value.create_draft.return_value = draft
+
+        response = self.client.post(
+            reverse("kokkai:reading_support_draft_generate"),
+            {"source_text": "確認用本文"},
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("kokkai:reading_support_draft_detail", args=[draft.pk]),
+        )
+        service_class.return_value.create_draft.assert_called_once()
+
+    def test_draft_detail_registers_approved_candidates(self):
+        """
+        シナリオ:
+        - 入力: 管理者が候補の内容を確認し、登録承認を付けた下書き。
+        - 処理: 候補確認画面から承認済み候補の登録を実行する。
+        - 期待値: 候補が辞書へ登録され、下書きと候補が登録済みになる。
+        """
+        self.client.force_login(self.admin_user)
+        draft = ReadingSupportDraft.objects.create(source_text="GXの一次資料")
+        candidate = ReadingSupportDraftCandidate.objects.create(
+            draft=draft,
+            entry_type="term",
+            surface="GX確認",
+            reading="ジーエックスカクニン",
+            description="脱炭素社会への移行",
+            category="政策",
+            source_url="https://example.com/gx-check",
+        )
+
+        response = self.client.post(
+            reverse("kokkai:reading_support_draft_detail", args=[draft.pk]),
+            {
+                "candidates-TOTAL_FORMS": "1",
+                "candidates-INITIAL_FORMS": "1",
+                "candidates-MIN_NUM_FORMS": "0",
+                "candidates-MAX_NUM_FORMS": "1000",
+                "candidates-0-id": str(candidate.pk),
+                "candidates-0-entry_type": "term",
+                "candidates-0-surface": "GX確認",
+                "candidates-0-reading": "ジーエックスカクニン",
+                "candidates-0-description": "脱炭素社会への移行",
+                "candidates-0-category": "政策",
+                "candidates-0-source_url": "https://example.com/gx-check",
+                "candidates-0-needs_review": "",
+                "candidates-0-is_approved": "on",
+                "candidates-0-review_note": "確認済み",
+                "action": "register_candidates",
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("kokkai:reading_support_draft_detail", args=[draft.pk]),
+        )
+        self.assertTrue(ReadingSupportEntry.objects.filter(surface="GX確認").exists())
+        candidate.refresh_from_db()
+        draft.refresh_from_db()
+        self.assertTrue(candidate.is_registered)
+        self.assertEqual(draft.status, draft.Status.IMPORTED)
+
+    def test_csv_import_view_imports_uploaded_file(self):
+        """
+        シナリオ:
+        - 入力: 管理者がKOKKAI内のCSV取り込み画面へ辞書CSVをアップロードする。
+        - 処理: CSV取り込みフォームを送信する。
+        - 期待値: KOKKAIの辞書一覧へリダイレクトし、辞書エントリが保存される。
+        """
+        self.client.force_login(self.admin_user)
+
+        response = self.client.post(
+            reverse("kokkai:reading_support_csv_import"),
             {
                 "file": SimpleUploadedFile(
                     "dictionary.csv",
@@ -224,24 +414,5 @@ class ReadingSupportAdminTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(response, reverse("kokkai:reading_support_management"))
         self.assertTrue(ReadingSupportEntry.objects.filter(surface="GX").exists())
-
-    def test_custom_admin_views_require_model_permissions(self):
-        """カスタム管理画面の直接アクセスでもモデル権限を要求する。"""
-        staff_user = User.objects.create_user(
-            username="reading-support-staff",
-            password="test-password",
-            is_staff=True,
-        )
-        self.client.force_login(staff_user)
-
-        csv_response = self.client.get(
-            reverse("admin:kokkai_readingsupportentry_csv_import")
-        )
-        draft_response = self.client.get(
-            reverse("admin:kokkai_readingsupportdraft_generate")
-        )
-
-        self.assertEqual(csv_response.status_code, 403)
-        self.assertEqual(draft_response.status_code, 403)

@@ -1,8 +1,51 @@
 from django import forms
 
+from .models import ReadingSupportDraftCandidate, ReadingSupportEntry
+
+
+class ReadingSupportEntryForm(forms.ModelForm):
+    """KOKKAI内の読み仮名支援辞書エントリを登録・編集するフォーム。"""
+
+    class Meta:
+        model = ReadingSupportEntry
+        fields = (
+            "entry_type",
+            "surface",
+            "reading",
+            "description",
+            "category",
+            "source_url",
+            "is_active",
+        )
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 4}),
+        }
+
+
+class ReadingSupportDraftCandidateForm(forms.ModelForm):
+    """KOKKAI内でGPT候補を確認・修正し、登録承認するフォーム。"""
+
+    class Meta:
+        model = ReadingSupportDraftCandidate
+        fields = (
+            "entry_type",
+            "surface",
+            "reading",
+            "description",
+            "category",
+            "source_url",
+            "needs_review",
+            "is_approved",
+            "review_note",
+        )
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 3}),
+            "review_note": forms.Textarea(attrs={"rows": 2}),
+        }
+
 
 class ReadingSupportCsvImportForm(forms.Form):
-    """読み仮名支援辞書CSVの管理画面取り込みフォーム。"""
+    """KOKKAI内で読み仮名支援辞書CSVを取り込むフォーム。"""
 
     file = forms.FileField(label="CSVファイル")
     update_existing = forms.BooleanField(

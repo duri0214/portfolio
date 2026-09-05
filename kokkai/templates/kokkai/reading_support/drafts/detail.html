@@ -1,0 +1,74 @@
+{% extends 'kokkai/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+        <ol class="breadcrumb mb-0 small">
+            <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">会議録一覧</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'kokkai:reading_support_draft_list' %}">候補下書き</a></li>
+            <li class="breadcrumb-item active" aria-current="page">#{{ draft.pk }}</li>
+        </ol>
+    </nav>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }}" role="alert">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="mb-4">
+        <h1 class="h2 mb-2">辞書候補下書き #{{ draft.pk }}</h1>
+        <p class="mb-1">状態: <span class="badge text-bg-secondary">{{ draft.get_status_display }}</span></p>
+        {% if draft.source_url %}
+        <p class="mb-1">入力URL: <a href="{{ draft.source_url }}" target="_blank" rel="noopener">{{ draft.source_url }}</a></p>
+        {% endif %}
+        <details class="mt-3">
+            <summary>入力本文を確認する</summary>
+            <div class="border rounded p-3 mt-2" style="white-space: pre-wrap;">{{ draft.source_text }}</div>
+        </details>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ candidate_formset.management_form }}
+        {% for form in candidate_formset %}
+        <section class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2 class="h5 mb-0">候補 #{{ form.instance.pk }}</h2>
+                {% if form.instance.is_registered %}
+                <span class="badge text-bg-success">登録済み</span>
+                {% elif form.instance.needs_review %}
+                <span class="badge text-bg-warning">要確認</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {{ form.id }}
+                {{ form.non_field_errors }}
+                {% for field in form %}
+                {% if field.field.widget.input_type == 'checkbox' %}
+                <div class="form-check mb-3">
+                    {{ field }}
+                    <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </div>
+                {% else %}
+                <div class="mb-3">
+                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </section>
+        {% empty %}
+        <p class="text-muted">この下書きには候補がありません。</p>
+        {% endfor %}
+
+        <div class="d-flex flex-wrap gap-2 mb-4">
+            <button type="submit" name="action" value="save_candidates" class="btn btn-secondary">候補を保存</button>
+            <button type="submit" name="action" value="register_candidates" class="btn btn-primary">承認済み候補を辞書へ登録</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

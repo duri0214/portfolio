@@ -2,10 +2,12 @@ from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 from django.contrib import messages
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Count, Q
+from django.forms import inlineformset_factory
 from django.shortcuts import redirect, render
-from django.urls import reverse
-from django.views.generic import DetailView, ListView
+from django.urls import reverse, reverse_lazy
+from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView
 
 from .domain.repository.scenario_repository import ScenarioRepository
 from .domain.service.meeting_catalog import MeetingCatalogService
@@ -15,7 +17,41 @@ from .domain.service.reading_support import ReadingSupportService
 from .domain.service.scenario import ScenarioGenerationError, ScenarioService
 from .domain.service.scenario_play import ScenarioPlayError, ScenarioPlayService
 from .domain.valueobject.meeting import MEETING_METADATA_SPEAKER_NAME
-from .models import Meeting
+from .domain.service.reading_support_draft import (
+    ReadingSupportDraftGenerationError,
+    ReadingSupportDraftService,
+)
+from .domain.service.reading_support_import import ReadingSupportCsvImporter
+from .forms import (
+    ReadingSupportCsvImportForm,
+    ReadingSupportDraftCandidateForm,
+    ReadingSupportDraftGenerationForm,
+    ReadingSupportEntryForm,
+)
+from .models import (
+    Meeting,
+    ReadingSupportDraft,
+    ReadingSupportDraftCandidate,
+    ReadingSupportEntry,
+)
+
+
+class KokkaiManagementRequiredMixin(UserPassesTestMixin):
+    """KOKKAI内の管理機能をスーパーユーザーだけに許可するMixin。"""
+
+    raise_exception = True
+
+    def test_func(self):
+        return self.request.user.is_authenticated and self.request.user.is_superuser
+
+
+ReadingSupportCandidateFormSet = inlineformset_factory(
+    ReadingSupportDraft,
+    ReadingSupportDraftCandidate,
+    form=ReadingSupportDraftCandidateForm,
+    extra=0,
+    can_delete=False,
+)
 
 
 class IndexView(ListView):
@@ -45,6 +81,9 @@ class IndexView(ListView):
         context["page_size"] = self._get_page_size()
         context["page_size_options"] = self.PAGE_SIZE_OPTIONS
         context["period_query"] = self._period_query(self.request.GET)
+        context["can_manage_reading_support"] = (
+            self.request.user.is_authenticated and self.request.user.is_superuser
+        )
         return context
 
     def get_paginate_by(self, queryset):
@@ -135,6 +174,145 @@ class IndexView(ListView):
             return ""
         start_date, end_date = cls._get_period(values)
         return cls._build_period_query(start_date, end_date)
+
+
+class ReadingSupportManagementView(KokkaiManagementRequiredMixin, ListView):
+    """KOKKAI内の読み仮名支援辞書を一覧表示する管理画面。"""
+
+    model = ReadingSupportEntry
+    template_name = "kokkai/reading_support/index.html"
+    context_object_name = "entries"
+
+    def get_queryset(self):
+        return ReadingSupportEntry.objects.all().order_by("surface", "pk")
+
+
+class ReadingSupportEntryCreateView(KokkaiManagementRequiredMixin, CreateView):
+    """KOKKAI内の読み仮名支援辞書エントリを追加する画面。"""
+
+    model = ReadingSupportEntry
+    form_class = ReadingSupportEntryForm
+    template_name = "kokkai/reading_support/entry_form.html"
+    success_url = reverse_lazy("kokkai:reading_support_management")
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "読み仮名支援辞書へ登録しました。")
+        return response
+
+
+class ReadingSupportEntryUpdateView(KokkaiManagementRequiredMixin, UpdateView):
+    """KOKKAI内の読み仮名支援辞書エントリを編集する画面。"""
+
+    model = ReadingSupportEntry
+    form_class = ReadingSupportEntryForm
+    template_name = "kokkai/reading_support/entry_form.html"
+    success_url = reverse_lazy("kokkai:reading_support_management")
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "読み仮名支援辞書を更新しました。")
+        return response
+
+
+class ReadingSupportCsvImportView(KokkaiManagementRequiredMixin, FormView):
+    """KOKKAI内で読み仮名支援辞書CSVを検証して取り込む画面。"""
+
+    template_name = "kokkai/reading_support/csv_import.html"
+    form_class = ReadingSupportCsvImportForm
+
+    def form_valid(self, form):
+        result = ReadingSupportCsvImporter().import_csv(
+            form.cleaned_data["file"].read(),
+            update_existing=form.cleaned_data["update_existing"],
+        )
+        if result.is_success:
+            messages.success(
+                self.request,
+                (
+                    f"CSVを取り込みました（新規 {result.created}件、"
+                    f"更新 {result.updated}件、スキップ {result.skipped}件）。"
+                ),
+            )
+            return redirect("kokkai:reading_support_management")
+        return self.render_to_response(self.get_context_data(form=form, result=result))
+
+
+class ReadingSupportDraftListView(KokkaiManagementRequiredMixin, ListView):
+    """KOKKAI内のGPT辞書候補下書きを一覧表示する管理画面。"""
+
+    model = ReadingSupportDraft
+    template_name = "kokkai/reading_support/drafts/index.html"
+    context_object_name = "drafts"
+
+    def get_queryset(self):
+        return ReadingSupportDraft.objects.prefetch_related("candidates").all()
+
+
+class ReadingSupportDraftGenerateView(KokkaiManagementRequiredMixin, FormView):
+    """KOKKAI内でWeb情報からGPT辞書候補の下書きを作成する画面。"""
+
+    template_name = "kokkai/reading_support/drafts/generate.html"
+    form_class = ReadingSupportDraftGenerationForm
+
+    def form_valid(self, form):
+        try:
+            draft = ReadingSupportDraftService().create_draft(
+                source_url=form.cleaned_data["source_url"],
+                source_text=form.cleaned_data["source_text"],
+                created_by=self.request.user,
+            )
+        except ReadingSupportDraftGenerationError as error:
+            form.add_error(None, str(error))
+            return self.form_invalid(form)
+
+        messages.success(
+            self.request,
+            f"候補下書き #{draft.pk}を作成しました。内容を確認してから承認してください。",
+        )
+        return redirect("kokkai:reading_support_draft_detail", pk=draft.pk)
+
+
+class ReadingSupportDraftDetailView(KokkaiManagementRequiredMixin, DetailView):
+    """KOKKAI内でGPT辞書候補を確認・修正・承認する画面。"""
+
+    model = ReadingSupportDraft
+    template_name = "kokkai/reading_support/drafts/detail.html"
+    context_object_name = "draft"
+
+    def get_context_data(self, **kwargs):
+        candidate_formset = kwargs.pop("candidate_formset", None)
+        context = super().get_context_data(**kwargs)
+        context["candidate_formset"] = (
+            candidate_formset or ReadingSupportCandidateFormSet(instance=self.object)
+        )
+        return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        candidate_formset = ReadingSupportCandidateFormSet(
+            request.POST, instance=self.object
+        )
+        if not candidate_formset.is_valid():
+            return self.render_to_response(
+                self.get_context_data(candidate_formset=candidate_formset)
+            )
+
+        candidate_formset.save()
+        if request.POST.get("action") == "register_candidates":
+            result = ReadingSupportDraftService().register_approved_candidates(
+                self.object
+            )
+            if result.errors:
+                for error in result.errors:
+                    messages.error(request, error)
+            else:
+                messages.success(
+                    request, f"{result.registered}件の候補を辞書へ登録しました。"
+                )
+        else:
+            messages.success(request, "候補を保存しました。")
+        return redirect("kokkai:reading_support_draft_detail", pk=self.object.pk)
 
 
 class MeetingDetailView(DetailView):
