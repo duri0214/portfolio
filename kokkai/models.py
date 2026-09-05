@@ -484,7 +484,7 @@ class ReadingSupportDraft(models.Model):
         ordering = ["-created_at", "-pk"]
 
     def __str__(self) -> str:
-        return f"辞書候補下書き #{self.pk}"
+        return f"Web取込候補 #{self.pk}"
 
 
 class ReadingSupportDraftCandidate(models.Model):

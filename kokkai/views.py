@@ -177,7 +177,7 @@ class IndexView(ListView):
 
 
 class ReadingSupportManagementView(KokkaiManagementRequiredMixin, ListView):
-    """KOKKAI内の読み仮名支援辞書を一覧表示する管理画面。"""
+    """KOKKAI内のワード管理モードと辞書ビューアを表示する画面。"""
 
     model = ReadingSupportEntry
     template_name = "kokkai/reading_support/index.html"
@@ -239,7 +239,7 @@ class ReadingSupportCsvImportView(KokkaiManagementRequiredMixin, FormView):
 
 
 class ReadingSupportDraftListView(KokkaiManagementRequiredMixin, ListView):
-    """KOKKAI内のGPT辞書候補下書きを一覧表示する管理画面。"""
+    """KOKKAI内のWeb取込候補を一覧表示する画面。"""
 
     model = ReadingSupportDraft
     template_name = "kokkai/reading_support/drafts/index.html"
@@ -250,7 +250,7 @@ class ReadingSupportDraftListView(KokkaiManagementRequiredMixin, ListView):
 
 
 class ReadingSupportDraftGenerateView(KokkaiManagementRequiredMixin, FormView):
-    """KOKKAI内でWeb情報からGPT辞書候補の下書きを作成する画面。"""
+    """KOKKAI内でWeb情報からワード候補を作成する画面。"""
 
     template_name = "kokkai/reading_support/drafts/generate.html"
     form_class = ReadingSupportDraftGenerationForm
@@ -268,13 +268,13 @@ class ReadingSupportDraftGenerateView(KokkaiManagementRequiredMixin, FormView):
 
         messages.success(
             self.request,
-            f"候補下書き #{draft.pk}を作成しました。内容を確認してから承認してください。",
+            f"Web取込候補 #{draft.pk}を作成しました。内容を確認してから承認してください。",
         )
         return redirect("kokkai:reading_support_draft_detail", pk=draft.pk)
 
 
 class ReadingSupportDraftDetailView(KokkaiManagementRequiredMixin, DetailView):
-    """KOKKAI内でGPT辞書候補を確認・修正・承認する画面。"""
+    """KOKKAI内でWeb取込候補を確認・修正・承認する画面。"""
 
     model = ReadingSupportDraft
     template_name = "kokkai/reading_support/drafts/detail.html"

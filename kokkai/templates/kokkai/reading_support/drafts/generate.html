@@ -5,13 +5,13 @@
     <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
         <ol class="breadcrumb mb-0 small">
             <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">会議録一覧</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'kokkai:reading_support_draft_list' %}">候補下書き</a></li>
-            <li class="breadcrumb-item active" aria-current="page">候補を作成</li>
+            <li class="breadcrumb-item"><a href="{% url 'kokkai:reading_support_management' %}">ワード管理</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Webから取り込む</li>
         </ol>
     </nav>
 
-    <h1 class="h2 mb-2">Web情報から辞書候補を作成</h1>
-    <p class="text-muted">生成結果は確認待ちの下書きとして保存され、承認するまで辞書へ反映されません。</p>
+    <h1 class="h2 mb-2">Webからワード候補を取り込む</h1>
+    <p class="text-muted">URLを指定すると本文を取得し、GPTがワード候補を作成します。本文を貼り付けて直接候補を作成することもできます。作成した候補は確認・修正後に辞書へ登録します。</p>
 
     <form method="post" class="card">
         {% csrf_token %}
@@ -28,7 +28,7 @@
         </div>
         <div class="card-footer d-flex flex-wrap gap-2">
             <button type="submit" class="btn btn-primary">候補を作成</button>
-            <a href="{% url 'kokkai:reading_support_draft_list' %}" class="btn btn-secondary">戻る</a>
+            <a href="{% url 'kokkai:reading_support_management' %}" class="btn btn-secondary">ワード管理へ戻る</a>
         </div>
     </form>
 </div>

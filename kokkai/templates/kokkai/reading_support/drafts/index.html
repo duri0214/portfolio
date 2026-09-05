@@ -5,7 +5,7 @@
     <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
         <ol class="breadcrumb mb-0 small">
             <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">会議録一覧</a></li>
-            <li class="breadcrumb-item active" aria-current="page">候補下書き</li>
+            <li class="breadcrumb-item active" aria-current="page">Web取込候補</li>
         </ol>
     </nav>
 
@@ -17,12 +17,12 @@
 
     <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
         <div>
-            <h1 class="h2 mb-1">辞書候補下書き</h1>
-            <p class="text-muted mb-0">Web情報から作成した候補を確認してから辞書へ登録します。</p>
+            <h1 class="h2 mb-1">Web取込候補</h1>
+            <p class="text-muted mb-0">Web本文から自動抽出したワードを確認してから辞書へ登録します。</p>
         </div>
         <div class="d-flex flex-wrap gap-2">
-            <a href="{% url 'kokkai:reading_support_draft_generate' %}" class="btn btn-primary">Web情報から候補を作成</a>
-            <a href="{% url 'kokkai:reading_support_management' %}" class="btn btn-outline-secondary">辞書を管理</a>
+            <a href="{% url 'kokkai:reading_support_draft_generate' %}" class="btn btn-primary">Webから取り込む</a>
+            <a href="{% url 'kokkai:reading_support_management' %}" class="btn btn-outline-secondary">ワード管理へ戻る</a>
         </div>
     </div>
 
@@ -58,13 +58,13 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="text-center text-muted">候補下書きはありません。</td>
+                    <td colspan="6" class="text-center text-muted">Web取込候補はありません。</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 
-    <a href="{% url 'kokkai:index' %}" class="btn btn-link px-0">会議録一覧へ戻る</a>
+    <a href="{% url 'kokkai:reading_support_management' %}" class="btn btn-link px-0">ワード管理へ戻る</a>
 </div>
 {% endblock %}

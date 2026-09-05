@@ -84,26 +84,20 @@
         <input type="hidden" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
         <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
             <div>
-                <h4 class="h6 mb-1">会議録本文・辞書管理</h4>
-                <p class="small text-muted mb-0">選択した会議録の本文を取り込み、読み仮名支援辞書を管理します。</p>
+                <h4 class="h6 mb-1">会議録本文</h4>
+                <p class="small text-muted mb-0">選択した会議録の発言本文をデータベースに取り込みます。</p>
             </div>
             <div class="d-flex flex-wrap justify-content-lg-end gap-2">
                 <button type="submit" class="btn btn-primary">本文をデータベースに取り込む</button>
                 {% if can_manage_reading_support %}
-                <a href="{% url 'kokkai:reading_support_management' %}" class="btn btn-outline-primary">辞書を管理</a>
-                <a href="{% url 'kokkai:reading_support_csv_import' %}" class="btn btn-outline-secondary">CSV取り込み</a>
-                <a href="{% url 'kokkai:reading_support_draft_list' %}" class="btn btn-outline-secondary">候補下書き</a>
-                <a href="{% url 'kokkai:reading_support_draft_generate' %}" class="btn btn-outline-secondary">Web情報から候補を作成</a>
+                <a href="{% url 'kokkai:reading_support_management' %}" class="btn btn-outline-primary">ワード管理</a>
                 {% else %}
-                <button type="button" class="btn btn-outline-secondary" disabled>辞書を管理</button>
-                <button type="button" class="btn btn-outline-secondary" disabled>CSV取り込み</button>
-                <button type="button" class="btn btn-outline-secondary" disabled>候補下書き</button>
-                <button type="button" class="btn btn-outline-secondary" disabled>Web情報から候補を作成</button>
+                <button type="button" class="btn btn-outline-secondary" disabled>ワード管理</button>
                 {% endif %}
             </div>
         </div>
         {% if not can_manage_reading_support %}
-        <p class="small text-muted mb-3">辞書管理・CSV取り込み・GPT候補の作成には管理者権限が必要です。</p>
+        <p class="small text-muted mb-3">ワード管理を利用するには管理者権限が必要です。</p>
         {% endif %}
         <div class="table-responsive">
         <table class="table table-striped align-middle">

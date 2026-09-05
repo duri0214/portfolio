@@ -5,7 +5,7 @@
     <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
         <ol class="breadcrumb mb-0 small">
             <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">会議録一覧</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'kokkai:reading_support_draft_list' %}">候補下書き</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'kokkai:reading_support_draft_list' %}">Web取込候補</a></li>
             <li class="breadcrumb-item active" aria-current="page">#{{ draft.pk }}</li>
         </ol>
     </nav>
@@ -17,8 +17,9 @@
     {% endif %}
 
     <div class="mb-4">
-        <h1 class="h2 mb-2">辞書候補下書き #{{ draft.pk }}</h1>
+        <h1 class="h2 mb-2">Web取込候補 #{{ draft.pk }}</h1>
         <p class="mb-1">状態: <span class="badge text-bg-secondary">{{ draft.get_status_display }}</span></p>
+        <p class="text-muted">Web本文から抽出した候補を確認・修正し、辞書へ登録する候補だけに「登録承認」を付けて保存してください。</p>
         {% if draft.source_url %}
         <p class="mb-1">入力URL: <a href="{{ draft.source_url }}" target="_blank" rel="noopener">{{ draft.source_url }}</a></p>
         {% endif %}
@@ -62,12 +63,12 @@
             </div>
         </section>
         {% empty %}
-        <p class="text-muted">この下書きには候補がありません。</p>
+        <p class="text-muted">このWeb取込候補にはワードがありません。</p>
         {% endfor %}
 
         <div class="d-flex flex-wrap gap-2 mb-4">
             <button type="submit" name="action" value="save_candidates" class="btn btn-secondary">候補を保存</button>
-            <button type="submit" name="action" value="register_candidates" class="btn btn-primary">承認済み候補を辞書へ登録</button>
+            <button type="submit" name="action" value="register_candidates" class="btn btn-primary">承認した候補を辞書へ登録</button>
         </div>
     </form>
 </div>

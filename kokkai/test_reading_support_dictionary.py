@@ -212,48 +212,46 @@ class ReadingSupportManagementViewTests(TestCase):
             password="test-password",
         )
 
-    def test_index_keeps_management_buttons_visible_but_disabled_for_guests(self):
+    def test_index_keeps_word_management_button_visible_but_disabled_for_guests(self):
         """
         シナリオ:
         - 入力: 未ログインの利用者がKOKKAI会議録一覧を表示する。
-        - 処理: 辞書管理に関する操作群を確認する。
+        - 処理: ワード管理への導線を確認する。
         - 期待値: ボタンは非表示にならずdisabledで表示され、管理者権限が必要だと分かる。
         """
         response = self.client.get(reverse("kokkai:index"))
 
-        for label in (
-            "辞書を管理",
-            "CSV取り込み",
-            "候補下書き",
-            "Web情報から候補を作成",
-        ):
-            self.assertContains(
-                response,
-                f'<button type="button" class="btn btn-outline-secondary" disabled>{label}</button>',
-                html=False,
-            )
-        self.assertContains(response, "管理者権限が必要です。")
+        self.assertContains(
+            response,
+            '<button type="button" class="btn btn-outline-secondary" disabled>ワード管理</button>',
+            html=False,
+        )
+        self.assertContains(response, "ワード管理を利用するには管理者権限が必要です。")
+        self.assertNotContains(response, "CSVから取り込む")
+        self.assertNotContains(response, "Webから取り込む")
+        self.assertNotContains(response, "Web取込候補")
         self.assertNotContains(response, "/admin/")
 
-    def test_index_links_management_buttons_to_kokkai_pages_for_superuser(self):
+    def test_index_links_single_word_management_button_for_superuser(self):
         """
         シナリオ:
         - 入力: スーパーユーザーがKOKKAI会議録一覧を表示する。
-        - 処理: 管理機能の操作群を確認する。
-        - 期待値: 辞書、CSV、候補一覧、候補作成の各KOKKAI画面へのリンクが表示される。
+        - 処理: ワード管理への導線を確認する。
+        - 期待値: ワード管理ボタン1つだけがKOKKAI内の管理モードへリンクする。
         """
         self.client.force_login(self.admin_user)
 
         response = self.client.get(reverse("kokkai:index"))
 
-        for view_name in (
-            "kokkai:reading_support_management",
-            "kokkai:reading_support_csv_import",
-            "kokkai:reading_support_draft_list",
-            "kokkai:reading_support_draft_generate",
-        ):
-            self.assertContains(response, f'href="{reverse(view_name)}"')
-        self.assertNotContains(response, "管理者権限が必要です。")
+        self.assertContains(
+            response,
+            f'href="{reverse("kokkai:reading_support_management")}"',
+            count=1,
+        )
+        self.assertContains(response, "ワード管理")
+        self.assertNotContains(response, "CSVから取り込む")
+        self.assertNotContains(response, "Webから取り込む")
+        self.assertNotContains(response, "Web取込候補")
 
     def test_management_pages_require_a_superuser(self):
         """
@@ -291,6 +289,15 @@ class ReadingSupportManagementViewTests(TestCase):
             response = self.client.get(reverse(view_name))
             self.assertEqual(response.status_code, 200)
             self.assertContains(response, "会議録一覧")
+
+        management_response = self.client.get(
+            reverse("kokkai:reading_support_management")
+        )
+        self.assertContains(management_response, "管理モード")
+        self.assertContains(management_response, "辞書ビューア")
+        self.assertContains(management_response, "CSVから取り込む")
+        self.assertContains(management_response, "Webから取り込む")
+        self.assertContains(management_response, "Web取込候補を確認")
 
     def test_entry_form_creates_a_dictionary_entry(self):
         """

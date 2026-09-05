@@ -5,65 +5,90 @@
     <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
         <ol class="breadcrumb mb-0 small">
             <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">会議録一覧</a></li>
-            <li class="breadcrumb-item active" aria-current="page">読み仮名支援辞書</li>
+            <li class="breadcrumb-item active" aria-current="page">ワード管理</li>
         </ol>
     </nav>
 
-    {% if messages %}
-    {% for message in messages %}
-    <div class="alert alert-{{ message.tags|default:'info' }}" role="alert">{{ message }}</div>
-    {% endfor %}
-    {% endif %}
-
-    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
-        <div>
-            <h1 class="h2 mb-1">読み仮名支援辞書</h1>
-            <p class="text-muted mb-0">会議録本文に表示する用語と読み補正を管理します。</p>
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="bg-light p-5 rounded shadow-sm">
+                <span class="badge text-bg-primary mb-3">管理モード</span>
+                <h1 class="display-4">KOKKAI ワード管理</h1>
+                <p class="lead mb-0">会議録本文に表示するワードと読み補正を確認・登録します。</p>
+            </div>
         </div>
-        <div class="d-flex flex-wrap gap-2">
-            <a href="{% url 'kokkai:reading_support_entry_create' %}" class="btn btn-primary">辞書エントリを追加</a>
-            <a href="{% url 'kokkai:reading_support_csv_import' %}" class="btn btn-outline-secondary">CSV取り込み</a>
-            <a href="{% url 'kokkai:reading_support_draft_list' %}" class="btn btn-outline-secondary">候補下書き</a>
-        </div>
-    </div>
 
-    <div class="table-responsive">
-        <table class="table table-striped align-middle">
-            <thead>
-                <tr>
-                    <th scope="col">表記</th>
-                    <th scope="col">読み</th>
-                    <th scope="col">種別</th>
-                    <th scope="col">カテゴリ</th>
-                    <th scope="col">状態</th>
-                    <th scope="col"><span class="visually-hidden">操作</span></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for entry in entries %}
-                <tr>
-                    <td>{{ entry.surface }}</td>
-                    <td>{{ entry.reading }}</td>
-                    <td>{{ entry.get_entry_type_display }}</td>
-                    <td>{{ entry.category|default:'-' }}</td>
-                    <td>
-                        {% if entry.is_active %}
-                        <span class="badge text-bg-success">有効</span>
-                        {% else %}
-                        <span class="badge text-bg-secondary">無効</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-end">
-                        <a href="{% url 'kokkai:reading_support_entry_update' entry.pk %}" class="btn btn-sm btn-outline-primary">編集</a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="6" class="text-center text-muted">辞書エントリはありません。</td>
-                </tr>
+        <div class="col-12">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
+                    </div>
                 {% endfor %}
-            </tbody>
-        </table>
+            {% endif %}
+
+            <div class="d-flex flex-wrap justify-content-end mb-3 gap-2">
+                <a href="{% url 'kokkai:reading_support_entry_create' %}" class="btn btn-primary">ワードを追加</a>
+                <a href="{% url 'kokkai:reading_support_csv_import' %}" class="btn btn-outline-secondary">CSVから取り込む</a>
+                <a href="{% url 'kokkai:reading_support_draft_generate' %}" class="btn btn-outline-success">Webから取り込む</a>
+                <a href="{% url 'kokkai:reading_support_draft_list' %}" class="btn btn-outline-info">Web取込候補を確認</a>
+            </div>
+
+            <div class="alert alert-info" role="status">
+                <strong>管理モードの使い方:</strong>
+                CSVは確定済みのワードを一括登録します。Webから取り込んだ本文は、すぐに辞書へ登録せず候補として保存し、内容を確認・修正してから登録します。
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h2 class="h5 mb-0">辞書ビューア</h2>
+                    <span class="small text-muted">{{ entries|length }}件</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">表記</th>
+                                    <th scope="col">読み</th>
+                                    <th scope="col">種別</th>
+                                    <th scope="col">説明</th>
+                                    <th scope="col">カテゴリ</th>
+                                    <th scope="col">状態</th>
+                                    <th scope="col"><span class="visually-hidden">操作</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in entries %}
+                                <tr>
+                                    <td>{{ entry.surface }}</td>
+                                    <td>{{ entry.reading }}</td>
+                                    <td>{{ entry.get_entry_type_display }}</td>
+                                    <td>{{ entry.description|default:'-'|truncatechars:40 }}</td>
+                                    <td>{{ entry.category|default:'-' }}</td>
+                                    <td>
+                                        {% if entry.is_active %}
+                                        <span class="badge text-bg-success">有効</span>
+                                        {% else %}
+                                        <span class="badge text-bg-secondary">無効</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="{% url 'kokkai:reading_support_entry_update' entry.pk %}" class="btn btn-sm btn-outline-primary">編集</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">辞書エントリはありません。</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <a href="{% url 'kokkai:index' %}" class="btn btn-link px-0">会議録一覧へ戻る</a>
