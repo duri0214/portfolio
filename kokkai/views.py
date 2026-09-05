@@ -197,7 +197,7 @@ class ReadingSupportEntryCreateView(KokkaiManagementRequiredMixin, CreateView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        messages.success(self.request, "読み仮名支援辞書へ登録しました。")
+        messages.success(self.request, "ワードを登録しました。")
         return response
 
 
@@ -211,7 +211,7 @@ class ReadingSupportEntryUpdateView(KokkaiManagementRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        messages.success(self.request, "読み仮名支援辞書を更新しました。")
+        messages.success(self.request, "ワードを更新しました。")
         return response
 
 
