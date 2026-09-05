@@ -177,7 +177,7 @@ class IndexView(ListView):
 
 
 class ReadingSupportManagementView(KokkaiManagementRequiredMixin, ListView):
-    """KOKKAI内のワード管理モードと辞書ビューアを表示する画面。"""
+    """KOKKAI内の読み仮名・用語辞書と辞書ビューアを表示する画面。"""
 
     model = ReadingSupportEntry
     template_name = "kokkai/reading_support/index.html"
@@ -197,7 +197,7 @@ class ReadingSupportEntryCreateView(KokkaiManagementRequiredMixin, CreateView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        messages.success(self.request, "ワードを登録しました。")
+        messages.success(self.request, "辞書項目を登録しました。")
         return response
 
 
@@ -211,7 +211,7 @@ class ReadingSupportEntryUpdateView(KokkaiManagementRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        messages.success(self.request, "ワードを更新しました。")
+        messages.success(self.request, "辞書項目を更新しました。")
         return response
 
 
@@ -250,7 +250,7 @@ class ReadingSupportDraftListView(KokkaiManagementRequiredMixin, ListView):
 
 
 class ReadingSupportDraftGenerateView(KokkaiManagementRequiredMixin, FormView):
-    """KOKKAI内でWeb情報からワード候補を作成する画面。"""
+    """KOKKAI内でWeb情報から辞書候補を作成する画面。"""
 
     template_name = "kokkai/reading_support/drafts/generate.html"
     form_class = ReadingSupportDraftGenerationForm

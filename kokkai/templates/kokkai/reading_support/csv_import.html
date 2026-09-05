@@ -5,12 +5,12 @@
     <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
         <ol class="breadcrumb mb-0 small">
             <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">会議録一覧</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'kokkai:reading_support_management' %}">ワード管理</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'kokkai:reading_support_management' %}">読み仮名・用語辞書</a></li>
             <li class="breadcrumb-item active" aria-current="page">CSVから取り込む</li>
         </ol>
     </nav>
 
-    <h1 class="h2 mb-2">ワードをCSVから取り込む</h1>
+    <h1 class="h2 mb-2">辞書項目をCSVから取り込む</h1>
     <p class="text-muted">UTF-8 CSVを検証し、エラーがなければ辞書へ一括登録します。</p>
 
     {% if messages %}
@@ -39,7 +39,7 @@
         </div>
         <div class="card-footer d-flex flex-wrap gap-2">
             <button type="submit" class="btn btn-primary">取り込む</button>
-            <a href="{% url 'kokkai:reading_support_management' %}" class="btn btn-secondary">ワード管理へ戻る</a>
+            <a href="{% url 'kokkai:reading_support_management' %}" class="btn btn-secondary">読み仮名・用語辞書へ戻る</a>
         </div>
     </form>
 

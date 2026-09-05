@@ -56,7 +56,7 @@ class ReadingSupportCsvImportForm(forms.Form):
 
 
 class ReadingSupportDraftGenerationForm(forms.Form):
-    """Web本文からワード候補を作るフォーム。"""
+    """Web本文から辞書候補を作るフォーム。"""
 
     source_url = forms.URLField(
         label="WebページURL",

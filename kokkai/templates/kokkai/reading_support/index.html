@@ -5,7 +5,7 @@
     <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
         <ol class="breadcrumb mb-0 small">
             <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">会議録一覧</a></li>
-            <li class="breadcrumb-item active" aria-current="page">ワード管理</li>
+            <li class="breadcrumb-item active" aria-current="page">読み仮名・用語辞書</li>
         </ol>
     </nav>
 
@@ -13,8 +13,8 @@
         <div class="col-12">
             <div class="bg-light p-5 rounded shadow-sm">
                 <span class="badge text-bg-primary mb-3">管理モード</span>
-                <h1 class="display-4">KOKKAI ワード管理</h1>
-                <p class="lead mb-0">会議録本文に表示するワードと読み補正を確認・登録します。</p>
+                <h1 class="display-4">KOKKAI 読み仮名・用語辞書</h1>
+                <p class="lead mb-0">会議録本文に表示する用語と読み補正を確認・登録します。</p>
             </div>
         </div>
 
@@ -29,7 +29,7 @@
             {% endif %}
 
             <div class="d-flex flex-wrap justify-content-end mb-3 gap-2">
-                <a href="{% url 'kokkai:reading_support_entry_create' %}" class="btn btn-primary">ワードを追加</a>
+                <a href="{% url 'kokkai:reading_support_entry_create' %}" class="btn btn-primary">辞書項目を追加</a>
                 <a href="{% url 'kokkai:reading_support_csv_import' %}" class="btn btn-outline-secondary">CSVから取り込む</a>
                 <a href="{% url 'kokkai:reading_support_draft_generate' %}" class="btn btn-outline-success">Webから取り込む</a>
                 <a href="{% url 'kokkai:reading_support_draft_list' %}" class="btn btn-outline-info">Web取込候補を確認</a>
@@ -37,7 +37,7 @@
 
             <div class="alert alert-info" role="status">
                 <strong>管理モードの使い方:</strong>
-                CSVは確定済みのワードを一括登録します。Webから取り込んだ本文は、すぐに辞書へ登録せず候補として保存し、内容を確認・修正してから登録します。
+                CSVは確定済みの辞書項目を一括登録します。Webから取り込んだ本文は、すぐに辞書へ登録せず候補として保存し、内容を確認・修正してから登録します。
             </div>
 
             <div class="card shadow-sm border-0">

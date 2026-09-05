@@ -90,14 +90,14 @@
             <div class="d-flex flex-wrap justify-content-lg-end gap-2">
                 <button type="submit" class="btn btn-primary">本文をデータベースに取り込む</button>
                 {% if can_manage_reading_support %}
-                <a href="{% url 'kokkai:reading_support_management' %}" class="btn btn-outline-primary">ワード管理</a>
+                <a href="{% url 'kokkai:reading_support_management' %}" class="btn btn-outline-primary">読み仮名・用語辞書</a>
                 {% else %}
-                <button type="button" class="btn btn-outline-secondary" disabled>ワード管理</button>
+                <button type="button" class="btn btn-outline-secondary" disabled>読み仮名・用語辞書</button>
                 {% endif %}
             </div>
         </div>
         {% if not can_manage_reading_support %}
-        <p class="small text-muted mb-3">ワード管理を利用するには管理者権限が必要です。</p>
+        <p class="small text-muted mb-3">読み仮名・用語辞書を利用するには管理者権限が必要です。</p>
         {% endif %}
         <div class="table-responsive">
         <table class="table table-striped align-middle">
