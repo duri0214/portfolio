@@ -16,8 +16,12 @@ from ..valueobject.reading_support import (
 class ReadingSupportService:
     """会議録本文へ辞書に基づく読み仮名と用語情報を付加するサービス。"""
 
-    # `一-龯` は個別の文字列ではなく、Unicodeコードポイントの範囲指定。
-    # `々・〆・ヵ・ヶ` は漢字ではないが、日本語の読み候補に含める文字。
+    # 参照: Unicode公式 Unihan Grid Index
+    # https://www.unicode.org/charts/unihangridindex.html
+    # `一-龯` は個別の文字列ではなく、U+4E00（一）からU+9FAF（龯）までの
+    # Unicodeコードポイント範囲（20,912コードポイント）を指定している。
+    # Unicode公式のCJK統合漢字全体にはU+9FB0以降や拡張範囲もあるため、これは全範囲ではない。
+    # `々・〆・ヵ・ヶ` は範囲外から個別に追加した、漢字ではない読み候補文字。
     _KANJI_LIKE_PATTERN = re.compile(r"[一-龯々〆ヵヶ]")
     _WHITESPACE_PATTERN = re.compile(r"\s+")
 
