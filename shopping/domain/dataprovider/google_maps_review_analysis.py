@@ -2,7 +2,7 @@ import json
 
 from lib.llm.service.completion import LlmCompletionService
 from lib.llm.valueobject.completion import Message, RoleType
-from lib.llm.valueobject.config import OpenAIGptConfig
+from lib.llm.valueobject.config import ModelDefaults, OpenAIGptConfig
 from shopping.domain.valueobject.store_planning_reviews import (
     StorePlanningPlaceSummaryResult,
     StorePlanningReviewAnalysisResult,
@@ -12,7 +12,7 @@ from shopping.domain.valueobject.store_planning_reviews import (
 class GoogleMapsReviewAnalysisClient:
     """Google Mapsレビューを出店計画向けにLLM分析するクライアント。"""
 
-    MODEL_NAME = "gpt-5-mini"
+    MODEL_NAME = ModelDefaults.SHOPPING_REVIEW.model
     PROMPT_VERSION = "store-planning-review-analysis-v3"
 
     def __init__(self, api_key: str, model_name: str = MODEL_NAME):

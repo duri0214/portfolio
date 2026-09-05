@@ -2,7 +2,7 @@ import logging
 
 from lib.llm.service.completion import OpenAILlmRagService
 from lib.llm.valueobject.completion import Message, RagResponse
-from lib.llm.valueobject.config import ModelName
+from lib.llm.valueobject.config import ModelDefaults
 from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
     ROKUNOHE_MINUTES_COLLECTION_NAME,
     RokunoheMinutesCollectionItem,
@@ -35,7 +35,7 @@ class RokunoheMinutesRagRepository:
         self,
         *,
         api_key: str,
-        model: str = ModelName.GPT_5_MINI,
+        model: str = ModelDefaults.ROKUNOHE_MINUTES_RAG.model,
         collection_name: str = ROKUNOHE_MINUTES_COLLECTION_NAME,
     ) -> None:
         self._rag_service = OpenAILlmRagService(

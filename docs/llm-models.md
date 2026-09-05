@@ -1,0 +1,86 @@
+# LLMモデル設定
+
+## 方針
+
+本番のOpenAI系テキスト生成モデルは `lib/llm/valueobject/config.py` の
+`ModelDefaults.TEXT_MODEL` から参照する。用途別プロファイルは、呼び出し箇所の責務と
+API・推論設定を表すために残し、モデルIDの分散には使わない。
+
+現行の既定値は `gpt-5.6-luna` である。`gpt-5.6-sol` と `gpt-5.6-terra` は
+比較・将来候補として明示的なモデルIDだけを共通VOに定義する。`gpt-5.6` の
+エイリアスは共通設定では使わない。
+
+Geminiは別プロバイダーのモデルであり、OpenAIのLunaに相当するモデルIDは設定しない。
+Geminiを使う経路では、Gemini側のモデル名をそのまま指定する。
+
+- [GPT-5.6モデルガイド](https://developers.openai.com/api/docs/guides/latest-model?model=gpt-5.6)
+- [GPT-5.6 Luna](https://developers.openai.com/api/docs/models/gpt-5.6-luna)
+- [GPT-5.6 Terra](https://developers.openai.com/api/docs/models/gpt-5.6-terra)
+- [GPT-5.6 Sol](https://developers.openai.com/api/docs/models/gpt-5.6-sol)
+
+## モデル一覧
+
+| モデル | Portfolioでの扱い | 採用理由 | API・設定 |
+| --- | --- | --- | --- |
+| `gpt-5.6-luna` | 全OpenAI系テキスト生成の現行モデル | コストと運用を単純化できる | Chat Completions / Responses、必要箇所のみ`low` |
+| `gpt-5.6-terra` | 共通VOに定義する比較・将来候補 | 明示的なモデルIDとして評価に利用できる | Chat Completions / Responses |
+| `gpt-5.6-sol` | 共通VOに定義する比較・将来候補 | 明示的なモデルIDとして評価に利用できる | Chat Completions / Responses |
+| `gemini-2.0-flash` / `gemini-2.5-flash` | Gemini経路専用 | プロバイダー固有のモデルを維持する | Gemini OpenAI互換エンドポイント |
+
+LunaはChat CompletionsとResponses、Function calling、Structured outputs、Streamingに
+対応するため、既存の呼び出し経路を変更せずに統一できる。
+
+画像・音声・Embeddingはテキストモデルとは別用途であり、モデルの実体は今回変更しない。
+モデル名の重複を避けるため、Embeddingの既定値だけは共通VOから参照する。
+
+- 画像: `gpt-image-1-mini`
+- 音声合成: `tts-1`
+- 音声認識: `whisper-1`
+- Embedding: `ModelName.TEXT_EMBEDDING_3_SMALL`（`text-embedding-3-small`）
+
+## 用途別既定値
+
+| 用途 | 共通設定 | モデル | 保存経路 |
+| --- | --- | --- | --- |
+| Kokkai概要・選択肢 | `KOKKAI_SCENARIO`（`low`） | Luna | `MeetingScenario.generator_model` |
+| MSCIレポート要約 | `USA_RESEARCH` | Luna | `MsciCountryWeightReport.model_name` |
+| 通常チャット | `LLM_CHAT` | Luna | `ChatLogs.model_name` |
+| なぞなぞ | `LLM_RIDDLE` | Luna | `ChatLogs.model_name` |
+| ストリーミング | `LLM_STREAMING` | Luna | `ChatLogs.model_name` |
+| PDF RAG | `LLM_RAG` | Luna | `ChatLogs.model_name` |
+| 六戸町会議録RAG | `ROKUNOHE_MINUTES_RAG` | Luna | `ChatLogs.model_name` |
+| Google Mapsレビュー | `SHOPPING_REVIEW` | Luna | 分析結果の`model_name` |
+| Taxonomy候補 | `TAXONOMY_CANDIDATE` | Luna | `llm_note` |
+| Agent（Responses） | `AI_AGENT`（`low`） | Luna | Agents SDKの実行設定 |
+
+`OpenAIGptConfig.from_profile` はChat Completions用プロファイルだけを受け付ける。
+JSONが必要なKokkai生成では、共通サービスへ `response_format=json_object` を渡し、
+Kokkaiプロファイルの `reasoning_effort=low` も同じリクエストへ渡す。
+
+## 型安全性と履歴
+
+モデルIDは `OpenAiModel` の `Literal` と `ModelName` に定義し、実行時の共通設定は
+`ModelDefaults` から参照する。現在のテキスト生成系アプリケーションコードにはモデルIDを直接書かず、
+`ModelDefaults.TEXT_MODEL` または用途別プロファイルを利用する。
+
+既存のChatLogs、MeetingScenario、レビュー分析、Taxonomy候補のモデル名は変更しない。
+新規呼び出しだけをLunaへ切り替え、保存されるモデル名は実際にリクエストへ渡した
+モデルIDと一致させる。MSCIレポートは過去レコードを更新せず、今回追加したnullableの
+`model_name` へ新規生成分だけを記録する。
+
+過去の保存値はデータベース上の文字列として保持されるため、現在のモデル定義から旧モデルを
+再登録する必要はない。旧モデルを使う履歴の表示・読み出しも、保存済み文字列をそのまま扱う。
+
+## 評価手順
+
+現行既定値はLunaに統一し、同じプロンプトバージョン・同じ入力・同じ制約で品質を確認する。
+将来モデルを変更する場合に限り、Luna/Terra/Solの出力を同一入力で比較する。
+
+1. 現行のLunaで、Kokkaiの同一会議録について概要生成と選択肢生成を実行する。
+2. JSON/structured output遵守率、根拠発言との一致、選択肢制約違反数を記録する。
+3. 入力・出力トークン数、レイテンシ、API費用を記録する。
+4. APIキー未設定、権限不足、非対応モデル、429発生時の表示を確認する。
+
+開発環境では課金を伴う実API比較を自動実行しない。固定入力を用いたモックテストと、
+モデル設定・JSON要求・保存モデル名の整合性を自動テストで確認し、実データの品質・
+コスト・レイテンシ比較はAPIキーと評価対象データを用意した環境で実施する。

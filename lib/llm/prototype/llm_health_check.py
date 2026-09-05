@@ -7,6 +7,14 @@ from typing import Any
 
 from openai import OpenAI, AzureOpenAI, APIError
 
+from lib.llm.valueobject.config import ModelDefaults, ModelName
+
+
+OPENAI_TARGET_MODELS = [
+    ModelDefaults.TEXT_MODEL,
+    ModelName.GPT_IMAGE_1_MINI,
+]
+
 
 class Status(Enum):
     """
@@ -310,7 +318,7 @@ class AvailabilityValidator(BaseValidator):
         self._validate(
             "OpenAI",
             self.get_client("OpenAI", os.getenv("OPENAI_API_KEY")),
-            ["gpt-4o", "gpt-4o-mini", "gpt-image-1-mini"],
+            OPENAI_TARGET_MODELS,
         )
 
         # Gemini
@@ -337,7 +345,7 @@ class AvailabilityValidator(BaseValidator):
                 os.getenv("AZURE_OPENAI_API_KEY"),
                 azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
             ),
-            ["gpt-4o", "gpt-35-turbo"],
+            [ModelDefaults.TEXT_MODEL],
             skip_msg="API Key or Endpoint not provided.",
         )
 

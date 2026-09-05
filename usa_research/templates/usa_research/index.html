@@ -367,6 +367,8 @@
                         {% if msci_report %}
                             <p class="text-muted mb-0 small me-3"><i class="fas fa-calendar-alt"></i> Report
                                 Date: {{ msci_report.report_date|date:"Y/m/d" }}</p>
+                            <p class="text-muted mb-0 small"><i class="fas fa-robot"></i> LLM:
+                                {{ msci_report.model_name|default:"履歴モデル未記録" }}</p>
                         {% endif %}
                         {% if msci_report_dates %}
                             <select id="report-date-select" class="form-select form-select-sm" style="width: auto;">

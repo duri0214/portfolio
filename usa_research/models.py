@@ -77,6 +77,12 @@ class MsciCountryWeightReport(models.Model):
     source = models.CharField(max_length=100, default="MSCI")
     report_date = models.DateField(unique=True)
     summary_md = models.TextField()
+    model_name = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        verbose_name="LLMモデル名",
+    )
     pdf_url = models.URLField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

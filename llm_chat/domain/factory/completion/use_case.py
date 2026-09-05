@@ -1,6 +1,11 @@
 import os
 
-from lib.llm.valueobject.config import OpenAIGptConfig, GeminiConfig, ModelName
+from lib.llm.valueobject.config import (
+    GeminiConfig,
+    ModelDefaults,
+    ModelName,
+    OpenAIGptConfig,
+)
 from llm_chat.domain.use_case.completion.chat import (
     LlmChatUseCase,
     OpenAIGptStreamingUseCase,
@@ -45,10 +50,10 @@ class UseCaseFactory:
                     model=ModelName.GEMINI_2_0_FLASH,
                 )
             else:
-                config = OpenAIGptConfig(
-                    api_key=os.getenv("OPENAI_API_KEY"),
+                config = OpenAIGptConfig.from_profile(
+                    ModelDefaults.LLM_CHAT,
+                    api_key=os.getenv("OPENAI_API_KEY") or "",
                     max_tokens=4000,
-                    model=ModelName.GPT_5_MINI,
                 )
             return LlmChatUseCase(config)
 
@@ -74,10 +79,10 @@ class UseCaseFactory:
             return RokunoheMinutesRagUseCase()
 
         if use_case_type == UseCaseType.RIDDLE:
-            config = OpenAIGptConfig(
-                api_key=os.getenv("OPENAI_API_KEY"),
+            config = OpenAIGptConfig.from_profile(
+                ModelDefaults.LLM_RIDDLE,
+                api_key=os.getenv("OPENAI_API_KEY") or "",
                 max_tokens=4000,
-                model=ModelName.GPT_5_MINI,
             )
             return RiddleUseCase(config)
 

@@ -8,9 +8,12 @@ from collections import OrderedDict
 from dataclasses import dataclass, replace
 from typing import Any, Protocol
 
-from openai import OpenAI, OpenAIError
+from openai import OpenAIError
 
 from ...models import Meeting, MeetingScenario, Speech
+from lib.llm.service.completion import LlmCompletionService
+from lib.llm.valueobject.completion import Message, RoleType
+from lib.llm.valueobject.config import ModelDefaults, OpenAIGptConfig
 from ..repository.scenario_repository import ScenarioRepository
 from ..valueobject.scenario import (
     ScenarioActorData,
@@ -66,9 +69,13 @@ class ScenarioAvailability:
 
 
 class OpenAIScenarioGenerator:
-    """会議全体の要約と、発言ごとの二択を生成するOpenAIアダプター。"""
+    """会議全体の要約と、発言ごとの二択を生成するOpenAIアダプター。
 
-    model = "gpt-4o-mini"
+    Attributes:
+        model: シナリオ生成で使用するLLMモデルの識別子。
+    """
+
+    model = ModelDefaults.KOKKAI_SCENARIO.model
 
     def __init__(self, api_key: str | None = None) -> None:
         self.api_key = api_key if api_key is not None else os.getenv("OPENAI_API_KEY")
@@ -83,9 +90,7 @@ class OpenAIScenarioGenerator:
         if not self.api_key:
             raise ScenarioGenerationError("OPENAI_API_KEY is not configured.")
 
-        client = OpenAI(api_key=self.api_key)
         content = self._request_json_content(
-            client,
             [
                 {
                     "role": "system",
@@ -141,9 +146,7 @@ class OpenAIScenarioGenerator:
         if not self.api_key:
             raise ScenarioGenerationError("OPENAI_API_KEY is not configured.")
 
-        client = OpenAI(api_key=self.api_key)
         content = self._request_json_content(
-            client,
             [
                 {
                     "role": "system",
@@ -234,15 +237,25 @@ class OpenAIScenarioGenerator:
             )
         return generated
 
-    def _request_json_content(
-        self, client: OpenAI, messages: list[dict[str, str]]
-    ) -> str:
-        """OpenAIへJSON出力を要求し、利用者に返せるドメイン例外へ変換する。"""
+    def _request_json_content(self, messages: list[dict[str, str]]) -> str:
+        """共通LLMサービスへJSON出力を要求し、ドメイン例外へ変換する。"""
         try:
-            response = client.chat.completions.create(
-                model=self.model,
+            profile = ModelDefaults.KOKKAI_SCENARIO
+            if self.model != profile.model:
+                profile = replace(profile, model=self.model, reasoning_effort=None)
+            response = LlmCompletionService(
+                OpenAIGptConfig.from_profile(
+                    profile,
+                    api_key=self.api_key or "",
+                    max_tokens=4000,
+                )
+            ).retrieve_answer(
+                [
+                    Message(role=RoleType(message["role"]), content=message["content"])
+                    for message in messages
+                ],
+                max_messages=len(messages),
                 response_format={"type": "json_object"},
-                messages=messages,
             )
         except OpenAIError as error:
             logger.warning(
@@ -281,7 +294,7 @@ class OpenAIScenarioGenerator:
             raise ScenarioGenerationError(
                 "The scenario generator request failed. Check the server log for details."
             ) from error
-        content = response.choices[0].message.content
+        content = response.answer
         if not content:
             raise ScenarioGenerationError(
                 "The scenario generator returned an empty response."

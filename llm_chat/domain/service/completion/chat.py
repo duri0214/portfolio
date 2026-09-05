@@ -10,9 +10,9 @@ from lib.llm.service.completion import (
 )
 from lib.llm.valueobject.completion import RoleType, StreamResponse
 from lib.llm.valueobject.config import (
+    ModelDefaults,
     OpenAIGptConfig,
     GeminiConfig,
-    ModelName,
 )
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.service.completion.base import BaseChatService
@@ -236,15 +236,15 @@ class ChatService(BaseChatService):
 
 
 class OpenAIStreamingService(BaseChatService):
-    model_name = ModelName.GPT_5_MINI
+    model_name = ModelDefaults.LLM_STREAMING.model
 
     def __init__(self):
         super().__init__(model_name=self.model_name)
         self.chat_history = []
-        self.config = OpenAIGptConfig(
+        self.config = OpenAIGptConfig.from_profile(
+            ModelDefaults.LLM_STREAMING,
             api_key=os.getenv("OPENAI_API_KEY") or "",
             max_tokens=4000,
-            model=self.model_name,
         )
 
     def generate(

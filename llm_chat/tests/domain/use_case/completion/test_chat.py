@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from unittest.mock import patch, MagicMock
 from lib.llm.valueobject.completion import RoleType
-from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
+from lib.llm.valueobject.config import ModelDefaults, OpenAIGptConfig
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 from llm_chat.domain.service.completion.chat import ChatService
@@ -25,7 +25,7 @@ class ChatUseCaseTest(TestCase):
             user=self.user,
             role=RoleType.USER,
             content="Normal message",
-            model_name=ModelName.GPT_4O,
+            model_name=ModelDefaults.LLM_CHAT.model,
             use_case_type=UseCaseType.OPENAI_GPT,
         )
         history = ChatService.get_chat_history(
@@ -49,13 +49,13 @@ class ChatUseCaseTest(TestCase):
         """
         mock_retrieve.return_value = MagicMock(answer="AIの回答です")
         config = OpenAIGptConfig(
-            api_key="fake", max_tokens=100, model=ModelName.GPT_5_MINI
+            api_key="fake", max_tokens=100, model=ModelDefaults.LLM_CHAT.model
         )
         use_case = LlmChatUseCase(config)
         result = use_case.execute(self.user, "こんにちは")
 
         self.assertEqual(result.content, "AIの回答です")
-        self.assertEqual(result.model_name, ModelName.GPT_5_MINI)
+        self.assertEqual(result.model_name, ModelDefaults.LLM_CHAT.model)
         self.assertEqual(result.use_case_type, UseCaseType.OPENAI_GPT)
         self.assertEqual(
             ChatLogs.objects.filter(user=self.user).count(), 2

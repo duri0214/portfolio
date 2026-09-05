@@ -7,7 +7,7 @@ from django.test import TestCase
 from lib.llm.service.completion_batch import OpenAIBatchCompletionService
 from lib.llm.valueobject.completion import RoleType, Message
 from lib.llm.valueobject.completion_batch import MessageChunk
-from lib.llm.valueobject.config import OpenAIGptConfig
+from lib.llm.valueobject.config import ModelDefaults, OpenAIGptConfig
 
 
 class TestOpenAIBatchCompletionService(TestCase):
@@ -22,7 +22,9 @@ class TestOpenAIBatchCompletionService(TestCase):
 
         # Mock Config
         self.mock_config = OpenAIGptConfig(
-            api_key="fake-api-key", model="gpt-5-mini", max_tokens=1000
+            api_key="fake-api-key",
+            model=ModelDefaults.LLM_CHAT.model,
+            max_tokens=1000,
         )
 
         # サービスを初期化
@@ -50,7 +52,7 @@ class TestOpenAIBatchCompletionService(TestCase):
         # 結果の確認
         self.assertIsInstance(result_chunk, MessageChunk)
         self.assertEqual(result_chunk.messages, self.sample_messages)
-        self.assertEqual(result_chunk.model, "gpt-5-mini")
+        self.assertEqual(result_chunk.model, ModelDefaults.LLM_CHAT.model)
         self.assertEqual(result_chunk.max_tokens, 1000)
 
     def test_export_jsonl_file(self):

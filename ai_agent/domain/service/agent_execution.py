@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
-from agents import Agent, Runner
+from agents import Agent, ModelSettings, Runner
 from agents.exceptions import (
     InputGuardrailTripwireTriggered,
     MaxTurnsExceeded,
@@ -16,6 +16,7 @@ from agents.exceptions import (
     ToolInputGuardrailTripwireTriggered,
     ToolOutputGuardrailTripwireTriggered,
 )
+from openai.types.shared.reasoning import Reasoning
 
 from ai_agent.domain.service.safety import SafetyPolicy
 from ai_agent.domain.valueobject.agent_execution import (
@@ -25,6 +26,7 @@ from ai_agent.domain.valueobject.agent_execution import (
     ToolCall,
     ToolResult,
 )
+from lib.llm.valueobject.config import ModelDefaults
 
 
 class AgentExecutionService:
@@ -42,17 +44,25 @@ class AgentExecutionService:
         tools: Iterable[Any] = (),
         input_guardrails: Iterable[Any] = (),
         output_guardrails: Iterable[Any] = (),
-        model: str = "gpt-5-mini",
+        model: str = ModelDefaults.AI_AGENT.model,
         runner: Any = Runner,
         safety_policy: SafetyPolicy | None = None,
     ) -> None:
         self.safety_policy = safety_policy or SafetyPolicy()
         tool_list = list(tools)
         self._attach_tool_guardrails(tool_list)
+        model_settings = ModelSettings()
+        if model == ModelDefaults.AI_AGENT.model:
+            model_settings = ModelSettings(
+                reasoning=Reasoning(
+                    effort=ModelDefaults.AI_AGENT.reasoning_effort,
+                )
+            )
         self.agent = Agent(
             name=name,
             instructions=instructions,
             model=model,
+            model_settings=model_settings,
             tools=tool_list,
             input_guardrails=[
                 self.safety_policy.input_guardrail(),

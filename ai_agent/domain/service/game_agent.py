@@ -4,6 +4,7 @@ import json
 
 from ai_agent.domain.service.agent_execution import AgentExecutionService
 from ai_agent.domain.service.skill_tools import GameToolSet, SkillToolCatalog
+from lib.llm.valueobject.config import ModelDefaults
 from ai_agent.domain.valueobject.agent_execution import (
     AgentRun,
     ToolChainEvaluation,
@@ -18,7 +19,12 @@ from ai_agent.domain.valueobject.game import (
 class GameAgentService:
     """ゲーム用Agentへ全Skill Toolを登録するアプリケーションサービス。"""
 
-    def __init__(self, tools: GameToolSet | None = None, *, model: str = "gpt-5-mini"):
+    def __init__(
+        self,
+        tools: GameToolSet | None = None,
+        *,
+        model: str = ModelDefaults.AI_AGENT.model,
+    ):
         self.tools = tools or GameToolSet()
         self.execution = AgentExecutionService(
             name="Skill Chain Game Agent",

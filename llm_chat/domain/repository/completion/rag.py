@@ -3,7 +3,7 @@ from pathlib import Path
 
 from lib.llm.service.completion import OpenAILlmRagService
 from lib.llm.valueobject.completion import Message, RagResponse
-from lib.llm.valueobject.config import ModelName
+from lib.llm.valueobject.config import ModelDefaults
 from llm_chat.domain.valueobject.completion.rag import (
     OPENAI_RAG_EMBEDDING_MODEL,
     OPENAI_RAG_COLLECTION_NAME,
@@ -68,7 +68,7 @@ class OpenAIRagVectorRepository:
         self,
         *,
         api_key: str,
-        model: str = ModelName.GPT_5_MINI,
+        model: str = ModelDefaults.LLM_RAG.model,
         collection_name: str = OPENAI_RAG_COLLECTION_NAME,
         embedding_model: str = OPENAI_RAG_EMBEDDING_MODEL,
     ) -> None:

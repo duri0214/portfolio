@@ -7,6 +7,7 @@ from django.test import SimpleTestCase
 
 from ai_agent.domain.service.agent_execution import AgentExecutionService
 from ai_agent.domain.valueobject.agent_execution import AgentRunStatus
+from lib.llm.valueobject.config import ModelDefaults
 
 
 @function_tool
@@ -183,7 +184,7 @@ class AgentExecutionServiceTest(SimpleTestCase):
         シナリオ:
         - 入力: Function Toolを1つ登録したAgentとユーザーの依頼。
         - 処理: Runnerへ依頼を渡し、返されたTool Call/Resultを実行履歴へ変換する。
-        - 期待値: Tool履歴、最終出力、ターン数、上限ターン数が構造化される。
+        - 期待値: Tool履歴、最終出力、ターン数、上限ターン数、共通Agentモデルの推論設定が構造化される。
         """
         service = AgentExecutionService(
             name="Test Agent",
@@ -197,6 +198,11 @@ class AgentExecutionServiceTest(SimpleTestCase):
         self.assertIs(run.status, AgentRunStatus.COMPLETED)
         self.assertEqual(FakeRunner.received_input, "調べて")
         self.assertEqual(FakeRunner.received_max_turns, 4)
+        self.assertEqual(FakeRunner.received_agent.model, ModelDefaults.AI_AGENT.model)
+        self.assertEqual(
+            FakeRunner.received_agent.model_settings.reasoning.effort,
+            ModelDefaults.AI_AGENT.reasoning_effort,
+        )
         self.assertEqual(FakeRunner.received_agent.tools[0].name, "lookup_skill")
         self.assertEqual(run.tool_calls[0].arguments, {"topic": "science"})
         self.assertEqual(run.tool_results[0].output, "result:science")

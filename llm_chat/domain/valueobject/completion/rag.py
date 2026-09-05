@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 from pathlib import Path
 
+from lib.llm.valueobject.config import ModelName
 
 OPENAI_RAG_COLLECTION_NAME = "openai_rag_pdfs"
 OPENAI_RAG_COLLECTION_PREFIX = "openai_rag_pdf"
-OPENAI_RAG_EMBEDDING_MODEL = "text-embedding-3-small"
+OPENAI_RAG_EMBEDDING_MODEL = ModelName.TEXT_EMBEDDING_3_SMALL
 OPENAI_RAG_CHUNK_BASIS = "page"
 
 

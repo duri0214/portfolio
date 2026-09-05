@@ -8,7 +8,7 @@ from pypdf import PdfReader
 
 from lib.llm.service.completion import LlmCompletionService
 from lib.llm.valueobject.completion import Message, RoleType
-from lib.llm.valueobject.config import OpenAIGptConfig
+from lib.llm.valueobject.config import ModelDefaults, OpenAIGptConfig
 from usa_research.domain.valueobject.msci import MsciUpdateResult
 from usa_research.models import MsciCountryWeightReport
 
@@ -52,7 +52,7 @@ class Command(BaseCommand):
         1. HTTP HEADリクエストを送り、Last-Modifiedヘッダで鮮度を確認。
            - ヘッダの日付がDB内の最新レコードの日付以前であれば、早期リターンする。
         2. 更新があれば、PDFをダウンロードし、pypdfでテキストを抽出。
-        3. 抽出されたテキストをOpenAI GPT-4oに渡し、LLMが「Country Weightsの要約」を生成。
+        3. 抽出されたテキストを共通設定のOpenAIテキストモデルに渡し、LLMが「Country Weightsの要約」を生成。
         4. HTTPヘッダの Last-Modified をレポート日付として採用し、DBを更新。
         """
         # 0. 観察（最新レコードの取得）
@@ -88,9 +88,9 @@ class Command(BaseCommand):
         if not api_key:
             return MsciUpdateResult(False, "OPENAI_API_KEY is not set.")
 
-        config = OpenAIGptConfig(
+        config = OpenAIGptConfig.from_profile(
+            ModelDefaults.USA_RESEARCH,
             api_key=api_key,
-            model="gpt-4o",
             max_tokens=2000,
         )
         llm_service = LlmCompletionService(config)
@@ -142,7 +142,10 @@ class Command(BaseCommand):
 
         # 5. 保存（冪等性は上流の判定で担保）
         MsciCountryWeightReport.objects.create(
-            report_date=report_date, summary_md=summary_md, pdf_url=pdf_url
+            report_date=report_date,
+            summary_md=summary_md,
+            pdf_url=pdf_url,
+            model_name=config.model,
         )
 
         return MsciUpdateResult(

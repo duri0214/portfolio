@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from lib.llm.service.completion import LlmCompletionService
 from lib.llm.valueobject.completion import Message, RoleType
-from lib.llm.valueobject.config import ModelName, OpenAIGptConfig
+from lib.llm.valueobject.config import ModelDefaults, OpenAIGptConfig
 from taxonomy.domain.repository.llm_taxonomy_candidate import (
     LLMTaxonomyCandidateRepository,
 )
@@ -30,7 +30,8 @@ class LLMTaxonomyCandidateGenerationService:
     LLMで分類候補を生成し、レビュー待ち候補として保存するServiceです。
     """
 
-    MODEL_NAME = ModelName.GPT_5_MINI
+    MODEL_PROFILE = ModelDefaults.TAXONOMY_CANDIDATE
+    MODEL_NAME = MODEL_PROFILE.model
     MAX_TOKENS = 1600
     PROMPT_VERSION = "taxonomy-candidate-generation-v1"
     TARGET_PROMPT_VERSION = "taxonomy-candidate-targets-v1"
@@ -306,9 +307,9 @@ class LLMTaxonomyCandidateGenerationService:
                 "OPENAI_API_KEY が未設定のため、LLM生成を実行できません。"
             )
         return LlmCompletionService(
-            OpenAIGptConfig(
+            OpenAIGptConfig.from_profile(
+                cls.MODEL_PROFILE,
                 api_key=api_key,
-                model=cls.MODEL_NAME,
                 max_tokens=cls.MAX_TOKENS,
             )
         )

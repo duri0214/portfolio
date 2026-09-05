@@ -7,6 +7,7 @@ from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 from openai import OpenAIError
 
+from lib.llm.valueobject.config import ModelDefaults
 from kokkai.domain.service.scenario import (
     OpenAIScenarioGenerator,
     ScenarioGenerationError,
@@ -106,21 +107,11 @@ class OpenAIScenarioGeneratorTests(SimpleTestCase):
     def test_generate_sends_the_transcript_once_for_the_overview(self):
         """
         シナリオ:
-        - 入力: 複数の発言単位を含む会議録と、概要生成用のOpenAIクライアント。
+        - 入力: 複数の発言単位を含む会議録と、概要生成用の共通LLMサービス。
         - 実行: 会議全体の概要生成を呼び出す。
         - 期待結果: 中間要約を挟まず、会議全体を1回のリクエストで渡す。
         """
         generator = OpenAIScenarioGenerator(api_key="test-key")
-        client = Mock()
-        client.chat.completions.create.return_value = Mock(
-            choices=[
-                Mock(
-                    message=Mock(
-                        content='{"overview": "会議全体の要約", "passing_score": 50}'
-                    )
-                )
-            ]
-        )
         meeting = Meeting(
             meeting_date=date(2024, 1, 26),
             session_number=213,
@@ -135,17 +126,27 @@ class OpenAIScenarioGeneratorTests(SimpleTestCase):
             "[speech_order: 21]\n後半の発言",
         ]
 
-        with patch("kokkai.domain.service.scenario.OpenAI", return_value=client):
+        with patch(
+            "kokkai.domain.service.scenario.LlmCompletionService"
+        ) as service_class:
+            service_class.return_value.retrieve_answer.return_value = Mock(
+                answer='{"overview": "会議全体の要約", "passing_score": 50}'
+            )
             generated = generator.generate(meeting, [], source_chunks)
 
         self.assertEqual(generated["overview"], "会議全体の要約")
-        client.chat.completions.create.assert_called_once()
         self.assertEqual(
-            client.chat.completions.create.call_args.kwargs["model"],
-            "gpt-4o-mini",
+            service_class.call_args.args[0].model,
+            ModelDefaults.KOKKAI_SCENARIO.model,
         )
-        messages = client.chat.completions.create.call_args.kwargs["messages"]
-        user_content = messages[1]["content"]
+        self.assertEqual(
+            service_class.call_args.args[0].reasoning_effort,
+            ModelDefaults.KOKKAI_SCENARIO.reasoning_effort,
+        )
+        service_class.return_value.retrieve_answer.assert_called_once()
+        request = service_class.return_value.retrieve_answer.call_args
+        self.assertEqual(request.kwargs["response_format"], {"type": "json_object"})
+        user_content = request.args[0][1].content
         self.assertLess(
             user_content.index("speech_order: 1"),
             user_content.index("speech_order: 21"),
@@ -160,16 +161,6 @@ class OpenAIScenarioGeneratorTests(SimpleTestCase):
         - 期待値: 直前の発言を返答先、現在の発言を正解判定用の根拠として1回だけ要求する。
         """
         generator = OpenAIScenarioGenerator(api_key="test-key")
-        client = Mock()
-        client.chat.completions.create.return_value = Mock(
-            choices=[
-                Mock(
-                    message=Mock(
-                        content='{"choices": [{"text": "A", "is_correct": true}, {"text": "B", "is_correct": false}]}'
-                    )
-                )
-            ]
-        )
         meeting = Meeting(
             meeting_date=date(2024, 1, 26),
             session_number=213,
@@ -206,7 +197,12 @@ class OpenAIScenarioGeneratorTests(SimpleTestCase):
             source_url="https://example.com/meeting/20",
         )
 
-        with patch("kokkai.domain.service.scenario.OpenAI", return_value=client):
+        with patch(
+            "kokkai.domain.service.scenario.LlmCompletionService"
+        ) as service_class:
+            service_class.return_value.retrieve_answer.return_value = Mock(
+                answer='{"choices": [{"text": "A", "is_correct": true}, {"text": "B", "is_correct": false}]}'
+            )
             generated = generator.generate_choices(
                 meeting,
                 actor,
@@ -216,19 +212,16 @@ class OpenAIScenarioGeneratorTests(SimpleTestCase):
             )
 
         self.assertEqual(len(generated["choices"]), 2)
-        client.chat.completions.create.assert_called_once()
-        user_content = client.chat.completions.create.call_args.kwargs["messages"][1][
-            "content"
-        ]
+        service_class.return_value.retrieve_answer.assert_called_once()
+        request = service_class.return_value.retrieve_answer.call_args
+        user_content = request.args[0][1].content
         prompt = json.loads(user_content)
         self.assertEqual(
             prompt["preceding_speech"]["speech_text"],
             preceding_speech.speech_text,
         )
         self.assertEqual(prompt["reference_speech"]["speech_text"], speech.speech_text)
-        system_content = client.chat.completions.create.call_args.kwargs["messages"][0][
-            "content"
-        ]
+        system_content = request.args[0][0].content
         self.assertIn("質問や依頼なら、選択肢は actor の回答", system_content)
         self.assertIn("質問を質問で返したり", system_content)
         self.assertIn("疑問符", system_content)
@@ -236,19 +229,22 @@ class OpenAIScenarioGeneratorTests(SimpleTestCase):
     def test_openai_request_error_is_converted_to_scenario_generation_error(self):
         """
         シナリオ:
-        - 入力: OpenAI SDK がリクエスト例外を返す生成クライアント。
+        - 入力: 共通LLMサービスがOpenAI SDKのリクエスト例外を返すケース。
         - 処理: JSON出力を要求する。
         - 期待値: SDK例外を画面で扱えるシナリオ生成例外へ変換する。
         """
         generator = OpenAIScenarioGenerator(api_key="test-key")
-        client = Mock()
-        client.chat.completions.create.side_effect = OpenAIError("network error")
-
-        with self.assertRaises(ScenarioGenerationError):
-            generator._request_json_content(
-                client,
-                [{"role": "system", "content": "Return valid json only."}],
+        with patch(
+            "kokkai.domain.service.scenario.LlmCompletionService"
+        ) as service_class:
+            service_class.return_value.retrieve_answer.side_effect = OpenAIError(
+                "network error"
             )
+
+            with self.assertRaises(ScenarioGenerationError):
+                generator._request_json_content(
+                    [{"role": "system", "content": "Return valid json only."}],
+                )
 
     def test_token_rate_limit_error_explains_the_cause(self):
         """
@@ -257,18 +253,19 @@ class OpenAIScenarioGeneratorTests(SimpleTestCase):
         Expected: The domain error explains that the token limit was exceeded.
         """
         generator = OpenAIScenarioGenerator(api_key="test-key")
-        client = Mock()
-        client.chat.completions.create.side_effect = OpenAIError(
-            "Request too large for tokens per min"
-        )
-
-        with self.assertRaisesRegex(
-            ScenarioGenerationError, "tokens-per-minute"
-        ) as context:
-            generator._request_json_content(
-                client,
-                [{"role": "system", "content": "Return valid json only."}],
+        with patch(
+            "kokkai.domain.service.scenario.LlmCompletionService"
+        ) as service_class:
+            service_class.return_value.retrieve_answer.side_effect = OpenAIError(
+                "Request too large for tokens per min"
             )
+
+            with self.assertRaisesRegex(
+                ScenarioGenerationError, "tokens-per-minute"
+            ) as context:
+                generator._request_json_content(
+                    [{"role": "system", "content": "Return valid json only."}],
+                )
 
         self.assertEqual(context.exception.status_code, 429)
 

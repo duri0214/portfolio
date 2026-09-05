@@ -17,7 +17,7 @@ class MessageDTO:
         role (RoleType): メッセージを送信した役割（例: ユーザ、アシスタント、システム）。
         content (str): メッセージの内容。
         id (int, optional): DB保存後に付与されるメッセージID。デフォルトは None。
-        model_name (str, optional): 使用されたモデル名（例: gpt-4o, gemini-2.0-flash）。デフォルトは None。
+        model_name (str, optional): 使用されたモデル名（例: gpt-5.6-luna, gemini-2.0-flash）。デフォルトは None。
         use_case_type (str, optional): 使用されたユースケースタイプ（例: OpenAIGpt, Riddle）。デフォルトは UseCaseType.OPENAI_GPT。
         next_riddle_state (str, optional): なぞなぞセッションの現在の状態（例: WAIT_ANSWER）。デフォルトは None。
         riddle_scores (dict, optional): なぞなぞの単問評価スコア。デフォルトは None。

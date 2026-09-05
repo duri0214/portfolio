@@ -3,6 +3,7 @@ from unittest.mock import patch, MagicMock
 import os
 import json
 from lib.llm.prototype.llm_health_check import LLMHealthCheck, Status, CheckResult
+from lib.llm.valueobject.config import ModelDefaults
 
 
 class TestLLMHealthCheck(unittest.TestCase):
@@ -131,7 +132,7 @@ class TestLLMHealthCheck(unittest.TestCase):
     def test_compatibility_missing_models(self, mock_azure, mock_openai):
         """
         利用可能なモデルリストに必要なモデルが含まれていない場合のテスト。
-        期待されるモデル（gpt-4oなど）が見つからない場合に WARNING ステータスを返すことを確認します。
+        期待されるモデル（GPT-5.6系など）が見つからない場合に WARNING ステータスを返すことを確認します。
         ※テストでは実際にAPIを呼び出さず、mockを使用して課金を完全に回避しています。
         """
         mock_instance = mock_openai.return_value
@@ -152,12 +153,12 @@ class TestLLMHealthCheck(unittest.TestCase):
         openai_comp = self._assert_status(
             summary, "Model Permission/Availability (OpenAI)", Status.WARNING
         )
-        self.assertIn("Missing: gpt-4o", openai_comp["message"])
+        self.assertIn(f"Missing: {ModelDefaults.TEXT_MODEL}", openai_comp["message"])
 
         azure_comp = self._assert_status(
             summary, "Model Permission/Availability (AzureOpenAI)", Status.WARNING
         )
-        self.assertIn("Missing: gpt-4o", azure_comp["message"])
+        self.assertIn(f"Missing: {ModelDefaults.TEXT_MODEL}", azure_comp["message"])
 
     def test_json_output(self):
         """

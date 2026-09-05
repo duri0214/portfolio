@@ -33,7 +33,7 @@ from dotenv import load_dotenv
 from openai import RateLimitError
 
 from lib.llm.valueobject.completion import StreamResponse
-from lib.llm.valueobject.config import OpenAIGptConfig, ModelName
+from lib.llm.valueobject.config import ModelDefaults, OpenAIGptConfig
 from llm_chat.domain.factory.completion.use_case import UseCaseFactory
 from llm_chat.domain.repository.completion.chat import ChatLogRepository
 from llm_chat.domain.repository.completion.rag import (
@@ -932,10 +932,10 @@ class StreamingResponseView(View):
             try:
                 if use_case_type == UseCaseType.RIDDLE:
                     use_case = RiddleStreamingUseCase(
-                        config=OpenAIGptConfig(
+                        config=OpenAIGptConfig.from_profile(
+                            ModelDefaults.LLM_RIDDLE,
                             api_key=os.getenv("OPENAI_API_KEY") or "",
                             max_tokens=4000,
-                            model=ModelName.GPT_5_MINI,
                         )
                     )
                 else:
@@ -1011,10 +1011,10 @@ class StreamResultSaveView(View):
             use_case_type = request.session.get("use_case_type")
             if use_case_type == UseCaseType.RIDDLE:
                 use_case = RiddleStreamingUseCase(
-                    config=OpenAIGptConfig(
+                    config=OpenAIGptConfig.from_profile(
+                        ModelDefaults.LLM_RIDDLE,
                         api_key=os.getenv("OPENAI_API_KEY") or "",
                         max_tokens=4000,
-                        model=ModelName.GPT_5_MINI,
                     )
                 )
                 use_case.save(user=request.user, content=content)

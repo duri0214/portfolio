@@ -8,7 +8,7 @@ from openai.types import Batch
 from lib.llm.service.completion import LlmService
 from lib.llm.valueobject.completion import Message, RoleType
 from lib.llm.valueobject.completion_batch import MessageChunk
-from lib.llm.valueobject.config import OpenAIGptConfig
+from lib.llm.valueobject.config import ModelDefaults, OpenAIGptConfig
 
 
 class OpenAIBatchCompletionService(LlmService):
@@ -140,7 +140,7 @@ if __name__ == "__main__":
     service = OpenAIBatchCompletionService(
         OpenAIGptConfig(
             api_key="your-api-key",
-            model="gpt-5-mini",
+            model=ModelDefaults.LLM_CHAT.model,
             max_tokens=1000,
         )
     )

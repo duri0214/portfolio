@@ -5,6 +5,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from lib.geo.valueobject.coord import GoogleMapsCoord
+from lib.llm.valueobject.config import ModelDefaults
 from shopping.domain.dataprovider.google_maps_review_analysis import (
     GoogleMapsReviewAnalysisClient,
 )
@@ -247,7 +248,7 @@ class StorePlanningReviewServiceTest(TestCase):
             one_line_summary="古いサマリー",
             issue="古い課題",
             location_insight="古い立地示唆",
-            model_name="gpt-5-mini",
+            model_name=ModelDefaults.SHOPPING_REVIEW.model,
             prompt_version="old-prompt",
         )
         target_location = StorePlanningTargetLocation(
@@ -605,7 +606,7 @@ class StorePlanningReviewServiceTest(TestCase):
             "shopping.domain.service.store_planning_reviews.GoogleMapsReviewAnalysisClient"
         ) as mock_client_class:
             mock_client = mock_client_class.return_value
-            mock_client.model_name = "gpt-5-mini"
+            mock_client.model_name = ModelDefaults.SHOPPING_REVIEW.model
             mock_client.PROMPT_VERSION = "test-prompt"
             mock_client.analyze_place_summaries.return_value = [
                 StorePlanningPlaceSummaryResult(
@@ -688,7 +689,7 @@ class StorePlanningReviewServiceTest(TestCase):
             "shopping.domain.service.store_planning_reviews.GoogleMapsReviewAnalysisClient"
         ) as mock_client_class:
             mock_client = mock_client_class.return_value
-            mock_client.model_name = "gpt-5-mini"
+            mock_client.model_name = ModelDefaults.SHOPPING_REVIEW.model
             mock_client.PROMPT_VERSION = "test-prompt"
             mock_client.analyze_place_summaries.return_value = []
 
@@ -750,7 +751,7 @@ class StorePlanningReviewServiceTest(TestCase):
             "shopping.domain.service.store_planning_reviews.GoogleMapsReviewAnalysisClient"
         ) as mock_client_class:
             mock_client = mock_client_class.return_value
-            mock_client.model_name = "gpt-5-mini"
+            mock_client.model_name = ModelDefaults.SHOPPING_REVIEW.model
             mock_client.PROMPT_VERSION = "test-prompt"
             mock_client.analyze_place_summaries.return_value = [
                 StorePlanningPlaceSummaryResult(
@@ -856,7 +857,7 @@ class StorePlanningReviewServiceTest(TestCase):
             "shopping.domain.service.store_planning_reviews.GoogleMapsReviewAnalysisClient"
         ) as mock_client_class:
             mock_client = mock_client_class.return_value
-            mock_client.model_name = "gpt-5-mini"
+            mock_client.model_name = ModelDefaults.SHOPPING_REVIEW.model
             mock_client.PROMPT_VERSION = "test-prompt"
             mock_client.analyze_place_summaries.side_effect = summarize
 
@@ -910,7 +911,7 @@ class StorePlanningReviewServiceTest(TestCase):
             "shopping.domain.service.store_planning_reviews.GoogleMapsReviewAnalysisClient"
         ) as mock_client_class:
             mock_client = mock_client_class.return_value
-            mock_client.model_name = "gpt-5-mini"
+            mock_client.model_name = ModelDefaults.SHOPPING_REVIEW.model
             mock_client.PROMPT_VERSION = "test-prompt"
             mock_client.analyze_place_summaries.return_value = [
                 StorePlanningPlaceSummaryResult(
@@ -976,7 +977,7 @@ class StorePlanningReviewServiceTest(TestCase):
             "shopping.domain.service.store_planning_reviews.GoogleMapsReviewAnalysisClient"
         ) as mock_client_class:
             mock_client = mock_client_class.return_value
-            mock_client.model_name = "gpt-5-mini"
+            mock_client.model_name = ModelDefaults.SHOPPING_REVIEW.model
             mock_client.PROMPT_VERSION = "test-prompt"
             mock_client.analyze_place_summaries.return_value = [
                 StorePlanningPlaceSummaryResult(
@@ -1222,7 +1223,7 @@ class StorePlanningReviewServiceTest(TestCase):
             "shopping.domain.service.store_planning_reviews.GoogleMapsReviewAnalysisClient"
         ) as mock_client_class:
             mock_client = mock_client_class.return_value
-            mock_client.model_name = "gpt-5-mini"
+            mock_client.model_name = ModelDefaults.SHOPPING_REVIEW.model
             mock_client.PROMPT_VERSION = "test-prompt"
             mock_client.analyze_place_summaries.side_effect = summarize
 
