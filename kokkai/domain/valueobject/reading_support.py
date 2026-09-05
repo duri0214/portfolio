@@ -23,7 +23,13 @@ class TermDefinition:
 
 @dataclass(frozen=True)
 class ReadingOverride:
-    """Janomeの読みを上書きする本文表記と読みの組み合わせ。"""
+    """
+    Janomeの読みを上書きする本文表記と読みの組み合わせ。
+
+    Attributes:
+        surface: 本文中で補正対象にする表記。
+        reading: 表示する読み。
+    """
 
     surface: str
     reading: str
@@ -31,7 +37,13 @@ class ReadingOverride:
 
 @dataclass(frozen=True)
 class ReadingSupportDictionary:
-    """読み補正と用語解説をまとめて扱う、読み仮名支援用の辞書。"""
+    """
+    読み補正と用語解説をまとめて扱う、読み仮名支援用の辞書。
+
+    Attributes:
+        terms: 本文から検出して説明を表示する用語定義の集合。
+        reading_overrides: Janomeの読みを上書きする表記と読みの集合。
+    """
 
     terms: tuple[TermDefinition, ...]
     reading_overrides: tuple[ReadingOverride, ...]

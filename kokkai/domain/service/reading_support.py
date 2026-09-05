@@ -14,14 +14,26 @@ from ..valueobject.reading_support import (
 
 
 class ReadingSupportService:
-    """会議録本文へ辞書に基づく読み仮名と用語情報を付加するサービス。"""
+    """
+    会議録本文へ辞書に基づく読み仮名と用語情報を付加するサービス。
 
-    # 参照: Unicode公式 Unihan Grid Index
-    # https://www.unicode.org/charts/unihangridindex.html
-    # `一-龯` は個別の文字列ではなく、U+4E00（一）からU+9FAF（龯）までの
-    # Unicodeコードポイント範囲（20,912コードポイント）を指定している。
-    # Unicode公式のCJK統合漢字全体にはU+9FB0以降や拡張範囲もあるため、これは全範囲ではない。
-    # `々・〆・ヵ・ヶ` は範囲外から個別に追加した、漢字ではない読み候補文字。
+    `_KANJI_LIKE_PATTERN` は、読み仮名を付ける候補を絞る簡易判定である。
+    `一-龯` は個別の文字列ではなく、U+4E00（一）からU+9FAF（龯）までの
+    Unicodeコードポイント範囲で、20,912コードポイントを含む。Unicode公式の
+    CJK統合漢字全体にはU+9FB0以降や拡張範囲もあるため、この判定は全範囲を
+    網羅しない。`々・〆・ヵ・ヶ` は範囲外から追加した読み候補文字である。
+
+    参照:
+        Unicode公式 Unihan Grid Index:
+        https://www.unicode.org/charts/unihangridindex.html
+
+    Attributes:
+        tokenizer: 本文を形態素へ分割するJanomeのトークナイザー。
+        dictionary: 用語定義と読み補正をまとめた読み仮名支援辞書。
+        _KANJI_LIKE_PATTERN: 漢字等を含む読み仮名候補を検出する正規表現。
+        _WHITESPACE_PATTERN: 表記の正規化で空白を除去する正規表現。
+    """
+
     _KANJI_LIKE_PATTERN = re.compile(r"[一-龯々〆ヵヶ]")
     _WHITESPACE_PATTERN = re.compile(r"\s+")
 
