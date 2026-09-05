@@ -83,19 +83,13 @@
         <input type="hidden" name="action" value="fetch_selected">
         <input type="hidden" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
         <input type="hidden" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
-        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
-            <div>
-                <h4 class="h6 mb-1">会議録本文</h4>
-                <p class="small text-muted mb-0">選択した会議録の発言本文をデータベースに取り込みます。</p>
-            </div>
-            <div class="d-flex flex-wrap justify-content-lg-end gap-2">
-                <button type="submit" class="btn btn-primary">本文をデータベースに取り込む</button>
-                {% if can_manage_reading_support %}
-                <a href="{% url 'kokkai:reading_support_management' %}" class="btn btn-outline-primary">読み仮名・用語辞書</a>
-                {% else %}
-                <button type="button" class="btn btn-outline-secondary" disabled>読み仮名・用語辞書</button>
-                {% endif %}
-            </div>
+        <div class="d-flex flex-wrap justify-content-end gap-2 mb-3">
+            <button type="submit" class="btn btn-primary">本文をデータベースに取り込む</button>
+            {% if can_manage_reading_support %}
+            <a href="{% url 'kokkai:reading_support_management' %}" class="btn btn-outline-primary">読み仮名・用語辞書</a>
+            {% else %}
+            <button type="button" class="btn btn-outline-secondary" disabled>読み仮名・用語辞書</button>
+            {% endif %}
         </div>
         {% if not can_manage_reading_support %}
         <p class="small text-muted text-end mb-3">読み仮名・用語辞書を利用するには管理者権限が必要です。</p>

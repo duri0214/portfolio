@@ -472,6 +472,10 @@ class IndexViewTests(TestCase):
             response,
             '<button type="submit" class="btn btn-primary">本文をデータベースに取り込む</button>',
         )
+        self.assertNotContains(response, "会議録本文")
+        self.assertNotContains(
+            response, "選択した会議録の発言本文をデータベースに取り込みます。"
+        )
         self.assertContains(
             response,
             "本文取り込み済みの会議録を再選択すると、発言本文を取り込み直せます。",
