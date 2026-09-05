@@ -466,7 +466,7 @@ class IndexViewTests(TestCase):
         )
         self.assertContains(
             response,
-            "会議録とPDFは、原文を確認するためのリンクです。",
+            "会議録は、原文を確認するためのリンクです。",
         )
         self.assertContains(
             response,
