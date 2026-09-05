@@ -120,18 +120,28 @@ class ReadingSupportService:
         return selected
 
     def _find_reading_override_spans(self, text: str) -> list[tuple[int, int, str]]:
-        spans = []
+        candidates: list[tuple[int, int, str]] = []
         for override in self.dictionary.reading_overrides:
             surface = override.surface
             reading = override.reading
+            if not surface:
+                continue
             search_start = 0
             while True:
                 start = text.find(surface, search_start)
                 if start < 0:
                     break
-                spans.append((start, start + len(surface), reading))
+                candidates.append((start, start + len(surface), reading))
                 search_start = start + len(surface)
-        return sorted(spans, key=lambda item: item[0])
+
+        selected: list[tuple[int, int, str]] = []
+        for candidate in sorted(
+            candidates, key=lambda item: (item[0], -(item[1] - item[0]))
+        ):
+            if selected and candidate[0] < selected[-1][1]:
+                continue
+            selected.append(candidate)
+        return selected
 
     @classmethod
     def _normalize(cls, value: str) -> str:

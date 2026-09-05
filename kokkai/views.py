@@ -295,20 +295,25 @@ class ScenarioGameView(DetailView):
         )
         context["current_turn"] = current_turn
         reading_support = ReadingSupportService()
+        annotation_by_turn_id = {
+            turn.pk: reading_support.annotate(turn.dialogue)
+            for turn in [*context["completed_turns"], current_turn]
+            if turn is not None
+        }
         context["current_turn_annotation"] = (
-            reading_support.annotate(current_turn.dialogue)
+            annotation_by_turn_id.get(current_turn.pk)
             if current_turn is not None
             else None
         )
         context["previous_turn_annotation"] = (
-            reading_support.annotate(previous_turn.dialogue)
+            annotation_by_turn_id.get(previous_turn.pk)
             if previous_turn is not None
             else None
         )
         context["completed_turn_items"] = [
             {
                 "turn": turn,
-                "annotation": reading_support.annotate(turn.dialogue),
+                "annotation": annotation_by_turn_id[turn.pk],
             }
             for turn in context["completed_turns"]
         ]

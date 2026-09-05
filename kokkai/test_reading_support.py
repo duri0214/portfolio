@@ -143,6 +143,32 @@ class ReadingSupportServiceTests(SimpleTestCase):
             "NISA",
         )
 
+    def test_annotation_ignores_empty_overrides_and_keeps_overlapping_text_once(self):
+        """
+        シナリオ:
+        - 入力: 空の読み補正と、同じ位置で重なる2つの読み補正を含む辞書。
+        - 処理: 辞書を使って本文を解析する。
+        - 期待値: 空の補正は無視し、長い補正を1回だけ適用して原文を重複させない。
+        """
+        dictionary = ReadingSupportDictionary(
+            terms=(),
+            reading_overrides=(
+                ReadingOverride(surface="", reading="空"),
+                ReadingOverride(surface="AB", reading="エービー"),
+                ReadingOverride(surface="ABC", reading="エービーシー"),
+            ),
+        )
+
+        annotation = ReadingSupportService(dictionary=dictionary).annotate("ABC")
+
+        self.assertEqual(
+            [(segment.text, segment.reading) for segment in annotation.segments],
+            [("ABC", "エービーシー")],
+        )
+        self.assertEqual(
+            "".join(segment.text for segment in annotation.segments), "ABC"
+        )
+
 
 class ReadingSupportViewTests(TestCase):
     """会議詳細とシナリオ画面で学習補助を確認できることを検証する。"""
@@ -180,9 +206,20 @@ class ReadingSupportViewTests(TestCase):
         self.assertContains(response, "お諮りします。ＦＯＩＰについて確認します。")
         self.assertContains(response, "読み仮名・用語を確認")
         self.assertContains(response, "おはかり")
+        self.assertContains(
+            response,
+            '<ruby class="kokkai-reading">お諮り<rt>おはかり</rt></ruby>します。',
+        )
+        self.assertContains(
+            response,
+            'します。<details class="kokkai-term d-inline"><summary',
+        )
         self.assertContains(response, "Free and Open Indo-Pacific")
         self.assertContains(response, "公式資料で確認する")
         self.assertContains(response, "https://janome.mocobeta.dev/ja/")
+        self.assertContains(
+            response, "登録した読み補正と用語の読みは読み仮名支援辞書に基づきます"
+        )
 
     def test_scenario_game_exposes_learning_support_for_the_current_speech(self):
         """
