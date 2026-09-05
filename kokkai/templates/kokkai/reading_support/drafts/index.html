@@ -5,7 +5,7 @@
     <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
         <ol class="breadcrumb mb-0 small">
             <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">会議録一覧</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Web取込候補</li>
+            <li class="breadcrumb-item active" aria-current="page">保存済み候補</li>
         </ol>
     </nav>
 
@@ -17,11 +17,11 @@
 
     <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
         <div>
-            <h1 class="h2 mb-1">Web取込候補</h1>
-            <p class="text-muted mb-0">Web本文から自動抽出した辞書候補を確認してから辞書へ登録します。</p>
+            <h1 class="h2 mb-1">保存済みのWeb取込候補</h1>
+            <p class="text-muted mb-0">以前にWeb本文から作成した辞書候補を確認・修正し、承認したものを辞書へ登録します。</p>
         </div>
         <div class="d-flex flex-wrap gap-2">
-            <a href="{% url 'kokkai:reading_support_draft_generate' %}" class="btn btn-primary">Webから取り込む</a>
+            <a href="{% url 'kokkai:reading_support_draft_generate' %}" class="btn btn-primary">Webから取り込んで確認</a>
             <a href="{% url 'kokkai:reading_support_management' %}" class="btn btn-outline-secondary">読み仮名・用語辞書へ戻る</a>
         </div>
     </div>
