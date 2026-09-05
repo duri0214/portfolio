@@ -1,4 +1,5 @@
 from django.contrib import admin, messages
+from django.core.exceptions import PermissionDenied
 from django.template.response import TemplateResponse
 from django.urls import path
 
@@ -63,6 +64,10 @@ class ReadingSupportEntryAdmin(admin.ModelAdmin):
         return custom_urls + urls
 
     def csv_import_view(self, request):
+        if not (
+            self.has_add_permission(request) and self.has_change_permission(request)
+        ):
+            raise PermissionDenied
         if request.method == "POST":
             form = ReadingSupportCsvImportForm(request.POST, request.FILES)
             if form.is_valid():
@@ -157,6 +162,11 @@ class ReadingSupportDraftAdmin(admin.ModelAdmin):
 
     @admin.action(description="承認済み候補を辞書へ登録する")
     def register_approved_candidates(self, request, queryset):
+        if not (
+            self.has_change_permission(request)
+            and self._has_entry_write_permission(request)
+        ):
+            raise PermissionDenied
         for draft in queryset:
             result = ReadingSupportDraftService().register_approved_candidates(draft)
             if result.errors:
@@ -179,6 +189,11 @@ class ReadingSupportDraftAdmin(admin.ModelAdmin):
         )
 
     def generate_view(self, request):
+        if not (
+            self.has_add_permission(request)
+            and self._has_candidate_add_permission(request)
+        ):
+            raise PermissionDenied
         if request.method == "POST":
             form = ReadingSupportDraftGenerationForm(request.POST)
             if form.is_valid():
@@ -209,3 +224,13 @@ class ReadingSupportDraftAdmin(admin.ModelAdmin):
             "admin/kokkai/readingsupportdraft/generate.html",
             context,
         )
+
+    def _has_candidate_add_permission(self, request):
+        opts = ReadingSupportDraftCandidate._meta
+        return request.user.has_perm(f"{opts.app_label}.add_{opts.model_name}")
+
+    def _has_entry_write_permission(self, request):
+        entry_admin = self.admin_site._registry[ReadingSupportEntry]
+        return entry_admin.has_add_permission(
+            request
+        ) and entry_admin.has_change_permission(request)

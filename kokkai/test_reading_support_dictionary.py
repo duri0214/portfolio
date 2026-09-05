@@ -226,3 +226,22 @@ class ReadingSupportAdminTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(ReadingSupportEntry.objects.filter(surface="GX").exists())
+
+    def test_custom_admin_views_require_model_permissions(self):
+        """カスタム管理画面の直接アクセスでもモデル権限を要求する。"""
+        staff_user = User.objects.create_user(
+            username="reading-support-staff",
+            password="test-password",
+            is_staff=True,
+        )
+        self.client.force_login(staff_user)
+
+        csv_response = self.client.get(
+            reverse("admin:kokkai_readingsupportentry_csv_import")
+        )
+        draft_response = self.client.get(
+            reverse("admin:kokkai_readingsupportdraft_generate")
+        )
+
+        self.assertEqual(csv_response.status_code, 403)
+        self.assertEqual(draft_response.status_code, 403)

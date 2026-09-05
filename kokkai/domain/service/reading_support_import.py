@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from ...models import ReadingSupportEntry
+from ..repository.reading_support_repository import ReadingSupportRepository
 from ..valueobject.reading_support import normalize_surface
 
 
@@ -55,6 +56,9 @@ class ReadingSupportCsvImporter:
     }
     _TRUE_VALUES = {"1", "true", "yes", "on", "有効", "はい"}
     _FALSE_VALUES = {"0", "false", "no", "off", "無効", "いいえ"}
+
+    def __init__(self, repository: ReadingSupportRepository | None = None) -> None:
+        self.repository = repository or ReadingSupportRepository()
 
     def import_csv(
         self,
@@ -109,9 +113,9 @@ class ReadingSupportCsvImporter:
                     raise ValueError("同じCSV内に同じ表記が複数あります。")
                 seen_surfaces.add(normalized_surface)
 
-                existing = ReadingSupportEntry.objects.filter(
-                    normalized_surface=normalized_surface
-                ).first()
+                existing = self.repository.find_by_normalized_surface(
+                    normalized_surface
+                )
                 if existing is not None:
                     if self._same_values(existing, entry):
                         skipped += 1
@@ -142,7 +146,7 @@ class ReadingSupportCsvImporter:
         updated = 0
         with transaction.atomic():
             for entry, is_new in entries_to_save:
-                entry.save()
+                self.repository.save_entry(entry)
                 if is_new:
                     created += 1
                 else:

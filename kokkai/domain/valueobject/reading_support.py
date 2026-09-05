@@ -61,9 +61,6 @@ def normalize_surface(value: str) -> str:
     return _WHITESPACE_PATTERN.sub("", normalized).casefold()
 
 
-READING_SUPPORT_DICTIONARY = ReadingSupportDictionary(terms=(), reading_overrides=())
-
-
 @dataclass(frozen=True)
 class SpeechTextSegment:
     """

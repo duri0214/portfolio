@@ -22,6 +22,10 @@ from ...models import (
     ReadingSupportDraftCandidate,
     ReadingSupportEntry,
 )
+from ..repository.reading_support_draft_repository import (
+    ReadingSupportDraftRepository,
+)
+from ..repository.reading_support_repository import ReadingSupportRepository
 from ..valueobject.reading_support import normalize_surface
 
 logger = logging.getLogger(__name__)
@@ -184,9 +188,13 @@ class ReadingSupportDraftService:
         self,
         fetcher: SourceTextFetcher | None = None,
         generator: CandidateGenerator | None = None,
+        entry_repository: ReadingSupportRepository | None = None,
+        draft_repository: ReadingSupportDraftRepository | None = None,
     ) -> None:
         self.fetcher = fetcher or WebSourceTextFetcher()
         self.generator = generator or OpenAIReadingSupportCandidateGenerator()
+        self.entry_repository = entry_repository or ReadingSupportRepository()
+        self.draft_repository = draft_repository or ReadingSupportDraftRepository()
 
     def create_draft(
         self,
@@ -209,7 +217,7 @@ class ReadingSupportDraftService:
         raw_candidates = self.generator.generate(source_text, source_url)
 
         with transaction.atomic():
-            draft = ReadingSupportDraft.objects.create(
+            draft = self.draft_repository.create_draft(
                 source_url=source_url,
                 source_text=source_text,
                 model_name=self.generator.model,
@@ -223,11 +231,7 @@ class ReadingSupportDraftService:
         self, draft: ReadingSupportDraft
     ) -> CandidateRegistrationResult:
         """管理者が承認した候補だけを辞書へ登録する。"""
-        candidates = list(
-            draft.candidates.filter(is_approved=True, is_registered=False).order_by(
-                "pk"
-            )
-        )
+        candidates = self.draft_repository.list_approved_unregistered_candidates(draft)
         if not candidates:
             return CandidateRegistrationResult(
                 errors=("登録承認済みの候補がありません。",)
@@ -242,9 +246,7 @@ class ReadingSupportDraftService:
                 errors.append(f"候補 #{candidate.pk}: 同じ表記が複数あります。")
                 continue
             seen_surfaces.add(normalized_surface)
-            entry = ReadingSupportEntry.objects.filter(
-                normalized_surface=normalized_surface
-            ).first()
+            entry = self.entry_repository.find_by_normalized_surface(normalized_surface)
             if entry is None:
                 entry = ReadingSupportEntry()
             entry.entry_type = candidate.entry_type
@@ -269,36 +271,23 @@ class ReadingSupportDraftService:
 
         with transaction.atomic():
             for candidate, entry in prepared:
-                entry.save()
-                candidate.is_registered = True
-                candidate.needs_review = False
-                candidate.registered_entry = entry
-                candidate.save(
-                    update_fields=[
-                        "is_registered",
-                        "needs_review",
-                        "registered_entry",
-                        "updated_at",
-                    ]
-                )
-            draft.status = ReadingSupportDraft.Status.IMPORTED
-            draft.error_message = ""
-            draft.save(update_fields=["status", "error_message", "updated_at"])
+                self.entry_repository.save_entry(entry)
+                self.draft_repository.mark_candidate_registered(candidate, entry)
+            self.draft_repository.mark_imported(draft)
         return CandidateRegistrationResult(registered=len(prepared))
 
-    @classmethod
     def _create_candidate(
-        cls,
+        self,
         draft: ReadingSupportDraft,
         raw_candidate: dict[str, Any],
         source_url: str,
     ) -> ReadingSupportDraftCandidate:
-        entry_type = cls._entry_type(raw_candidate.get("entry_type"))
-        surface = cls._string_value(raw_candidate.get("surface"))
-        reading = cls._string_value(raw_candidate.get("reading"))
-        description = cls._string_value(raw_candidate.get("description"))
-        category = cls._string_value(raw_candidate.get("category"))
-        candidate_source_url = cls._string_value(raw_candidate.get("source_url"))
+        entry_type = self._entry_type(raw_candidate.get("entry_type"))
+        surface = self._string_value(raw_candidate.get("surface"))
+        reading = self._string_value(raw_candidate.get("reading"))
+        description = self._string_value(raw_candidate.get("description"))
+        category = self._string_value(raw_candidate.get("category"))
+        candidate_source_url = self._string_value(raw_candidate.get("source_url"))
         if not candidate_source_url:
             candidate_source_url = source_url
         if candidate_source_url:
@@ -311,11 +300,9 @@ class ReadingSupportDraftService:
         needs_review = bool(raw_candidate.get("needs_review"))
         needs_review = needs_review or not surface or not reading
         if entry_type == ReadingSupportEntry.EntryType.TERM:
-            needs_review = needs_review or not all(
-                (description, category, candidate_source_url)
-            )
-        return ReadingSupportDraftCandidate.objects.create(
-            draft=draft,
+            needs_review = needs_review or not all((description, candidate_source_url))
+        return self.draft_repository.create_candidate(
+            draft,
             entry_type=entry_type,
             surface=surface,
             reading=reading,
@@ -323,7 +310,7 @@ class ReadingSupportDraftService:
             category=category,
             source_url=candidate_source_url,
             needs_review=needs_review,
-            review_note=cls._string_value(raw_candidate.get("review_note")),
+            review_note=self._string_value(raw_candidate.get("review_note")),
         )
 
     @staticmethod
