@@ -5,6 +5,11 @@ from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
 from kokkai.domain.service.reading_support import ReadingSupportService
+from kokkai.domain.valueobject.reading_support import (
+    ReadingOverride,
+    ReadingSupportDictionary,
+    TermDefinition,
+)
 from kokkai.models import (
     Meeting,
     MeetingScenario,
@@ -94,6 +99,49 @@ class ReadingSupportServiceTests(SimpleTestCase):
 
         self.assertEqual("".join(segment.text for segment in annotation.segments), text)
         self.assertFalse(annotation.has_support)
+
+    def test_service_uses_one_dictionary_for_terms_and_reading_overrides(self):
+        """
+        シナリオ:
+        - 入力: 用語と読み補正を登録した読み仮名支援辞書。
+        - 処理: 同じ辞書をReadingSupportServiceへ渡して本文を解析する。
+        - 期待値: 用語と読み補正の両方が、辞書の登録内容から表示される。
+        """
+        dictionary = ReadingSupportDictionary(
+            terms=(
+                TermDefinition(
+                    surface="NISA",
+                    reading="ニーサ",
+                    description="少額投資非課税制度",
+                    category="制度",
+                    source_url="https://example.com/nisa",
+                ),
+            ),
+            reading_overrides=(
+                ReadingOverride(surface="読み補正", reading="ヨミホセイ"),
+            ),
+        )
+
+        annotation = ReadingSupportService(dictionary=dictionary).annotate(
+            "読み補正とNISAを確認します。"
+        )
+
+        self.assertEqual(
+            next(
+                segment.reading
+                for segment in annotation.segments
+                if segment.text == "読み補正"
+            ),
+            "ヨミホセイ",
+        )
+        self.assertEqual(
+            next(
+                segment.term.surface
+                for segment in annotation.segments
+                if segment.text == "NISA"
+            ),
+            "NISA",
+        )
 
 
 class ReadingSupportViewTests(TestCase):

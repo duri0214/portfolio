@@ -5,7 +5,8 @@ import jaconv
 from janome.tokenizer import Tokenizer
 
 from ..valueobject.reading_support import (
-    REGISTERED_TERMS,
+    READING_SUPPORT_DICTIONARY,
+    ReadingSupportDictionary,
     SpeechAnnotation,
     SpeechTextSegment,
     TermDefinition,
@@ -15,17 +16,16 @@ from ..valueobject.reading_support import (
 class ReadingSupportService:
     """会議録本文へ辞書に基づく読み仮名と用語情報を付加するサービス。"""
 
-    _KANJI_PATTERN = re.compile(r"[一-龯々〆ヵヶ]")
+    _KANJI_LIKE_PATTERN = re.compile(r"[一-龯々〆ヵヶ]")
     _WHITESPACE_PATTERN = re.compile(r"\s+")
-    _READING_OVERRIDES = {"お諮り": "おはかり"}
 
     def __init__(
         self,
         tokenizer: Tokenizer | None = None,
-        terms: Iterable[TermDefinition] = REGISTERED_TERMS,
+        dictionary: ReadingSupportDictionary = READING_SUPPORT_DICTIONARY,
     ) -> None:
         self.tokenizer = tokenizer or Tokenizer()
-        self.terms = tuple(terms)
+        self.dictionary = dictionary
 
     def annotate(self, text: str) -> SpeechAnnotation:
         """本文を原文順のセグメントへ分け、読み仮名と登録用語を付加する。"""
@@ -64,7 +64,7 @@ class ReadingSupportService:
     @classmethod
     def _reading_for_token(cls, token) -> str | None:
         """Janomeの結果から、誤読を断定しにくい語だけの読みを返す。"""
-        if not cls._KANJI_PATTERN.search(token.surface):
+        if not cls._KANJI_LIKE_PATTERN.search(token.surface):
             return None
         if token.reading in (None, "*", token.surface):
             return None
@@ -76,7 +76,7 @@ class ReadingSupportService:
     def _find_term_spans(self, text: str) -> list[tuple[int, int, TermDefinition]]:
         normalized_text, positions = self._normalize_with_positions(text)
         candidates: list[tuple[int, int, TermDefinition]] = []
-        for term in self.terms:
+        for term in self.dictionary.terms:
             normalized_term = self._normalize(term.surface)
             if not normalized_term:
                 continue
@@ -103,7 +103,9 @@ class ReadingSupportService:
 
     def _find_reading_override_spans(self, text: str) -> list[tuple[int, int, str]]:
         spans = []
-        for surface, reading in self._READING_OVERRIDES.items():
+        for override in self.dictionary.reading_overrides:
+            surface = override.surface
+            reading = override.reading
             search_start = 0
             while True:
                 start = text.find(surface, search_start)

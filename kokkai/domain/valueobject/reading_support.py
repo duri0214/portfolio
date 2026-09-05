@@ -22,6 +22,22 @@ class TermDefinition:
 
 
 @dataclass(frozen=True)
+class ReadingOverride:
+    """Janomeの読みを上書きする本文表記と読みの組み合わせ。"""
+
+    surface: str
+    reading: str
+
+
+@dataclass(frozen=True)
+class ReadingSupportDictionary:
+    """読み補正と用語解説をまとめて扱う、読み仮名支援用の辞書。"""
+
+    terms: tuple[TermDefinition, ...]
+    reading_overrides: tuple[ReadingOverride, ...]
+
+
+@dataclass(frozen=True)
 class SpeechTextSegment:
     """
     会議録本文を読み仮名または用語情報付きで表示するための一部分。
@@ -68,4 +84,7 @@ FOIP_TERM = TermDefinition(
 )
 
 
-REGISTERED_TERMS: tuple[TermDefinition, ...] = (FOIP_TERM,)
+READING_SUPPORT_DICTIONARY = ReadingSupportDictionary(
+    terms=(FOIP_TERM,),
+    reading_overrides=(ReadingOverride(surface="お諮り", reading="おはかり"),),
+)
