@@ -230,7 +230,7 @@ class ReadingSupportManagementViewTests(TestCase):
             response, "読み仮名・用語辞書を利用するには管理者権限が必要です。"
         )
         self.assertNotContains(response, "CSVから取り込む")
-        self.assertNotContains(response, "Webから取り込んで確認")
+        self.assertNotContains(response, "Webから取り込む")
         self.assertNotContains(response, "Web取込候補")
         self.assertNotContains(response, "/admin/")
 
@@ -252,7 +252,7 @@ class ReadingSupportManagementViewTests(TestCase):
         )
         self.assertContains(response, "読み仮名・用語辞書")
         self.assertNotContains(response, "CSVから取り込む")
-        self.assertNotContains(response, "Webから取り込んで確認")
+        self.assertNotContains(response, "Webから取り込む")
         self.assertNotContains(response, "Web取込候補")
 
     def test_management_pages_require_a_superuser(self):
@@ -299,8 +299,8 @@ class ReadingSupportManagementViewTests(TestCase):
         self.assertContains(management_response, "読み仮名・用語辞書")
         self.assertContains(management_response, "辞書ビューア")
         self.assertContains(management_response, "CSVから取り込む")
-        self.assertContains(management_response, "Webから取り込んで確認")
-        self.assertContains(management_response, "保存済み候補を確認")
+        self.assertContains(management_response, "Webから取り込む")
+        self.assertNotContains(management_response, "保存済み候補を確認")
 
     def test_entry_form_creates_a_dictionary_entry(self):
         """

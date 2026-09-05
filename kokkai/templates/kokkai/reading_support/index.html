@@ -31,13 +31,12 @@
             <div class="d-flex flex-wrap justify-content-end mb-3 gap-2">
                 <a href="{% url 'kokkai:reading_support_entry_create' %}" class="btn btn-primary">辞書項目を追加</a>
                 <a href="{% url 'kokkai:reading_support_csv_import' %}" class="btn btn-outline-secondary">CSVから取り込む</a>
-                <a href="{% url 'kokkai:reading_support_draft_generate' %}" class="btn btn-outline-success">Webから取り込んで確認</a>
-                <a href="{% url 'kokkai:reading_support_draft_list' %}" class="btn btn-outline-info">保存済み候補を確認</a>
+                <a href="{% url 'kokkai:reading_support_draft_generate' %}" class="btn btn-outline-success">Webから取り込む</a>
             </div>
 
             <div class="alert alert-info" role="status">
                 <strong>管理モードの使い方:</strong>
-                CSVは確定済みの辞書項目を一括登録します。「Webから取り込んで確認」では、URLまたは本文をGPTで候補化し、作成後に候補確認画面へ進みます。候補を確認・修正し、「承認した候補を辞書へ登録」を押すと辞書へ登録されます。「保存済み候補を確認」は、以前に作成した候補を後から確認する画面です。
+                CSVは確定済みの辞書項目を一括登録します。「Webから取り込む」では、URLまたは本文をGPTで候補化し、作成後に候補確認画面へ進みます。候補を確認・修正し、「承認した候補を辞書へ登録」を押すと辞書へ登録されます。
             </div>
 
             <div class="card shadow-sm border-0">
