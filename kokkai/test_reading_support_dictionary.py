@@ -273,12 +273,63 @@ class ReadingSupportManagementViewTests(TestCase):
 
         for view_name in (
             "kokkai:reading_support_management",
+            "kokkai:reading_support_entry_delete",
             "kokkai:reading_support_csv_import",
             "kokkai:reading_support_draft_list",
             "kokkai:reading_support_draft_generate",
         ):
-            response = self.client.get(reverse(view_name))
+            kwargs = (
+                {"pk": 1} if view_name == "kokkai:reading_support_entry_delete" else {}
+            )
+            response = self.client.get(reverse(view_name, kwargs=kwargs))
             self.assertEqual(response.status_code, 403)
+
+    def test_superuser_can_delete_a_reading_support_entry(self):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーが辞書ビューアの削除ボタンを押す。
+        - 処理: 辞書項目をPOSTで削除する。
+        - 期待値: 項目が削除され、辞書管理画面へ戻る。
+        """
+        entry = ReadingSupportEntry.objects.create(
+            entry_type=ReadingSupportEntry.EntryType.READING_OVERRIDE,
+            surface="削除確認用語",
+            reading="さくじょかくにん",
+        )
+        self.client.force_login(self.admin_user)
+
+        management_response = self.client.get(
+            reverse("kokkai:reading_support_management")
+        )
+        self.assertContains(
+            management_response,
+            f'action="{reverse("kokkai:reading_support_entry_delete", kwargs={"pk": entry.pk})}"',
+            html=False,
+        )
+        self.assertContains(management_response, "削除")
+
+        response = self.client.post(
+            reverse("kokkai:reading_support_entry_delete", kwargs={"pk": entry.pk})
+        )
+
+        self.assertRedirects(response, reverse("kokkai:reading_support_management"))
+        self.assertFalse(ReadingSupportEntry.objects.filter(pk=entry.pk).exists())
+
+    def test_regular_user_cannot_delete_a_reading_support_entry(self):
+        """通常ユーザーは辞書項目を削除できない。"""
+        entry = ReadingSupportEntry.objects.create(
+            entry_type=ReadingSupportEntry.EntryType.READING_OVERRIDE,
+            surface="削除権限確認",
+            reading="さくじょけんげんかくにん",
+        )
+        self.client.force_login(self.regular_user)
+
+        response = self.client.post(
+            reverse("kokkai:reading_support_entry_delete", kwargs={"pk": entry.pk})
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(ReadingSupportEntry.objects.filter(pk=entry.pk).exists())
 
     def test_management_pages_render_inside_the_kokkai_app(self):
         """

@@ -7,7 +7,14 @@ from django.db.models import Count, Q
 from django.forms import inlineformset_factory
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
-from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    FormView,
+    ListView,
+    UpdateView,
+)
 
 from .domain.repository.scenario_repository import ScenarioRepository
 from .domain.service.meeting_catalog import MeetingCatalogService
@@ -212,6 +219,20 @@ class ReadingSupportEntryUpdateView(KokkaiManagementRequiredMixin, UpdateView):
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, "辞書項目を更新しました。")
+        return response
+
+
+class ReadingSupportEntryDeleteView(KokkaiManagementRequiredMixin, DeleteView):
+    """KOKKAI内の読み仮名支援辞書エントリを削除する画面。"""
+
+    model = ReadingSupportEntry
+    success_url = reverse_lazy("kokkai:reading_support_management")
+    http_method_names = ["post", "options"]
+
+    def form_valid(self, form):
+        surface = self.object.surface
+        response = super().form_valid(form)
+        messages.success(self.request, f"辞書項目「{surface}」を削除しました。")
         return response
 
 

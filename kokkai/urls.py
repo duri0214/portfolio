@@ -20,6 +20,11 @@ urlpatterns = [
         name="reading_support_entry_update",
     ),
     path(
+        "reading-support/entries/<int:pk>/delete/",
+        views.ReadingSupportEntryDeleteView.as_view(),
+        name="reading_support_entry_delete",
+    ),
+    path(
         "reading-support/csv-import/",
         views.ReadingSupportCsvImportView.as_view(),
         name="reading_support_csv_import",

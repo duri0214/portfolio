@@ -75,6 +75,10 @@
                                     </td>
                                     <td class="text-end">
                                         <a href="{% url 'kokkai:reading_support_entry_update' entry.pk %}" class="btn btn-sm btn-outline-primary">編集</a>
+                                        <form method="post" action="{% url 'kokkai:reading_support_entry_delete' entry.pk %}" class="d-inline" onsubmit="return confirm('この辞書項目を削除しますか？');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">削除</button>
+                                        </form>
                                     </td>
                                 </tr>
                                 {% empty %}
