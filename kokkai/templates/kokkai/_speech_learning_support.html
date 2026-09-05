@@ -1,0 +1,28 @@
+<div class="kokkai-speech {{ speech_class|default:'' }}">{{ speech_text }}</div>
+
+{% if annotation.has_support %}
+<details class="kokkai-reading-panel mt-3">
+    <summary>読み仮名・用語を確認</summary>
+    <div class="kokkai-annotated-speech mt-2">
+        {% for segment in annotation.segments %}
+        {% if segment.term %}
+        <details class="kokkai-term d-inline">
+            <summary class="kokkai-term-summary" title="用語解説を表示">{{ segment.text }}</summary>
+            <div class="kokkai-term-definition small">
+                <strong>{{ segment.term.surface }}</strong>
+                <span class="kokkai-term-reading">{{ segment.term.reading }}</span>
+                <span class="badge text-bg-light">{{ segment.term.category }}</span>
+                <div class="mt-1">{{ segment.term.description }}</div>
+                <a href="{{ segment.term.source_url }}" target="_blank" rel="noopener">公式資料で確認する</a>
+            </div>
+        </details>
+        {% elif segment.reading %}
+        <ruby class="kokkai-reading">{{ segment.text }}<rt>{{ segment.reading }}</rt></ruby>
+        {% else %}
+        {{ segment.text }}
+        {% endif %}
+        {% endfor %}
+    </div>
+    <p class="kokkai-reading-source small text-muted mb-0 mt-2">読みは <a href="{{ annotation.reading_source_url }}" target="_blank" rel="noopener">Janome の辞書</a> に基づきます。固有名詞や辞書にない語は読みを表示しません。</p>
+</details>
+{% endif %}

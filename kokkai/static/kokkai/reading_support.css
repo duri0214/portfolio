@@ -1,0 +1,59 @@
+.kokkai-speech {
+    white-space: pre-wrap;
+}
+
+.kokkai-reading-panel {
+    border: 1px solid #dee2e6;
+    border-radius: .5rem;
+    padding: .65rem .8rem;
+}
+
+.kokkai-reading-panel > summary {
+    color: #6c757d;
+    cursor: pointer;
+    font-size: .875rem;
+}
+
+.kokkai-annotated-speech {
+    background: #f8f9fa;
+    border-radius: .375rem;
+    line-height: 2.2;
+    padding: .75rem;
+    white-space: pre-wrap;
+}
+
+.kokkai-reading rt {
+    color: #6c757d;
+    font-size: .6em;
+}
+
+.kokkai-term {
+    margin: 0 .1rem;
+}
+
+.kokkai-term-summary {
+    color: #0d6efd;
+    cursor: pointer;
+    display: inline;
+    text-decoration: underline dotted;
+    text-underline-offset: .18em;
+}
+
+.kokkai-term-summary::marker {
+    content: "";
+}
+
+.kokkai-term-definition {
+    background: #fff;
+    border: 1px solid #cfe2ff;
+    border-radius: .375rem;
+    display: block;
+    margin: .35rem 0 .25rem;
+    max-width: 38rem;
+    padding: .65rem .75rem;
+}
+
+.kokkai-term-reading {
+    color: #6c757d;
+    margin-left: .35rem;
+}

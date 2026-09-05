@@ -11,6 +11,7 @@ from .domain.repository.scenario_repository import ScenarioRepository
 from .domain.service.meeting_catalog import MeetingCatalogService
 from .domain.service.pipeline import KokkaiPipeline
 from .domain.service.participant_query import ParticipantQueryService
+from .domain.service.reading_support import ReadingSupportService
 from .domain.service.scenario import ScenarioGenerationError, ScenarioService
 from .domain.service.scenario_play import ScenarioPlayError, ScenarioPlayService
 from .domain.valueobject.meeting import MEETING_METADATA_SPEAKER_NAME
@@ -147,6 +148,14 @@ class MeetingDetailView(DetailView):
             speaker_name=MEETING_METADATA_SPEAKER_NAME
         ).order_by("speech_order", "pk")
         context["has_speeches"] = context["speeches"].exists()
+        reading_support = ReadingSupportService()
+        context["speech_items"] = [
+            {
+                "speech": speech,
+                "annotation": reading_support.annotate(speech.speech_text),
+            }
+            for speech in context["speeches"]
+        ]
         participant_service = ParticipantQueryService()
         context["participants"] = participant_service.list_participants(self.object)
         context["participant_summary"] = participant_service.get_participant_summary(
@@ -285,6 +294,24 @@ class ScenarioGameView(DetailView):
             else 0
         )
         context["current_turn"] = current_turn
+        reading_support = ReadingSupportService()
+        context["current_turn_annotation"] = (
+            reading_support.annotate(current_turn.dialogue)
+            if current_turn is not None
+            else None
+        )
+        context["previous_turn_annotation"] = (
+            reading_support.annotate(previous_turn.dialogue)
+            if previous_turn is not None
+            else None
+        )
+        context["completed_turn_items"] = [
+            {
+                "turn": turn,
+                "annotation": reading_support.annotate(turn.dialogue),
+            }
+            for turn in context["completed_turns"]
+        ]
         context["previous_turn"] = previous_turn
         context["is_response_to_other_actor"] = (
             previous_turn is not None
