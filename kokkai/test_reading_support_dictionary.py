@@ -302,6 +302,42 @@ class ReadingSupportManagementViewTests(TestCase):
         self.assertContains(management_response, "Webから取り込む")
         self.assertNotContains(management_response, "保存済み候補を確認")
 
+    def test_reading_support_forms_use_bootstrap_widgets(self):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーがKOKKAI内の辞書関連フォームを表示する。
+        - 処理: 辞書項目、CSV、Web取込、Web取込候補の各画面をGETする。
+        - 期待値: 入力部品がBootstrapのフォームクラスで描画される。
+        """
+        self.client.force_login(self.admin_user)
+
+        entry_response = self.client.get(reverse("kokkai:reading_support_entry_create"))
+        self.assertContains(entry_response, 'class="form-select"')
+        self.assertContains(entry_response, 'class="form-control"')
+        self.assertContains(entry_response, 'class="form-check-input"')
+
+        csv_response = self.client.get(reverse("kokkai:reading_support_csv_import"))
+        self.assertContains(csv_response, 'class="form-control"')
+        self.assertContains(csv_response, 'class="form-check-input"')
+
+        generate_response = self.client.get(
+            reverse("kokkai:reading_support_draft_generate")
+        )
+        self.assertContains(generate_response, 'class="form-control"')
+
+        draft = ReadingSupportDraft.objects.create(source_text="確認用本文")
+        ReadingSupportDraftCandidate.objects.create(
+            draft=draft,
+            surface="確認用語",
+            reading="かくにんようご",
+        )
+        detail_response = self.client.get(
+            reverse("kokkai:reading_support_draft_detail", kwargs={"pk": draft.pk})
+        )
+        self.assertContains(detail_response, 'class="form-select"')
+        self.assertContains(detail_response, 'class="form-control"')
+        self.assertContains(detail_response, 'class="form-check-input"')
+
     def test_entry_form_creates_a_dictionary_entry(self):
         """
         シナリオ:
