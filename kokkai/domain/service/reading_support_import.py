@@ -122,8 +122,9 @@ class ReadingSupportCsvImporter:
                         continue
                     if not update_existing:
                         raise ValueError(
-                            "既存データと異なるため更新できません。"
-                            "更新する場合は --update-existing を指定してください。"
+                            "既存データと内容が異なるため更新できません。"
+                            "上書きする場合は「既存データを更新する」にチェックを入れて、"
+                            "再度取り込んでください。"
                         )
                     self._copy_values(entry, existing)
                     existing.full_clean()

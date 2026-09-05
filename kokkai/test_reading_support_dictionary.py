@@ -99,6 +99,12 @@ class ReadingSupportCsvImporterTests(TestCase):
         self.assertEqual((first.created, first.updated, first.skipped), (1, 0, 0))
         self.assertEqual((second.created, second.updated, second.skipped), (0, 0, 1))
         self.assertEqual(len(changed.errors), 1)
+        self.assertEqual(
+            changed.errors[0].message,
+            "既存データと内容が異なるため更新できません。"
+            "上書きする場合は「既存データを更新する」にチェックを入れて、"
+            "再度取り込んでください。",
+        )
         self.assertEqual((updated.created, updated.updated, updated.skipped), (0, 1, 0))
         self.assertEqual(
             ReadingSupportEntry.objects.get(surface="NISA").description,
