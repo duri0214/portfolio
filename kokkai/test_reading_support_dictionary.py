@@ -229,6 +229,7 @@ class ReadingSupportManagementViewTests(TestCase):
         self.assertContains(
             response, "読み仮名・用語辞書を利用するには管理者権限が必要です。"
         )
+        self.assertContains(response, 'class="small text-muted text-end mb-3"')
         self.assertNotContains(response, "CSVから取り込む")
         self.assertNotContains(response, "Webから取り込む")
         self.assertNotContains(response, "Web取込候補")
