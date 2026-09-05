@@ -485,7 +485,7 @@ class IndexViewTests(TestCase):
             response, "カタログの更新は、既に保存した発言やChromaのデータを削除しません"
         )
         content = response.content.decode()
-        self.assertLess(content.index("会議録一覧"), content.index("使い方:"))
+        self.assertLess(content.index("使い方:"), content.index("会議録一覧"))
         self.assertLess(
             content.index("会議録を検索して一覧を表示"),
             content.rindex("会議録全量へのリンク"),
