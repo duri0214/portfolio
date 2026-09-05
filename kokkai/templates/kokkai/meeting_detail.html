@@ -142,7 +142,8 @@
         <summary class="text-muted">会議録の原文を確認する{% if scenario %}（シナリオの生成元）{% endif %}</summary>
 
     <div class="speeches mt-3">
-        {% for speech in speeches %}
+        {% for speech_item in speech_items %}
+        {% with speech=speech_item.speech %}
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between">
                 <div>
@@ -152,9 +153,10 @@
                 <span class="text-muted">{{ speech.speaker_role|default:"" }} {{ speech.speaker_affiliation|default:"" }}</span>
             </div>
             <div class="card-body">
-                <p class="card-text" style="white-space: pre-wrap;">{{ speech.speech_text }}</p>
+                {% include 'kokkai/_speech_learning_support.html' with speech_text=speech.speech_text annotation=speech_item.annotation speech_class="card-text" %}
             </div>
         </div>
+        {% endwith %}
         {% endfor %}
     </div>
     </details>

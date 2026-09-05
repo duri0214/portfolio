@@ -223,7 +223,7 @@
                     <strong id="current-turn-heading">{{ current_turn.actor.name }}</strong>
                     <span class="badge text-bg-light">議事録 No.{{ current_turn.turn_number|stringformat:"03d" }}</span>
                 </div>
-                <p class="fs-5 mb-0" style="white-space: pre-wrap;">{{ current_turn.dialogue }}</p>
+                {% include 'kokkai/_speech_learning_support.html' with speech_text=current_turn.dialogue annotation=current_turn_annotation speech_class="fs-5 mb-0" %}
             </div>
 
             <details class="roleplay-evidence mb-3">
@@ -245,7 +245,7 @@
                     <strong>{% if is_response_to_other_actor %}相手からの発言{% else %}直前の発言{% endif %}</strong>
                     <span class="small text-muted text-nowrap">{{ previous_turn.actor.name }} / 議事録 No.{{ previous_turn.turn_number|stringformat:"03d" }}</span>
                 </div>
-                <p class="mb-0" style="white-space: pre-wrap;">{{ previous_turn.dialogue }}</p>
+                {% include 'kokkai/_speech_learning_support.html' with speech_text=previous_turn.dialogue annotation=previous_turn_annotation %}
             </div>
             {% endif %}
 
@@ -286,12 +286,14 @@
         <details class="mt-4">
             <summary class="small text-muted">ここまでの展開を見る（{{ completed_turns|length }}ターン）</summary>
             <div class="mt-3">
-                {% for turn in completed_turns %}
+                {% for turn_item in completed_turn_items %}
+                {% with turn=turn_item.turn annotation=turn_item.annotation %}
                 <article class="border-start border-3 ps-3 mb-3">
                     <strong>{{ turn.actor.name }}</strong>
                     <span class="small text-muted ms-2">No.{{ turn.turn_number|stringformat:"03d" }}</span>
-                    <p class="mb-1" style="white-space: pre-wrap;">{{ turn.dialogue }}</p>
+                    {% include 'kokkai/_speech_learning_support.html' with speech_text=turn.dialogue annotation=annotation speech_class="mb-1" %}
                 </article>
+                {% endwith %}
                 {% endfor %}
             </div>
         </details>
