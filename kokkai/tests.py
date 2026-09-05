@@ -438,14 +438,14 @@ class IndexViewTests(TestCase):
             response,
             f'href="{detail_url}?start_date=2024-01-26&amp;end_date=2024-01-26"',
         )
-        self.assertContains(response, "期間内の会議録カタログを取得")
+        self.assertContains(response, "会議録を検索して一覧を表示")
         self.assertContains(response, "会議録全量へのリンク")
         self.assertNotContains(response, "（結果を表示）")
         self.assertNotContains(response, 'data-bs-toggle="tooltip"')
         self.assertNotContains(
             response, "期間内の会議録のタイトルと開催情報を一覧で取得します"
         )
-        self.assertContains(response, "カタログを取得中…")
+        self.assertContains(response, "会議録を検索中…")
         self.assertContains(response, 'name="meeting_ids"')
         self.assertContains(response, "PDF")
         self.assertContains(response, 'id="index-form"')
@@ -453,33 +453,41 @@ class IndexViewTests(TestCase):
         self.assertNotContains(response, 'id="index-loading"')
         self.assertNotContains(response, "rowspan=")
         self.assertContains(
-            response, "一覧から、ロープレに使いたい会議録にチェックを入れます"
+            response, "検索結果から、ロープレの題材にする会議録を選びます。"
         )
         self.assertContains(
             response,
-            "期間を指定し、「カタログを取得」を押します。会議情報の一覧が表示されます。",
+            "期間を指定して「会議録を検索」を押すと、検索結果が一覧に表示されます。",
         )
         self.assertNotContains(response, "<li>期間の目安がつかない場合は")
         self.assertContains(
             response,
-            "「本文をデータベースに取り込む」を押すと、選択した会議録の発言本文を保存します。PDFは参照リンクから確認できます。",
+            "「本文をデータベースに取り込む」を押すと、選択した会議録の発言本文をロープレのベースとして保存します。",
+        )
+        self.assertContains(
+            response,
+            "会議録は、原文を確認するためのリンクです。",
+            count=1,
         )
         self.assertContains(
             response,
             '<button type="submit" class="btn btn-primary">本文をデータベースに取り込む</button>',
         )
+        self.assertNotContains(response, "会議録本文")
+        self.assertNotContains(
+            response, "選択した会議録の発言本文をデータベースに取り込みます。"
+        )
         self.assertContains(
-            response, "本文取り込み済みの会議録を再選択すると、本文を取り込み直せます。"
+            response,
+            "本文取り込み済みの会議録を再選択すると、発言本文を取り込み直せます。",
         )
         self.assertNotContains(
             response, "カタログの更新は、既に保存した発言やChromaのデータを削除しません"
         )
         content = response.content.decode()
+        self.assertLess(content.index("使い方:"), content.index("会議録一覧"))
         self.assertLess(
-            content.index("使い方:"), content.index("期間内の会議録カタログを取得")
-        )
-        self.assertLess(
-            content.index("期間内の会議録カタログを取得"),
+            content.index("会議録を検索して一覧を表示"),
             content.rindex("会議録全量へのリンク"),
         )
 
