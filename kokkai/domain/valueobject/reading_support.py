@@ -13,14 +13,12 @@ class TermDefinition:
         surface: 本文中で表示する代表表記。
         reading: 学習用に表示する用語の読み。
         description: 用語の短い説明。
-        category: 用語の分類。
         source_url: 説明の根拠となる公式資料のURL。
     """
 
     surface: str
     reading: str
     description: str
-    category: str
     source_url: str
 
 
@@ -41,10 +39,10 @@ class ReadingOverride:
 @dataclass(frozen=True)
 class ReadingSupportDictionary:
     """
-    読み補正と用語解説をまとめて扱う、読み仮名支援用の辞書。
+    読み補正と説明表示をまとめて扱う、読み仮名支援用の辞書。
 
     Attributes:
-        terms: 本文から検出して説明を表示する用語定義の集合。
+        terms: 本文から検出して説明を表示する辞書項目の集合。
         reading_overrides: Janomeの読みを上書きする表記と読みの集合。
     """
 
@@ -83,7 +81,7 @@ class SpeechAnnotation:
     1件の会議録本文を学習補助表示用に分割した値。
 
     Attributes:
-        segments: 原文の順序を保った読み仮名・用語付きの本文部分。
+        segments: 原文の順序を保った読み仮名支援付きの本文部分。
         reading_source_url: 読みの根拠として案内するJanome公式ドキュメントのURL。
     """
 

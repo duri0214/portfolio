@@ -8,7 +8,7 @@ from kokkai.domain.service.reading_support_import import ReadingSupportCsvImport
 class Command(BaseCommand):
     """読み仮名支援辞書CSVを検証・取り込む管理コマンド。"""
 
-    help = "用語・読み補正のCSVを読み仮名支援辞書へ取り込みます。"
+    help = "辞書項目のCSVを読み仮名支援辞書へ取り込みます。"
 
     def add_arguments(self, parser):
         parser.add_argument("csv_path", type=Path, help="UTF-8 CSVファイルのパス")

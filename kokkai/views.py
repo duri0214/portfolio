@@ -4,7 +4,6 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Count, Q
-from django.forms import inlineformset_factory
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
@@ -24,23 +23,12 @@ from .domain.service.reading_support import ReadingSupportService
 from .domain.service.scenario import ScenarioGenerationError, ScenarioService
 from .domain.service.scenario_play import ScenarioPlayError, ScenarioPlayService
 from .domain.valueobject.meeting import MEETING_METADATA_SPEAKER_NAME
-from .domain.service.reading_support_draft import (
-    ReadingSupportDraftGenerationError,
-    ReadingSupportDraftService,
-)
 from .domain.service.reading_support_import import ReadingSupportCsvImporter
 from .forms import (
     ReadingSupportCsvImportForm,
-    ReadingSupportDraftCandidateForm,
-    ReadingSupportDraftGenerationForm,
     ReadingSupportEntryForm,
 )
-from .models import (
-    Meeting,
-    ReadingSupportDraft,
-    ReadingSupportDraftCandidate,
-    ReadingSupportEntry,
-)
+from .models import Meeting, ReadingSupportEntry
 
 
 class KokkaiManagementRequiredMixin(UserPassesTestMixin):
@@ -50,15 +38,6 @@ class KokkaiManagementRequiredMixin(UserPassesTestMixin):
 
     def test_func(self):
         return self.request.user.is_authenticated and self.request.user.is_superuser
-
-
-ReadingSupportCandidateFormSet = inlineformset_factory(
-    ReadingSupportDraft,
-    ReadingSupportDraftCandidate,
-    form=ReadingSupportDraftCandidateForm,
-    extra=0,
-    can_delete=False,
-)
 
 
 class IndexView(ListView):
@@ -184,7 +163,7 @@ class IndexView(ListView):
 
 
 class ReadingSupportManagementView(KokkaiManagementRequiredMixin, ListView):
-    """KOKKAI内の読み仮名・用語辞書と辞書ビューアを表示する画面。"""
+    """KOKKAI内の読み仮名支援辞書と辞書ビューアを表示する画面。"""
 
     model = ReadingSupportEntry
     template_name = "kokkai/reading_support/index.html"
@@ -257,83 +236,6 @@ class ReadingSupportCsvImportView(KokkaiManagementRequiredMixin, FormView):
             )
             return redirect("kokkai:reading_support_management")
         return self.render_to_response(self.get_context_data(form=form, result=result))
-
-
-class ReadingSupportDraftListView(KokkaiManagementRequiredMixin, ListView):
-    """KOKKAI内のWeb取込候補を一覧表示する画面。"""
-
-    model = ReadingSupportDraft
-    template_name = "kokkai/reading_support/drafts/index.html"
-    context_object_name = "drafts"
-
-    def get_queryset(self):
-        return ReadingSupportDraft.objects.prefetch_related("candidates").all()
-
-
-class ReadingSupportDraftGenerateView(KokkaiManagementRequiredMixin, FormView):
-    """KOKKAI内でWeb情報から辞書候補を作成する画面。"""
-
-    template_name = "kokkai/reading_support/drafts/generate.html"
-    form_class = ReadingSupportDraftGenerationForm
-
-    def form_valid(self, form):
-        try:
-            draft = ReadingSupportDraftService().create_draft(
-                source_url=form.cleaned_data["source_url"],
-                source_text=form.cleaned_data["source_text"],
-                created_by=self.request.user,
-            )
-        except ReadingSupportDraftGenerationError as error:
-            form.add_error(None, str(error))
-            return self.form_invalid(form)
-
-        messages.success(
-            self.request,
-            f"Web取込候補 #{draft.pk}を作成しました。内容を確認してから承認してください。",
-        )
-        return redirect("kokkai:reading_support_draft_detail", pk=draft.pk)
-
-
-class ReadingSupportDraftDetailView(KokkaiManagementRequiredMixin, DetailView):
-    """KOKKAI内でWeb取込候補を確認・修正・承認する画面。"""
-
-    model = ReadingSupportDraft
-    template_name = "kokkai/reading_support/drafts/detail.html"
-    context_object_name = "draft"
-
-    def get_context_data(self, **kwargs):
-        candidate_formset = kwargs.pop("candidate_formset", None)
-        context = super().get_context_data(**kwargs)
-        context["candidate_formset"] = (
-            candidate_formset or ReadingSupportCandidateFormSet(instance=self.object)
-        )
-        return context
-
-    def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        candidate_formset = ReadingSupportCandidateFormSet(
-            request.POST, instance=self.object
-        )
-        if not candidate_formset.is_valid():
-            return self.render_to_response(
-                self.get_context_data(candidate_formset=candidate_formset)
-            )
-
-        candidate_formset.save()
-        if request.POST.get("action") == "register_candidates":
-            result = ReadingSupportDraftService().register_approved_candidates(
-                self.object
-            )
-            if result.errors:
-                for error in result.errors:
-                    messages.error(request, error)
-            else:
-                messages.success(
-                    request, f"{result.registered}件の候補を辞書へ登録しました。"
-                )
-        else:
-            messages.success(request, "候補を保存しました。")
-        return redirect("kokkai:reading_support_draft_detail", pk=self.object.pk)
 
 
 class MeetingDetailView(DetailView):

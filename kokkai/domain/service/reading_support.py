@@ -15,7 +15,7 @@ from ..valueobject.reading_support import (
 
 class ReadingSupportService:
     """
-    会議録本文へ辞書に基づく読み仮名と用語情報を付加するサービス。
+    会議録本文へ辞書に基づく読み仮名と説明情報を付加するサービス。
 
     `_KANJI_LIKE_PATTERN` は、読み仮名を付ける候補を絞る簡易判定である。
     `一-龯` は個別の文字列ではなく、U+4E00（一）からU+9FAF（龯）までの
@@ -29,7 +29,7 @@ class ReadingSupportService:
 
     Attributes:
         tokenizer: 本文を形態素へ分割するJanomeのトークナイザー。
-        dictionary: 用語定義と読み補正をまとめた読み仮名支援辞書。
+        dictionary: 読みと説明をまとめた読み仮名支援辞書。
         _KANJI_LIKE_PATTERN: 漢字等を含む読み仮名候補を検出する正規表現。
     """
 

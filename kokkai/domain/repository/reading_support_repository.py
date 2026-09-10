@@ -23,23 +23,22 @@ class ReadingSupportRepository:
         return entry
 
     def get_dictionary(self) -> ReadingSupportDictionary:
-        """有効な辞書エントリだけを読み仮名支援辞書として返す。"""
-        entries = ReadingSupportEntry.objects.filter(is_active=True).order_by("pk")
+        """登録済みの辞書エントリを読み仮名支援辞書として返す。"""
+        entries = ReadingSupportEntry.objects.all().order_by("pk")
         terms = tuple(
             TermDefinition(
                 surface=entry.surface,
                 reading=entry.reading,
                 description=entry.description,
-                category=entry.category,
                 source_url=entry.source_url,
             )
             for entry in entries
-            if entry.entry_type == ReadingSupportEntry.EntryType.TERM
+            if entry.is_term
         )
         reading_overrides = tuple(
             ReadingOverride(surface=entry.surface, reading=entry.reading)
             for entry in entries
-            if entry.entry_type == ReadingSupportEntry.EntryType.READING_OVERRIDE
+            if not entry.is_term
         )
         return ReadingSupportDictionary(
             terms=terms,

@@ -36,26 +36,14 @@ class ReadingSupportImportResult:
 
 
 class ReadingSupportCsvImporter:
-    """用語・読み補正CSVを検証して辞書へ取り込む。"""
+    """読み仮名支援辞書CSVを検証して辞書へ取り込む。"""
 
     REQUIRED_COLUMNS = (
         "surface",
         "reading",
         "description",
-        "category",
         "source_url",
     )
-    OPTIONAL_COLUMNS = ("entry_type", "is_active")
-    _ENTRY_TYPE_ALIASES = {
-        "term": ReadingSupportEntry.EntryType.TERM,
-        "用語": ReadingSupportEntry.EntryType.TERM,
-        "reading_override": ReadingSupportEntry.EntryType.READING_OVERRIDE,
-        "reading-override": ReadingSupportEntry.EntryType.READING_OVERRIDE,
-        "override": ReadingSupportEntry.EntryType.READING_OVERRIDE,
-        "読み補正": ReadingSupportEntry.EntryType.READING_OVERRIDE,
-    }
-    _TRUE_VALUES = {"1", "true", "yes", "on", "有効", "はい"}
-    _FALSE_VALUES = {"0", "false", "no", "off", "無効", "いいえ"}
 
     def __init__(self, repository: ReadingSupportRepository | None = None) -> None:
         self.repository = repository or ReadingSupportRepository()
@@ -193,69 +181,34 @@ class ReadingSupportCsvImporter:
         surface = values.get("surface", "")
         reading = values.get("reading", "")
         description = values.get("description", "")
-        category = values.get("category", "")
         source_url = values.get("source_url", "")
-        raw_entry_type = values.get("entry_type", "").casefold()
-        if raw_entry_type:
-            entry_type = self._ENTRY_TYPE_ALIASES.get(raw_entry_type)
-            if entry_type is None:
-                raise ValueError(
-                    "entry_type は term または reading_override を指定してください。"
-                )
-        else:
-            entry_type = (
-                ReadingSupportEntry.EntryType.READING_OVERRIDE
-                if not any((description, category, source_url))
-                else ReadingSupportEntry.EntryType.TERM
-            )
 
-        is_active = self._parse_is_active(values.get("is_active", ""))
         return ReadingSupportEntry(
-            entry_type=entry_type,
             surface=surface,
             normalized_surface=normalize_surface(surface),
             reading=reading,
             description=description,
-            category=category,
             source_url=source_url,
-            is_active=is_active,
         )
-
-    @classmethod
-    def _parse_is_active(cls, value: str) -> bool:
-        if not value:
-            return True
-        normalized = value.casefold()
-        if normalized in cls._TRUE_VALUES:
-            return True
-        if normalized in cls._FALSE_VALUES:
-            return False
-        raise ValueError("is_active は true または false を指定してください。")
 
     @staticmethod
     def _copy_values(source: ReadingSupportEntry, target: ReadingSupportEntry) -> None:
-        target.entry_type = source.entry_type
         target.surface = source.surface
         target.normalized_surface = source.normalized_surface
         target.reading = source.reading
         target.description = source.description
-        target.category = source.category
         target.source_url = source.source_url
-        target.is_active = source.is_active
 
     @staticmethod
     def _same_values(left: ReadingSupportEntry, right: ReadingSupportEntry) -> bool:
         return all(
             getattr(left, field) == getattr(right, field)
             for field in (
-                "entry_type",
                 "surface",
                 "normalized_surface",
                 "reading",
                 "description",
-                "category",
                 "source_url",
-                "is_active",
             )
         )
 
