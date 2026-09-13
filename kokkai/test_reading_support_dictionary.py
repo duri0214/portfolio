@@ -164,6 +164,49 @@ class ReadingSupportManagementViewTests(TestCase):
         with self.assertRaises(NoReverseMatch):
             reverse("kokkai:reading_support_entry_create")
 
+    def test_management_view_uses_primary_import_button_and_pagination(self):
+        """
+        シナリオ:
+        - 入力: 41件の辞書項目とスーパーユーザー。
+        - 処理: 辞書一覧の1ページ目と2ページ目を開く。
+        - 期待値: CSV取り込みはprimaryボタンで表示され、40件単位でページングされる。
+        """
+        ReadingSupportEntry.objects.all().delete()
+        ReadingSupportEntry.objects.bulk_create(
+            [
+                ReadingSupportEntry(
+                    word=f"ページング単語{number:02d}",
+                    normalized_word=f"ページング単語{number:02d}",
+                    reading=f"ぺーじんぐたんご{number:02d}",
+                    description="ページング確認用の説明",
+                )
+                for number in range(41)
+            ]
+        )
+        self.client.force_login(self.admin_user)
+
+        first_page = self.client.get(reverse("kokkai:reading_support_management"))
+        second_page = self.client.get(
+            reverse("kokkai:reading_support_management"), {"page": "2"}
+        )
+
+        self.assertContains(
+            first_page,
+            'class="btn btn-primary">CSVから取り込む</a>',
+        )
+        self.assertContains(
+            first_page,
+            'class="btn btn-outline-secondary mt-4">会議録一覧へ戻る</a>',
+        )
+        self.assertContains(first_page, "出典")
+        self.assertEqual(first_page.context["paginator"].per_page, 40)
+        self.assertEqual(first_page.context["paginator"].count, 41)
+        self.assertEqual(len(first_page.context["entries"]), 40)
+        self.assertContains(first_page, "1-40件 / 全41件")
+        self.assertEqual(second_page.context["page_obj"].number, 2)
+        self.assertEqual(len(second_page.context["entries"]), 1)
+        self.assertContains(second_page, "41-41件 / 全41件")
+
     def test_existing_entry_can_be_edited(self):
         """
         シナリオ:

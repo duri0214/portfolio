@@ -167,6 +167,7 @@ class ReadingSupportManagementView(KokkaiManagementRequiredMixin, ListView):
     model = ReadingSupportEntry
     template_name = "kokkai/reading_support/index.html"
     context_object_name = "entries"
+    paginate_by = 40
 
     def get_queryset(self):
         return ReadingSupportEntry.objects.all().order_by("word", "pk")
