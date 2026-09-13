@@ -3,7 +3,7 @@
 {% if annotation.has_support %}
 <details class="kokkai-reading-panel mt-3">
     <summary>読み仮名支援を確認</summary>
-    <div class="kokkai-annotated-speech mt-2">{% for segment in annotation.segments %}{% if segment.entry and segment.entry.description %}{% spaceless %}<details class="kokkai-term d-inline">
+    <div class="kokkai-annotated-speech mt-2">{% for segment in annotation.segments %}{% if segment.entry %}{% spaceless %}<details class="kokkai-term d-inline">
             <summary class="kokkai-term-summary" title="辞書項目の説明を表示"><ruby class="kokkai-reading">{{ segment.text }}<rt>{{ segment.reading }}</rt></ruby></summary>
             <div class="kokkai-term-definition small">
                 <strong>{{ segment.entry.word }}</strong>

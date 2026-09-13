@@ -27,7 +27,6 @@ class ReadingSupportImportResult:
 
     created: int = 0
     updated: int = 0
-    skipped: int = 0
     errors: tuple[ReadingSupportImportError, ...] = ()
 
     @property
@@ -85,7 +84,6 @@ class ReadingSupportCsvImporter:
         entries_to_save: list[tuple[ReadingSupportEntry, bool]] = []
         errors: list[ReadingSupportImportError] = []
         seen_words: set[str] = set()
-        skipped = 0
 
         for row in reader:
             line_number = reader.line_num
@@ -101,9 +99,6 @@ class ReadingSupportCsvImporter:
 
                 existing = self.repository.find_by_normalized_word(normalized_word)
                 if existing is not None:
-                    if self._same_values(existing, entry):
-                        skipped += 1
-                        continue
                     self._copy_values(entry, existing)
                     existing.full_clean()
                     entries_to_save.append((existing, False))
@@ -133,7 +128,6 @@ class ReadingSupportCsvImporter:
         return ReadingSupportImportResult(
             created=created,
             updated=updated,
-            skipped=skipped,
         )
 
     @staticmethod
@@ -188,19 +182,6 @@ class ReadingSupportCsvImporter:
         target.reading = source.reading
         target.description = source.description
         target.source_url = source.source_url
-
-    @staticmethod
-    def _same_values(left: ReadingSupportEntry, right: ReadingSupportEntry) -> bool:
-        return all(
-            getattr(left, field) == getattr(right, field)
-            for field in (
-                "word",
-                "normalized_word",
-                "reading",
-                "description",
-                "source_url",
-            )
-        )
 
     @staticmethod
     def _error_message(error: ValidationError | ValueError) -> str:

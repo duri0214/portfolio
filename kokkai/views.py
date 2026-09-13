@@ -215,7 +215,7 @@ class ReadingSupportCsvImportView(KokkaiManagementRequiredMixin, FormView):
                 self.request,
                 (
                     f"CSVを取り込みました（新規 {result.created}件、"
-                    f"更新 {result.updated}件、スキップ {result.skipped}件）。"
+                    f"上書き {result.updated}件）。"
                 ),
             )
             return redirect("kokkai:reading_support_management")

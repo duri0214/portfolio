@@ -35,7 +35,7 @@ class ReadingSupportServiceTests(SimpleTestCase):
                     ReadingSupportDefinition(
                         word="お諮り",
                         reading="おはかり",
-                        description="",
+                        description="議題について意見を求める表現。",
                         source_url="",
                     ),
                 ),
@@ -119,7 +119,7 @@ class ReadingSupportServiceTests(SimpleTestCase):
     def test_service_uses_one_dictionary_for_reading_and_description(self):
         """
         シナリオ:
-        - 入力: 説明付き項目と説明なし項目を登録した読み仮名支援辞書。
+        - 入力: 読みと説明を持つ2つの辞書項目を登録した読み仮名支援辞書。
         - 処理: 同じ辞書をReadingSupportServiceへ渡して本文を解析する。
         - 期待値: 各項目の読みが補正され、説明付き項目には説明を保持する。
         """
@@ -134,7 +134,7 @@ class ReadingSupportServiceTests(SimpleTestCase):
                 ReadingSupportDefinition(
                     word="読み補正",
                     reading="ヨミホセイ",
-                    description="",
+                    description="読みを補正する登録語。",
                     source_url="",
                 ),
             ),
@@ -170,9 +170,9 @@ class ReadingSupportServiceTests(SimpleTestCase):
         """
         dictionary = ReadingSupportDictionary(
             entries=(
-                ReadingSupportDefinition("", "空", "", ""),
-                ReadingSupportDefinition("AB", "エービー", "", ""),
-                ReadingSupportDefinition("ABC", "エービーシー", "", ""),
+                ReadingSupportDefinition("", "空", "説明", ""),
+                ReadingSupportDefinition("AB", "エービー", "説明", ""),
+                ReadingSupportDefinition("ABC", "エービーシー", "説明", ""),
             ),
         )
 
@@ -225,7 +225,7 @@ class ReadingSupportViewTests(TestCase):
         self.assertContains(response, "おはかり")
         self.assertContains(
             response,
-            '<ruby class="kokkai-reading">お諮り<rt>おはかり</rt></ruby>します。',
+            '<summary class="kokkai-term-summary" title="辞書項目の説明を表示"><ruby class="kokkai-reading">お諮り<rt>おはかり</rt></ruby>',
         )
         self.assertContains(
             response,

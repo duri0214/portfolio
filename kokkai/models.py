@@ -381,8 +381,8 @@ class ReadingSupportEntry(models.Model):
         word: 本文で検出する語の代表表記。
         normalized_word: 表記ゆれを検出するために正規化した語。
         reading: 本文で優先して表示する読み。
-        description: 用語の説明。空なら説明を表示しない。
-        source_url: 説明の根拠となるURL。説明がある場合は必須。
+        description: 用語の説明。辞書項目では必須。
+        source_url: 説明の根拠となるURL。任意。
     """
 
     word = models.CharField("単語", max_length=255)
@@ -390,7 +390,7 @@ class ReadingSupportEntry(models.Model):
         "正規化単語", max_length=255, unique=True, editable=False
     )
     reading = models.CharField("読み", max_length=255)
-    description = models.TextField("説明", blank=True)
+    description = models.TextField("説明")
     source_url = models.URLField("出典URL", blank=True)
     created_at = models.DateTimeField("登録日時", auto_now_add=True)
     updated_at = models.DateTimeField("更新日時", auto_now=True)
@@ -416,9 +416,8 @@ class ReadingSupportEntry(models.Model):
             errors["word"] = "単語を入力してください。"
         if not self.reading:
             errors["reading"] = "読みを入力してください。"
-        if self.description:
-            if not self.source_url:
-                errors["source_url"] = "説明がある項目には出典URLが必要です。"
+        if not self.description:
+            errors["description"] = "説明を入力してください。"
         if errors:
             raise ValidationError(errors)
 

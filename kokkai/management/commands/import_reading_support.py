@@ -26,7 +26,6 @@ class Command(BaseCommand):
             raise CommandError("CSVの検証に失敗したため、取り込みを中止しました。")
         self.stdout.write(
             self.style.SUCCESS(
-                "取り込み完了: "
-                f"新規={result.created}, 更新={result.updated}, スキップ={result.skipped}"
+                "取り込み完了: " f"新規={result.created}, 上書き={result.updated}"
             )
         )

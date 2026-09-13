@@ -12,7 +12,7 @@ class ReadingSupportDefinition:
     Attributes:
         word: 本文中で表示する代表表記。
         reading: Janomeの結果より優先して表示する読み。
-        description: 用語の短い説明。空なら説明を表示しない。
+        description: 用語の短い説明。
         source_url: 説明の根拠となる公式資料のURL。空ならリンクを表示しない。
     """
 

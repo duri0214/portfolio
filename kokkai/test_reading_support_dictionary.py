@@ -12,28 +12,30 @@ from kokkai.models import ReadingSupportEntry
 class ReadingSupportEntryTests(TestCase):
     """辞書エントリーの入力規則と読み仮名支援への反映を確認する。"""
 
-    def test_description_and_reading_are_independent_entry_properties(self):
+    def test_word_requires_reading_and_description(self):
         """
         シナリオ:
-        - 入力: 説明付きの項目と、説明なしの項目。
-        - 処理: 両方の項目を検証して保存する。
-        - 期待値: どちらも単一の辞書項目として保存でき、説明付きには出典URLが必要になる。
+        - 入力: 説明が空の項目と、読み・説明を持つ項目。
+        - 処理: 両方の項目を検証する。
+        - 期待値: 説明が空の項目は拒否され、読み・説明を持つ項目は保存できる。
         """
-        with_description = ReadingSupportEntry(
-            word="説明付き単語",
-            reading="せつめいつきたんご",
-            description="説明",
+        without_description = ReadingSupportEntry(
+            word="説明なし単語",
+            reading="せつめいなしたんご",
         )
         with self.assertRaises(ValidationError):
-            with_description.full_clean()
+            without_description.full_clean()
 
-        reading_only = ReadingSupportEntry(
-            word="読み補正",
-            reading="よみほせい",
+        valid_entry = ReadingSupportEntry(
+            word="説明付き単語",
+            reading="せつめいつきたんご",
+            description="単語の説明",
         )
-        reading_only.full_clean()
-        reading_only.save()
-        self.assertTrue(ReadingSupportEntry.objects.filter(word="読み補正").exists())
+        valid_entry.full_clean()
+        valid_entry.save()
+        self.assertTrue(
+            ReadingSupportEntry.objects.filter(word="説明付き単語").exists()
+        )
 
     def test_db_entry_uses_reading_and_description_together(self):
         """
@@ -63,12 +65,12 @@ class ReadingSupportCsvImporterTests(TestCase):
 
     HEADER = "word,reading,description,source_url\n"
 
-    def test_import_is_idempotent_and_changed_word_is_updated(self):
+    def test_import_upserts_existing_word_even_when_content_is_unchanged(self):
         """
         シナリオ:
         - 入力: 同じ単語のCSVを再取り込みし、その後に説明を変えたCSVを取り込む。
         - 処理: CSV取り込みを3回実行する。
-        - 期待値: 同一内容はスキップされ、変更内容は既存項目に反映される。
+        - 期待値: 既存単語は同一内容でも上書き対象として扱われ、変更内容も反映される。
         """
         csv_text = (
             self.HEADER + "NISA,ニーサ,少額投資非課税制度,https://example.com/nisa\n"
@@ -80,29 +82,30 @@ class ReadingSupportCsvImporterTests(TestCase):
         changed_csv = csv_text.replace("少額投資非課税制度", "更新後の説明")
         updated = importer.import_csv(changed_csv)
 
-        self.assertEqual((first.created, first.updated, first.skipped), (1, 0, 0))
-        self.assertEqual((second.created, second.updated, second.skipped), (0, 0, 1))
-        self.assertEqual((updated.created, updated.updated, updated.skipped), (0, 1, 0))
+        self.assertEqual((first.created, first.updated), (1, 0))
+        self.assertEqual((second.created, second.updated), (0, 1))
+        self.assertEqual((updated.created, updated.updated), (0, 1))
         self.assertEqual(
             ReadingSupportEntry.objects.get(word="NISA").description,
             "更新後の説明",
         )
 
-    def test_blank_description_still_creates_a_reading_support_entry(self):
+    def test_blank_description_is_rejected(self):
         """
         シナリオ:
-        - 入力: 説明と出典URLが空のCSV行。
+        - 入力: 説明が空のCSV行。
         - 処理: CSVを取り込む。
-        - 期待値: 説明の有無で用途を分類せず、読みを持つ辞書項目として保存される。
+        - 期待値: 説明が必須のためエラーになり、項目は保存されない。
         """
         result = ReadingSupportCsvImporter().import_csv(
-            self.HEADER + "お諮り,おはかり,,\n"
+            self.HEADER + "新規読み補正,しんきよみほせい,,\n"
         )
 
-        self.assertTrue(result.is_success)
-        entry = ReadingSupportEntry.objects.get(word="お諮り")
-        self.assertEqual(entry.reading, "おはかり")
-        self.assertEqual(entry.description, "")
+        self.assertFalse(result.is_success)
+        self.assertIn("説明を入力してください", result.errors[0].message)
+        self.assertFalse(
+            ReadingSupportEntry.objects.filter(word="新規読み補正").exists()
+        )
 
     def test_invalid_rows_are_reported_without_partial_import(self):
         """
