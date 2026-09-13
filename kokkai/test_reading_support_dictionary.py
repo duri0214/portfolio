@@ -237,6 +237,23 @@ class ReadingSupportManagementViewTests(TestCase):
             "word,reading,description,source_url\r\n",
         )
 
+    def test_csv_import_view_explains_word_based_overwrite_rule(self):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーによるCSV取り込み画面へのアクセス。
+        - 処理: 取り込みルールの説明を表示する。
+        - 期待値: wordだけで照合し、上書き範囲とCSV内重複時の扱いを確認できる。
+        """
+        self.client.force_login(self.admin_user)
+
+        response = self.client.get(reverse("kokkai:reading_support_csv_import"))
+
+        self.assertContains(response, "wordだけ")
+        self.assertContains(
+            response, "reading、description、source_urlをCSVの値で上書き"
+        )
+        self.assertContains(response, "同じCSV内に同じwordが複数ある場合はエラー")
+
     def test_existing_entry_can_be_edited(self):
         """
         シナリオ:

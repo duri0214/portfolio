@@ -16,6 +16,15 @@
     </div>
     <p class="text-muted">UTF-8 CSV（word,reading,description,source_url）を検証し、エラーがなければ辞書へ追加・上書きします。word、reading、descriptionは必須です。</p>
 
+    <div class="alert alert-info" role="note">
+        <h2 class="h5">重複と上書きのルール</h2>
+        <ul class="mb-0">
+            <li><strong>wordだけ</strong>で同じ辞書項目かを判定します。全角・半角、英字の大小文字、空白の違いは同じwordとして扱います。</li>
+            <li>既に同じwordがある場合は、reading、description、source_urlをCSVの値で上書きします。source_urlを空欄にすると、登録済みの出典も空欄になります。</li>
+            <li>同じCSV内に同じwordが複数ある場合はエラーです。CSV全体を取り込まず、行を1つにまとめてから再度取り込んでください。</li>
+        </ul>
+    </div>
+
     {% if messages %}
     {% for message in messages %}
     <div class="alert alert-{{ message.tags|default:'info' }}" role="alert">{{ message }}</div>
