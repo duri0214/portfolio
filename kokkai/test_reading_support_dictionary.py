@@ -215,12 +215,12 @@ class ReadingSupportManagementViewTests(TestCase):
         self.assertContains(second_page, "31-31件 / 全31件")
         self.assertEqual(sixty_page.context["paginator"].per_page, 60)
 
-    def test_csv_template_download_has_import_header(self):
+    def test_csv_template_download_has_sample_data(self):
         """
         シナリオ:
         - 入力: スーパーユーザーによるCSVテンプレートのダウンロード要求。
         - 処理: テンプレートURLを開く。
-        - 期待値: そのまま入力に使えるUTF-8 BOM付きのヘッダーCSVがダウンロードされる。
+        - 期待値: 初期投入値と新規追加例を含むUTF-8 BOM付きのCSVがダウンロードされる。
         """
         self.client.force_login(self.admin_user)
 
@@ -234,7 +234,12 @@ class ReadingSupportManagementViewTests(TestCase):
         )
         self.assertEqual(
             response.content.decode("utf-8-sig"),
-            "word,reading,description,source_url\r\n",
+            (
+                "word,reading,description,source_url\r\n"
+                "FOIP,フォイップ,Free and Open Indo-Pacific（自由で開かれたインド太平洋）の略称で、法の支配に基づく自由で開かれた地域の実現を目指す外交上の概念です。,https://www.meti.go.jp/policy/external_economy/trade/foip/index.html\r\n"
+                "お諮り,おはかり,読み仮名を補正するための登録語です。,\r\n"
+                "NISA,ニーサ,少額投資非課税制度です。,https://example.com/nisa\r\n"
+            ),
         )
 
     def test_csv_import_view_explains_word_based_overwrite_rule(self):

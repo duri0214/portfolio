@@ -238,13 +238,18 @@ class ReadingSupportCsvImportView(KokkaiManagementRequiredMixin, FormView):
 
 
 class ReadingSupportCsvTemplateView(KokkaiManagementRequiredMixin, View):
-    """読み仮名支援辞書へ入力するCSVテンプレートをダウンロードする。"""
+    """読み仮名支援辞書へ入力するサンプル付きCSVテンプレートをダウンロードする。"""
 
-    TEMPLATE_HEADER = "word,reading,description,source_url\r\n"
+    TEMPLATE_CONTENT = (
+        "word,reading,description,source_url\r\n"
+        "FOIP,フォイップ,Free and Open Indo-Pacific（自由で開かれたインド太平洋）の略称で、法の支配に基づく自由で開かれた地域の実現を目指す外交上の概念です。,https://www.meti.go.jp/policy/external_economy/trade/foip/index.html\r\n"
+        "お諮り,おはかり,読み仮名を補正するための登録語です。,\r\n"
+        "NISA,ニーサ,少額投資非課税制度です。,https://example.com/nisa\r\n"
+    )
 
     def get(self, request, *args, **kwargs):
         response = HttpResponse(
-            "\ufeff" + self.TEMPLATE_HEADER,
+            "\ufeff" + self.TEMPLATE_CONTENT,
             content_type="text/csv; charset=utf-8",
         )
         response["Content-Disposition"] = (
