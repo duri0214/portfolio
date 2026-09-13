@@ -1,8 +1,10 @@
 import uuid
 
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from .domain.valueobject.participant import join_roles
+from .domain.valueobject.reading_support import normalize_word
 
 
 class Meeting(models.Model):
@@ -369,3 +371,69 @@ class ScenarioPlayAnswer(models.Model):
                 fields=["play", "turn"], name="unique_play_turn_answer"
             )
         ]
+
+
+class ReadingSupportEntry(models.Model):
+    """
+    会議録本文へ適用する読み仮名支援辞書のエントリ。
+
+    Attributes:
+        word: 本文で検出する語の代表表記。
+        normalized_word: 表記ゆれを検出するために正規化した語。
+        reading: 本文で優先して表示する読み。
+        description: 用語の説明。辞書項目では必須。
+        source_url: 説明の根拠となるURL。任意。
+    """
+
+    word = models.CharField("単語", max_length=255)
+    normalized_word = models.CharField(
+        "正規化単語", max_length=255, unique=True, editable=False
+    )
+    reading = models.CharField("読み", max_length=255)
+    description = models.TextField("説明")
+    source_url = models.URLField("出典URL", blank=True)
+    created_at = models.DateTimeField("登録日時", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    class Meta:
+        ordering = ["word", "pk"]
+
+    def __str__(self) -> str:
+        return self.word
+
+    def clean(self) -> None:
+        """辞書エントリの必須項目を検証する。"""
+        self.word = (self.word or "").strip()
+        self.reading = (self.reading or "").strip()
+        self.description = (self.description or "").strip()
+        self.source_url = (self.source_url or "").strip()
+        self.normalized_word = normalize_word(self.word)
+
+        errors: dict[str, str] = {}
+        if not self.word:
+            errors["word"] = "単語を入力してください。"
+        if not self.normalized_word:
+            errors["word"] = "単語を入力してください。"
+        if not self.reading:
+            errors["reading"] = "読みを入力してください。"
+        if not self.description:
+            errors["description"] = "説明を入力してください。"
+        if errors:
+            raise ValidationError(errors)
+
+        duplicate_query = type(self).objects.filter(
+            normalized_word=self.normalized_word
+        )
+        if self.pk:
+            duplicate_query = duplicate_query.exclude(pk=self.pk)
+        if duplicate_query.exists():
+            raise ValidationError({"word": "同じ単語の辞書エントリが既にあります。"})
+
+    def save(self, *args, **kwargs):
+        """保存時にも正規化表記を同期する。"""
+        self.word = (self.word or "").strip()
+        self.reading = (self.reading or "").strip()
+        self.description = (self.description or "").strip()
+        self.source_url = (self.source_url or "").strip()
+        self.normalized_word = normalize_word(self.word)
+        return super().save(*args, **kwargs)

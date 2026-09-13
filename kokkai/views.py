@@ -2,10 +2,19 @@ from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 from django.contrib import messages
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Count, Q
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
-from django.urls import reverse
-from django.views.generic import DetailView, ListView
+from django.urls import reverse, reverse_lazy
+from django.views.generic import (
+    DeleteView,
+    DetailView,
+    FormView,
+    ListView,
+    UpdateView,
+    View,
+)
 
 from .domain.repository.scenario_repository import ScenarioRepository
 from .domain.service.meeting_catalog import MeetingCatalogService
@@ -15,15 +24,52 @@ from .domain.service.reading_support import ReadingSupportService
 from .domain.service.scenario import ScenarioGenerationError, ScenarioService
 from .domain.service.scenario_play import ScenarioPlayError, ScenarioPlayService
 from .domain.valueobject.meeting import MEETING_METADATA_SPEAKER_NAME
-from .models import Meeting
+from .domain.service.reading_support_import import ReadingSupportCsvImporter
+from .forms import (
+    ReadingSupportCsvImportForm,
+    ReadingSupportEntryForm,
+)
+from .models import Meeting, ReadingSupportEntry
 
 
-class IndexView(ListView):
+class KokkaiManagementRequiredMixin(UserPassesTestMixin):
+    """KOKKAI内の管理機能をスーパーユーザーだけに許可するMixin。"""
+
+    raise_exception = True
+
+    def test_func(self):
+        return self.request.user.is_authenticated and self.request.user.is_superuser
+
+
+class PageSizePaginationMixin:
+    """30、60、120件から選ぶ一覧ページの共通ページング設定。"""
+
+    PAGE_SIZE_OPTIONS = (30, 60, 120)
+    DEFAULT_PAGE_SIZE = 30
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_size"] = self._get_page_size()
+        context["page_size_options"] = self.PAGE_SIZE_OPTIONS
+        return context
+
+    def get_paginate_by(self, queryset):
+        return self._get_page_size()
+
+    def _get_page_size(self):
+        try:
+            page_size = int(self.request.GET.get("page_size", self.DEFAULT_PAGE_SIZE))
+        except (TypeError, ValueError):
+            return self.DEFAULT_PAGE_SIZE
+        return (
+            page_size if page_size in self.PAGE_SIZE_OPTIONS else self.DEFAULT_PAGE_SIZE
+        )
+
+
+class IndexView(PageSizePaginationMixin, ListView):
     model = Meeting
     template_name = "kokkai/index.html"
     context_object_name = "meetings_by_date"
-    PAGE_SIZE_OPTIONS = (30, 60, 120)
-    DEFAULT_PAGE_SIZE = 30
 
     def get_queryset(self):
         return (
@@ -42,22 +88,11 @@ class IndexView(ListView):
         start_date, end_date = self._get_period(self.request.GET)
         context["start_date"] = start_date
         context["end_date"] = end_date
-        context["page_size"] = self._get_page_size()
-        context["page_size_options"] = self.PAGE_SIZE_OPTIONS
         context["period_query"] = self._period_query(self.request.GET)
-        return context
-
-    def get_paginate_by(self, queryset):
-        return self._get_page_size()
-
-    def _get_page_size(self):
-        try:
-            page_size = int(self.request.GET.get("page_size", self.DEFAULT_PAGE_SIZE))
-        except (TypeError, ValueError):
-            return self.DEFAULT_PAGE_SIZE
-        return (
-            page_size if page_size in self.PAGE_SIZE_OPTIONS else self.DEFAULT_PAGE_SIZE
+        context["can_manage_reading_support"] = (
+            self.request.user.is_authenticated and self.request.user.is_superuser
         )
+        return context
 
     @staticmethod
     def post(request, *args, **kwargs):
@@ -135,6 +170,92 @@ class IndexView(ListView):
             return ""
         start_date, end_date = cls._get_period(values)
         return cls._build_period_query(start_date, end_date)
+
+
+class ReadingSupportManagementView(
+    PageSizePaginationMixin,
+    KokkaiManagementRequiredMixin,
+    ListView,
+):
+    """KOKKAI内の読み仮名支援辞書と辞書ビューアを表示する画面。"""
+
+    model = ReadingSupportEntry
+    template_name = "kokkai/reading_support/index.html"
+    context_object_name = "entries"
+
+    def get_queryset(self):
+        return ReadingSupportEntry.objects.all().order_by("word", "pk")
+
+
+class ReadingSupportEntryUpdateView(KokkaiManagementRequiredMixin, UpdateView):
+    """KOKKAI内の読み仮名支援辞書エントリを編集する画面。"""
+
+    model = ReadingSupportEntry
+    form_class = ReadingSupportEntryForm
+    template_name = "kokkai/reading_support/entry_form.html"
+    success_url = reverse_lazy("kokkai:reading_support_management")
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "辞書項目を更新しました。")
+        return response
+
+
+class ReadingSupportEntryDeleteView(KokkaiManagementRequiredMixin, DeleteView):
+    """KOKKAI内の読み仮名支援辞書エントリを削除する画面。"""
+
+    model = ReadingSupportEntry
+    success_url = reverse_lazy("kokkai:reading_support_management")
+    http_method_names = ["post", "options"]
+
+    def form_valid(self, form):
+        word = self.object.word
+        response = super().form_valid(form)
+        messages.success(self.request, f"辞書項目「{word}」を削除しました。")
+        return response
+
+
+class ReadingSupportCsvImportView(KokkaiManagementRequiredMixin, FormView):
+    """KOKKAI内で読み仮名支援辞書CSVを検証して取り込む画面。"""
+
+    template_name = "kokkai/reading_support/csv_import.html"
+    form_class = ReadingSupportCsvImportForm
+
+    def form_valid(self, form):
+        result = ReadingSupportCsvImporter().import_csv(
+            form.cleaned_data["file"].read()
+        )
+        if result.is_success:
+            messages.success(
+                self.request,
+                (
+                    f"CSVを取り込みました（新規 {result.created}件、"
+                    f"上書き {result.updated}件）。"
+                ),
+            )
+            return redirect("kokkai:reading_support_management")
+        return self.render_to_response(self.get_context_data(form=form, result=result))
+
+
+class ReadingSupportCsvTemplateView(KokkaiManagementRequiredMixin, View):
+    """読み仮名支援辞書へ入力するサンプル付きCSVテンプレートをダウンロードする。"""
+
+    TEMPLATE_CONTENT = (
+        "word,reading,description,source_url\r\n"
+        "FOIP,フォイップ,Free and Open Indo-Pacific（自由で開かれたインド太平洋）の略称で、法の支配に基づく自由で開かれた地域の実現を目指す外交上の概念です。,https://www.meti.go.jp/policy/external_economy/trade/foip/index.html\r\n"
+        "お諮り,おはかり,読み仮名を補正するための登録語です。,\r\n"
+        "NISA,ニーサ,少額投資非課税制度です。,https://example.com/nisa\r\n"
+    )
+
+    def get(self, request, *args, **kwargs):
+        response = HttpResponse(
+            "\ufeff" + self.TEMPLATE_CONTENT,
+            content_type="text/csv; charset=utf-8",
+        )
+        response["Content-Disposition"] = (
+            'attachment; filename="reading-support-dictionary-template.csv"'
+        )
+        return response
 
 
 class MeetingDetailView(DetailView):

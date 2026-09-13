@@ -1,49 +1,41 @@
 import re
 from collections.abc import Iterable
 
-import jaconv
 from janome.tokenizer import Tokenizer
 
+from ..repository.reading_support_repository import ReadingSupportRepository
 from ..valueobject.reading_support import (
-    READING_SUPPORT_DICTIONARY,
+    ReadingSupportDefinition,
     ReadingSupportDictionary,
     SpeechAnnotation,
     SpeechTextSegment,
-    TermDefinition,
+    normalize_word,
 )
 
 
 class ReadingSupportService:
     """
-    会議録本文へ辞書に基づく読み仮名と用語情報を付加するサービス。
-
-    `_KANJI_LIKE_PATTERN` は、読み仮名を付ける候補を絞る簡易判定である。
-    `一-龯` は個別の文字列ではなく、U+4E00（一）からU+9FAF（龯）までの
-    Unicodeコードポイント範囲で、20,912コードポイントを含む。Unicode公式の
-    CJK統合漢字全体にはU+9FB0以降や拡張範囲もあるため、この判定は全範囲を
-    網羅しない。`々・〆・ヵ・ヶ` は範囲外から追加した読み候補文字である。
-
-    参照:
-        Unicode公式 Unihan Grid Index:
-        https://www.unicode.org/charts/unihangridindex.html
+    会議録本文へ辞書に基づく読み仮名と説明情報を付加するサービス。
 
     Attributes:
         tokenizer: 本文を形態素へ分割するJanomeのトークナイザー。
-        dictionary: 用語定義と読み補正をまとめた読み仮名支援辞書。
+        dictionary: 読みと説明をまとめた読み仮名支援辞書。
         _KANJI_LIKE_PATTERN: 漢字等を含む読み仮名候補を検出する正規表現。
-        _WHITESPACE_PATTERN: 表記の正規化で空白を除去する正規表現。
     """
 
     _KANJI_LIKE_PATTERN = re.compile(r"[一-龯々〆ヵヶ]")
-    _WHITESPACE_PATTERN = re.compile(r"\s+")
 
     def __init__(
         self,
         tokenizer: Tokenizer | None = None,
-        dictionary: ReadingSupportDictionary = READING_SUPPORT_DICTIONARY,
+        dictionary: ReadingSupportDictionary | None = None,
     ) -> None:
         self.tokenizer = tokenizer or Tokenizer()
-        self.dictionary = dictionary
+        self.dictionary = (
+            dictionary
+            if dictionary is not None
+            else ReadingSupportRepository().get_dictionary()
+        )
 
     def annotate(self, text: str) -> SpeechAnnotation:
         """本文を原文順のセグメントへ分け、読み仮名と登録用語を付加する。"""
@@ -52,25 +44,16 @@ class ReadingSupportService:
 
         segments: list[SpeechTextSegment] = []
         cursor = 0
-        for start, end, term in self._find_term_spans(text):
-            segments.extend(self._annotate_plain_text(text[cursor:start]))
-            segments.append(SpeechTextSegment(text=text[start:end], term=term))
-            cursor = end
-        segments.extend(self._annotate_plain_text(text[cursor:]))
-        return SpeechAnnotation(segments=tuple(self._merge_plain_segments(segments)))
-
-    def _annotate_plain_text(self, text: str) -> list[SpeechTextSegment]:
-        if not text:
-            return []
-
-        segments: list[SpeechTextSegment] = []
-        cursor = 0
-        for start, end, reading in self._find_reading_override_spans(text):
+        for start, end, entry in self._find_entry_spans(text):
             segments.extend(self._tokenize(text[cursor:start]))
-            segments.append(SpeechTextSegment(text=text[start:end], reading=reading))
+            segments.append(
+                SpeechTextSegment(
+                    text=text[start:end], reading=entry.reading, entry=entry
+                )
+            )
             cursor = end
         segments.extend(self._tokenize(text[cursor:]))
-        return segments
+        return SpeechAnnotation(segments=tuple(self._merge_plain_segments(segments)))
 
     def _tokenize(self, text: str) -> list[SpeechTextSegment]:
         segments = []
@@ -91,50 +74,28 @@ class ReadingSupportService:
             return None
         return token.reading
 
-    def _find_term_spans(self, text: str) -> list[tuple[int, int, TermDefinition]]:
+    def _find_entry_spans(
+        self, text: str
+    ) -> list[tuple[int, int, ReadingSupportDefinition]]:
         normalized_text, positions = self._normalize_with_positions(text)
-        candidates: list[tuple[int, int, TermDefinition]] = []
-        for term in self.dictionary.terms:
-            normalized_term = self._normalize(term.surface)
-            if not normalized_term:
+        candidates: list[tuple[int, int, ReadingSupportDefinition]] = []
+        for entry in self.dictionary.entries:
+            normalized_entry = self._normalize(entry.word)
+            if not normalized_entry:
                 continue
             search_start = 0
             while True:
-                match_start = normalized_text.find(normalized_term, search_start)
+                match_start = normalized_text.find(normalized_entry, search_start)
                 if match_start < 0:
                     break
-                match_end = match_start + len(normalized_term)
-                if self._has_term_boundary(normalized_text, match_start, match_end):
+                match_end = match_start + len(normalized_entry)
+                if self._has_entry_boundary(normalized_text, match_start, match_end):
                     original_start = positions[match_start]
                     original_end = positions[match_end - 1] + 1
-                    candidates.append((original_start, original_end, term))
+                    candidates.append((original_start, original_end, entry))
                 search_start = match_end
 
-        selected: list[tuple[int, int, TermDefinition]] = []
-        for candidate in sorted(
-            candidates, key=lambda item: (item[0], -(item[1] - item[0]))
-        ):
-            if selected and candidate[0] < selected[-1][1]:
-                continue
-            selected.append(candidate)
-        return selected
-
-    def _find_reading_override_spans(self, text: str) -> list[tuple[int, int, str]]:
-        candidates: list[tuple[int, int, str]] = []
-        for override in self.dictionary.reading_overrides:
-            surface = override.surface
-            reading = override.reading
-            if not surface:
-                continue
-            search_start = 0
-            while True:
-                start = text.find(surface, search_start)
-                if start < 0:
-                    break
-                candidates.append((start, start + len(surface), reading))
-                search_start = start + len(surface)
-
-        selected: list[tuple[int, int, str]] = []
+        selected: list[tuple[int, int, ReadingSupportDefinition]] = []
         for candidate in sorted(
             candidates, key=lambda item: (item[0], -(item[1] - item[0]))
         ):
@@ -145,8 +106,7 @@ class ReadingSupportService:
 
     @classmethod
     def _normalize(cls, value: str) -> str:
-        normalized = jaconv.normalize(value)
-        return cls._WHITESPACE_PATTERN.sub("", normalized).casefold()
+        return normalize_word(value)
 
     @classmethod
     def _normalize_with_positions(cls, value: str) -> tuple[str, list[int]]:
@@ -160,8 +120,8 @@ class ReadingSupportService:
         return "".join(normalized_chars), positions
 
     @staticmethod
-    def _has_term_boundary(text: str, start: int, end: int) -> bool:
-        """英数字の一部だけを用語として誤検出しない。"""
+    def _has_entry_boundary(text: str, start: int, end: int) -> bool:
+        """英数字の一部だけを辞書項目として誤検出しない。"""
         return not (
             (start > 0 and text[start - 1].isascii() and text[start - 1].isalnum())
             or (end < len(text) and text[end].isascii() and text[end].isalnum())
@@ -176,9 +136,9 @@ class ReadingSupportService:
             if (
                 merged
                 and not segment.reading
-                and segment.term is None
+                and segment.entry is None
                 and not merged[-1].reading
-                and merged[-1].term is None
+                and merged[-1].entry is None
             ):
                 previous = merged[-1]
                 merged[-1] = SpeechTextSegment(text=previous.text + segment.text)

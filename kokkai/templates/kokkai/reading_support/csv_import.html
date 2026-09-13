@@ -1,0 +1,94 @@
+{% extends 'kokkai/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+        <ol class="breadcrumb mb-0 small">
+            <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">会議録一覧</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'kokkai:reading_support_management' %}">読み仮名支援辞書</a></li>
+            <li class="breadcrumb-item active" aria-current="page">CSVから取り込む</li>
+        </ol>
+    </nav>
+
+    <h1 class="h2 mb-3">辞書項目をCSVから取り込む</h1>
+
+    <div class="card mb-3">
+        <div class="card-header bg-white d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+            <h2 class="h5 mb-0">CSVの形式</h2>
+            <a href="{% url 'kokkai:reading_support_csv_template' %}" class="btn btn-outline-secondary">CSVテンプレート（サンプル付き）をダウンロード</a>
+        </div>
+        <div class="card-body">
+            <p>UTF-8のカンマ区切りCSVを使用します。CSVの列名と画面の項目名は次の対応です。</p>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">CSV列名（画面の項目名）</th>
+                            <th scope="col">入力</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><th scope="row"><code>word</code>（単語）</th><td>必須</td></tr>
+                        <tr><th scope="row"><code>reading</code>（読み）</th><td>必須</td></tr>
+                        <tr><th scope="row"><code>description</code>（説明）</th><td>必須</td></tr>
+                        <tr><th scope="row"><code>source_url</code>（出典）</th><td>任意</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-info mb-3" role="note">
+        <h2 class="h5">取り込み時の扱い</h2>
+        <ul class="mb-0">
+            <li>新しいwordは辞書に追加します。</li>
+            <li><strong>wordだけ</strong>で同じ辞書項目かを判定します。全角・半角、英字の大小文字、空白の違いは同じwordとして扱い、reading、description、source_urlをCSVの値で上書きします。source_urlを空欄にすると、登録済みの出典も空欄になります。</li>
+            <li>同じCSV内に同じwordが複数ある場合はエラーです。CSV全体を取り込まず、行を1つにまとめてから再度取り込んでください。</li>
+        </ul>
+    </div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }}" role="alert">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="card mb-4">
+        {% csrf_token %}
+        <div class="card-header bg-white">
+            <h2 class="h5 mb-0">CSVファイルを選択して取り込む</h2>
+        </div>
+        <div class="card-body">
+            {{ form.non_field_errors }}
+            {% for field in form %}
+            <div class="mb-3{% if field.field.widget.input_type == 'checkbox' %} form-check{% endif %}">
+                {% if field.field.widget.input_type == 'checkbox' %}
+                {{ field }}
+                <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {% else %}
+                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% endif %}
+                {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+        <div class="card-footer d-flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-primary">取り込む</button>
+            <a href="{% url 'kokkai:reading_support_management' %}" class="btn btn-secondary">読み仮名支援辞書へ戻る</a>
+        </div>
+    </form>
+
+    {% if result and result.errors %}
+    <div class="alert alert-danger" role="alert">
+        <h2 class="h5">取り込みエラー</h2>
+        <ul class="mb-0">
+            {% for error in result.errors %}
+            <li>{{ error.line_number }}行目: {{ error.message }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

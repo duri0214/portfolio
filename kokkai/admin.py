@@ -1,3 +1,1 @@
-from django.contrib import admin
-
-# Register your models here.
+"""KOKKAIの管理機能は kokkai.views のアプリ内画面で提供する。"""

@@ -1,52 +1,81 @@
+import re
 from dataclasses import dataclass
 
+import jaconv
+
 
 @dataclass(frozen=True)
-class TermDefinition:
+class ReadingSupportDefinition:
     """
-    会議録本文から検出して表示する登録用語の定義。
+    会議録本文から検出して表示する辞書項目の定義。
 
     Attributes:
-        surface: 本文中で表示する代表表記。
-        reading: 学習用に表示する用語の読み。
+        word: 本文中で表示する代表表記。
+        reading: Janomeの結果より優先して表示する読み。
         description: 用語の短い説明。
-        category: 用語の分類。
-        source_url: 説明の根拠となる公式資料のURL。
+        source_url: 説明の根拠となる公式資料のURL。空ならリンクを表示しない。
     """
 
-    surface: str
+    word: str
     reading: str
     description: str
-    category: str
     source_url: str
-
-
-@dataclass(frozen=True)
-class ReadingOverride:
-    """
-    Janomeの読みを上書きする本文表記と読みの組み合わせ。
-
-    Attributes:
-        surface: 本文中で補正対象にする表記。
-        reading: 表示する読み。
-    """
-
-    surface: str
-    reading: str
 
 
 @dataclass(frozen=True)
 class ReadingSupportDictionary:
     """
-    読み補正と用語解説をまとめて扱う、読み仮名支援用の辞書。
+    読み補正と説明表示に使う辞書項目の集合。
 
     Attributes:
-        terms: 本文から検出して説明を表示する用語定義の集合。
-        reading_overrides: Janomeの読みを上書きする表記と読みの集合。
+        entries: 本文から検出する辞書項目の集合。
     """
 
-    terms: tuple[TermDefinition, ...]
-    reading_overrides: tuple[ReadingOverride, ...]
+    entries: tuple[ReadingSupportDefinition, ...]
+
+
+@dataclass(frozen=True)
+class ReadingSupportImportError:
+    """
+    CSVの1行に対する検証エラー。
+
+    Attributes:
+        line_number: エラーが発生したCSVの行番号。
+        message: 利用者へ表示する検証エラーメッセージ。
+    """
+
+    line_number: int
+    message: str
+
+
+@dataclass(frozen=True)
+class ReadingSupportImportResult:
+    """
+    CSV取り込みの件数とエラーを表す結果。
+
+    Attributes:
+        created: 新規作成した辞書項目の件数。
+        updated: 上書きした辞書項目の件数。
+        errors: CSVの検証エラーの一覧。
+    """
+
+    created: int = 0
+    updated: int = 0
+    errors: tuple[ReadingSupportImportError, ...] = ()
+
+    @property
+    def is_success(self) -> bool:
+        """検証エラーがなく、取り込みに成功した結果かを返す。"""
+        return not self.errors
+
+
+_WHITESPACE_PATTERN = re.compile(r"\s+")
+
+
+def normalize_word(value: str) -> str:
+    """表記の全角・半角、大小文字、空白を検出用に正規化する。"""
+    normalized = jaconv.normalize(value or "")
+    return _WHITESPACE_PATTERN.sub("", normalized).casefold()
 
 
 @dataclass(frozen=True)
@@ -57,12 +86,12 @@ class SpeechTextSegment:
     Attributes:
         text: 本文に現れた原文。
         reading: Janomeまたは登録済み補正による読み。表示不要ならNone。
-        term: 本文に登録用語が含まれる場合の定義。該当しない場合はNone。
+        entry: 本文に辞書項目が含まれる場合の定義。該当しない場合はNone。
     """
 
     text: str
     reading: str | None = None
-    term: TermDefinition | None = None
+    entry: ReadingSupportDefinition | None = None
 
 
 @dataclass(frozen=True)
@@ -71,7 +100,7 @@ class SpeechAnnotation:
     1件の会議録本文を学習補助表示用に分割した値。
 
     Attributes:
-        segments: 原文の順序を保った読み仮名・用語付きの本文部分。
+        segments: 原文の順序を保った読み仮名支援付きの本文部分。
         reading_source_url: 読みの根拠として案内するJanome公式ドキュメントのURL。
     """
 
@@ -81,22 +110,4 @@ class SpeechAnnotation:
     @property
     def has_support(self) -> bool:
         """読み仮名または登録用語の表示対象が含まれるかを返す。"""
-        return any(segment.reading or segment.term for segment in self.segments)
-
-
-FOIP_TERM = TermDefinition(
-    surface="FOIP",
-    reading="フォイップ",
-    description=(
-        "Free and Open Indo-Pacific（自由で開かれたインド太平洋）の略称で、"
-        "法の支配に基づく自由で開かれた地域の実現を目指す外交上の概念です。"
-    ),
-    category="政策・略語",
-    source_url="https://www.meti.go.jp/policy/external_economy/trade/foip/index.html",
-)
-
-
-READING_SUPPORT_DICTIONARY = ReadingSupportDictionary(
-    terms=(FOIP_TERM,),
-    reading_overrides=(ReadingOverride(surface="お諮り", reading="おはかり"),),
-)
+        return any(segment.reading or segment.entry for segment in self.segments)

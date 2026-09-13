@@ -1,0 +1,125 @@
+{% extends 'kokkai/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+        <ol class="breadcrumb mb-0 small">
+            <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">会議録一覧</a></li>
+            <li class="breadcrumb-item active" aria-current="page">読み仮名支援辞書</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="bg-light p-5 rounded shadow-sm">
+                <span class="badge text-bg-primary mb-3">管理モード</span>
+                <h1 class="display-4">読み仮名支援辞書</h1>
+                <p class="lead mb-0">会議録本文に使う辞書項目を確認・編集します。</p>
+            </div>
+        </div>
+
+        <div class="col-12">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="d-flex flex-wrap justify-content-end mb-3 gap-2">
+                <a href="{% url 'kokkai:reading_support_csv_import' %}" class="btn btn-primary">CSVから取り込む</a>
+            </div>
+
+            <div class="alert alert-info" role="status">
+                <strong>使い方:</strong>
+                新しい辞書項目はCSVから取り込みます。登録済みの項目は、この画面から編集・削除できます。
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                    <h2 class="h5 mb-0">辞書ビューア</h2>
+                    <form method="get" class="d-flex align-items-center gap-2 flex-nowrap">
+                        <label for="dictionary_page_size" class="form-label mb-0 text-nowrap">表示件数</label>
+                        <select id="dictionary_page_size" name="page_size" class="form-select form-select-sm w-auto">
+                            {% for option in page_size_options %}
+                            <option value="{{ option }}" {% if option == page_size %}selected{% endif %}>{{ option }}件</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-outline-secondary text-nowrap">適用</button>
+                    </form>
+                    <span class="small text-muted">全{{ paginator.count }}件</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">単語（word）</th>
+                                    <th scope="col">読み（reading）</th>
+                                    <th scope="col">説明（description）</th>
+                                    <th scope="col">出典（source_url）</th>
+                                    <th scope="col"><span class="visually-hidden">操作</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in entries %}
+                                <tr>
+                                    <td>{{ entry.word }}</td>
+                                    <td>{{ entry.reading }}</td>
+                                    <td>{{ entry.description|truncatechars:40 }}</td>
+                                    <td>{% if entry.source_url %}<a href="{{ entry.source_url }}" target="_blank" rel="noopener">確認する</a>{% else %}-{% endif %}</td>
+                                    <td class="text-end">
+                                        <a href="{% url 'kokkai:reading_support_entry_update' entry.pk %}" class="btn btn-sm btn-outline-primary">編集</a>
+                                        <form method="post" action="{% url 'kokkai:reading_support_entry_delete' entry.pk %}" class="d-inline" onsubmit="return confirm('この辞書項目を削除しますか？');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">削除</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">辞書エントリはありません。</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {% if is_paginated %}
+            <nav aria-label="読み仮名支援辞書ページ" class="mt-3">
+                <div class="d-flex flex-column align-items-center gap-2">
+                    <span class="small text-muted">{{ page_obj.start_index }}-{{ page_obj.end_index }}件 / 全{{ paginator.count }}件</span>
+                    <ul class="pagination mb-0">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page_size={{ page_size }}&page=1">最初へ</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page_size={{ page_size }}&page={{ page_obj.previous_page_number }}">前へ</a>
+                        </li>
+                        {% endif %}
+                        <li class="page-item disabled">
+                            <span class="page-link">{{ page_obj.number }} / {{ paginator.num_pages }}</span>
+                        </li>
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page_size={{ page_size }}&page={{ page_obj.next_page_number }}">次へ</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page_size={{ page_size }}&page={{ paginator.num_pages }}">最後へ</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+
+    <a href="{% url 'kokkai:index' %}" class="btn btn-outline-secondary mt-4">会議録一覧へ戻る</a>
+</div>
+{% endblock %}
