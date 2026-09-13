@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import csv
 import io
-from dataclasses import dataclass
 from typing import TextIO
 
 from django.core.exceptions import ValidationError
@@ -10,28 +9,11 @@ from django.db import transaction
 
 from ...models import ReadingSupportEntry
 from ..repository.reading_support_repository import ReadingSupportRepository
-from ..valueobject.reading_support import normalize_word
-
-
-@dataclass(frozen=True)
-class ReadingSupportImportError:
-    """CSVの1行に対する検証エラー。"""
-
-    line_number: int
-    message: str
-
-
-@dataclass(frozen=True)
-class ReadingSupportImportResult:
-    """CSV取り込みの件数とエラーを表す結果。"""
-
-    created: int = 0
-    updated: int = 0
-    errors: tuple[ReadingSupportImportError, ...] = ()
-
-    @property
-    def is_success(self) -> bool:
-        return not self.errors
+from ..valueobject.reading_support import (
+    ReadingSupportImportError,
+    ReadingSupportImportResult,
+    normalize_word,
+)
 
 
 class ReadingSupportCsvImporter:

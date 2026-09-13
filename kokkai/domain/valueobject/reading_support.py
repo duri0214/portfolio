@@ -34,6 +34,41 @@ class ReadingSupportDictionary:
     entries: tuple[ReadingSupportDefinition, ...]
 
 
+@dataclass(frozen=True)
+class ReadingSupportImportError:
+    """
+    CSVの1行に対する検証エラー。
+
+    Attributes:
+        line_number: エラーが発生したCSVの行番号。
+        message: 利用者へ表示する検証エラーメッセージ。
+    """
+
+    line_number: int
+    message: str
+
+
+@dataclass(frozen=True)
+class ReadingSupportImportResult:
+    """
+    CSV取り込みの件数とエラーを表す結果。
+
+    Attributes:
+        created: 新規作成した辞書項目の件数。
+        updated: 上書きした辞書項目の件数。
+        errors: CSVの検証エラーの一覧。
+    """
+
+    created: int = 0
+    updated: int = 0
+    errors: tuple[ReadingSupportImportError, ...] = ()
+
+    @property
+    def is_success(self) -> bool:
+        """検証エラーがなく、取り込みに成功した結果かを返す。"""
+        return not self.errors
+
+
 _WHITESPACE_PATTERN = re.compile(r"\s+")
 
 
