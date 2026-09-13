@@ -10,17 +10,39 @@
         </ol>
     </nav>
 
-    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-2">
-        <h1 class="h2 mb-0">辞書項目をCSVから取り込む</h1>
-        <a href="{% url 'kokkai:reading_support_csv_template' %}" class="btn btn-outline-secondary">CSVテンプレートをダウンロード</a>
-    </div>
-    <p class="text-muted">UTF-8 CSV（word,reading,description,source_url）を検証し、エラーがなければ辞書へ追加・上書きします。CSVの列名と画面の項目名は、word（単語）、reading（読み）、description（説明）、source_url（出典）の対応です。word、reading、descriptionは必須です。</p>
+    <h1 class="h2 mb-3">辞書項目をCSVから取り込む</h1>
 
-    <div class="alert alert-info" role="note">
-        <h2 class="h5">重複と上書きのルール</h2>
+    <div class="card mb-3">
+        <div class="card-header bg-white d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+            <h2 class="h5 mb-0">CSVの形式</h2>
+            <a href="{% url 'kokkai:reading_support_csv_template' %}" class="btn btn-outline-secondary">CSVテンプレートをダウンロード</a>
+        </div>
+        <div class="card-body">
+            <p>UTF-8のカンマ区切りCSVを使用します。CSVの列名と画面の項目名は次の対応です。</p>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">CSV列名（画面の項目名）</th>
+                            <th scope="col">入力</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><th scope="row"><code>word</code>（単語）</th><td>必須</td></tr>
+                        <tr><th scope="row"><code>reading</code>（読み）</th><td>必須</td></tr>
+                        <tr><th scope="row"><code>description</code>（説明）</th><td>必須</td></tr>
+                        <tr><th scope="row"><code>source_url</code>（出典）</th><td>任意</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-info mb-3" role="note">
+        <h2 class="h5">取り込み時の扱い</h2>
         <ul class="mb-0">
-            <li><strong>wordだけ</strong>で同じ辞書項目かを判定します。全角・半角、英字の大小文字、空白の違いは同じwordとして扱います。</li>
-            <li>既に同じwordがある場合は、reading、description、source_urlをCSVの値で上書きします。source_urlを空欄にすると、登録済みの出典も空欄になります。</li>
+            <li>新しいwordは辞書に追加します。</li>
+            <li><strong>wordだけ</strong>で同じ辞書項目かを判定します。全角・半角、英字の大小文字、空白の違いは同じwordとして扱い、reading、description、source_urlをCSVの値で上書きします。source_urlを空欄にすると、登録済みの出典も空欄になります。</li>
             <li>同じCSV内に同じwordが複数ある場合はエラーです。CSV全体を取り込まず、行を1つにまとめてから再度取り込んでください。</li>
         </ul>
     </div>
@@ -33,6 +55,9 @@
 
     <form method="post" enctype="multipart/form-data" class="card mb-4">
         {% csrf_token %}
+        <div class="card-header bg-white">
+            <h2 class="h5 mb-0">CSVファイルを選択して取り込む</h2>
+        </div>
         <div class="card-body">
             {{ form.non_field_errors }}
             {% for field in form %}

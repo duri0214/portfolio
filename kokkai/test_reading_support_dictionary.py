@@ -248,10 +248,13 @@ class ReadingSupportManagementViewTests(TestCase):
 
         response = self.client.get(reverse("kokkai:reading_support_csv_import"))
 
-        self.assertContains(response, "word（単語）")
-        self.assertContains(response, "reading（読み）")
-        self.assertContains(response, "description（説明）")
-        self.assertContains(response, "source_url（出典）")
+        self.assertContains(response, "CSVの形式")
+        self.assertContains(response, "取り込み時の扱い")
+        self.assertContains(response, "CSVファイルを選択して取り込む")
+        self.assertContains(response, "<code>word</code>（単語）")
+        self.assertContains(response, "<code>reading</code>（読み）")
+        self.assertContains(response, "<code>description</code>（説明）")
+        self.assertContains(response, "<code>source_url</code>（出典）")
         self.assertContains(response, "wordだけ")
         self.assertContains(
             response, "reading、description、source_urlをCSVの値で上書き"
