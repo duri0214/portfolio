@@ -14,7 +14,7 @@
         <h1 class="h2 mb-0">辞書項目をCSVから取り込む</h1>
         <a href="{% url 'kokkai:reading_support_csv_template' %}" class="btn btn-outline-secondary">CSVテンプレートをダウンロード</a>
     </div>
-    <p class="text-muted">UTF-8 CSV（word,reading,description,source_url）を検証し、エラーがなければ辞書へ追加・上書きします。word、reading、descriptionは必須です。</p>
+    <p class="text-muted">UTF-8 CSV（word,reading,description,source_url）を検証し、エラーがなければ辞書へ追加・上書きします。CSVの列名と画面の項目名は、word（単語）、reading（読み）、description（説明）、source_url（出典）の対応です。word、reading、descriptionは必須です。</p>
 
     <div class="alert alert-info" role="note">
         <h2 class="h5">重複と上書きのルール</h2>
