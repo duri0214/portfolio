@@ -150,6 +150,7 @@ class ReadingSupportManagementViewTests(TestCase):
         for view_name in (
             "kokkai:reading_support_management",
             "kokkai:reading_support_csv_import",
+            "kokkai:reading_support_csv_template",
         ):
             response = self.client.get(reverse(view_name))
             self.assertEqual(response.status_code, 403)
@@ -164,12 +165,12 @@ class ReadingSupportManagementViewTests(TestCase):
         with self.assertRaises(NoReverseMatch):
             reverse("kokkai:reading_support_entry_create")
 
-    def test_management_view_uses_primary_import_button_and_pagination(self):
+    def test_management_view_reuses_kokkai_page_size_options(self):
         """
         シナリオ:
-        - 入力: 41件の辞書項目とスーパーユーザー。
-        - 処理: 辞書一覧の1ページ目と2ページ目を開く。
-        - 期待値: CSV取り込みはprimaryボタンで表示され、40件単位でページングされる。
+        - 入力: 31件の辞書項目とスーパーユーザー。
+        - 処理: 辞書一覧の1ページ目、2ページ目、60件表示を開く。
+        - 期待値: 会議録一覧と同じ30、60、120件の選択肢でページングされる。
         """
         ReadingSupportEntry.objects.all().delete()
         ReadingSupportEntry.objects.bulk_create(
@@ -180,7 +181,7 @@ class ReadingSupportManagementViewTests(TestCase):
                     reading=f"ぺーじんぐたんご{number:02d}",
                     description="ページング確認用の説明",
                 )
-                for number in range(41)
+                for number in range(31)
             ]
         )
         self.client.force_login(self.admin_user)
@@ -188,6 +189,9 @@ class ReadingSupportManagementViewTests(TestCase):
         first_page = self.client.get(reverse("kokkai:reading_support_management"))
         second_page = self.client.get(
             reverse("kokkai:reading_support_management"), {"page": "2"}
+        )
+        sixty_page = self.client.get(
+            reverse("kokkai:reading_support_management"), {"page_size": "60"}
         )
 
         self.assertContains(
@@ -199,13 +203,39 @@ class ReadingSupportManagementViewTests(TestCase):
             'class="btn btn-outline-secondary mt-4">会議録一覧へ戻る</a>',
         )
         self.assertContains(first_page, "出典")
-        self.assertEqual(first_page.context["paginator"].per_page, 40)
-        self.assertEqual(first_page.context["paginator"].count, 41)
-        self.assertEqual(len(first_page.context["entries"]), 40)
-        self.assertContains(first_page, "1-40件 / 全41件")
+        self.assertEqual(first_page.context["page_size_options"], (30, 60, 120))
+        self.assertEqual(first_page.context["page_size"], 30)
+        self.assertEqual(first_page.context["paginator"].per_page, 30)
+        self.assertEqual(first_page.context["paginator"].count, 31)
+        self.assertEqual(len(first_page.context["entries"]), 30)
+        self.assertContains(first_page, "1-30件 / 全31件")
+        self.assertContains(first_page, "?page_size=30&page=2")
         self.assertEqual(second_page.context["page_obj"].number, 2)
         self.assertEqual(len(second_page.context["entries"]), 1)
-        self.assertContains(second_page, "41-41件 / 全41件")
+        self.assertContains(second_page, "31-31件 / 全31件")
+        self.assertEqual(sixty_page.context["paginator"].per_page, 60)
+
+    def test_csv_template_download_has_import_header(self):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーによるCSVテンプレートのダウンロード要求。
+        - 処理: テンプレートURLを開く。
+        - 期待値: そのまま入力に使えるUTF-8 BOM付きのヘッダーCSVがダウンロードされる。
+        """
+        self.client.force_login(self.admin_user)
+
+        response = self.client.get(reverse("kokkai:reading_support_csv_template"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/csv; charset=utf-8")
+        self.assertIn(
+            'attachment; filename="reading-support-dictionary-template.csv"',
+            response["Content-Disposition"],
+        )
+        self.assertEqual(
+            response.content.decode("utf-8-sig"),
+            "word,reading,description,source_url\r\n",
+        )
 
     def test_existing_entry_can_be_edited(self):
         """

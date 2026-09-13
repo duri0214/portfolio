@@ -24,6 +24,11 @@ urlpatterns = [
         views.ReadingSupportCsvImportView.as_view(),
         name="reading_support_csv_import",
     ),
+    path(
+        "reading-support/csv-template/",
+        views.ReadingSupportCsvTemplateView.as_view(),
+        name="reading_support_csv_template",
+    ),
     path("meeting/<int:pk>/", views.MeetingDetailView.as_view(), name="meeting_detail"),
     path(
         "scenario/<int:scenario_id>/actors/",

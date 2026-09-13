@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Count, Q
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
@@ -12,6 +13,7 @@ from django.views.generic import (
     FormView,
     ListView,
     UpdateView,
+    View,
 )
 
 from .domain.repository.scenario_repository import ScenarioRepository
@@ -39,12 +41,35 @@ class KokkaiManagementRequiredMixin(UserPassesTestMixin):
         return self.request.user.is_authenticated and self.request.user.is_superuser
 
 
-class IndexView(ListView):
+class PageSizePaginationMixin:
+    """30、60、120件から選ぶ一覧ページの共通ページング設定。"""
+
+    PAGE_SIZE_OPTIONS = (30, 60, 120)
+    DEFAULT_PAGE_SIZE = 30
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_size"] = self._get_page_size()
+        context["page_size_options"] = self.PAGE_SIZE_OPTIONS
+        return context
+
+    def get_paginate_by(self, queryset):
+        return self._get_page_size()
+
+    def _get_page_size(self):
+        try:
+            page_size = int(self.request.GET.get("page_size", self.DEFAULT_PAGE_SIZE))
+        except (TypeError, ValueError):
+            return self.DEFAULT_PAGE_SIZE
+        return (
+            page_size if page_size in self.PAGE_SIZE_OPTIONS else self.DEFAULT_PAGE_SIZE
+        )
+
+
+class IndexView(PageSizePaginationMixin, ListView):
     model = Meeting
     template_name = "kokkai/index.html"
     context_object_name = "meetings_by_date"
-    PAGE_SIZE_OPTIONS = (30, 60, 120)
-    DEFAULT_PAGE_SIZE = 30
 
     def get_queryset(self):
         return (
@@ -63,25 +88,11 @@ class IndexView(ListView):
         start_date, end_date = self._get_period(self.request.GET)
         context["start_date"] = start_date
         context["end_date"] = end_date
-        context["page_size"] = self._get_page_size()
-        context["page_size_options"] = self.PAGE_SIZE_OPTIONS
         context["period_query"] = self._period_query(self.request.GET)
         context["can_manage_reading_support"] = (
             self.request.user.is_authenticated and self.request.user.is_superuser
         )
         return context
-
-    def get_paginate_by(self, queryset):
-        return self._get_page_size()
-
-    def _get_page_size(self):
-        try:
-            page_size = int(self.request.GET.get("page_size", self.DEFAULT_PAGE_SIZE))
-        except (TypeError, ValueError):
-            return self.DEFAULT_PAGE_SIZE
-        return (
-            page_size if page_size in self.PAGE_SIZE_OPTIONS else self.DEFAULT_PAGE_SIZE
-        )
 
     @staticmethod
     def post(request, *args, **kwargs):
@@ -161,13 +172,16 @@ class IndexView(ListView):
         return cls._build_period_query(start_date, end_date)
 
 
-class ReadingSupportManagementView(KokkaiManagementRequiredMixin, ListView):
+class ReadingSupportManagementView(
+    PageSizePaginationMixin,
+    KokkaiManagementRequiredMixin,
+    ListView,
+):
     """KOKKAI内の読み仮名支援辞書と辞書ビューアを表示する画面。"""
 
     model = ReadingSupportEntry
     template_name = "kokkai/reading_support/index.html"
     context_object_name = "entries"
-    paginate_by = 40
 
     def get_queryset(self):
         return ReadingSupportEntry.objects.all().order_by("word", "pk")
@@ -221,6 +235,22 @@ class ReadingSupportCsvImportView(KokkaiManagementRequiredMixin, FormView):
             )
             return redirect("kokkai:reading_support_management")
         return self.render_to_response(self.get_context_data(form=form, result=result))
+
+
+class ReadingSupportCsvTemplateView(KokkaiManagementRequiredMixin, View):
+    """読み仮名支援辞書へ入力するCSVテンプレートをダウンロードする。"""
+
+    TEMPLATE_HEADER = "word,reading,description,source_url\r\n"
+
+    def get(self, request, *args, **kwargs):
+        response = HttpResponse(
+            "\ufeff" + self.TEMPLATE_HEADER,
+            content_type="text/csv; charset=utf-8",
+        )
+        response["Content-Disposition"] = (
+            'attachment; filename="reading-support-dictionary-template.csv"'
+        )
+        return response
 
 
 class MeetingDetailView(DetailView):

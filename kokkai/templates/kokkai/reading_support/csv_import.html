@@ -10,7 +10,10 @@
         </ol>
     </nav>
 
-    <h1 class="h2 mb-2">辞書項目をCSVから取り込む</h1>
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-2">
+        <h1 class="h2 mb-0">辞書項目をCSVから取り込む</h1>
+        <a href="{% url 'kokkai:reading_support_csv_template' %}" class="btn btn-outline-secondary">CSVテンプレートをダウンロード</a>
+    </div>
     <p class="text-muted">UTF-8 CSV（word,reading,description,source_url）を検証し、エラーがなければ辞書へ追加・上書きします。word、reading、descriptionは必須です。</p>
 
     {% if messages %}
