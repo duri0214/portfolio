@@ -7,7 +7,6 @@ from django.db.models import Count, Q
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
-    CreateView,
     DeleteView,
     DetailView,
     FormView,
@@ -170,21 +169,7 @@ class ReadingSupportManagementView(KokkaiManagementRequiredMixin, ListView):
     context_object_name = "entries"
 
     def get_queryset(self):
-        return ReadingSupportEntry.objects.all().order_by("surface", "pk")
-
-
-class ReadingSupportEntryCreateView(KokkaiManagementRequiredMixin, CreateView):
-    """KOKKAI内の読み仮名支援辞書エントリを追加する画面。"""
-
-    model = ReadingSupportEntry
-    form_class = ReadingSupportEntryForm
-    template_name = "kokkai/reading_support/entry_form.html"
-    success_url = reverse_lazy("kokkai:reading_support_management")
-
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        messages.success(self.request, "辞書項目を登録しました。")
-        return response
+        return ReadingSupportEntry.objects.all().order_by("word", "pk")
 
 
 class ReadingSupportEntryUpdateView(KokkaiManagementRequiredMixin, UpdateView):
@@ -209,9 +194,9 @@ class ReadingSupportEntryDeleteView(KokkaiManagementRequiredMixin, DeleteView):
     http_method_names = ["post", "options"]
 
     def form_valid(self, form):
-        surface = self.object.surface
+        word = self.object.word
         response = super().form_valid(form)
-        messages.success(self.request, f"辞書項目「{surface}」を削除しました。")
+        messages.success(self.request, f"辞書項目「{word}」を削除しました。")
         return response
 
 
@@ -223,8 +208,7 @@ class ReadingSupportCsvImportView(KokkaiManagementRequiredMixin, FormView):
 
     def form_valid(self, form):
         result = ReadingSupportCsvImporter().import_csv(
-            form.cleaned_data["file"].read(),
-            update_existing=form.cleaned_data["update_existing"],
+            form.cleaned_data["file"].read()
         )
         if result.is_success:
             messages.success(

@@ -12,20 +12,12 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("csv_path", type=Path, help="UTF-8 CSVファイルのパス")
-        parser.add_argument(
-            "--update-existing",
-            action="store_true",
-            help="同じ正規化表記の既存データを更新する",
-        )
 
     def handle(self, *args, **options):
         csv_path: Path = options["csv_path"]
         if not csv_path.is_file():
             raise CommandError(f"CSVファイルが見つかりません: {csv_path}")
-        result = ReadingSupportCsvImporter().import_csv(
-            csv_path.read_bytes(),
-            update_existing=options["update_existing"],
-        )
+        result = ReadingSupportCsvImporter().import_csv(csv_path.read_bytes())
         if result.errors:
             for error in result.errors:
                 self.stderr.write(

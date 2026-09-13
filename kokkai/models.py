@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from .domain.valueobject.participant import join_roles
-from .domain.valueobject.reading_support import normalize_surface
+from .domain.valueobject.reading_support import normalize_word
 
 
 class Meeting(models.Model):
@@ -374,11 +374,20 @@ class ScenarioPlayAnswer(models.Model):
 
 
 class ReadingSupportEntry(models.Model):
-    """会議録本文へ適用する読み仮名支援辞書のエントリ。"""
+    """
+    会議録本文へ適用する読み仮名支援辞書のエントリ。
 
-    surface = models.CharField("表記", max_length=255)
-    normalized_surface = models.CharField(
-        "正規化表記", max_length=255, unique=True, editable=False
+    Attributes:
+        word: 本文で検出する語の代表表記。
+        normalized_word: 表記ゆれを検出するために正規化した語。
+        reading: 本文で優先して表示する読み。
+        description: 用語の説明。空なら説明を表示しない。
+        source_url: 説明の根拠となるURL。説明がある場合は必須。
+    """
+
+    word = models.CharField("単語", max_length=255)
+    normalized_word = models.CharField(
+        "正規化単語", max_length=255, unique=True, editable=False
     )
     reading = models.CharField("読み", max_length=255)
     description = models.TextField("説明", blank=True)
@@ -387,29 +396,24 @@ class ReadingSupportEntry(models.Model):
     updated_at = models.DateTimeField("更新日時", auto_now=True)
 
     class Meta:
-        ordering = ["surface", "pk"]
+        ordering = ["word", "pk"]
 
     def __str__(self) -> str:
-        return self.surface
-
-    @property
-    def is_term(self) -> bool:
-        """説明があるエントリを用語として扱う。"""
-        return bool(self.description)
+        return self.word
 
     def clean(self) -> None:
         """辞書エントリの必須項目を検証する。"""
-        self.surface = (self.surface or "").strip()
+        self.word = (self.word or "").strip()
         self.reading = (self.reading or "").strip()
         self.description = (self.description or "").strip()
         self.source_url = (self.source_url or "").strip()
-        self.normalized_surface = normalize_surface(self.surface)
+        self.normalized_word = normalize_word(self.word)
 
         errors: dict[str, str] = {}
-        if not self.surface:
-            errors["surface"] = "表記を入力してください。"
-        if not self.normalized_surface:
-            errors["surface"] = "表記を入力してください。"
+        if not self.word:
+            errors["word"] = "単語を入力してください。"
+        if not self.normalized_word:
+            errors["word"] = "単語を入力してください。"
         if not self.reading:
             errors["reading"] = "読みを入力してください。"
         if self.description:
@@ -419,18 +423,18 @@ class ReadingSupportEntry(models.Model):
             raise ValidationError(errors)
 
         duplicate_query = type(self).objects.filter(
-            normalized_surface=self.normalized_surface
+            normalized_word=self.normalized_word
         )
         if self.pk:
             duplicate_query = duplicate_query.exclude(pk=self.pk)
         if duplicate_query.exists():
-            raise ValidationError({"surface": "同じ表記の辞書エントリが既にあります。"})
+            raise ValidationError({"word": "同じ単語の辞書エントリが既にあります。"})
 
     def save(self, *args, **kwargs):
         """保存時にも正規化表記を同期する。"""
-        self.surface = (self.surface or "").strip()
+        self.word = (self.word or "").strip()
         self.reading = (self.reading or "").strip()
         self.description = (self.description or "").strip()
         self.source_url = (self.source_url or "").strip()
-        self.normalized_surface = normalize_surface(self.surface)
+        self.normalized_word = normalize_word(self.word)
         return super().save(*args, **kwargs)

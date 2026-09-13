@@ -10,7 +10,7 @@ from django.db import transaction
 
 from ...models import ReadingSupportEntry
 from ..repository.reading_support_repository import ReadingSupportRepository
-from ..valueobject.reading_support import normalize_surface
+from ..valueobject.reading_support import normalize_word
 
 
 @dataclass(frozen=True)
@@ -39,7 +39,7 @@ class ReadingSupportCsvImporter:
     """読み仮名支援辞書CSVを検証して辞書へ取り込む。"""
 
     REQUIRED_COLUMNS = (
-        "surface",
+        "word",
         "reading",
         "description",
         "source_url",
@@ -51,8 +51,6 @@ class ReadingSupportCsvImporter:
     def import_csv(
         self,
         source: bytes | str | TextIO,
-        *,
-        update_existing: bool = False,
     ) -> ReadingSupportImportResult:
         """CSV全体を検証し、エラーがなければ一括保存する。"""
         try:
@@ -86,7 +84,7 @@ class ReadingSupportCsvImporter:
 
         entries_to_save: list[tuple[ReadingSupportEntry, bool]] = []
         errors: list[ReadingSupportImportError] = []
-        seen_surfaces: set[str] = set()
+        seen_words: set[str] = set()
         skipped = 0
 
         for row in reader:
@@ -96,24 +94,16 @@ class ReadingSupportCsvImporter:
             try:
                 values = self._row_values(row)
                 entry = self._build_entry(values)
-                normalized_surface = entry.normalized_surface
-                if normalized_surface in seen_surfaces:
-                    raise ValueError("同じCSV内に同じ表記が複数あります。")
-                seen_surfaces.add(normalized_surface)
+                normalized_word = entry.normalized_word
+                if normalized_word in seen_words:
+                    raise ValueError("同じCSV内に同じ単語が複数あります。")
+                seen_words.add(normalized_word)
 
-                existing = self.repository.find_by_normalized_surface(
-                    normalized_surface
-                )
+                existing = self.repository.find_by_normalized_word(normalized_word)
                 if existing is not None:
                     if self._same_values(existing, entry):
                         skipped += 1
                         continue
-                    if not update_existing:
-                        raise ValueError(
-                            "既存データと内容が異なるため更新できません。"
-                            "上書きする場合は「既存データを更新する」にチェックを入れて、"
-                            "再度取り込んでください。"
-                        )
                     self._copy_values(entry, existing)
                     existing.full_clean()
                     entries_to_save.append((existing, False))
@@ -178,14 +168,14 @@ class ReadingSupportCsvImporter:
         }
 
     def _build_entry(self, values: dict[str, str]) -> ReadingSupportEntry:
-        surface = values.get("surface", "")
+        word = values.get("word", "")
         reading = values.get("reading", "")
         description = values.get("description", "")
         source_url = values.get("source_url", "")
 
         return ReadingSupportEntry(
-            surface=surface,
-            normalized_surface=normalize_surface(surface),
+            word=word,
+            normalized_word=normalize_word(word),
             reading=reading,
             description=description,
             source_url=source_url,
@@ -193,8 +183,8 @@ class ReadingSupportCsvImporter:
 
     @staticmethod
     def _copy_values(source: ReadingSupportEntry, target: ReadingSupportEntry) -> None:
-        target.surface = source.surface
-        target.normalized_surface = source.normalized_surface
+        target.word = source.word
+        target.normalized_word = source.normalized_word
         target.reading = source.reading
         target.description = source.description
         target.source_url = source.source_url
@@ -204,8 +194,8 @@ class ReadingSupportCsvImporter:
         return all(
             getattr(left, field) == getattr(right, field)
             for field in (
-                "surface",
-                "normalized_surface",
+                "word",
+                "normalized_word",
                 "reading",
                 "description",
                 "source_url",

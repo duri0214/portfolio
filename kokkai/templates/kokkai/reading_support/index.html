@@ -14,7 +14,7 @@
             <div class="bg-light p-5 rounded shadow-sm">
                 <span class="badge text-bg-primary mb-3">管理モード</span>
                 <h1 class="display-4">読み仮名支援辞書</h1>
-                <p class="lead mb-0">会議録本文に表示する辞書項目を確認・登録します。</p>
+                <p class="lead mb-0">会議録本文に使う辞書項目を確認・編集します。</p>
             </div>
         </div>
 
@@ -29,13 +29,12 @@
             {% endif %}
 
             <div class="d-flex flex-wrap justify-content-end mb-3 gap-2">
-                <a href="{% url 'kokkai:reading_support_entry_create' %}" class="btn btn-primary">辞書項目を追加</a>
                 <a href="{% url 'kokkai:reading_support_csv_import' %}" class="btn btn-outline-secondary">CSVから取り込む</a>
             </div>
 
             <div class="alert alert-info" role="status">
                 <strong>使い方:</strong>
-                元資料をGPTでCSV形式に整え、内容を確認してから「CSVから取り込む」で登録します。
+                新しい辞書項目はCSVから取り込みます。登録済みの項目は、この画面から編集・削除できます。
             </div>
 
             <div class="card shadow-sm border-0">
@@ -48,7 +47,7 @@
                         <table class="table table-striped align-middle mb-0">
                             <thead>
                                 <tr>
-                                    <th scope="col">表記</th>
+                                    <th scope="col">単語</th>
                                     <th scope="col">読み</th>
                                     <th scope="col">説明</th>
                                     <th scope="col"><span class="visually-hidden">操作</span></th>
@@ -57,7 +56,7 @@
                             <tbody>
                                 {% for entry in entries %}
                                 <tr>
-                                    <td>{{ entry.surface }}</td>
+                                    <td>{{ entry.word }}</td>
                                     <td>{{ entry.reading }}</td>
                                     <td>{{ entry.description|default:'-'|truncatechars:40 }}</td>
                                     <td class="text-end">

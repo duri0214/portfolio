@@ -6,9 +6,8 @@ from django.urls import reverse
 
 from kokkai.domain.service.reading_support import ReadingSupportService
 from kokkai.domain.valueobject.reading_support import (
-    ReadingOverride,
+    ReadingSupportDefinition,
     ReadingSupportDictionary,
-    TermDefinition,
 )
 from kokkai.models import (
     Meeting,
@@ -26,16 +25,19 @@ class ReadingSupportServiceTests(SimpleTestCase):
     def setUp(self):
         self.service = ReadingSupportService(
             dictionary=ReadingSupportDictionary(
-                terms=(
-                    TermDefinition(
-                        surface="FOIP",
+                entries=(
+                    ReadingSupportDefinition(
+                        word="FOIP",
                         reading="フォイップ",
                         description="Free and Open Indo-Pacific（自由で開かれたインド太平洋）の略称です。",
                         source_url="https://www.meti.go.jp/policy/external_economy/trade/foip/index.html",
                     ),
-                ),
-                reading_overrides=(
-                    ReadingOverride(surface="お諮り", reading="おはかり"),
+                    ReadingSupportDefinition(
+                        word="お諮り",
+                        reading="おはかり",
+                        description="",
+                        source_url="",
+                    ),
                 ),
             )
         )
@@ -86,17 +88,17 @@ class ReadingSupportServiceTests(SimpleTestCase):
         text = "ＦＯＩＰ、F O I P、foip"
 
         annotation = self.service.annotate(text)
-        terms = [segment for segment in annotation.segments if segment.term]
+        entries = [segment for segment in annotation.segments if segment.entry]
 
         self.assertEqual(
-            [segment.text for segment in terms], ["ＦＯＩＰ", "F O I P", "foip"]
+            [segment.text for segment in entries], ["ＦＯＩＰ", "F O I P", "foip"]
         )
-        self.assertTrue(all(segment.term.surface == "FOIP" for segment in terms))
+        self.assertTrue(all(segment.entry.word == "FOIP" for segment in entries))
         self.assertTrue(
             all(
-                segment.term.source_url
+                segment.entry.source_url
                 == "https://www.meti.go.jp/policy/external_economy/trade/foip/index.html"
-                for segment in terms
+                for segment in entries
             )
         )
 
@@ -114,24 +116,27 @@ class ReadingSupportServiceTests(SimpleTestCase):
         self.assertEqual("".join(segment.text for segment in annotation.segments), text)
         self.assertFalse(annotation.has_support)
 
-    def test_service_uses_one_dictionary_for_terms_and_reading_overrides(self):
+    def test_service_uses_one_dictionary_for_reading_and_description(self):
         """
         シナリオ:
-        - 入力: 説明付き項目と読み補正を登録した読み仮名支援辞書。
+        - 入力: 説明付き項目と説明なし項目を登録した読み仮名支援辞書。
         - 処理: 同じ辞書をReadingSupportServiceへ渡して本文を解析する。
-        - 期待値: 説明付き項目と読み補正の両方が、辞書の登録内容から表示される。
+        - 期待値: 各項目の読みが補正され、説明付き項目には説明を保持する。
         """
         dictionary = ReadingSupportDictionary(
-            terms=(
-                TermDefinition(
-                    surface="NISA",
+            entries=(
+                ReadingSupportDefinition(
+                    word="NISA",
                     reading="ニーサ",
                     description="少額投資非課税制度",
                     source_url="https://example.com/nisa",
                 ),
-            ),
-            reading_overrides=(
-                ReadingOverride(surface="読み補正", reading="ヨミホセイ"),
+                ReadingSupportDefinition(
+                    word="読み補正",
+                    reading="ヨミホセイ",
+                    description="",
+                    source_url="",
+                ),
             ),
         )
 
@@ -149,26 +154,25 @@ class ReadingSupportServiceTests(SimpleTestCase):
         )
         self.assertEqual(
             next(
-                segment.term.surface
+                segment.entry.word
                 for segment in annotation.segments
-                if segment.text == "NISA"
+                if segment.text == "NISA" and segment.entry
             ),
             "NISA",
         )
 
-    def test_annotation_ignores_empty_overrides_and_keeps_overlapping_text_once(self):
+    def test_annotation_ignores_empty_words_and_keeps_overlapping_text_once(self):
         """
         シナリオ:
-        - 入力: 空の読み補正と、同じ位置で重なる2つの読み補正を含む辞書。
+        - 入力: 空の単語と、同じ位置で重なる2つの辞書項目を含む辞書。
         - 処理: 辞書を使って本文を解析する。
-        - 期待値: 空の補正は無視し、長い補正を1回だけ適用して原文を重複させない。
+        - 期待値: 空の単語は無視し、長い項目を1回だけ適用して原文を重複させない。
         """
         dictionary = ReadingSupportDictionary(
-            terms=(),
-            reading_overrides=(
-                ReadingOverride(surface="", reading="空"),
-                ReadingOverride(surface="AB", reading="エービー"),
-                ReadingOverride(surface="ABC", reading="エービーシー"),
+            entries=(
+                ReadingSupportDefinition("", "空", "", ""),
+                ReadingSupportDefinition("AB", "エービー", "", ""),
+                ReadingSupportDefinition("ABC", "エービーシー", "", ""),
             ),
         )
 
@@ -226,6 +230,10 @@ class ReadingSupportViewTests(TestCase):
         self.assertContains(
             response,
             'します。<details class="kokkai-term d-inline"><summary',
+        )
+        self.assertContains(
+            response,
+            '<ruby class="kokkai-reading">ＦＯＩＰ<rt>フォイップ</rt></ruby>',
         )
         self.assertContains(response, "Free and Open Indo-Pacific")
         self.assertContains(response, "公式資料で確認する")

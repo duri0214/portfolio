@@ -7,13 +7,13 @@
             <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">会議録一覧</a></li>
             <li class="breadcrumb-item"><a href="{% url 'kokkai:reading_support_management' %}">読み仮名支援辞書</a></li>
             <li class="breadcrumb-item active" aria-current="page">
-                {% if form.instance.pk %}編集{% else %}追加{% endif %}
+                編集
             </li>
         </ol>
     </nav>
 
     <h1 class="h2 mb-4">
-        {% if form.instance.pk %}辞書項目を編集{% else %}辞書項目を追加{% endif %}
+        辞書項目を編集
     </h1>
 
     <form method="post" class="card">

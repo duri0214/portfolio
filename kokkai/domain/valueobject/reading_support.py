@@ -5,55 +5,39 @@ import jaconv
 
 
 @dataclass(frozen=True)
-class TermDefinition:
+class ReadingSupportDefinition:
     """
-    会議録本文から検出して表示する登録用語の定義。
+    会議録本文から検出して表示する辞書項目の定義。
 
     Attributes:
-        surface: 本文中で表示する代表表記。
-        reading: 学習用に表示する用語の読み。
-        description: 用語の短い説明。
-        source_url: 説明の根拠となる公式資料のURL。
+        word: 本文中で表示する代表表記。
+        reading: Janomeの結果より優先して表示する読み。
+        description: 用語の短い説明。空なら説明を表示しない。
+        source_url: 説明の根拠となる公式資料のURL。空ならリンクを表示しない。
     """
 
-    surface: str
+    word: str
     reading: str
     description: str
     source_url: str
 
 
 @dataclass(frozen=True)
-class ReadingOverride:
-    """
-    Janomeの読みを上書きする本文表記と読みの組み合わせ。
-
-    Attributes:
-        surface: 本文中で補正対象にする表記。
-        reading: 表示する読み。
-    """
-
-    surface: str
-    reading: str
-
-
-@dataclass(frozen=True)
 class ReadingSupportDictionary:
     """
-    読み補正と説明表示をまとめて扱う、読み仮名支援用の辞書。
+    読み補正と説明表示に使う辞書項目の集合。
 
     Attributes:
-        terms: 本文から検出して説明を表示する辞書項目の集合。
-        reading_overrides: Janomeの読みを上書きする表記と読みの集合。
+        entries: 本文から検出する辞書項目の集合。
     """
 
-    terms: tuple[TermDefinition, ...]
-    reading_overrides: tuple[ReadingOverride, ...]
+    entries: tuple[ReadingSupportDefinition, ...]
 
 
 _WHITESPACE_PATTERN = re.compile(r"\s+")
 
 
-def normalize_surface(value: str) -> str:
+def normalize_word(value: str) -> str:
     """表記の全角・半角、大小文字、空白を検出用に正規化する。"""
     normalized = jaconv.normalize(value or "")
     return _WHITESPACE_PATTERN.sub("", normalized).casefold()
@@ -67,12 +51,12 @@ class SpeechTextSegment:
     Attributes:
         text: 本文に現れた原文。
         reading: Janomeまたは登録済み補正による読み。表示不要ならNone。
-        term: 本文に登録用語が含まれる場合の定義。該当しない場合はNone。
+        entry: 本文に辞書項目が含まれる場合の定義。該当しない場合はNone。
     """
 
     text: str
     reading: str | None = None
-    term: TermDefinition | None = None
+    entry: ReadingSupportDefinition | None = None
 
 
 @dataclass(frozen=True)
@@ -91,4 +75,4 @@ class SpeechAnnotation:
     @property
     def has_support(self) -> bool:
         """読み仮名または登録用語の表示対象が含まれるかを返す。"""
-        return any(segment.reading or segment.term for segment in self.segments)
+        return any(segment.reading or segment.entry for segment in self.segments)

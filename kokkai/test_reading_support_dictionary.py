@@ -1,8 +1,8 @@
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.contrib.auth.models import User
 from django.test import TestCase
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 
 from kokkai.domain.service.reading_support import ReadingSupportService
 from kokkai.domain.service.reading_support_import import ReadingSupportCsvImporter
@@ -12,122 +12,118 @@ from kokkai.models import ReadingSupportEntry
 class ReadingSupportEntryTests(TestCase):
     """辞書エントリーの入力規則と読み仮名支援への反映を確認する。"""
 
-    def test_description_distinguishes_terms_from_reading_overrides(self):
+    def test_description_and_reading_are_independent_entry_properties(self):
         """
-        Scenario:
-        - Create an item with an incomplete description and an item without a description.
-        - Validate both entries.
-        - The incomplete description is rejected and the empty description is accepted.
+        シナリオ:
+        - 入力: 説明付きの項目と、説明なしの項目。
+        - 処理: 両方の項目を検証して保存する。
+        - 期待値: どちらも単一の辞書項目として保存でき、説明付きには出典URLが必要になる。
         """
-        term = ReadingSupportEntry(
-            surface="term-without-definition",
-            reading="term-reading",
-            description="説明だけ",
+        with_description = ReadingSupportEntry(
+            word="説明付き単語",
+            reading="せつめいつきたんご",
+            description="説明",
         )
         with self.assertRaises(ValidationError):
-            term.full_clean()
+            with_description.full_clean()
 
-        override = ReadingSupportEntry(
-            surface="reading-override",
-            reading="override-reading",
+        reading_only = ReadingSupportEntry(
+            word="読み補正",
+            reading="よみほせい",
         )
-        override.full_clean()
-        override.save()
-        self.assertTrue(
-            ReadingSupportEntry.objects.filter(surface="reading-override").exists()
-        )
+        reading_only.full_clean()
+        reading_only.save()
+        self.assertTrue(ReadingSupportEntry.objects.filter(word="読み補正").exists())
 
-    def test_db_entries_are_used_for_annotation(self):
+    def test_db_entry_uses_reading_and_description_together(self):
         """
-        Scenario:
-        - Add a dictionary entry and annotate text containing it.
-        - The entry is used for annotation.
+        シナリオ:
+        - 入力: 読みと説明の両方を持つ辞書項目。
+        - 処理: DB辞書を使って本文を解析する。
+        - 期待値: 同じセグメントに優先読みと説明情報が保持される。
         """
         ReadingSupportEntry.objects.create(
-            surface="NISA",
-            normalized_surface="nisa",
-            reading="nisa-reading",
-            description="a description",
+            word="NISA",
+            reading="ニーサ",
+            description="少額投資非課税制度",
             source_url="https://example.com/nisa",
         )
 
         annotation = ReadingSupportService().annotate("NISA")
 
-        self.assertTrue(
-            any(
-                segment.term and segment.term.surface == "NISA"
-                for segment in annotation.segments
-            )
+        entry_segment = next(
+            segment for segment in annotation.segments if segment.text == "NISA"
         )
+        self.assertEqual(entry_segment.reading, "ニーサ")
+        self.assertEqual(entry_segment.entry.description, "少額投資非課税制度")
 
 
 class ReadingSupportCsvImporterTests(TestCase):
     """CSVの登録、再取り込み、エラー時の一括取り消しを確認する。"""
 
-    HEADER = "surface,reading,description,source_url\n"
+    HEADER = "word,reading,description,source_url\n"
 
-    def test_import_is_idempotent_and_update_requires_explicit_option(self):
+    def test_import_is_idempotent_and_changed_word_is_updated(self):
         """
-        Scenario:
-        - Import the same term twice and then import changed content.
-        - Repeat the changed import with the update option.
-        - The second import is skipped, the first changed import fails, and the
-          explicit update changes the existing entry.
+        シナリオ:
+        - 入力: 同じ単語のCSVを再取り込みし、その後に説明を変えたCSVを取り込む。
+        - 処理: CSV取り込みを3回実行する。
+        - 期待値: 同一内容はスキップされ、変更内容は既存項目に反映される。
         """
         csv_text = (
-            self.HEADER + "NISA,nisa-reading,a description,https://example.com/nisa\n"
+            self.HEADER + "NISA,ニーサ,少額投資非課税制度,https://example.com/nisa\n"
         )
         importer = ReadingSupportCsvImporter()
 
         first = importer.import_csv(csv_text)
         second = importer.import_csv(csv_text)
-        changed_csv = csv_text.replace("a description", "a changed description")
-        changed = importer.import_csv(changed_csv)
-        updated = importer.import_csv(changed_csv, update_existing=True)
+        changed_csv = csv_text.replace("少額投資非課税制度", "更新後の説明")
+        updated = importer.import_csv(changed_csv)
 
         self.assertEqual((first.created, first.updated, first.skipped), (1, 0, 0))
         self.assertEqual((second.created, second.updated, second.skipped), (0, 0, 1))
-        self.assertEqual(len(changed.errors), 1)
         self.assertEqual((updated.created, updated.updated, updated.skipped), (0, 1, 0))
         self.assertEqual(
-            ReadingSupportEntry.objects.get(surface="NISA").description,
-            "a changed description",
+            ReadingSupportEntry.objects.get(word="NISA").description,
+            "更新後の説明",
         )
 
-    def test_blank_definition_columns_create_a_reading_override(self):
+    def test_blank_description_still_creates_a_reading_support_entry(self):
         """
-        Scenario:
-        - Import a CSV row with an empty definition and source URL.
-        - The importer treats it as a reading override.
+        シナリオ:
+        - 入力: 説明と出典URLが空のCSV行。
+        - 処理: CSVを取り込む。
+        - 期待値: 説明の有無で用途を分類せず、読みを持つ辞書項目として保存される。
         """
         result = ReadingSupportCsvImporter().import_csv(
-            self.HEADER + "reading-override,override-reading,,\n"
+            self.HEADER + "お諮り,おはかり,,\n"
         )
 
         self.assertTrue(result.is_success)
-        entry = ReadingSupportEntry.objects.get(surface="reading-override")
-        self.assertFalse(entry.is_term)
+        entry = ReadingSupportEntry.objects.get(word="お諮り")
+        self.assertEqual(entry.reading, "おはかり")
+        self.assertEqual(entry.description, "")
 
     def test_invalid_rows_are_reported_without_partial_import(self):
         """
-        Scenario:
-        - Import one valid term and one invalid term in the same CSV.
-        - The importer validates all rows before saving.
-        - The error is reported and the valid row is not saved either.
+        シナリオ:
+        - 入力: 有効行と、読みが空の無効行を含むCSV。
+        - 処理: CSV全体を検証する。
+        - 期待値: エラーを表示し、有効行も保存しない。
         """
         result = ReadingSupportCsvImporter().import_csv(
             self.HEADER
-            + "NISA,nisa-reading,a description,https://example.com/nisa\n"
-            + "invalid-term,,invalid description,https://example.com/invalid\n"
+            + "NISA,ニーサ,少額投資非課税制度,https://example.com/nisa\n"
+            + "invalid-word,,説明,https://example.com/invalid\n"
         )
 
         self.assertFalse(result.is_success)
         self.assertEqual(result.errors[0].line_number, 3)
-        self.assertFalse(ReadingSupportEntry.objects.filter(surface="NISA").exists())
+        self.assertFalse(ReadingSupportEntry.objects.filter(word="NISA").exists())
 
 
 class ReadingSupportManagementViewTests(TestCase):
-    """Test dictionary management and CSV import permissions and registration."""
+    """辞書の管理、CSV取り込み、権限を確認する。"""
 
     def setUp(self):
         self.admin_user = User.objects.create_superuser(
@@ -142,10 +138,10 @@ class ReadingSupportManagementViewTests(TestCase):
 
     def test_management_pages_require_a_superuser(self):
         """
-        Scenario:
-        - A regular user requests dictionary management pages.
-        - The management and CSV pages are protected.
-        - Each request returns HTTP 403.
+        シナリオ:
+        - 入力: 一般ユーザーによる辞書管理画面へのアクセス。
+        - 処理: 一覧とCSV取り込み画面を開く。
+        - 期待値: どちらもHTTP 403になる。
         """
         self.client.force_login(self.regular_user)
         for view_name in (
@@ -155,49 +151,51 @@ class ReadingSupportManagementViewTests(TestCase):
             response = self.client.get(reverse(view_name))
             self.assertEqual(response.status_code, 403)
 
-    def test_reading_support_form_uses_bootstrap_widgets(self):
+    def test_manual_create_page_is_not_available(self):
         """
-        Scenario:
-        - Open the manual dictionary entry form.
-        - The form uses Bootstrap controls and only exposes the current fields.
+        シナリオ:
+        - 入力: 手動追加画面のURL名。
+        - 処理: URLを逆引きする。
+        - 期待値: 新規追加画面は提供されない。
         """
-        self.client.force_login(self.admin_user)
+        with self.assertRaises(NoReverseMatch):
+            reverse("kokkai:reading_support_entry_create")
 
-        response = self.client.get(reverse("kokkai:reading_support_entry_create"))
-
-        self.assertContains(response, 'class="form-control"')
-        self.assertNotContains(response, 'name="entry_type"')
-        self.assertNotContains(response, 'name="category"')
-
-    def test_entry_form_creates_a_dictionary_entry(self):
+    def test_existing_entry_can_be_edited(self):
         """
-        Scenario:
-        - A superuser submits the manual dictionary entry form.
-        - The form redirects to management.
-        - The new term is available in the dictionary.
+        シナリオ:
+        - 入力: 登録済み項目と、スーパーユーザーによる更新内容。
+        - 処理: 編集画面から保存する。
+        - 期待値: CSVで追加した項目を後から編集できる。
         """
+        entry = ReadingSupportEntry.objects.create(
+            word="NISA",
+            reading="ニーサ",
+            description="少額投資非課税制度",
+            source_url="https://example.com/nisa",
+        )
         self.client.force_login(self.admin_user)
 
         response = self.client.post(
-            reverse("kokkai:reading_support_entry_create"),
+            reverse("kokkai:reading_support_entry_update", args=[entry.pk]),
             {
-                "surface": "manual-term",
-                "reading": "manual-reading",
-                "description": "manual description",
-                "source_url": "https://example.com/manual",
+                "word": "NISA",
+                "reading": "ニーサ",
+                "description": "更新後の説明",
+                "source_url": "https://example.com/nisa",
             },
         )
 
         self.assertRedirects(response, reverse("kokkai:reading_support_management"))
-        entry = ReadingSupportEntry.objects.get(surface="manual-term")
-        self.assertEqual(entry.description, "manual description")
+        entry.refresh_from_db()
+        self.assertEqual(entry.description, "更新後の説明")
 
     def test_csv_import_view_imports_uploaded_file(self):
         """
-        Scenario:
-        - A superuser uploads a valid dictionary CSV.
-        - The CSV import view redirects to management.
-        - The uploaded term is saved.
+        シナリオ:
+        - 入力: スーパーユーザーと有効な辞書CSV。
+        - 処理: CSV取り込み画面からアップロードする。
+        - 期待値: 新規の単語が保存され、管理画面へ戻る。
         """
         self.client.force_login(self.admin_user)
 
@@ -207,7 +205,7 @@ class ReadingSupportManagementViewTests(TestCase):
                 "file": SimpleUploadedFile(
                     "dictionary.csv",
                     (
-                        "surface,reading,description,source_url\n"
+                        "word,reading,description,source_url\n"
                         "csv-term,csv-reading,csv description,https://example.com/csv\n"
                     ).encode("utf-8"),
                     content_type="text/csv",
@@ -216,4 +214,4 @@ class ReadingSupportManagementViewTests(TestCase):
         )
 
         self.assertRedirects(response, reverse("kokkai:reading_support_management"))
-        self.assertTrue(ReadingSupportEntry.objects.filter(surface="csv-term").exists())
+        self.assertTrue(ReadingSupportEntry.objects.filter(word="csv-term").exists())

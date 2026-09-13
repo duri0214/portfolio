@@ -10,11 +10,6 @@ urlpatterns = [
         name="reading_support_management",
     ),
     path(
-        "reading-support/entries/new/",
-        views.ReadingSupportEntryCreateView.as_view(),
-        name="reading_support_entry_create",
-    ),
-    path(
         "reading-support/entries/<int:pk>/edit/",
         views.ReadingSupportEntryUpdateView.as_view(),
         name="reading_support_entry_update",
