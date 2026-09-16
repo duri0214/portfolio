@@ -10,8 +10,7 @@ apply: always
 - `git commit --amend` や `git push --force` / `git push --force-with-lease` による履歴上書きは原則禁止する。PR作成後の修正や追加対応は、新しいコミットとして履歴を残す。
 - 履歴上書きが必要な場合は、ユーザーから明示的な許可を得て、理由と影響範囲を作業報告に残す。
 - コード修正やルール・ドキュメント修正を行った場合は、必要な確認（フォーマット、関連テスト、差分確認など）を通したうえで、ユーザーが明示的に `commit不要`・`push不要`・`PR不要`・`まだコミットしない` と指示していない限り、確認待ちせずコミット、push、PR 作成まで進める。
-- コミット前の確認手順や失敗時の扱いは、`commit` スキルに従う。
-- PR 作成時の本文、作成手順、メタ情報設定は、`pull-request` スキルに従う。作成可能な状態なら本文提示だけで止めず、追加確認なしで PR 作成まで進める。
+- コミット前の確認手順、失敗時の扱い、PR 作成時の本文・メタ情報設定は、`AGENTS.md` の常用フローに従う。作成可能な状態なら本文提示だけで止めず、追加確認なしで PR 作成または更新まで進める。
 - `git add`、`git commit`、`git push`、`git checkout`、`git reset` などが失敗した場合は、API 等で迂回せず、原因を切り分けてユーザーに確認する。
 - Issue/PR の作成、本文更新、コメント、メタ情報更新、状態確認などの GitHub 操作は、普段使っている `gh` CLI を使う。
 - GitHub API、GitHub App、MCP の GitHub 更新系ツールで Issue/PR を作成・更新・コメントしない。権限差や挙動差でチケット重複・意図しない更新が起きるため。
@@ -36,10 +35,11 @@ apply: always
 
 ## 設計方針
 - 基本的に DDD（ドメイン駆動設計）のエッセンスに沿って設計・実装する。
-- `domain/` 配下は基本的に Repository、Service、Value Object の3層で構成する。
+- 各Djangoアプリの `domain/` 配下は基本的に `valueobject/`、`service/`、`repository/` の3領域で構成する。
 - 業務ルールや判断ロジックは、可能な限り `domain/` 配下の Value Object、Service、Repository に集約する。
 - Django の `views.py`、`forms.py`、`models.py` はフレームワーク連携や入出力、永続化の責務を中心にし、業務ロジックを過度に持たせない。
 - Repository は永続化の詳細を隠蔽し、Service が Django モデルのクエリ操作に直接依存しないようにする。
+- 外部APIや外部ファイルなどの入力元を抽象化する必要がある場合だけ、`domain/dataprovider/` など責務が明確な領域を追加する。
 - UseCase、Factory など追加の DDD 構造は、必要性が明確な場合にだけ作る。
 - 基本の3層で十分な場合は追加の層を作らず、過剰品質を避ける。
 
