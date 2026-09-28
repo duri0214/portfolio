@@ -11,6 +11,9 @@
         <h1 class="display-5">国会会議録ロープレ</h1>
         <p class="lead mb-0">実際の国会会議を題材に、役割と文脈を意識した学習ゲーム</p>
     </div>
+    <div class="d-flex justify-content-end mb-3">
+        <a href="{% url 'kokkai:affiliation_traceability' %}" class="btn btn-outline-primary">政治家の会派トレーサビリティ</a>
+    </div>
 
     {% if messages %}
     {% for message in messages %}

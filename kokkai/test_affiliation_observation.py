@@ -55,6 +55,12 @@ class AffiliationObservationRepositoryTests(TestCase):
         )
 
     def test_timeline_counts_observed_affiliation_change_without_inferring_gap(self):
+        """
+        シナリオ:
+        - 入力: 同一人物について、異なる会派が記載された二つの会議録
+        - 処理: 会派記載を収集してタイムラインを取得する
+        - 期待値: 観測された会派変更だけを数え、記載のない期間を補完しない
+        """
         self.repository.refresh_for_record(self.record)
         second_speech = replace(
             self.record.speech_records[1],
@@ -86,6 +92,12 @@ class AffiliationObservationRepositoryTests(TestCase):
 
 class AffiliationImportServiceTests(TestCase):
     def test_import_period_reads_every_api_page_and_refreshes_each_record(self):
+        """
+        シナリオ:
+        - 入力: 二ページに分かれた国会会議録APIの検索結果
+        - 処理: 期間を指定して会派記載を収集する
+        - 期待値: 全ページの各会議録を一度ずつ更新する
+        """
         first_record = participant_meeting_record()
         second_record = replace(first_record, issue_id="121305254X00220240127")
         client = Mock()
@@ -124,8 +136,14 @@ class AffiliationTraceabilityViewTests(TestCase):
             speech_order=1,
         )
 
-    def test_top_page_and_traceability_page_are_independent_from_roleplay(self):
-        home_response = self.client.get(reverse("home:index"))
+    def test_kokkai_top_and_traceability_page_are_independent_from_roleplay(self):
+        """
+        シナリオ:
+        - 入力: KOKKAIのトップ、会派トレーサビリティ、政治家タイムラインへのアクセス
+        - 処理: 各画面を表示する
+        - 期待値: KOKKAIトップから遷移でき、会派記載はロープレの実施と独立して表示される
+        """
+        kokkai_response = self.client.get(reverse("kokkai:index"))
         traceability_response = self.client.get(
             reverse("kokkai:affiliation_traceability")
         )
@@ -133,7 +151,7 @@ class AffiliationTraceabilityViewTests(TestCase):
             reverse("kokkai:politician_timeline", args=[self.person.pk])
         )
 
-        self.assertContains(home_response, "政治家の会派トレーサビリティ")
+        self.assertContains(kokkai_response, "政治家の会派トレーサビリティ")
         self.assertContains(traceability_response, "ロープレとは独立して")
         self.assertContains(traceability_response, 'value="2016-01-01"')
         self.assertContains(timeline_response, "会派観測タイムライン")
@@ -143,6 +161,12 @@ class AffiliationTraceabilityViewTests(TestCase):
     def test_period_submission_imports_all_meetings_before_redirecting(
         self, service_class
     ):
+        """
+        シナリオ:
+        - 入力: 2016年の開始日と終了日を指定した収集フォーム
+        - 処理: 会派トレーサビリティ画面へPOSTする
+        - 期待値: 指定期間を渡して収集し、一覧画面へ戻る
+        """
         response = self.client.post(
             reverse("kokkai:affiliation_traceability"),
             {"start_date": "2016-01-01", "end_date": "2016-12-31"},
