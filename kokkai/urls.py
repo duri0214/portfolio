@@ -10,6 +10,11 @@ urlpatterns = [
         name="affiliation_traceability",
     ),
     path(
+        "traceability/imports/<uuid:pk>/step/",
+        views.AffiliationImportStepView.as_view(),
+        name="affiliation_import_step",
+    ),
+    path(
         "politicians/<int:pk>/",
         views.PoliticianTimelineView.as_view(),
         name="politician_timeline",

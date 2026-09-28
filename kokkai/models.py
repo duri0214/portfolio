@@ -333,6 +333,62 @@ class AffiliationObservationEvidence(models.Model):
         ordering = ["speech_order", "pk"]
 
 
+class AffiliationImportJob(models.Model):
+    """
+    会派観測の月次取得を、APIページごとに再開可能な状態で管理する。
+
+    Attributes:
+        id: 取得処理を参照・再開するためのUUID。
+        start_date: ユーザーが指定した取得開始日。
+        end_date: ユーザーが指定した取得終了日。
+        current_start_date: 現在取得している月次期間の開始日。
+        current_end_date: 現在取得している月次期間の終了日。
+        next_record_position: 現在の月次期間で次に取得するAPIレコード位置。
+        current_period_record_count: 現在の月次期間でAPIが返した会議録総数。
+        processed_meeting_count: これまでに観測へ反映した会議録数。
+        status: 取得処理の進行状態。
+        error_message: 直近の通信失敗理由。
+        created_at: 取得処理の作成日時。
+        updated_at: 取得処理の最終更新日時。
+    """
+
+    class Status(models.TextChoices):
+        """
+        会派観測取得処理の進行状態。
+
+        Attributes:
+            PENDING: 次のAPIページを取得していない状態。
+            RUNNING: APIページを取得中または次のページ待ちの状態。
+            COMPLETED: 指定期間の全月次期間を取得済みの状態。
+            FAILED: 通信失敗により利用者の再開を待つ状態。
+        """
+
+        PENDING = "pending", "開始待ち"
+        RUNNING = "running", "取得中"
+        COMPLETED = "completed", "完了"
+        FAILED = "failed", "再開待ち"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    start_date = models.DateField("取得開始日")
+    end_date = models.DateField("取得終了日")
+    current_start_date = models.DateField("現在の取得開始日")
+    current_end_date = models.DateField("現在の取得終了日")
+    next_record_position = models.PositiveIntegerField("次のAPIレコード位置", default=1)
+    current_period_record_count = models.PositiveIntegerField(
+        "現在の月次期間の会議録数", null=True, blank=True
+    )
+    processed_meeting_count = models.PositiveIntegerField("反映済み会議録数", default=0)
+    status = models.CharField(
+        "取得状態", max_length=16, choices=Status.choices, default=Status.PENDING
+    )
+    error_message = models.CharField("通信失敗理由", max_length=255, blank=True)
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at", "-created_at"]
+
+
 class MeetingScenario(models.Model):
     """会議録から生成した、再利用可能な選択式ゲームシナリオ。"""
 

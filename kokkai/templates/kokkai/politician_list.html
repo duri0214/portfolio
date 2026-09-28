@@ -23,7 +23,7 @@
     <section class="card mb-4" aria-labelledby="import-heading">
         <div class="card-body">
             <h2 id="import-heading" class="h4">会議録を期間取得する</h2>
-            <p class="text-muted">公式APIの会議録を指定期間の全ページから取得し、発言に含まれる会派を観測ログへ更新します。例として2016年以降を選べます。</p>
+            <p class="text-muted">公式APIの会議録を月ごと・ページごとに取得し、発言に含まれる会派を観測ログへ更新します。初期値は今日から10年前です。</p>
             <form method="post" class="row g-3 align-items-end" id="traceability-import-form">
                 {% csrf_token %}
                 <div class="col-md-5">
@@ -38,6 +38,24 @@
             </form>
         </div>
     </section>
+
+    {% if import_job %}
+    <section class="card border-primary mb-4" id="affiliation-import-progress"
+             data-step-url="{% url 'kokkai:affiliation_import_step' import_job.pk %}"
+             data-status="{{ import_job.status }}">
+        <div class="card-body">
+            <h2 class="h4">期間取得の進捗</h2>
+            <p class="mb-2" id="affiliation-import-progress-text">
+                {{ import_job.current_start_date|date:"Y-m-d" }} から {{ import_job.current_end_date|date:"Y-m-d" }} を取得します。
+            </p>
+            <p class="text-muted mb-3" id="affiliation-import-count">反映済み会議録: {{ import_job.processed_meeting_count }}件</p>
+            <div class="alert alert-warning mb-3 {% if import_job.status != 'failed' %}d-none{% endif %}" id="affiliation-import-error" role="alert">
+                {{ import_job.error_message }}
+            </div>
+            <button type="button" class="btn btn-outline-primary d-none" id="affiliation-import-retry">再開する</button>
+        </div>
+    </section>
+    {% endif %}
 
     <div class="alert alert-warning" role="alert">
         氏名とよみが一致する記録を表示単位にしています。同姓同名を本人と確定しておらず、人物同定状態はすべて未確認です。
@@ -82,15 +100,79 @@
         const form = document.getElementById("traceability-import-form");
         const button = document.getElementById("traceability-import-submit");
 
-        if (!form || !button) {
+        if (form && button) {
+            form.addEventListener("submit", function () {
+                button.disabled = true;
+                button.setAttribute("aria-busy", "true");
+                button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>開始中…';
+            });
+        }
+
+        const progress = document.getElementById("affiliation-import-progress");
+        if (!progress) {
             return;
         }
 
-        form.addEventListener("submit", function () {
-            button.disabled = true;
-            button.setAttribute("aria-busy", "true");
-            button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>取得中…';
-        });
+        const progressText = document.getElementById("affiliation-import-progress-text");
+        const count = document.getElementById("affiliation-import-count");
+        const error = document.getElementById("affiliation-import-error");
+        const retry = document.getElementById("affiliation-import-retry");
+        const csrfToken = document.querySelector("#traceability-import-form input[name=csrfmiddlewaretoken]").value;
+
+        function wait(milliseconds) {
+            return new Promise(function (resolve) {
+                window.setTimeout(resolve, milliseconds);
+            });
+        }
+
+        function renderProgress(data) {
+            progressText.textContent = data.current_start_date + " から " + data.current_end_date + " を取得中です。";
+            count.textContent = "反映済み会議録: " + data.processed_meeting_count + "件";
+            if (data.error_message) {
+                error.textContent = data.error_message;
+                error.classList.remove("d-none");
+            } else {
+                error.classList.add("d-none");
+            }
+        }
+
+        async function continueImport() {
+            retry.classList.add("d-none");
+            while (true) {
+                let response;
+                let data;
+                try {
+                    response = await fetch(progress.dataset.stepUrl, {
+                        method: "POST",
+                        headers: {"X-CSRFToken": csrfToken, "Accept": "application/json"},
+                        credentials: "same-origin"
+                    });
+                    data = await response.json();
+                } catch (requestError) {
+                    error.textContent = "通信に失敗しました。再開できます。";
+                    error.classList.remove("d-none");
+                    retry.classList.remove("d-none");
+                    return;
+                }
+
+                renderProgress(data);
+                if (!response.ok || data.status === "failed") {
+                    retry.classList.remove("d-none");
+                    return;
+                }
+                if (data.status === "completed") {
+                    progressText.textContent = "取得が完了しました。一覧を更新します。";
+                    window.setTimeout(function () {
+                        window.location.assign("{% url 'kokkai:affiliation_traceability' %}");
+                    }, 500);
+                    return;
+                }
+                await wait(2000);
+            }
+        }
+
+        retry.addEventListener("click", continueImport);
+        continueImport();
     });
 </script>
 {% endblock %}
