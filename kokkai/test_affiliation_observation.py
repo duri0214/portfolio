@@ -176,6 +176,8 @@ class AffiliationTraceabilityViewTests(TestCase):
 
         self.assertContains(kokkai_response, "政治家の会派トレーサビリティ")
         self.assertContains(traceability_response, "ロープレとは独立して")
+        self.assertContains(traceability_response, "政治家別 会派観測ガントチャート")
+        self.assertContains(traceability_response, "affiliation-gantt-bar")
         self.assertContains(
             traceability_response,
             f'value="{date.today().replace(year=date.today().year - 10).isoformat()}"',
@@ -261,3 +263,27 @@ class AffiliationTraceabilityViewTests(TestCase):
         self.assertEqual(response.status_code, 503)
         self.assertEqual(job.status, AffiliationImportJob.Status.FAILED)
         self.assertEqual(job.next_record_position, 1)
+
+    def test_chart_separates_affiliations_observed_on_the_same_day(self):
+        """
+        シナリオ:
+        - 入力: 同一人物に同日観測された異なる二つの会派
+        - 処理: 人物別会派ガントチャートの描画データを取得する
+        - 期待値: 二つのバーを別の段に配置して、会派の混在を隠さない
+        """
+        AffiliationObservation.objects.create(
+            person=self.person,
+            observed_on=date(2024, 1, 26),
+            affiliation="会派B",
+            source_meeting_id="121305254X00220240126",
+            source_url="https://kokkai.ndl.go.jp/txt/121305254X00220240126",
+        )
+
+        chart = AffiliationTimelineService().get_chart()
+
+        self.assertIsNotNone(chart)
+        row = chart.rows[0]
+        self.assertEqual(row.lane_count, 2)
+        self.assertEqual(
+            {segment.affiliation_label for segment in row.segments}, {"会派A", "会派B"}
+        )

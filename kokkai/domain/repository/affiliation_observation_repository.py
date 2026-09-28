@@ -102,3 +102,16 @@ class AffiliationObservationRepository:
             .prefetch_related("evidences")
             .order_by("observed_on", "source_meeting_id", "affiliation", "pk")
         )
+
+    def list_all(self):
+        """ガントチャート表示に必要な全人物の会派観測を時系列で取得する。"""
+
+        return AffiliationObservation.objects.select_related("person").order_by(
+            "person__name",
+            "person__name_yomi",
+            "person_id",
+            "observed_on",
+            "source_meeting_id",
+            "affiliation",
+            "pk",
+        )

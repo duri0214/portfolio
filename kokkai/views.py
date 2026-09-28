@@ -186,10 +186,22 @@ class AffiliationTraceabilityView(TemplateView):
 
     template_name = "kokkai/politician_list.html"
     DEFAULT_YEARS_BACK = 10
+    CHART_PAGE_SIZE = 100
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["politicians"] = AffiliationTimelineService().list_people()
+        chart_page = self._chart_page()
+        context["chart"] = AffiliationTimelineService().get_chart(
+            offset=(chart_page - 1) * self.CHART_PAGE_SIZE,
+            limit=self.CHART_PAGE_SIZE,
+        )
+        context["chart_page"] = chart_page
+        context["chart_page_size"] = self.CHART_PAGE_SIZE
+        context["chart_has_previous"] = chart_page > 1
+        context["chart_has_next"] = bool(
+            context["chart"]
+            and context["chart"].total_row_count > chart_page * self.CHART_PAGE_SIZE
+        )
         today = date.today()
         context["default_start_date"] = self._years_ago(today, self.DEFAULT_YEARS_BACK)
         context["default_end_date"] = today
@@ -197,6 +209,14 @@ class AffiliationTraceabilityView(TemplateView):
             pk=self.request.GET.get("import_job")
         ).first()
         return context
+
+    def _chart_page(self) -> int:
+        """クエリ文字列から会派ガントチャートのページ番号を取得する。"""
+
+        try:
+            return max(int(self.request.GET.get("chart_page", "1")), 1)
+        except ValueError:
+            return 1
 
     def post(self, request, *args, **kwargs):
         try:

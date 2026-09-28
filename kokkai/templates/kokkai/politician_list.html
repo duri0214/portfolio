@@ -1,4 +1,9 @@
 {% extends 'kokkai/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'kokkai/affiliation_traceability.css' %}">
+{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
@@ -61,36 +66,64 @@
         氏名とよみが一致する記録を表示単位にしています。同姓同名を本人と確定しておらず、人物同定状態はすべて未確認です。
     </div>
 
-    <div class="table-responsive">
-        <table class="table table-striped align-middle">
-            <thead>
-                <tr>
-                    <th scope="col">氏名</th>
-                    <th scope="col">観測期間</th>
-                    <th scope="col">会派変更（観測上）</th>
-                    <th scope="col">会派数</th>
-                    <th scope="col">発言件数 / 観測件数</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for politician in politicians %}
-                <tr>
-                    <td>
-                        <a href="{% url 'kokkai:politician_timeline' politician.person.pk %}">{{ politician.person.name }}</a>
-                        {% if politician.person.name_yomi %}<div class="small text-muted">{{ politician.person.name_yomi }}</div>{% endif %}
-                        <div class="small text-muted">人物同定: {{ politician.person.get_identity_status_display }}</div>
-                    </td>
-                    <td>{{ politician.first_observed_on|date:"Y-m-d" }} 〜 {{ politician.last_observed_on|date:"Y-m-d" }}</td>
-                    <td>{{ politician.affiliation_change_count }}回</td>
-                    <td>{{ politician.affiliation_count }}会派</td>
-                    <td>{{ politician.speech_count }}件 / {{ politician.observation_count }}件</td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="5" class="text-center">会派情報を含む発言はまだ取り込まれていません。</td></tr>
+    <section aria-labelledby="chart-heading">
+        <div class="d-flex justify-content-between align-items-end mb-2">
+            <div>
+                <h2 id="chart-heading" class="h4 mb-1">政治家別 会派観測ガントチャート</h2>
+                <p class="text-muted small mb-0">人物を縦、観測日を横に表示します。バーは同じ会派が連続して観測された最初と最後の日の間を示します。バーをクリックすると詳細を開きます。</p>
+            </div>
+            {% if chart %}<span class="small text-muted">{{ chart.start_date|date:"Y-m-d" }} 〜 {{ chart.end_date|date:"Y-m-d" }} / {{ chart.total_row_count }}人</span>{% endif %}
+        </div>
+
+        {% if chart %}
+        <div class="affiliation-gantt-scroll border rounded">
+            <div class="affiliation-gantt">
+                <div class="affiliation-gantt-header">
+                    <div class="affiliation-gantt-person fw-semibold">人物</div>
+                    <div class="affiliation-gantt-axis" aria-label="観測日">
+                        {% for tick in chart.ticks %}
+                        <div class="affiliation-gantt-tick" style="left: {{ tick.left_percent }}%"><span>{{ tick.label }}</span></div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% for row in chart.rows %}
+                <div class="affiliation-gantt-row">
+                    <div class="affiliation-gantt-person">
+                        <a href="{% url 'kokkai:politician_timeline' row.person.pk %}">{{ row.person.name }}</a>
+                        {% if row.person.name_yomi %}<div class="small text-muted">{{ row.person.name_yomi }}</div>{% endif %}
+                    </div>
+                    <div class="affiliation-gantt-track" style="--lane-count: {{ row.lane_count }}">
+                        {% for tick in chart.ticks %}
+                        <span class="affiliation-gantt-guide" style="left: {{ tick.left_percent }}%" aria-hidden="true"></span>
+                        {% endfor %}
+                        {% for segment in row.segments %}
+                        <a href="{% url 'kokkai:politician_timeline' row.person.pk %}"
+                           class="affiliation-gantt-bar affiliation-color-{{ segment.color_index }} px-2"
+                           style="left: {{ segment.left_percent }}%; width: {{ segment.width_percent }}%; --lane: {{ segment.lane }}"
+                           title="{{ segment.affiliation_label }}: {{ segment.first_observed_on|date:'Y-m-d' }} 〜 {{ segment.last_observed_on|date:'Y-m-d' }}">
+                            {{ segment.affiliation_label }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
                 {% endfor %}
-            </tbody>
-        </table>
-    </div>
+            </div>
+        </div>
+        <nav aria-label="会派ガントチャートのページ" class="mt-3">
+            <div class="d-flex justify-content-center align-items-center gap-3">
+                {% if chart_has_previous %}
+                <a class="btn btn-sm btn-outline-secondary" href="?chart_page={{ chart_page|add:'-1' }}">前の100人</a>
+                {% endif %}
+                <span class="small text-muted">{{ chart_page }}ページ目（{{ chart_page_size }}人ずつ）</span>
+                {% if chart_has_next %}
+                <a class="btn btn-sm btn-outline-secondary" href="?chart_page={{ chart_page|add:'1' }}">次の100人</a>
+                {% endif %}
+            </div>
+        </nav>
+        {% else %}
+        <p class="text-center border rounded py-4">会派情報を含む発言はまだ取り込まれていません。</p>
+        {% endif %}
+    </section>
 </div>
 {% endblock %}
 
