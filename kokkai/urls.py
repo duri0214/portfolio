@@ -4,6 +4,12 @@ from . import views
 app_name = "kokkai"
 urlpatterns = [
     path("", views.IndexView.as_view(), name="index"),
+    path("politicians/", views.PoliticianListView.as_view(), name="politician_list"),
+    path(
+        "politicians/<int:pk>/",
+        views.PoliticianTimelineView.as_view(),
+        name="politician_timeline",
+    ),
     path(
         "reading-support/",
         views.ReadingSupportManagementView.as_view(),

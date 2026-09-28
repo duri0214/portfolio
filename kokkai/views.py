@@ -12,24 +12,26 @@ from django.views.generic import (
     DetailView,
     FormView,
     ListView,
+    TemplateView,
     UpdateView,
     View,
 )
 
 from .domain.repository.scenario_repository import ScenarioRepository
+from .domain.service.affiliation_timeline import AffiliationTimelineService
 from .domain.service.meeting_catalog import MeetingCatalogService
 from .domain.service.pipeline import KokkaiPipeline
 from .domain.service.participant_query import ParticipantQueryService
 from .domain.service.reading_support import ReadingSupportService
+from .domain.service.reading_support_import import ReadingSupportCsvImporter
 from .domain.service.scenario import ScenarioGenerationError, ScenarioService
 from .domain.service.scenario_play import ScenarioPlayError, ScenarioPlayService
 from .domain.valueobject.meeting import MEETING_METADATA_SPEAKER_NAME
-from .domain.service.reading_support_import import ReadingSupportCsvImporter
 from .forms import (
     ReadingSupportCsvImportForm,
     ReadingSupportEntryForm,
 )
-from .models import Meeting, ReadingSupportEntry
+from .models import Meeting, ObservedPerson, ReadingSupportEntry
 
 
 class KokkaiManagementRequiredMixin(UserPassesTestMixin):
@@ -170,6 +172,32 @@ class IndexView(PageSizePaginationMixin, ListView):
             return ""
         start_date, end_date = cls._get_period(values)
         return cls._build_period_query(start_date, end_date)
+
+
+class PoliticianListView(TemplateView):
+    """会議録発言から生成した会派観測対象の一覧を表示する。"""
+
+    template_name = "kokkai/politician_list.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["politicians"] = AffiliationTimelineService().list_people()
+        return context
+
+
+class PoliticianTimelineView(DetailView):
+    """観測対象ごとの会派観測履歴と一次資料根拠を表示する。"""
+
+    model = ObservedPerson
+    template_name = "kokkai/politician_timeline.html"
+    context_object_name = "person"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        summary, periods = AffiliationTimelineService().get_timeline(self.object)
+        context["summary"] = summary
+        context["periods"] = periods
+        return context
 
 
 class ReadingSupportManagementView(

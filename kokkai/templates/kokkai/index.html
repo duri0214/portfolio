@@ -12,6 +12,10 @@
         <p class="lead mb-0">実際の国会会議を題材に、役割と文脈を意識した学習ゲーム</p>
     </div>
 
+    <div class="d-flex justify-content-end mb-3">
+        <a href="{% url 'kokkai:politician_list' %}" class="btn btn-outline-primary">会派観測を確認する</a>
+    </div>
+
     {% if messages %}
     {% for message in messages %}
     <div class="alert alert-{{ message.tags }}" role="alert">{{ message }}</div>

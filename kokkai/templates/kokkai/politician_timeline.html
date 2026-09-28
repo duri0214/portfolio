@@ -1,0 +1,66 @@
+{% extends 'kokkai/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+        <ol class="breadcrumb mb-0 small">
+            <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">会議録一覧</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'kokkai:politician_list' %}">会派観測</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ person.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="bg-light p-4 rounded mb-4">
+        <h1 class="h2 mb-1">{{ person.name }}</h1>
+        {% if person.name_yomi %}<p class="text-muted mb-2">{{ person.name_yomi }}</p>{% endif %}
+        <p class="mb-0">人物同定: {{ person.get_identity_status_display }}。同姓同名を自動統合していません。</p>
+    </div>
+
+    <div class="row row-cols-2 row-cols-md-4 g-3 mb-4" aria-label="会派観測集計">
+        <div class="col"><div class="border rounded p-3 h-100"><div class="small text-muted">最初の観測日</div>{{ summary.first_observed_on|date:"Y-m-d" }}</div></div>
+        <div class="col"><div class="border rounded p-3 h-100"><div class="small text-muted">最後の観測日</div>{{ summary.last_observed_on|date:"Y-m-d" }}</div></div>
+        <div class="col"><div class="border rounded p-3 h-100"><div class="small text-muted">会派変更（観測上）</div>{{ summary.affiliation_change_count }}回</div></div>
+        <div class="col"><div class="border rounded p-3 h-100"><div class="small text-muted">会派数 / 発言・観測件数</div>{{ summary.affiliation_count }}会派 / {{ summary.speech_count }}件・{{ summary.observation_count }}件</div></div>
+    </div>
+
+    <div class="alert alert-info" role="alert">
+        下の区間は同じ会派が連続して観測された日をまとめた表示です。区間の間や、同じ会派の最初と最後の観測日の間も所属継続を示すものではありません。
+    </div>
+
+    <section aria-labelledby="timeline-heading">
+        <h2 id="timeline-heading" class="h4">会派観測タイムライン</h2>
+        {% for period in periods %}
+        <article class="card mb-3">
+            <div class="card-header d-flex flex-column flex-md-row justify-content-between gap-1">
+                <strong>{{ period.affiliation_label }}</strong>
+                <span>{{ period.first_observed_on|date:"Y-m-d" }} 〜 {{ period.last_observed_on|date:"Y-m-d" }}（{{ period.observation_count }}件）</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead><tr><th>観測日</th><th>種別</th><th>役職</th><th>会議録</th><th>一次資料</th></tr></thead>
+                        <tbody>
+                            {% for observation in period.observations %}
+                            <tr>
+                                <td>{{ observation.observed_on|date:"Y-m-d" }}</td>
+                                <td>{{ observation.get_source_type_display }}</td>
+                                <td>{{ observation.role|default:"未確認" }}</td>
+                                <td>{{ observation.source_meeting_id }}</td>
+                                <td>
+                                    {% for evidence in observation.evidences.all %}
+                                    <a href="{{ evidence.source_url }}" target="_blank" rel="noopener">発言 {{ evidence.source_speech_id }}</a>{% if not forloop.last %} / {% endif %}
+                                    {% empty %}
+                                    <a href="{{ observation.source_url }}" target="_blank" rel="noopener">会議録</a>
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </section>
+</div>
+{% endblock %}

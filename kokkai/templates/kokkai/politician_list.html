@@ -1,0 +1,52 @@
+{% extends 'kokkai/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+        <ol class="breadcrumb mb-0 small">
+            <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">会議録一覧</a></li>
+            <li class="breadcrumb-item active" aria-current="page">会派観測</li>
+        </ol>
+    </nav>
+
+    <div class="bg-light p-4 rounded mb-4">
+        <h1 class="h2">政治家の会派観測</h1>
+        <p class="mb-0">国会会議録検索システムの発言データに記載された会派を、発言日の観測として表示します。政党所属、入党日、離党日、未観測期間の所属は示しません。</p>
+    </div>
+
+    <div class="alert alert-warning" role="alert">
+        氏名とよみが一致する記録を表示単位にしています。同姓同名を本人と確定しておらず、人物同定状態はすべて未確認です。
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th scope="col">氏名</th>
+                    <th scope="col">観測期間</th>
+                    <th scope="col">会派変更（観測上）</th>
+                    <th scope="col">会派数</th>
+                    <th scope="col">発言件数 / 観測件数</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for politician in politicians %}
+                <tr>
+                    <td>
+                        <a href="{% url 'kokkai:politician_timeline' politician.person.pk %}">{{ politician.person.name }}</a>
+                        {% if politician.person.name_yomi %}<div class="small text-muted">{{ politician.person.name_yomi }}</div>{% endif %}
+                        <div class="small text-muted">人物同定: {{ politician.person.get_identity_status_display }}</div>
+                    </td>
+                    <td>{{ politician.first_observed_on|date:"Y-m-d" }} 〜 {{ politician.last_observed_on|date:"Y-m-d" }}</td>
+                    <td>{{ politician.affiliation_change_count }}回</td>
+                    <td>{{ politician.affiliation_count }}会派</td>
+                    <td>{{ politician.speech_count }}件 / {{ politician.observation_count }}件</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center">会派情報を含む発言はまだ取り込まれていません。</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
