@@ -72,10 +72,13 @@ class MeetingRepository:
                     Speech(
                         meeting=meeting,
                         speaker_name=speech.speaker,
+                        speaker_yomi=speech.speaker_yomi or "",
+                        speaker_position=speech.speaker_position or "",
                         speaker_role=speech.speaker_role,
                         speaker_affiliation=speech.speaker_group,
                         speech_text=speech.speech or "",
                         speech_order=speech_order,
+                        source_speech_id=speech.speech_id,
                         source_url=speech.speech_url,
                     )
                     for speech, speech_order in speeches

@@ -5,7 +5,7 @@ import json
 import logging
 import os
 from collections import OrderedDict
-from dataclasses import dataclass, replace
+from dataclasses import replace
 from typing import Any, Protocol
 
 from openai import OpenAIError
@@ -17,6 +17,7 @@ from lib.llm.valueobject.config import ModelDefaults, OpenAIGptConfig
 from ..repository.scenario_repository import ScenarioRepository
 from ..valueobject.scenario import (
     ScenarioActorData,
+    ScenarioAvailability,
     ScenarioChoiceData,
     ScenarioPayload,
 )
@@ -58,14 +59,6 @@ class ScenarioGenerator(Protocol):
         preceding_speech: Speech | None = None,
     ) -> dict[str, Any]:
         """直前の発言に対する選択アクターの返答を二択で返す。"""
-
-
-@dataclass(frozen=True)
-class ScenarioAvailability:
-    """会議詳細に表示するシナリオの利用可否。"""
-
-    scenario: MeetingScenario | None
-    needs_regeneration: bool
 
 
 class OpenAIScenarioGenerator:

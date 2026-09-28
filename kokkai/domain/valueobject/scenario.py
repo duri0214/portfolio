@@ -1,5 +1,21 @@
 from dataclasses import dataclass
 
+from ...models import MeetingScenario
+
+
+@dataclass(frozen=True)
+class ScenarioAvailability:
+    """
+    会議詳細に表示するシナリオの利用可否。
+
+    Attributes:
+        scenario: 表示対象の最新シナリオ。未生成時はNone。
+        needs_regeneration: 会議録の更新により再生成が必要かどうか。
+    """
+
+    scenario: MeetingScenario | None
+    needs_regeneration: bool
+
 
 @dataclass(frozen=True)
 class ScenarioActorData:

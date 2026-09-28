@@ -49,10 +49,13 @@ class Speech(models.Model):
     Attributes:
         meeting: 所属する会議録。
         speaker_name: 発言者名。
+        speaker_yomi: 発言者名のよみ。
+        speaker_position: 発言者の肩書き。
         speaker_role: 発言者の役割。
         speaker_affiliation: 発言者の所属会派。
         speech_text: 発言本文。
         speech_order: 会議録内の発言順。
+        source_speech_id: 国会会議録検索システムの発言ID。
         created_at: レコード作成日時。
     """
 
@@ -63,12 +66,15 @@ class Speech(models.Model):
         verbose_name="会議録",
     )
     speaker_name = models.CharField("発言者名", max_length=128)
+    speaker_yomi = models.CharField("発言者よみ", max_length=128, blank=True)
+    speaker_position = models.CharField("発言者肩書き", max_length=128, blank=True)
     speaker_role = models.CharField("発言者役割", max_length=128, null=True, blank=True)
     speaker_affiliation = models.CharField(
         "発言者所属会派", max_length=128, null=True, blank=True
     )
     speech_text = models.TextField("発言本文")
     speech_order = models.IntegerField("発言順")
+    source_speech_id = models.CharField("発言ID", max_length=64, blank=True)
     source_url = models.URLField("発言URL", blank=True)
     created_at = models.DateTimeField("作成日時", auto_now_add=True)
 
@@ -172,6 +178,215 @@ class MeetingParticipantEvidence(models.Model):
 
     class Meta:
         ordering = ["source_type", "speech_order", "pk"]
+
+
+class ObservedPerson(models.Model):
+    """
+    会議録の氏名とよみで区別する、本人確認前の観測対象。
+
+    Attributes:
+        name: 会議録から正規化した氏名。
+        name_yomi: 会議録APIが返した氏名よみ。
+        identity_status: 同姓同名を本人と確定していない状態。
+        created_at: 登録日時。
+    """
+
+    class IdentityStatus(models.TextChoices):
+        UNCONFIRMED = "unconfirmed", "未確認"
+
+    name = models.CharField("正規化氏名", max_length=128)
+    name_yomi = models.CharField("氏名よみ", max_length=128, blank=True)
+    identity_status = models.CharField(
+        "人物同定状態",
+        max_length=16,
+        choices=IdentityStatus.choices,
+        default=IdentityStatus.UNCONFIRMED,
+    )
+    created_at = models.DateTimeField("登録日時", auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["name", "name_yomi"], name="unique_observed_person_name_yomi"
+            )
+        ]
+        ordering = ["name", "name_yomi", "pk"]
+
+
+class AffiliationObservation(models.Model):
+    """
+    会議録の発言から得た、特定日における会派の観測値。
+
+    Attributes:
+        person: 観測対象。
+        meeting: 旧ロープレ取り込みとの互換用に保持する会議録。会派観測の取得では使わない。
+        observed_on: 会議開催日として扱う観測日。
+        source_type: 会議録内の観測種別。初期版では発言だけを扱う。
+        affiliation: 発言時にAPIが返した会派。空値は会派情報の欠損を示す。
+        speaker_position: 発言時の肩書き。
+        speaker_role: 発言時の役割。
+        speech_count: 同一人物・日付・会派へ集約した発言数。
+        source_meeting_id: 根拠会議録ID。
+        source_url: 根拠会議録URL。
+        created_at: 登録日時。
+        updated_at: 更新日時。
+    """
+
+    class SourceType(models.TextChoices):
+        """
+        会派観測の根拠種別。
+
+        Attributes:
+            SPEECH: 公式会議録APIが返した発言記録。
+        """
+
+        SPEECH = "speech", "発言"
+
+    person = models.ForeignKey(
+        ObservedPerson,
+        on_delete=models.CASCADE,
+        related_name="affiliation_observations",
+        verbose_name="観測対象",
+    )
+    meeting = models.ForeignKey(
+        Meeting,
+        on_delete=models.CASCADE,
+        related_name="affiliation_observations",
+        verbose_name="会議録",
+        null=True,
+        blank=True,
+    )
+    observed_on = models.DateField("観測日", db_index=True)
+    source_type = models.CharField(
+        "観測種別",
+        max_length=16,
+        choices=SourceType.choices,
+        default=SourceType.SPEECH,
+    )
+    affiliation = models.CharField("観測会派", max_length=128, blank=True)
+    speaker_position = models.CharField("発言時の肩書き", max_length=128, blank=True)
+    speaker_role = models.CharField("発言時の役割", max_length=128, blank=True)
+    speech_count = models.PositiveIntegerField("発言・観測件数", default=0)
+    source_meeting_id = models.CharField("根拠会議録ID", max_length=64)
+    source_url = models.URLField("根拠会議録URL", blank=True)
+    created_at = models.DateTimeField("登録日時", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["person", "source_meeting_id", "affiliation"],
+                name="unique_person_source_meeting_affiliation_observation",
+            )
+        ]
+        ordering = ["observed_on", "meeting_id", "pk"]
+
+    @property
+    def affiliation_label(self) -> str:
+        """会派情報がない観測を、所属なしと断定せずに表示する。"""
+
+        return self.affiliation or "会派情報なし"
+
+    @property
+    def role(self) -> str:
+        """構造化された発言時の役職を表示する。"""
+
+        return join_roles(self.speaker_position, self.speaker_role)
+
+
+class AffiliationObservationEvidence(models.Model):
+    """
+    会派観測を国会会議録の個別発言へ戻す根拠。
+
+    Attributes:
+        observation: 紐づく会派観測。
+        source_speech_id: 公式APIの発言ID。
+        source_url: 公式会議録の発言URL。
+        source_text: 根拠となった発言本文。
+        speech_order: 会議録内の発言順。
+        speaker_position: 発言時の肩書き。
+        speaker_role: 発言時の役割。
+        created_at: 登録日時。
+    """
+
+    observation = models.ForeignKey(
+        AffiliationObservation,
+        on_delete=models.CASCADE,
+        related_name="evidences",
+        verbose_name="会派観測",
+    )
+    source_speech_id = models.CharField("根拠発言ID", max_length=64)
+    source_url = models.URLField("根拠発言URL", blank=True)
+    source_text = models.TextField("根拠発言本文")
+    speech_order = models.PositiveIntegerField("発言順")
+    speaker_position = models.CharField("発言時の肩書き", max_length=128, blank=True)
+    speaker_role = models.CharField("発言時の役割", max_length=128, blank=True)
+    created_at = models.DateTimeField("登録日時", auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["observation", "source_speech_id"],
+                name="unique_affiliation_observation_speech",
+            )
+        ]
+        ordering = ["speech_order", "pk"]
+
+
+class AffiliationImportJob(models.Model):
+    """
+    会派観測の月次取得を、APIページごとに再開可能な状態で管理する。
+
+    Attributes:
+        id: 取得処理を参照・再開するためのUUID。
+        start_date: ユーザーが指定した取得開始日。
+        end_date: ユーザーが指定した取得終了日。
+        current_start_date: 現在取得している月次期間の開始日。
+        current_end_date: 現在取得している月次期間の終了日。
+        next_record_position: 現在の月次期間で次に取得するAPIレコード位置。
+        current_period_record_count: 現在の月次期間でAPIが返した会議録総数。
+        processed_meeting_count: これまでに観測へ反映した会議録数。
+        status: 取得処理の進行状態。
+        error_message: 直近の通信失敗理由。
+        created_at: 取得処理の作成日時。
+        updated_at: 取得処理の最終更新日時。
+    """
+
+    class Status(models.TextChoices):
+        """
+        会派観測取得処理の進行状態。
+
+        Attributes:
+            PENDING: 次のAPIページを取得していない状態。
+            RUNNING: APIページを取得中または次のページ待ちの状態。
+            COMPLETED: 指定期間の全月次期間を取得済みの状態。
+            FAILED: 通信失敗により利用者の再開を待つ状態。
+        """
+
+        PENDING = "pending", "開始待ち"
+        RUNNING = "running", "取得中"
+        COMPLETED = "completed", "完了"
+        FAILED = "failed", "再開待ち"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    start_date = models.DateField("取得開始日")
+    end_date = models.DateField("取得終了日")
+    current_start_date = models.DateField("現在の取得開始日")
+    current_end_date = models.DateField("現在の取得終了日")
+    next_record_position = models.PositiveIntegerField("次のAPIレコード位置", default=1)
+    current_period_record_count = models.PositiveIntegerField(
+        "現在の月次期間の会議録数", null=True, blank=True
+    )
+    processed_meeting_count = models.PositiveIntegerField("反映済み会議録数", default=0)
+    status = models.CharField(
+        "取得状態", max_length=16, choices=Status.choices, default=Status.PENDING
+    )
+    error_message = models.CharField("通信失敗理由", max_length=255, blank=True)
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at", "-created_at"]
 
 
 class MeetingScenario(models.Model):

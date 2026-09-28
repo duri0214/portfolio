@@ -1,0 +1,211 @@
+{% extends 'kokkai/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'kokkai/affiliation_traceability.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+        <ol class="breadcrumb mb-0 small">
+            <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">国会会議録ロープレ</a></li>
+            <li class="breadcrumb-item active" aria-current="page">会派観測</li>
+        </ol>
+    </nav>
+
+    <div class="bg-light p-4 rounded mb-4">
+        <h1 class="h2">政治家の会派トレーサビリティ</h1>
+        <p class="mb-0">ロープレとは独立して、国会会議録検索システムの発言データから会派観測を収集・可視化します。政党所属、入党日、離党日、未観測期間の所属は示しません。</p>
+    </div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }}" role="alert">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+
+    <section class="card mb-4" aria-labelledby="import-heading">
+        <div class="card-body">
+            <h2 id="import-heading" class="h4">会議録を期間取得する</h2>
+            <p class="text-muted">公式APIの会議録を月ごと・ページごとに取得し、発言に含まれる会派を観測ログへ更新します。初期値は今日から10年前です。</p>
+            <form method="post" class="row g-3 align-items-end" id="traceability-import-form">
+                {% csrf_token %}
+                <div class="col-md-5">
+                    <label for="start_date" class="form-label">開始日</label>
+                    <input id="start_date" name="start_date" type="date" class="form-control" value="{{ default_start_date|date:'Y-m-d' }}" min="1947-05-20" required>
+                </div>
+                <div class="col-md-5">
+                    <label for="end_date" class="form-label">終了日</label>
+                    <input id="end_date" name="end_date" type="date" class="form-control" value="{{ default_end_date|date:'Y-m-d' }}" required>
+                </div>
+                <div class="col-md-2"><button type="submit" class="btn btn-primary w-100" id="traceability-import-submit">期間を取得する</button></div>
+            </form>
+        </div>
+    </section>
+
+    {% if import_job %}
+    <section class="card border-primary mb-4" id="affiliation-import-progress"
+             data-step-url="{% url 'kokkai:affiliation_import_step' import_job.pk %}"
+             data-status="{{ import_job.status }}">
+        <div class="card-body">
+            <h2 class="h4">期間取得の進捗</h2>
+            <p class="mb-2" id="affiliation-import-progress-text">
+                {{ import_job.current_start_date|date:"Y-m-d" }} から {{ import_job.current_end_date|date:"Y-m-d" }} を取得します。
+            </p>
+            <p class="text-muted mb-3" id="affiliation-import-count">反映済み会議録: {{ import_job.processed_meeting_count }}件</p>
+            <div class="alert alert-warning mb-3 {% if import_job.status != 'failed' %}d-none{% endif %}" id="affiliation-import-error" role="alert">
+                {{ import_job.error_message }}
+            </div>
+            <button type="button" class="btn btn-outline-primary d-none" id="affiliation-import-retry">再開する</button>
+        </div>
+    </section>
+    {% endif %}
+
+    <div class="alert alert-warning" role="alert">
+        氏名とよみが一致する記録を表示単位にしています。同姓同名を本人と確定しておらず、人物同定状態はすべて未確認です。
+    </div>
+
+    <section aria-labelledby="chart-heading">
+        <div class="d-flex justify-content-between align-items-end mb-2">
+            <div>
+                <h2 id="chart-heading" class="h4 mb-1">政治家別 会派観測ガントチャート</h2>
+                <p class="text-muted small mb-0">人物を縦、観測日を横に表示します。バーは同じ会派が連続して観測された最初と最後の日の間を示します。バーをクリックすると詳細を開きます。</p>
+            </div>
+            {% if chart %}<span class="small text-muted">{{ chart.start_date|date:"Y-m-d" }} 〜 {{ chart.end_date|date:"Y-m-d" }} / {{ chart.total_row_count }}人</span>{% endif %}
+        </div>
+
+        {% if chart %}
+        <div class="affiliation-gantt-scroll border rounded">
+            <div class="affiliation-gantt">
+                <div class="affiliation-gantt-header">
+                    <div class="affiliation-gantt-person fw-semibold">人物</div>
+                    <div class="affiliation-gantt-axis" aria-label="観測日">
+                        {% for tick in chart.ticks %}
+                        <div class="affiliation-gantt-tick" style="left: {{ tick.left_percent }}%"><span>{{ tick.label }}</span></div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% for row in chart.rows %}
+                <div class="affiliation-gantt-row">
+                    <div class="affiliation-gantt-person">
+                        <a href="{% url 'kokkai:politician_timeline' row.person.pk %}">{{ row.person.name }}</a>
+                        {% if row.person.name_yomi %}<div class="small text-muted">{{ row.person.name_yomi }}</div>{% endif %}
+                    </div>
+                    <div class="affiliation-gantt-track" style="--lane-count: {{ row.lane_count }}">
+                        {% for tick in chart.ticks %}
+                        <span class="affiliation-gantt-guide" style="left: {{ tick.left_percent }}%" aria-hidden="true"></span>
+                        {% endfor %}
+                        {% for segment in row.segments %}
+                        <a href="{% url 'kokkai:politician_timeline' row.person.pk %}"
+                           class="affiliation-gantt-bar affiliation-color-{{ segment.color_index }} px-2"
+                           style="left: {{ segment.left_percent }}%; width: {{ segment.width_percent }}%; --lane: {{ segment.lane }}"
+                           title="{{ segment.affiliation_label }}: {{ segment.first_observed_on|date:'Y-m-d' }} 〜 {{ segment.last_observed_on|date:'Y-m-d' }}">
+                            {{ segment.affiliation_label }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <nav aria-label="会派ガントチャートのページ" class="mt-3">
+            <div class="d-flex justify-content-center align-items-center gap-3">
+                {% if chart_has_previous %}
+                <a class="btn btn-sm btn-outline-secondary" href="?chart_page={{ chart_page|add:'-1' }}">前の100人</a>
+                {% endif %}
+                <span class="small text-muted">{{ chart_page }}ページ目（{{ chart_page_size }}人ずつ）</span>
+                {% if chart_has_next %}
+                <a class="btn btn-sm btn-outline-secondary" href="?chart_page={{ chart_page|add:'1' }}">次の100人</a>
+                {% endif %}
+            </div>
+        </nav>
+        {% else %}
+        <p class="text-center border rounded py-4">会派情報を含む発言はまだ取り込まれていません。</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("traceability-import-form");
+        const button = document.getElementById("traceability-import-submit");
+
+        if (form && button) {
+            form.addEventListener("submit", function () {
+                button.disabled = true;
+                button.setAttribute("aria-busy", "true");
+                button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>開始中…';
+            });
+        }
+
+        const progress = document.getElementById("affiliation-import-progress");
+        if (!progress) {
+            return;
+        }
+
+        const progressText = document.getElementById("affiliation-import-progress-text");
+        const count = document.getElementById("affiliation-import-count");
+        const error = document.getElementById("affiliation-import-error");
+        const retry = document.getElementById("affiliation-import-retry");
+        const csrfToken = document.querySelector("#traceability-import-form input[name=csrfmiddlewaretoken]").value;
+
+        function wait(milliseconds) {
+            return new Promise(function (resolve) {
+                window.setTimeout(resolve, milliseconds);
+            });
+        }
+
+        function renderProgress(data) {
+            progressText.textContent = data.current_start_date + " から " + data.current_end_date + " を取得中です。";
+            count.textContent = "反映済み会議録: " + data.processed_meeting_count + "件";
+            if (data.error_message) {
+                error.textContent = data.error_message;
+                error.classList.remove("d-none");
+            } else {
+                error.classList.add("d-none");
+            }
+        }
+
+        async function continueImport() {
+            retry.classList.add("d-none");
+            while (true) {
+                let response;
+                let data;
+                try {
+                    response = await fetch(progress.dataset.stepUrl, {
+                        method: "POST",
+                        headers: {"X-CSRFToken": csrfToken, "Accept": "application/json"},
+                        credentials: "same-origin"
+                    });
+                    data = await response.json();
+                } catch (requestError) {
+                    error.textContent = "通信に失敗しました。再開できます。";
+                    error.classList.remove("d-none");
+                    retry.classList.remove("d-none");
+                    return;
+                }
+
+                renderProgress(data);
+                if (!response.ok || data.status === "failed") {
+                    retry.classList.remove("d-none");
+                    return;
+                }
+                if (data.status === "completed") {
+                    progressText.textContent = "取得が完了しました。一覧を更新します。";
+                    window.setTimeout(function () {
+                        window.location.assign("{% url 'kokkai:affiliation_traceability' %}");
+                    }, 500);
+                    return;
+                }
+                await wait(2000);
+            }
+        }
+
+        retry.addEventListener("click", continueImport);
+        continueImport();
+    });
+</script>
+{% endblock %}

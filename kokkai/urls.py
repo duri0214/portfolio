@@ -5,6 +5,21 @@ app_name = "kokkai"
 urlpatterns = [
     path("", views.IndexView.as_view(), name="index"),
     path(
+        "traceability/",
+        views.AffiliationTraceabilityView.as_view(),
+        name="affiliation_traceability",
+    ),
+    path(
+        "traceability/imports/<uuid:pk>/step/",
+        views.AffiliationImportStepView.as_view(),
+        name="affiliation_import_step",
+    ),
+    path(
+        "politicians/<int:pk>/",
+        views.PoliticianTimelineView.as_view(),
+        name="politician_timeline",
+    ),
+    path(
         "reading-support/",
         views.ReadingSupportManagementView.as_view(),
         name="reading_support_management",

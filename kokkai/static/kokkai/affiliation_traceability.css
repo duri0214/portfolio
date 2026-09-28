@@ -1,0 +1,95 @@
+.affiliation-gantt-scroll {
+    overflow-x: auto;
+}
+
+.affiliation-gantt {
+    min-width: 980px;
+}
+
+.affiliation-gantt-header,
+.affiliation-gantt-row {
+    display: grid;
+    grid-template-columns: 180px minmax(760px, 1fr);
+}
+
+.affiliation-gantt-header {
+    border-bottom: 1px solid #ced4da;
+    font-size: 0.8rem;
+}
+
+.affiliation-gantt-person {
+    padding: 0.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.affiliation-gantt-axis {
+    position: relative;
+    min-height: 2.25rem;
+    border-left: 1px solid #ced4da;
+    border-bottom: 1px solid #e9ecef;
+    background-image: linear-gradient(to right, rgba(13, 110, 253, 0.04), rgba(13, 110, 253, 0.04));
+}
+
+.affiliation-gantt-tick {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    border-left: 1px solid #ced4da;
+    color: #495057;
+    white-space: nowrap;
+}
+
+.affiliation-gantt-tick span {
+    display: inline-block;
+    margin-left: 0.25rem;
+    padding-top: 0.45rem;
+}
+
+.affiliation-gantt-track {
+    position: relative;
+    min-height: calc(var(--lane-count) * 2rem + 0.5rem);
+    border-left: 1px solid #ced4da;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.affiliation-gantt-guide {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-left: 1px solid rgba(108, 117, 125, 0.3);
+}
+
+.affiliation-gantt-bar {
+    position: absolute;
+    z-index: 1;
+    top: calc(0.25rem + var(--lane) * 2rem);
+    height: 1.5rem;
+    min-width: 0.8rem;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.18);
+    border-radius: 0.25rem;
+    color: #fff;
+    font-size: 0.75rem;
+    line-height: 1.35rem;
+    text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.affiliation-gantt-bar:hover,
+.affiliation-gantt-bar:focus-visible {
+    z-index: 1;
+    color: #fff;
+    outline: 3px solid rgba(13, 110, 253, 0.35);
+}
+
+.affiliation-color-0 { background-color: #0d6efd; }
+.affiliation-color-1 { background-color: #198754; }
+.affiliation-color-2 { background-color: #6f42c1; }
+.affiliation-color-3 { background-color: #d63384; }
+.affiliation-color-4 { background-color: #fd7e14; }
+.affiliation-color-5 { background-color: #20c997; }
+.affiliation-color-6 { background-color: #0dcaf0; }
+.affiliation-color-7 { background-color: #795548; }
+.affiliation-color-8 { background-color: #dc3545; }
+.affiliation-color-9 { background-color: #6610f2; }

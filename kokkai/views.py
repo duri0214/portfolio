@@ -1,35 +1,39 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from urllib.parse import urlencode
 
+import requests
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Count, Q
-from django.http import HttpResponse
-from django.shortcuts import redirect, render
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
     DeleteView,
     DetailView,
     FormView,
     ListView,
+    TemplateView,
     UpdateView,
     View,
 )
 
 from .domain.repository.scenario_repository import ScenarioRepository
+from .domain.service.affiliation_import import AffiliationImportService
+from .domain.service.affiliation_timeline import AffiliationTimelineService
 from .domain.service.meeting_catalog import MeetingCatalogService
 from .domain.service.pipeline import KokkaiPipeline
 from .domain.service.participant_query import ParticipantQueryService
 from .domain.service.reading_support import ReadingSupportService
+from .domain.service.reading_support_import import ReadingSupportCsvImporter
 from .domain.service.scenario import ScenarioGenerationError, ScenarioService
 from .domain.service.scenario_play import ScenarioPlayError, ScenarioPlayService
 from .domain.valueobject.meeting import MEETING_METADATA_SPEAKER_NAME
-from .domain.service.reading_support_import import ReadingSupportCsvImporter
 from .forms import (
     ReadingSupportCsvImportForm,
     ReadingSupportEntryForm,
 )
-from .models import Meeting, ReadingSupportEntry
+from .models import AffiliationImportJob, Meeting, ObservedPerson, ReadingSupportEntry
 
 
 class KokkaiManagementRequiredMixin(UserPassesTestMixin):
@@ -170,6 +174,160 @@ class IndexView(PageSizePaginationMixin, ListView):
             return ""
         start_date, end_date = cls._get_period(values)
         return cls._build_period_query(start_date, end_date)
+
+
+class AffiliationTraceabilityView(TemplateView):
+    """
+    会派観測の期間取得と人物一覧を、ロープレから独立して表示する。
+
+    Attributes:
+        DEFAULT_YEARS_BACK: 初期表示で今日から遡る年数。
+    """
+
+    template_name = "kokkai/politician_list.html"
+    DEFAULT_YEARS_BACK = 10
+    CHART_PAGE_SIZE = 100
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        chart_page = self._chart_page()
+        context["chart"] = AffiliationTimelineService().get_chart(
+            offset=(chart_page - 1) * self.CHART_PAGE_SIZE,
+            limit=self.CHART_PAGE_SIZE,
+        )
+        context["chart_page"] = chart_page
+        context["chart_page_size"] = self.CHART_PAGE_SIZE
+        context["chart_has_previous"] = chart_page > 1
+        context["chart_has_next"] = bool(
+            context["chart"]
+            and context["chart"].total_row_count > chart_page * self.CHART_PAGE_SIZE
+        )
+        today = date.today()
+        context["default_start_date"] = self._years_ago(today, self.DEFAULT_YEARS_BACK)
+        context["default_end_date"] = today
+        context["import_job"] = AffiliationImportJob.objects.filter(
+            pk=self.request.GET.get("import_job")
+        ).first()
+        return context
+
+    def _chart_page(self) -> int:
+        """クエリ文字列から会派ガントチャートのページ番号を取得する。"""
+
+        try:
+            return max(int(self.request.GET.get("chart_page", "1")), 1)
+        except ValueError:
+            return 1
+
+    def post(self, request, *args, **kwargs):
+        try:
+            start_date = date.fromisoformat(request.POST["start_date"])
+            end_date = date.fromisoformat(request.POST["end_date"])
+        except (KeyError, ValueError):
+            messages.error(request, "開始日と終了日を正しい形式で指定してください。")
+            return redirect("kokkai:affiliation_traceability")
+        if end_date < start_date:
+            messages.error(request, "終了日は開始日以降にしてください。")
+            return redirect("kokkai:affiliation_traceability")
+
+        current_end_date = AffiliationImportService.first_chunk_end(
+            start_date, end_date
+        )
+        job = AffiliationImportJob.objects.create(
+            start_date=start_date,
+            end_date=end_date,
+            current_start_date=start_date,
+            current_end_date=current_end_date,
+        )
+        messages.success(
+            request,
+            "会派観測の非同期取得を開始しました。画面を開いたままお待ちください。",
+        )
+        return redirect(
+            f"{reverse('kokkai:affiliation_traceability')}?import_job={job.pk}"
+        )
+
+    @staticmethod
+    def _years_ago(today: date, years: int) -> date:
+        """うるう日を含め、今日から指定年数前の日付を返す。"""
+
+        try:
+            return today.replace(year=today.year - years)
+        except ValueError:
+            return today.replace(year=today.year - years, day=28)
+
+
+class AffiliationImportStepView(View):
+    """会派観測取得処理を一つのAPIページずつ進め、JSONで進捗を返す。"""
+
+    def post(self, request, pk, *args, **kwargs):
+        job = get_object_or_404(AffiliationImportJob, pk=pk)
+        if job.status == AffiliationImportJob.Status.COMPLETED:
+            return JsonResponse(self._payload(job))
+
+        job.status = AffiliationImportJob.Status.RUNNING
+        job.error_message = ""
+        job.save(update_fields=["status", "error_message", "updated_at"])
+        try:
+            result = AffiliationImportService().import_page(
+                job.current_start_date,
+                job.current_end_date,
+                job.next_record_position,
+            )
+        except requests.RequestException:
+            job.status = AffiliationImportJob.Status.FAILED
+            job.error_message = (
+                "国会会議録APIとの通信がタイムアウトしました。再開できます。"
+            )
+            job.save(update_fields=["status", "error_message", "updated_at"])
+            return JsonResponse(self._payload(job), status=503)
+
+        job.processed_meeting_count += result.meeting_count
+        job.current_period_record_count = result.total_meeting_count
+        if (
+            result.next_record_position
+            and result.next_record_position > job.next_record_position
+        ):
+            job.next_record_position = result.next_record_position
+        elif job.current_end_date >= job.end_date:
+            job.status = AffiliationImportJob.Status.COMPLETED
+        else:
+            next_start_date = job.current_end_date + timedelta(days=1)
+            job.current_start_date = next_start_date
+            job.current_end_date = AffiliationImportService.first_chunk_end(
+                next_start_date, job.end_date
+            )
+            job.next_record_position = 1
+            job.current_period_record_count = None
+        job.save()
+        return JsonResponse(self._payload(job))
+
+    @staticmethod
+    def _payload(job: AffiliationImportJob) -> dict[str, str | int | None]:
+        """ブラウザーで次の取得要求を判断できる進捗情報を組み立てる。"""
+
+        return {
+            "status": job.status,
+            "processed_meeting_count": job.processed_meeting_count,
+            "current_start_date": job.current_start_date.isoformat(),
+            "current_end_date": job.current_end_date.isoformat(),
+            "current_period_record_count": job.current_period_record_count,
+            "error_message": job.error_message or None,
+        }
+
+
+class PoliticianTimelineView(DetailView):
+    """観測対象ごとの会派観測履歴と一次資料根拠を表示する。"""
+
+    model = ObservedPerson
+    template_name = "kokkai/politician_timeline.html"
+    context_object_name = "person"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        summary, periods = AffiliationTimelineService().get_timeline(self.object)
+        context["summary"] = summary
+        context["periods"] = periods
+        return context
 
 
 class ReadingSupportManagementView(
