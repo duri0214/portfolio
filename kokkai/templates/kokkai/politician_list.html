@@ -4,15 +4,40 @@
 <div class="container mt-4">
     <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
         <ol class="breadcrumb mb-0 small">
-            <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">会議録一覧</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'home:index' %}">ポートフォリオ</a></li>
             <li class="breadcrumb-item active" aria-current="page">会派観測</li>
         </ol>
     </nav>
 
     <div class="bg-light p-4 rounded mb-4">
-        <h1 class="h2">政治家の会派観測</h1>
-        <p class="mb-0">国会会議録検索システムの発言データに記載された会派を、発言日の観測として表示します。政党所属、入党日、離党日、未観測期間の所属は示しません。</p>
+        <h1 class="h2">政治家の会派トレーサビリティ</h1>
+        <p class="mb-0">ロープレとは独立して、国会会議録検索システムの発言データから会派観測を収集・可視化します。政党所属、入党日、離党日、未観測期間の所属は示しません。</p>
     </div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }}" role="alert">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+
+    <section class="card mb-4" aria-labelledby="import-heading">
+        <div class="card-body">
+            <h2 id="import-heading" class="h4">会議録を期間取得する</h2>
+            <p class="text-muted">公式APIの会議録を指定期間の全ページから取得し、発言に含まれる会派を観測ログへ更新します。例として2016年以降を選べます。</p>
+            <form method="post" class="row g-3 align-items-end" id="traceability-import-form">
+                {% csrf_token %}
+                <div class="col-md-5">
+                    <label for="start_date" class="form-label">開始日</label>
+                    <input id="start_date" name="start_date" type="date" class="form-control" value="{{ default_start_date|date:'Y-m-d' }}" min="1947-05-20" required>
+                </div>
+                <div class="col-md-5">
+                    <label for="end_date" class="form-label">終了日</label>
+                    <input id="end_date" name="end_date" type="date" class="form-control" value="{{ default_end_date|date:'Y-m-d' }}" required>
+                </div>
+                <div class="col-md-2"><button type="submit" class="btn btn-primary w-100" id="traceability-import-submit">期間を取得する</button></div>
+            </form>
+        </div>
+    </section>
 
     <div class="alert alert-warning" role="alert">
         氏名とよみが一致する記録を表示単位にしています。同姓同名を本人と確定しておらず、人物同定状態はすべて未確認です。
@@ -49,4 +74,23 @@
         </table>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("traceability-import-form");
+        const button = document.getElementById("traceability-import-submit");
+
+        if (!form || !button) {
+            return;
+        }
+
+        form.addEventListener("submit", function () {
+            button.disabled = true;
+            button.setAttribute("aria-busy", "true");
+            button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>取得中…';
+        });
+    });
+</script>
 {% endblock %}

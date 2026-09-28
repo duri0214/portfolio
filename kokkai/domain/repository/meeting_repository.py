@@ -5,7 +5,6 @@ from django.db import transaction
 from ...models import Meeting, Speech
 from ..valueobject.meeting import MeetingCatalogRecord, MeetingRecord, SpeechRecord
 from ..valueobject.participant import ParticipantData
-from .affiliation_observation_repository import AffiliationObservationRepository
 from .participant_repository import MeetingParticipantRepository
 
 
@@ -19,7 +18,6 @@ class MeetingRepository:
         self.participant_repository = (
             participant_repository or MeetingParticipantRepository()
         )
-        self.affiliation_observation_repository = AffiliationObservationRepository()
 
     def rebuild_meetings(self, records: Iterable[MeetingCatalogRecord]) -> int:
         """
@@ -87,5 +85,4 @@ class MeetingRepository:
                 ]
             )
             self.participant_repository.refresh_for_meeting(meeting, participants)
-            self.affiliation_observation_repository.refresh_for_meeting(meeting)
         return meeting

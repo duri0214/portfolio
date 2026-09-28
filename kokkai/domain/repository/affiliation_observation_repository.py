@@ -3,37 +3,35 @@ from collections import defaultdict
 from ...models import (
     AffiliationObservation,
     AffiliationObservationEvidence,
-    Meeting,
     ObservedPerson,
-    Speech,
 )
 from ..service.participant import normalize_person_name, normalize_text
+from ..valueobject.meeting import MEETING_METADATA_SPEAKER_NAME, MeetingRecord
 
 
 class AffiliationObservationRepository:
     """会議録発言を、会派の時点観測として保存・参照する。"""
 
-    def refresh_for_meeting(self, meeting: Meeting) -> None:
-        """会議単位で会派観測を洗い替え、発言根拠を重複なく保存する。"""
+    def refresh_for_record(self, record: MeetingRecord) -> None:
+        """公式APIの会議録1件から会派観測を洗い替え、根拠を重複なく保存する。"""
 
         evidences_by_key = defaultdict(list)
-        source_speeches = (
-            Speech.objects.filter(meeting=meeting)
-            .exclude(speaker_name="会議録情報")
-            .order_by("speech_order", "pk")
-        )
-        for speech in source_speeches:
-            name = normalize_person_name(speech.speaker_name)
-            if not name or not normalize_text(speech.speech_text):
+        for speech in sorted(record.speech_records, key=lambda item: item.speech_order):
+            if speech.speaker == MEETING_METADATA_SPEAKER_NAME:
+                continue
+            name = normalize_person_name(speech.speaker)
+            if not name or not normalize_text(speech.speech):
                 continue
             key = (
                 name,
                 normalize_text(speech.speaker_yomi),
-                normalize_text(speech.speaker_affiliation),
+                normalize_text(speech.speaker_group),
             )
             evidences_by_key[key].append(speech)
 
-        AffiliationObservation.objects.filter(meeting=meeting).delete()
+        AffiliationObservation.objects.filter(
+            source_meeting_id=record.issue_id
+        ).delete()
         if not evidences_by_key:
             return
 
@@ -47,15 +45,14 @@ class AffiliationObservationRepository:
             observations.append(
                 AffiliationObservation(
                     person=person,
-                    meeting=meeting,
-                    observed_on=meeting.meeting_date,
+                    observed_on=record.date_obj,
                     source_type=AffiliationObservation.SourceType.SPEECH,
                     affiliation=affiliation,
-                    speaker_position=first_speech.speaker_position,
+                    speaker_position=first_speech.speaker_position or "",
                     speaker_role=first_speech.speaker_role or "",
                     speech_count=len(evidences),
-                    source_meeting_id=meeting.min_id,
-                    source_url=meeting.url,
+                    source_meeting_id=record.issue_id,
+                    source_url=record.meeting_url,
                 )
             )
         AffiliationObservation.objects.bulk_create(observations)
@@ -67,7 +64,7 @@ class AffiliationObservationRepository:
                 observation.affiliation,
             ): observation
             for observation in AffiliationObservation.objects.filter(
-                meeting=meeting
+                source_meeting_id=record.issue_id
             ).select_related("person")
         }
         models = []
@@ -77,13 +74,13 @@ class AffiliationObservationRepository:
                 AffiliationObservationEvidence(
                     observation=observation,
                     source_speech_id=(
-                        evidence.source_speech_id
-                        or f"{meeting.min_id}_{evidence.speech_order:03d}"
+                        evidence.speech_id
+                        or f"{record.issue_id}_{evidence.speech_order:03d}"
                     ),
-                    source_url=evidence.source_url,
-                    source_text=evidence.speech_text,
+                    source_url=evidence.speech_url,
+                    source_text=evidence.speech or "",
                     speech_order=evidence.speech_order,
-                    speaker_position=evidence.speaker_position,
+                    speaker_position=evidence.speaker_position or "",
                     speaker_role=evidence.speaker_role or "",
                 )
                 for evidence in evidences
@@ -102,7 +99,6 @@ class AffiliationObservationRepository:
 
         return (
             AffiliationObservation.objects.filter(person=person)
-            .select_related("meeting")
             .prefetch_related("evidences")
-            .order_by("observed_on", "meeting__min_id", "affiliation", "pk")
+            .order_by("observed_on", "source_meeting_id", "affiliation", "pk")
         )

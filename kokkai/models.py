@@ -219,7 +219,7 @@ class AffiliationObservation(models.Model):
 
     Attributes:
         person: 観測対象。
-        meeting: 根拠となる会議録。
+        meeting: 旧ロープレ取り込みとの互換用に保持する会議録。会派観測の取得では使わない。
         observed_on: 会議開催日として扱う観測日。
         source_type: 会議録内の観測種別。初期版では発言だけを扱う。
         affiliation: 発言時にAPIが返した会派。空値は会派情報の欠損を示す。
@@ -253,6 +253,8 @@ class AffiliationObservation(models.Model):
         on_delete=models.CASCADE,
         related_name="affiliation_observations",
         verbose_name="会議録",
+        null=True,
+        blank=True,
     )
     observed_on = models.DateField("観測日", db_index=True)
     source_type = models.CharField(
@@ -273,8 +275,8 @@ class AffiliationObservation(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["person", "meeting", "affiliation"],
-                name="unique_person_meeting_affiliation_observation",
+                fields=["person", "source_meeting_id", "affiliation"],
+                name="unique_person_source_meeting_affiliation_observation",
             )
         ]
         ordering = ["observed_on", "meeting_id", "pk"]

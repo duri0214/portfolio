@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from urllib.parse import urlencode
 
 from django.contrib import messages
@@ -18,6 +18,7 @@ from django.views.generic import (
 )
 
 from .domain.repository.scenario_repository import ScenarioRepository
+from .domain.service.affiliation_import import AffiliationImportService
 from .domain.service.affiliation_timeline import AffiliationTimelineService
 from .domain.service.meeting_catalog import MeetingCatalogService
 from .domain.service.pipeline import KokkaiPipeline
@@ -174,15 +175,41 @@ class IndexView(PageSizePaginationMixin, ListView):
         return cls._build_period_query(start_date, end_date)
 
 
-class PoliticianListView(TemplateView):
-    """会議録発言から生成した会派観測対象の一覧を表示する。"""
+class AffiliationTraceabilityView(TemplateView):
+    """
+    会派観測の期間取得と人物一覧を、ロープレから独立して表示する。
+
+    Attributes:
+        DEFAULT_START_DATE: 期間指定を省略したときの開始日。
+    """
 
     template_name = "kokkai/politician_list.html"
+    DEFAULT_START_DATE = date(2016, 1, 1)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["politicians"] = AffiliationTimelineService().list_people()
+        context["default_start_date"] = self.DEFAULT_START_DATE
+        context["default_end_date"] = date.today()
         return context
+
+    def post(self, request, *args, **kwargs):
+        try:
+            start_date = date.fromisoformat(request.POST["start_date"])
+            end_date = date.fromisoformat(request.POST["end_date"])
+        except (KeyError, ValueError):
+            messages.error(request, "開始日と終了日を正しい形式で指定してください。")
+            return redirect("kokkai:affiliation_traceability")
+        if end_date < start_date:
+            messages.error(request, "終了日は開始日以降にしてください。")
+            return redirect("kokkai:affiliation_traceability")
+
+        result = AffiliationImportService().import_period(start_date, end_date)
+        messages.success(
+            request,
+            f"{result.meeting_count}件の会議録から会派観測を更新しました。",
+        )
+        return redirect("kokkai:affiliation_traceability")
 
 
 class PoliticianTimelineView(DetailView):
