@@ -9,11 +9,9 @@ from django.urls import reverse
 from kokkai.domain.repository.affiliation_observation_repository import (
     AffiliationObservationRepository,
 )
-from kokkai.domain.service.affiliation_import import (
-    AffiliationImportPage,
-    AffiliationImportService,
-)
+from kokkai.domain.service.affiliation_import import AffiliationImportService
 from kokkai.domain.service.affiliation_timeline import AffiliationTimelineService
+from kokkai.domain.valueobject.affiliation import AffiliationImportPage
 from kokkai.domain.valueobject.meeting import MeetingSearchResult
 from kokkai.models import (
     AffiliationImportJob,

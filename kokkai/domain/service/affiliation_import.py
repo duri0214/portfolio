@@ -1,26 +1,10 @@
-from dataclasses import dataclass
 from datetime import date, timedelta
 
 from ..repository.affiliation_observation_repository import (
     AffiliationObservationRepository,
 )
+from ..valueobject.affiliation import AffiliationImportPage
 from .kokkai_api import KokkaiAPIClient
-
-
-@dataclass(frozen=True)
-class AffiliationImportPage:
-    """
-    会派観測の一回分の会議録取り込み結果。
-
-    Attributes:
-        meeting_count: 今回のAPIページから観測へ反映した会議録数。
-        total_meeting_count: 現在の月次期間に含まれる会議録の総数。
-        next_record_position: 同じ月次期間で次に取得するAPIレコード位置。
-    """
-
-    meeting_count: int
-    total_meeting_count: int
-    next_record_position: int | None
 
 
 class AffiliationImportService:
