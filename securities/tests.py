@@ -81,6 +81,10 @@ class CompanyListViewTests(TestCase):
 
         self.assertContains(response, company.submitter_name)
         self.assertContains(response, company.edinet_code)
+        self.assertContains(
+            response,
+            "https://disclosure2.edinet-fsa.go.jp/WEEK0010.aspx?bForm=true&amp;edinetCode=E00001",
+        )
         self.assertContains(response, company.end_fiscal_year)
         self.assertContains(response, "確認日時")
         self.assertContains(response, company.created_at.strftime("%Y年"))
