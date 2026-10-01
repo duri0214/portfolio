@@ -153,14 +153,17 @@ class IndexViewTests(TestCase):
         self.assertEqual(response.context["start_date"], date(2026, 6, 1))
         self.assertEqual(response.context["end_date"], date(2026, 7, 1))
 
-    def test_reserved_list_and_pagination_preserve_submission_dates(self):
+    def test_document_list_shows_all_documents_without_pagination(self):
         """
         シナリオ:
-        - Given: 指定期間の書類一覧に複数ページの書類がある。
-        - When: 予約済みリストへ切り替え、次ページのリンクを表示する。
-        - Then: 両方のリンクに開始日と終了日を含める。
+        - Given: 同じ提出者の未予約書類が11件ある。
+        - When: 書類一覧を表示する。
+        - Then: 11件すべてが同じ画面に表示され、ページネーションは表示されない。
         """
-        company = Company.objects.create(edinet_code="E00001")
+        company = Company.objects.create(
+            edinet_code="E00001",
+            submitter_name="ＭＳ＆ＡＤテスト株式会社",
+        )
         for number in range(11):
             ReportDocument.objects.create(
                 seq_number=number,
@@ -179,25 +182,17 @@ class IndexViewTests(TestCase):
                 english_doc_flag=False,
                 csv_flag=False,
                 legal_status=False,
-                download_reserved=True,
                 company=company,
             )
 
-        response = self.client.get(
-            "/securities/?start_date=2026-06-01&end_date=2026-06-30"
-        )
+        response = self.client.get("/securities/")
 
+        self.assertEqual(response.context["object_list"].count(), 11)
+        self.assertContains(response, "S1000010")
         self.assertContains(
-            response,
-            "?start_date=2026-06-01&amp;end_date=2026-06-30&amp;reserved=yes",
+            response, 'data-filer-name="ＭＳ＆ＡＤテスト株式会社"', count=11
         )
-        reserved_response = self.client.get(
-            "/securities/?start_date=2026-06-01&end_date=2026-06-30&reserved=yes"
-        )
-        self.assertContains(
-            reserved_response,
-            "?start_date=2026-06-01&amp;end_date=2026-06-30&amp;reserved=yes&amp;page=2",
-        )
+        self.assertNotContains(response, 'aria-label="Page navigation"')
 
     @patch("securities.views.XbrlService.fetch_report_doc_list")
     def test_post_with_company_saves_fetched_documents(self, fetch_report_doc_list):
