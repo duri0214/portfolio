@@ -37,6 +37,13 @@
                 </div>
             </div>
 
+            <div class="col-12">
+                <div class="alert alert-info mb-0" role="note">
+                    <a href="{% url 'sec:company_list' %}">企業の提出者名・EDINETコード・決算期を確認</a>
+                    できます。決算期はSTEP 2の提出日時検索期間を検討するための情報です。
+                </div>
+            </div>
+
             <!-- Step 2 -->
             <div class="col-md-4">
                 <div class="card shadow-sm border-0 h-100">
@@ -70,6 +77,13 @@
                             </div>
                         </form>
                     </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="alert alert-secondary mb-0" role="note">
+                    STEP 2の開始日・終了日は、EDINET APIで検索する書類の提出日時の期間です。
+                    企業の決算期とは別の項目なので、決算期を参考に利用者が入力してください。
                 </div>
             </div>
 

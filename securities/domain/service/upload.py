@@ -20,5 +20,7 @@ class UploadService:
     @staticmethod
     def execute_command_and_cleanup(upload_folder: Path):
         if upload_folder.exists():
-            call_command("import_edinet_code", str(upload_folder))
-            shutil.rmtree(upload_folder)
+            try:
+                call_command("import_edinet_code", str(upload_folder))
+            finally:
+                shutil.rmtree(upload_folder)

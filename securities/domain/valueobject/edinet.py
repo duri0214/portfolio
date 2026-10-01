@@ -2,6 +2,12 @@ import datetime
 from dataclasses import dataclass
 
 
+EDINET_CODE_LIST_SOURCE_NAME = "EDINETコードリストの決算日"
+EDINET_CODE_LIST_SOURCE_URL = (
+    "https://disclosure2.edinet-fsa.go.jp/weee0010.aspx#TXT_TITLE_CODE"
+)
+
+
 @dataclass
 class RequestData:
     SECURITIES_REPORT_AND_META_DATA = 2

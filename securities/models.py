@@ -12,6 +12,8 @@ class Company(models.Model):
         consolidated_status (CharField): The consolidated status of the company.
         capital (IntegerField): The capital of the company.
         end_fiscal_year (CharField): The end fiscal year of the company.
+        fiscal_year_end_source (CharField): The source used to confirm the fiscal year end.
+        fiscal_year_end_checked_at (DateTimeField): The time when the fiscal year end was confirmed.
         submitter_name (CharField): The name of the submitter of the company.
         submitter_name_en (CharField): The name of the submitter in English.
         submitter_name_kana (CharField): The name of the submitter in Kana.
@@ -35,6 +37,12 @@ class Company(models.Model):
     )
     capital = models.IntegerField(verbose_name="資本金", null=True)
     end_fiscal_year = models.CharField(verbose_name="決算日", max_length=6, null=True)
+    fiscal_year_end_source = models.CharField(
+        verbose_name="決算期の取得元", max_length=255, null=True, blank=True
+    )
+    fiscal_year_end_checked_at = models.DateTimeField(
+        verbose_name="決算期の確認日時", null=True, blank=True
+    )
     submitter_name = models.CharField(
         verbose_name="提出者名", max_length=100, null=True
     )
