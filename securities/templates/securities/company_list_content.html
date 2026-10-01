@@ -6,14 +6,8 @@
             決算期から提出日時を自動推測することはありません。
         </p>
         <p class="small text-muted mb-0">
-            決算期が未取得の企業は、EDINETコードリストの「決算日」が空欄です。
-            同じリストを再取込しても補完されません。
-        </p>
-        <p class="small text-muted mb-0">
-            取得元:
-            <a href="{{ fiscal_year_source_url }}" target="_blank" rel="noopener">
-                {{ fiscal_year_source_name }}
-            </a>
+            決算期が空欄の企業は、同じリストを再取込しても補完されません。
+            確認日時はEDINETコードリストを取り込んだ日時です。
         </p>
         <div class="mt-3">
             <label for="company-search" class="form-label">提出者名・EDINETコードで検索</label>
@@ -28,7 +22,6 @@
                 <th scope="col">提出者名</th>
                 <th scope="col">EDINETコード</th>
                 <th scope="col">決算期</th>
-                <th scope="col">取得元</th>
                 <th scope="col">確認日時</th>
             </tr>
             </thead>
@@ -44,18 +37,17 @@
                     {% else %}
                         <td class="text-center">-</td>
                     {% endif %}
-                    <td>{{ company.fiscal_year_end_source|default:fiscal_year_source_name }}</td>
-                    <td>{{ company.fiscal_year_end_checked_at|date:"Y年n月j日 H:i"|default:"未記録" }}</td>
+                    <td>{{ company.created_at|date:"Y年n月j日 H:i" }}</td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="5" class="text-center text-muted py-4">
+                    <td colspan="4" class="text-center text-muted py-4">
                         企業データがありません。EDINETコードリストを取り込んでください。
                     </td>
                 </tr>
             {% endfor %}
             <tr id="company-search-empty" class="d-none">
-                <td colspan="5" class="text-center text-muted py-4" aria-live="polite">
+                <td colspan="4" class="text-center text-muted py-4" aria-live="polite">
                     一致する企業はありません。
                 </td>
             </tr>

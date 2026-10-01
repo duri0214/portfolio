@@ -64,19 +64,17 @@ class IndexViewTests(TestCase):
 
 
 class CompanyListViewTests(TestCase):
-    def test_company_list_shows_fiscal_year_source_and_checked_at(self):
+    def test_company_list_shows_fiscal_year_and_created_at(self):
         """
         Scenario:
         - Given: A company has a fiscal year end imported from the EDINET code list.
         - When: The company list is requested.
-        - Then: The submitter, EDINET code, fiscal year end, source, and check time are shown.
+        - Then: The submitter, EDINET code, fiscal year end, and creation time are shown.
         """
         company = Company.objects.create(
             edinet_code="E00001",
             submitter_name="テスト株式会社",
             end_fiscal_year="3月31日",
-            fiscal_year_end_source="EDINETコードリストの決算日",
-            fiscal_year_end_checked_at=datetime(2026, 10, 1, 9, 30, tzinfo=UTC),
         )
 
         response = self.client.get("/securities/companies/")
@@ -84,8 +82,8 @@ class CompanyListViewTests(TestCase):
         self.assertContains(response, company.submitter_name)
         self.assertContains(response, company.edinet_code)
         self.assertContains(response, company.end_fiscal_year)
-        self.assertContains(response, company.fiscal_year_end_source)
-        self.assertContains(response, "2026年10月1日 18:30")
+        self.assertContains(response, "確認日時")
+        self.assertContains(response, company.created_at.strftime("%Y年"))
 
     def test_company_list_includes_incremental_search_data(self):
         """
@@ -123,7 +121,6 @@ class CompanyListViewTests(TestCase):
             response,
             "同じリストを再取込しても補完されません",
         )
-        self.assertContains(response, "EDINETコードリストの決算日")
 
 
 class EdinetCodeImportCommandTests(TestCase):
@@ -149,12 +146,12 @@ class EdinetCodeImportCommandTests(TestCase):
             ]
         )
 
-    def test_import_records_fiscal_year_source_and_check_time(self):
+    def test_import_records_fiscal_year_and_created_at(self):
         """
         Scenario:
         - Given: An EDINET code list contains a fiscal year end.
         - When: The import command is executed.
-        - Then: The company stores the value, source, and import check time.
+        - Then: The company stores the value and creation time.
         """
         with TemporaryDirectory() as directory:
             csv_path = Path(directory) / "EdinetcodeDlInfo.csv"
@@ -168,15 +165,14 @@ class EdinetCodeImportCommandTests(TestCase):
         company = Company.objects.get(edinet_code="E00001")
 
         self.assertEqual(company.end_fiscal_year, "3月31日")
-        self.assertEqual(company.fiscal_year_end_source, "EDINETコードリストの決算日")
-        self.assertIsNotNone(company.fiscal_year_end_checked_at)
+        self.assertIsNotNone(company.created_at)
 
-    def test_import_records_source_and_check_time_when_fiscal_year_is_missing(self):
+    def test_import_records_created_at_when_fiscal_year_is_missing(self):
         """
         Scenario:
         - Given: An EDINET code list has a company with no fiscal year end.
         - When: The import command is executed.
-        - Then: The missing value still records its source and confirmation time.
+        - Then: The missing value still records the company creation time.
         """
         with TemporaryDirectory() as directory:
             csv_path = Path(directory) / "EdinetcodeDlInfo.csv"
@@ -190,8 +186,7 @@ class EdinetCodeImportCommandTests(TestCase):
         company = Company.objects.get(edinet_code="E00001")
 
         self.assertIsNone(company.end_fiscal_year)
-        self.assertEqual(company.fiscal_year_end_source, "EDINETコードリストの決算日")
-        self.assertIsNotNone(company.fiscal_year_end_checked_at)
+        self.assertIsNotNone(company.created_at)
 
     def test_import_does_not_delete_existing_companies_when_fiscal_year_is_missing(
         self,

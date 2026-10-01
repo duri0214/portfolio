@@ -15,11 +15,7 @@ from django.views.generic import TemplateView, FormView, ListView
 
 from securities.domain.service.upload import UploadService
 from securities.domain.service.xbrl import XbrlService
-from securities.domain.valueobject.edinet import (
-    EDINET_CODE_LIST_SOURCE_NAME,
-    EDINET_CODE_LIST_SOURCE_URL,
-    RequestData,
-)
+from securities.domain.valueobject.edinet import RequestData
 from securities.forms import UploadForm
 from securities.models import ReportDocument, Company, Counting
 
@@ -114,8 +110,6 @@ class EdinetCodeUploadSuccessView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["companies"] = Company.objects.order_by("submitter_name", "edinet_code")
-        context["fiscal_year_source_name"] = EDINET_CODE_LIST_SOURCE_NAME
-        context["fiscal_year_source_url"] = EDINET_CODE_LIST_SOURCE_URL
         return context
 
 
@@ -129,6 +123,4 @@ class CompanyListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["fiscal_year_source_name"] = EDINET_CODE_LIST_SOURCE_NAME
-        context["fiscal_year_source_url"] = EDINET_CODE_LIST_SOURCE_URL
         return context

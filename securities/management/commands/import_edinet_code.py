@@ -3,9 +3,7 @@ from pathlib import Path
 import pandas as pd
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-from django.utils.timezone import now
 
-from securities.domain.valueobject.edinet import EDINET_CODE_LIST_SOURCE_NAME
 from securities.models import Company
 
 
@@ -72,7 +70,6 @@ class Command(BaseCommand):
                 f"{', '.join(missing_columns)}"
             )
 
-        imported_at = now()
         edinet_list = []
         for _, row in df.iterrows():
             end_fiscal_year = na(row[fiscal_year_column])
@@ -84,8 +81,6 @@ class Command(BaseCommand):
                     consolidated_status=na(row["連結の有無"]),
                     capital=(int(row["資本金"]) if pd.notna(row["資本金"]) else None),
                     end_fiscal_year=end_fiscal_year,
-                    fiscal_year_end_source=EDINET_CODE_LIST_SOURCE_NAME,
-                    fiscal_year_end_checked_at=imported_at,
                     submitter_name=na(row["提出者名"]),
                     submitter_name_en=na(row["提出者名（英字）"]),
                     submitter_name_kana=na(row["提出者名（ヨミ）"]),
