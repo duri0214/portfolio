@@ -83,6 +83,32 @@ class IndexViewTests(TestCase):
             (now() - relativedelta(days=1)).date(),
         )
 
+    def test_datepicker_uses_japanese_month_heading_and_iso_date_format(self):
+        """
+        シナリオ:
+        - Given: 開始日と終了日を指定して書類一覧画面を表示する。
+        - When: STEP 2の日付入力欄を描画する。
+        - Then: 両方のDatePickerが日本語の年・月表示を使い、入力値はYYYY-MM-DD形式で表示される。
+        """
+        response = self.client.get(
+            "/securities/?start_date=2026-08-01&end_date=2026-08-31"
+        )
+
+        self.assertContains(response, 'value="2026-08-01"')
+        self.assertContains(response, 'value="2026-08-31"')
+        self.assertContains(response, 'dateFormat: "yy-mm-dd"')
+        self.assertContains(response, 'monthNames: ["1月", "2月", "3月"')
+        self.assertContains(response, "showMonthAfterYear: true")
+        self.assertContains(response, 'yearSuffix: "年"')
+        self.assertContains(
+            response,
+            '$("#start_date").datepicker(japaneseDatepickerOptions);',
+        )
+        self.assertContains(
+            response,
+            '$("#end_date").datepicker(japaneseDatepickerOptions);',
+        )
+
     @patch("securities.views.XbrlService.fetch_report_doc_list")
     def test_post_without_company_guides_to_edinet_code_import(
         self, fetch_report_doc_list
