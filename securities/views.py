@@ -24,7 +24,6 @@ from securities.models import ReportDocument, Company, Counting
 class IndexView(ListView):
     template_name = "securities/index.html"
     model = ReportDocument
-    paginate_by = 10
 
     def get_queryset(self):
         queryset = super().get_queryset()
