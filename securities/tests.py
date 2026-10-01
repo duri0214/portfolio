@@ -87,6 +87,26 @@ class CompanyListViewTests(TestCase):
         self.assertContains(response, company.fiscal_year_end_source)
         self.assertContains(response, "2026年10月1日 18:30")
 
+    def test_company_list_includes_incremental_search_data(self):
+        """
+        Scenario:
+        - Given: A company has a submitter name and EDINET code.
+        - When: The company list is requested.
+        - Then: The incremental search input and row data are rendered.
+        """
+        Company.objects.create(
+            edinet_code="E00003",
+            submitter_name="検索対象株式会社",
+            end_fiscal_year="12月31日",
+        )
+
+        response = self.client.get("/securities/companies/")
+
+        self.assertContains(response, 'id="company-search"')
+        self.assertContains(response, 'data-submitter-name="検索対象株式会社"')
+        self.assertContains(response, 'data-edinet-code="E00003"')
+        self.assertContains(response, "一致する企業はありません")
+
     def test_company_list_distinguishes_missing_fiscal_year(self):
         """
         Scenario:

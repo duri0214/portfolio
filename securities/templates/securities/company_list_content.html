@@ -11,6 +11,11 @@
                 {{ fiscal_year_source_name }}
             </a>
         </p>
+        <div class="mt-3">
+            <label for="company-search" class="form-label">提出者名・EDINETコードで検索</label>
+            <input type="search" id="company-search" class="form-control"
+                   placeholder="提出者名またはEDINETコードを入力" autocomplete="off">
+        </div>
     </div>
     <div class="table-responsive">
         <table class="table table-striped table-hover table-sm mb-0">
@@ -25,7 +30,9 @@
             </thead>
             <tbody>
             {% for company in companies %}
-                <tr>
+                <tr data-company-row
+                    data-submitter-name="{{ company.submitter_name }}"
+                    data-edinet-code="{{ company.edinet_code }}">
                     <td>{{ company.submitter_name|default:"未取得" }}</td>
                     <td>{{ company.edinet_code|default:"未取得" }}</td>
                     {% if company.end_fiscal_year %}
@@ -46,7 +53,41 @@
                     </td>
                 </tr>
             {% endfor %}
+            <tr id="company-search-empty" class="d-none">
+                <td colspan="5" class="text-center text-muted py-4" aria-live="polite">
+                    一致する企業はありません。
+                </td>
+            </tr>
             </tbody>
         </table>
     </div>
 </div>
+
+<script>
+    const companySearch = document.querySelector('#company-search');
+    const companyRows = Array.from(document.querySelectorAll('[data-company-row]'));
+    const companySearchEmpty = document.querySelector('#company-search-empty');
+
+    function normalizeSearchText(value) {
+        return value.normalize('NFKC').trim().toLocaleLowerCase('ja-JP');
+    }
+
+    companySearch.addEventListener('input', function () {
+        const query = normalizeSearchText(companySearch.value);
+        let visibleCompanyCount = 0;
+
+        companyRows.forEach(function (row) {
+            const submitterName = normalizeSearchText(row.dataset.submitterName);
+            const edinetCode = normalizeSearchText(row.dataset.edinetCode);
+            const matches = !query || submitterName.includes(query) || edinetCode.includes(query);
+
+            row.classList.toggle('d-none', !matches);
+            if (matches) visibleCompanyCount += 1;
+        });
+
+        companySearchEmpty.classList.toggle(
+            'd-none',
+            !query || visibleCompanyCount > 0
+        );
+    });
+</script>
