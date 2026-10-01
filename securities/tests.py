@@ -4,10 +4,13 @@ from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 import pandas as pd
+from dateutil.relativedelta import relativedelta
 from django.core import management
 from django.core.management.base import CommandError
 from django.test import TestCase
+from django.utils.timezone import now
 
+from securities.domain.valueobject.edinet import RequestData
 from securities.models import Company, ReportDocument
 
 
@@ -62,6 +65,24 @@ class IndexViewTests(TestCase):
         self.assertContains(response, "提出日時の期間")
         self.assertContains(response, 'href="/securities/companies/"')
 
+    def test_initial_display_uses_default_submission_dates(self):
+        """
+        シナリオ:
+        - Given: 検索条件を指定せずに書類一覧を初回表示する。
+        - When: 一覧画面を表示する。
+        - Then: 開始日と終了日には従来の既定値を表示する。
+        """
+        response = self.client.get("/securities/")
+
+        self.assertEqual(
+            response.context["start_date"],
+            (now() - relativedelta(months=2)).date(),
+        )
+        self.assertEqual(
+            response.context["end_date"],
+            (now() - relativedelta(days=1)).date(),
+        )
+
     @patch("securities.views.XbrlService.fetch_report_doc_list")
     def test_post_without_company_guides_to_edinet_code_import(
         self, fetch_report_doc_list
@@ -102,7 +123,81 @@ class IndexViewTests(TestCase):
 
         self.assertContains(response, "指定した期間に対象書類はありません。")
         self.assertNotContains(response, "STEP 1の実施が必要です。")
-        fetch_report_doc_list.assert_called_once()
+        fetch_report_doc_list.assert_called_once_with(
+            RequestData(start_date=date(2026, 6, 1), end_date=date(2026, 6, 30))
+        )
+        self.assertEqual(response.context["start_date"], date(2026, 6, 1))
+        self.assertEqual(response.context["end_date"], date(2026, 6, 30))
+
+    @patch("securities.views.XbrlService.fetch_report_doc_list", return_value=[])
+    def test_post_can_fetch_again_with_adjusted_submission_dates(
+        self, fetch_report_doc_list
+    ):
+        """
+        シナリオ:
+        - Given: 指定期間で取得後の一覧に開始日と終了日が表示されている。
+        - When: 利用者が終了日を変更して再取得する。
+        - Then: 変更後の期間をEDINET APIへ渡し、一覧にもその期間を表示する。
+        """
+        Company.objects.create(edinet_code="E00001")
+
+        response = self.client.post(
+            "/securities/",
+            {"start_date": "2026-06-01", "end_date": "2026-07-01"},
+            follow=True,
+        )
+
+        fetch_report_doc_list.assert_called_once_with(
+            RequestData(start_date=date(2026, 6, 1), end_date=date(2026, 7, 1))
+        )
+        self.assertEqual(response.context["start_date"], date(2026, 6, 1))
+        self.assertEqual(response.context["end_date"], date(2026, 7, 1))
+
+    def test_reserved_list_and_pagination_preserve_submission_dates(self):
+        """
+        シナリオ:
+        - Given: 指定期間の書類一覧に複数ページの書類がある。
+        - When: 予約済みリストへ切り替え、次ページのリンクを表示する。
+        - Then: 両方のリンクに開始日と終了日を含める。
+        """
+        company = Company.objects.create(edinet_code="E00001")
+        for number in range(11):
+            ReportDocument.objects.create(
+                seq_number=number,
+                doc_id=f"S100{number:04d}",
+                ordinance_code="010",
+                form_code="030000",
+                period_start=date(2026, 1, 1),
+                period_end=date(2026, 3, 31),
+                submit_date_time=datetime(2026, 6, 30, 9, 0, tzinfo=UTC),
+                doc_description="有価証券報告書",
+                withdrawal_status="0",
+                doc_info_edit_status="0",
+                disclosure_status="0",
+                xbrl_flag=True,
+                pdf_flag=True,
+                english_doc_flag=False,
+                csv_flag=False,
+                legal_status=False,
+                download_reserved=True,
+                company=company,
+            )
+
+        response = self.client.get(
+            "/securities/?start_date=2026-06-01&end_date=2026-06-30"
+        )
+
+        self.assertContains(
+            response,
+            "?start_date=2026-06-01&amp;end_date=2026-06-30&amp;reserved=yes",
+        )
+        reserved_response = self.client.get(
+            "/securities/?start_date=2026-06-01&end_date=2026-06-30&reserved=yes"
+        )
+        self.assertContains(
+            reserved_response,
+            "?start_date=2026-06-01&amp;end_date=2026-06-30&amp;reserved=yes&amp;page=2",
+        )
 
     @patch("securities.views.XbrlService.fetch_report_doc_list")
     def test_post_with_company_saves_fetched_documents(self, fetch_report_doc_list):
