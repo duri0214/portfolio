@@ -6,6 +6,10 @@
             決算期から提出日時を自動推測することはありません。
         </p>
         <p class="small text-muted mb-0">
+            決算期が未取得の企業は、EDINETコードリストの「決算日」が空欄です。
+            同じリストを再取込しても補完されません。
+        </p>
+        <p class="small text-muted mb-0">
             取得元:
             <a href="{{ fiscal_year_source_url }}" target="_blank" rel="noopener">
                 {{ fiscal_year_source_name }}
@@ -37,14 +41,13 @@
                     <td>{{ company.edinet_code|default:"未取得" }}</td>
                     {% if company.end_fiscal_year %}
                         <td>{{ company.end_fiscal_year }}</td>
-                        <td>{{ company.fiscal_year_end_source }}</td>
-                        <td>{{ company.fiscal_year_end_checked_at|date:"Y年n月j日 H:i" }}</td>
                     {% else %}
-                        <td class="text-warning">未取得</td>
-                        <td colspan="2">
-                            EDINETコードリストの「決算日」を確認して、リストを再取込してください。
+                        <td class="text-warning">
+                            未取得（EDINETコードリストの「決算日」が空欄）
                         </td>
                     {% endif %}
+                    <td>{{ company.fiscal_year_end_source|default:fiscal_year_source_name }}</td>
+                    <td>{{ company.fiscal_year_end_checked_at|date:"Y年n月j日 H:i"|default:"未記録" }}</td>
                 </tr>
             {% empty %}
                 <tr>

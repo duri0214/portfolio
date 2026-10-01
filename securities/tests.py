@@ -118,11 +118,12 @@ class CompanyListViewTests(TestCase):
 
         response = self.client.get("/securities/companies/")
 
-        self.assertContains(response, "未取得")
+        self.assertContains(response, "未取得（EDINETコードリストの「決算日」が空欄）")
         self.assertContains(
             response,
-            "EDINETコードリストの「決算日」を確認して、リストを再取込してください",
+            "同じリストを再取込しても補完されません",
         )
+        self.assertContains(response, "EDINETコードリストの決算日")
 
 
 class EdinetCodeImportCommandTests(TestCase):
@@ -167,6 +168,28 @@ class EdinetCodeImportCommandTests(TestCase):
         company = Company.objects.get(edinet_code="E00001")
 
         self.assertEqual(company.end_fiscal_year, "3月31日")
+        self.assertEqual(company.fiscal_year_end_source, "EDINETコードリストの決算日")
+        self.assertIsNotNone(company.fiscal_year_end_checked_at)
+
+    def test_import_records_source_and_check_time_when_fiscal_year_is_missing(self):
+        """
+        Scenario:
+        - Given: An EDINET code list has a company with no fiscal year end.
+        - When: The import command is executed.
+        - Then: The missing value still records its source and confirmation time.
+        """
+        with TemporaryDirectory() as directory:
+            csv_path = Path(directory) / "EdinetcodeDlInfo.csv"
+            csv_path.touch()
+            with patch(
+                "securities.management.commands.import_edinet_code.pd.read_csv",
+                return_value=self._dataframe(end_fiscal_year=None),
+            ):
+                management.call_command("import_edinet_code", directory)
+
+        company = Company.objects.get(edinet_code="E00001")
+
+        self.assertIsNone(company.end_fiscal_year)
         self.assertEqual(company.fiscal_year_end_source, "EDINETコードリストの決算日")
         self.assertIsNotNone(company.fiscal_year_end_checked_at)
 
