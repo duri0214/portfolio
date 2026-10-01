@@ -8,7 +8,9 @@
         <p class="small text-muted mb-0">
             決算期が空欄の企業は、同じリストを再取込しても補完されません。
             確認日時はEDINETコードリストを取り込んだ日時です。
-            EDINETコードから提出書類と提出日を確認できます。
+            <a href="https://disclosure2.edinet-fsa.go.jp/WEEK0010.aspx?bForm=true"
+               target="_blank" rel="noopener noreferrer">EDINETの提出者別書類検索</a>
+            で提出書類と提出日を確認できます。
         </p>
         <div class="mt-3">
             <label for="company-search" class="form-label">提出者名・EDINETコードで検索</label>
@@ -32,16 +34,7 @@
                     data-submitter-name="{{ company.submitter_name }}"
                     data-edinet-code="{{ company.edinet_code }}">
                     <td>{{ company.submitter_name|default:"未取得" }}</td>
-                    <td>
-                        {% if company.edinet_code %}
-                            <a href="https://disclosure2.edinet-fsa.go.jp/WEEK0010.aspx?bForm=true&amp;edinetCode={{ company.edinet_code }}"
-                               target="_blank" rel="noopener noreferrer">
-                                {{ company.edinet_code }}
-                            </a>
-                        {% else %}
-                            未取得
-                        {% endif %}
-                    </td>
+                    <td>{{ company.edinet_code|default:"未取得" }}</td>
                     {% if company.end_fiscal_year %}
                         <td>{{ company.end_fiscal_year }}</td>
                     {% else %}
