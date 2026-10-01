@@ -75,6 +75,9 @@ class IndexViewTests(TestCase):
         response = self.client.post("/securities/", follow=True)
 
         self.assertContains(response, "STEP 1の実施が必要です。")
+        self.assertContains(response, "setup-required-alert")
+        self.assertContains(response, "alert-danger")
+        self.assertContains(response, "setup-required-shake")
         self.assertContains(
             response,
             'href="/securities/edinet_code_upload/upload"',
