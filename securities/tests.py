@@ -118,7 +118,7 @@ class CompanyListViewTests(TestCase):
 
         response = self.client.get("/securities/companies/")
 
-        self.assertContains(response, "未取得（EDINETコードリストの「決算日」が空欄）")
+        self.assertContains(response, '<td class="text-center">-</td>', html=True)
         self.assertContains(
             response,
             "同じリストを再取込しても補完されません",

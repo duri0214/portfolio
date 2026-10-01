@@ -42,9 +42,7 @@
                     {% if company.end_fiscal_year %}
                         <td>{{ company.end_fiscal_year }}</td>
                     {% else %}
-                        <td class="text-warning">
-                            未取得（EDINETコードリストの「決算日」が空欄）
-                        </td>
+                        <td class="text-center">-</td>
                     {% endif %}
                     <td>{{ company.fiscal_year_end_source|default:fiscal_year_source_name }}</td>
                     <td>{{ company.fiscal_year_end_checked_at|date:"Y年n月j日 H:i"|default:"未記録" }}</td>
