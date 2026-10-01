@@ -15,7 +15,7 @@ class IndexViewTests(TestCase):
         """
         company = Company.objects.create(
             edinet_code="E00001",
-            submitter_name="テスト株式会社",
+            submitter_name="ＭＳ＆ＡＤテスト株式会社",
         )
         ReportDocument.objects.create(
             seq_number=1,
@@ -40,6 +40,6 @@ class IndexViewTests(TestCase):
         response = self.client.get("/securities/")
 
         self.assertContains(response, 'id="document-search"')
-        self.assertContains(response, 'data-filer-name="テスト株式会社"')
+        self.assertContains(response, 'data-filer-name="ＭＳ＆ＡＤテスト株式会社"')
         self.assertContains(response, 'data-edinet-code="E00001"')
         self.assertContains(response, "一致する書類はありません。")

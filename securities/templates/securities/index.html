@@ -177,13 +177,17 @@
         const reportDocumentRows = Array.from(document.querySelectorAll('[data-report-document]'));
         const documentSearchEmpty = document.querySelector('#document-search-empty');
 
+        function normalizeSearchText(value) {
+            return value.normalize('NFKC').trim().toLocaleLowerCase('ja-JP');
+        }
+
         documentSearch.addEventListener('input', function () {
-            const query = documentSearch.value.trim().toLocaleLowerCase('ja-JP');
+            const query = normalizeSearchText(documentSearch.value);
             let visibleDocumentCount = 0;
 
             reportDocumentRows.forEach(function (row) {
-                const filerName = row.dataset.filerName.toLocaleLowerCase('ja-JP');
-                const edinetCode = row.dataset.edinetCode.toLocaleLowerCase('ja-JP');
+                const filerName = normalizeSearchText(row.dataset.filerName);
+                const edinetCode = normalizeSearchText(row.dataset.edinetCode);
                 const matches = !query || filerName.includes(query) || edinetCode.includes(query);
 
                 row.classList.toggle('d-none', !matches);
