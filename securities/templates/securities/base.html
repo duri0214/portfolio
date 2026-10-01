@@ -50,12 +50,17 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
 <script>
     $(function () {
-        $("#start_date").datepicker({
-            dateFormat: "yy-mm-dd"
-        });
-        $("#end_date").datepicker({
-            dateFormat: "yy-mm-dd"
-        });
+        const japaneseDatepickerOptions = {
+            dateFormat: "yy-mm-dd",
+            monthNames: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
+            monthNamesShort: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
+            dayNames: ["日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"],
+            dayNamesMin: ["日", "月", "火", "水", "木", "金", "土"],
+            showMonthAfterYear: true,
+            yearSuffix: "年"
+        };
+        $("#start_date").datepicker(japaneseDatepickerOptions);
+        $("#end_date").datepicker(japaneseDatepickerOptions);
     });
 </script>
 </body>
