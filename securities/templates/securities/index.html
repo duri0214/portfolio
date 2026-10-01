@@ -93,6 +93,11 @@
             <!-- Document Table -->
             <div class="col-12">
                 <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <label for="document-search" class="form-label">提出者名・EDINETコードで検索</label>
+                        <input type="search" id="document-search" class="form-control"
+                               placeholder="提出者名またはEDINETコードを入力" autocomplete="off">
+                    </div>
                     <div class="card-body p-0">
                         <table class="table table-striped table-hover table-sm mb-0">
                             <thead class="table-primary">
@@ -112,7 +117,9 @@
                             </thead>
                             <tbody>
                             {% for report_document in object_list %}
-                                <tr>
+                                <tr data-report-document
+                                    data-filer-name="{{ report_document.company.submitter_name }}"
+                                    data-edinet-code="{{ report_document.company.edinet_code }}">
                                     <td>{% if request.GET.reserved != 'yes' %}
                                         <input type="checkbox" value="{{ report_document.id }}" class="report-checkbox">{% endif %}
                                     </td>
@@ -132,6 +139,11 @@
                                     <td colspan="11" class="text-center text-muted py-4">No documents available.</td>
                                 </tr>
                             {% endfor %}
+                            <tr id="document-search-empty" class="d-none">
+                                <td colspan="11" class="text-center text-muted py-4" aria-live="polite">
+                                    一致する書類はありません。
+                                </td>
+                            </tr>
                             </tbody>
                         </table>
                     </div>
@@ -161,6 +173,29 @@
     </div>
 
     <script>
+        const documentSearch = document.querySelector('#document-search');
+        const reportDocumentRows = Array.from(document.querySelectorAll('[data-report-document]'));
+        const documentSearchEmpty = document.querySelector('#document-search-empty');
+
+        documentSearch.addEventListener('input', function () {
+            const query = documentSearch.value.trim().toLocaleLowerCase('ja-JP');
+            let visibleDocumentCount = 0;
+
+            reportDocumentRows.forEach(function (row) {
+                const filerName = row.dataset.filerName.toLocaleLowerCase('ja-JP');
+                const edinetCode = row.dataset.edinetCode.toLocaleLowerCase('ja-JP');
+                const matches = !query || filerName.includes(query) || edinetCode.includes(query);
+
+                row.classList.toggle('d-none', !matches);
+                if (matches) visibleDocumentCount += 1;
+            });
+
+            documentSearchEmpty.classList.toggle(
+                'd-none',
+                !query || visibleDocumentCount > 0
+            );
+        });
+
         document.querySelector('#submit-for-reserve').addEventListener('click', function () {
             const ids = Array.from(document.querySelectorAll('.report-checkbox:checked')).map(box => box.value);
             fetch('{% url 'sec:download_reserve' %}', {
