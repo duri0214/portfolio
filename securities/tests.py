@@ -62,6 +62,89 @@ class IndexViewTests(TestCase):
         self.assertContains(response, "提出日時の期間")
         self.assertContains(response, 'href="/securities/companies/"')
 
+    @patch("securities.views.XbrlService.fetch_report_doc_list")
+    def test_post_without_company_guides_to_edinet_code_import(
+        self, fetch_report_doc_list
+    ):
+        """
+        シナリオ:
+        - Given: 会社マスタが空である。
+        - When: STEP 2で書類一覧の取得を実行する。
+        - Then: STEP 1の取込案内を表示し、EDINET APIの取得処理を実行しない。
+        """
+        response = self.client.post("/securities/", follow=True)
+
+        self.assertContains(response, "STEP 1の実施が必要です。")
+        self.assertContains(response, "setup-required-alert")
+        self.assertContains(response, "alert-danger")
+        self.assertContains(response, "setup-required-shake")
+        self.assertContains(
+            response,
+            'href="/securities/edinet_code_upload/upload"',
+        )
+        fetch_report_doc_list.assert_not_called()
+
+    @patch("securities.views.XbrlService.fetch_report_doc_list", return_value=[])
+    def test_post_with_company_shows_empty_result_message(self, fetch_report_doc_list):
+        """
+        シナリオ:
+        - Given: 会社マスタがあり、指定期間に対象書類がない。
+        - When: STEP 2で書類一覧の取得を実行する。
+        - Then: STEP 1未実施案内ではなく、対象書類がないことを表示する。
+        """
+        Company.objects.create(edinet_code="E00001")
+
+        response = self.client.post(
+            "/securities/",
+            {"start_date": "2026-06-01", "end_date": "2026-06-30"},
+            follow=True,
+        )
+
+        self.assertContains(response, "指定した期間に対象書類はありません。")
+        self.assertNotContains(response, "STEP 1の実施が必要です。")
+        fetch_report_doc_list.assert_called_once()
+
+    @patch("securities.views.XbrlService.fetch_report_doc_list")
+    def test_post_with_company_saves_fetched_documents(self, fetch_report_doc_list):
+        """
+        シナリオ:
+        - Given: 会社マスタがあり、取得サービスが書類を返す。
+        - When: STEP 2で書類一覧の取得を実行する。
+        - Then: 書類を保存し、書類一覧へリダイレクトする。
+        """
+        company = Company.objects.create(edinet_code="E00001")
+        fetch_report_doc_list.return_value = [
+            ReportDocument(
+                seq_number=1,
+                doc_id="S1000002",
+                ordinance_code="010",
+                form_code="030000",
+                period_start=date(2026, 1, 1),
+                period_end=date(2026, 3, 31),
+                submit_date_time=datetime(2026, 6, 30, 9, 0, tzinfo=UTC),
+                doc_description="有価証券報告書",
+                withdrawal_status="0",
+                doc_info_edit_status="0",
+                disclosure_status="0",
+                xbrl_flag=True,
+                pdf_flag=True,
+                english_doc_flag=False,
+                csv_flag=False,
+                legal_status=False,
+                company=company,
+            )
+        ]
+
+        response = self.client.post(
+            "/securities/",
+            {"start_date": "2026-06-01", "end_date": "2026-06-30"},
+            follow=True,
+        )
+
+        self.assertContains(response, "S1000002")
+        self.assertTrue(ReportDocument.objects.filter(doc_id="S1000002").exists())
+        fetch_report_doc_list.assert_called_once()
+
 
 class CompanyListViewTests(TestCase):
     def test_company_list_shows_fiscal_year_and_created_at(self):

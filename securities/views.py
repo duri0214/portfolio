@@ -6,7 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import CommandError
 from django.http import JsonResponse
 from django.shortcuts import redirect
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.utils.timezone import now
 from django.views import View
@@ -39,13 +39,15 @@ class IndexView(ListView):
         current_time = now()
         context["start_date"] = current_time - relativedelta(months=2)  # 2 months ago
         context["end_date"] = current_time - relativedelta(days=1)  # yesterday
+        context["setup_required"] = self.request.GET.get("setup_required") == "1"
+        context["searched"] = self.request.GET.get("searched") == "1"
 
         return context
 
     @staticmethod
     def post(request, **kwargs):
         if not Company.objects.exists():
-            return redirect("sec:index")
+            return redirect(f"{reverse('sec:index')}?setup_required=1")
 
         ReportDocument.objects.all().delete()
 
@@ -58,7 +60,7 @@ class IndexView(ListView):
             RequestData(start_date=start_date, end_date=end_date)
         )
         ReportDocument.objects.bulk_create(report_document_list)
-        return redirect("sec:index")
+        return redirect(f"{reverse('sec:index')}?searched=1")
 
 
 class CountingView(ListView):

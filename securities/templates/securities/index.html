@@ -1,7 +1,54 @@
 {% extends "securities/base.html" %}
 {% load static %}
 {% load humanize %}
-{% block extra_head %}{% endblock %}
+{% block extra_head %}
+    <style>
+        .setup-required-alert {
+            position: relative;
+        }
+
+        .setup-required-alert::after {
+            position: absolute;
+            bottom: -0.75rem;
+            left: calc(16.6667% - 0.75rem);
+            width: 0;
+            height: 0;
+            border-top: 0.75rem solid var(--bs-danger-bg-subtle);
+            border-right: 0.75rem solid transparent;
+            border-left: 0.75rem solid transparent;
+            content: "";
+        }
+
+        .setup-required-shake {
+            animation: setup-required-shake 0.55s ease-in-out 2;
+        }
+
+        @keyframes setup-required-shake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-0.4rem);
+            }
+            75% {
+                transform: translateX(0.4rem);
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .setup-required-alert::after {
+                left: 50%;
+                transform: translateX(-50%);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .setup-required-shake {
+                animation: none;
+            }
+        }
+    </style>
+{% endblock %}
 {% block content %}
     <div class="container mt-4">
         <!-- Breadcrumb -->
@@ -23,6 +70,16 @@
                     </div>
                 </div>
             </div>
+
+            {% if setup_required %}
+                <div class="col-12">
+                    <div id="setup-required-alert" class="setup-required-alert alert alert-danger mb-0" role="alert">
+                        <strong>STEP 1の実施が必要です。</strong>
+                        書類一覧を取得する前に、EDINETコードリストを取り込んでください。
+                        <a class="alert-link" href="{% url 'sec:edinet_code_upload' %}">STEP 1の取込画面へ進む</a>
+                    </div>
+                </div>
+            {% endif %}
 
             <!-- Step 1 -->
             <div class="col-md-4">
@@ -72,7 +129,11 @@
                                     {% endif %}
                                 </div>
                                 <div class="col-12">
-                                    <button type="submit" class="btn btn-primary btn-sm w-100">書類一覧を取得</button>
+                                    <button type="submit"
+                                            class="btn btn-primary btn-sm w-100{% if setup_required %} setup-required-shake{% endif %}"
+                                            {% if setup_required %}aria-describedby="setup-required-alert"{% endif %}>
+                                        書類一覧を取得
+                                    </button>
                                 </div>
                             </div>
                         </form>
@@ -86,6 +147,14 @@
                     企業の決算期とは別の項目なので、決算期を参考に利用者が入力してください。
                 </div>
             </div>
+
+            {% if searched and not object_list %}
+                <div class="col-12">
+                    <div class="alert alert-info mb-0" role="status">
+                        指定した期間に対象書類はありません。
+                    </div>
+                </div>
+            {% endif %}
 
             <!-- Step 3 -->
             <div class="col-md-4">
