@@ -6,6 +6,7 @@ from securities.views import (
     EdinetCodeUploadSuccessView,
     DownloadReserveView,
     CountingView,
+    CompanyListView,
 )
 
 app_name = "sec"
@@ -13,6 +14,7 @@ urlpatterns = [
     path("", IndexView.as_view(), name="index"),
     path("download_reserve/", DownloadReserveView.as_view(), name="download_reserve"),
     path("table_view/counting", CountingView.as_view(), name="counting"),
+    path("companies/", CompanyListView.as_view(), name="company_list"),
     path(
         "edinet_code_upload/upload",
         EdinetCodeUploadView.as_view(),

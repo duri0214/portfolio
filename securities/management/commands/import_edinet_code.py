@@ -1,7 +1,8 @@
 from pathlib import Path
 
 import pandas as pd
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
+from django.db import transaction
 
 from securities.models import Company
 
@@ -24,7 +25,7 @@ class Command(BaseCommand):
         file_path = Path(folder_path) / filename
         if not file_path.exists():
             raise FileNotFoundError(f"File does not exist: {file_path}")
-        Company.objects.all().delete()
+        # The existing company master is replaced only after the CSV structure is validated.
 
         # Note: 最初の行には `ダウンロード実行日...` のようなメタデータが入っているのでskip
         df = pd.read_csv(
@@ -39,8 +40,39 @@ class Command(BaseCommand):
             },
         )
         # 3行目以降のデータを保存
+        fiscal_year_column = "決算日"
+        required_columns = [
+            "ＥＤＩＮＥＴコード",
+            "提出者種別",
+            "上場区分",
+            "連結の有無",
+            "資本金",
+            fiscal_year_column,
+            "提出者名",
+            "提出者名（英字）",
+            "提出者名（ヨミ）",
+            "所在地",
+            "提出者業種",
+            "証券コード",
+            "提出者法人番号",
+        ]
+        missing_columns = [
+            column for column in required_columns if column not in df.columns
+        ]
+        if fiscal_year_column in missing_columns:
+            raise CommandError(
+                "EDINETコードリストに決算日がありません。"
+                "公式のEDINETコードリストをダウンロードして再度取り込んでください。"
+            )
+        if missing_columns:
+            raise CommandError(
+                "EDINETコードリストに必要な列がありません: "
+                f"{', '.join(missing_columns)}"
+            )
+
         edinet_list = []
         for _, row in df.iterrows():
+            end_fiscal_year = na(row[fiscal_year_column])
             edinet_list.append(
                 Company(
                     edinet_code=na(row["ＥＤＩＮＥＴコード"]),
@@ -48,7 +80,7 @@ class Command(BaseCommand):
                     listing_status=na(row["上場区分"]),
                     consolidated_status=na(row["連結の有無"]),
                     capital=(int(row["資本金"]) if pd.notna(row["資本金"]) else None),
-                    end_fiscal_year=na(row["決算日"]),
+                    end_fiscal_year=end_fiscal_year,
                     submitter_name=na(row["提出者名"]),
                     submitter_name_en=na(row["提出者名（英字）"]),
                     submitter_name_kana=na(row["提出者名（ヨミ）"]),
@@ -58,7 +90,9 @@ class Command(BaseCommand):
                     corporate_number=na(row["提出者法人番号"]),
                 )
             )
-        Company.objects.bulk_create(edinet_list)
+        with transaction.atomic():
+            Company.objects.all().delete()
+            Company.objects.bulk_create(edinet_list)
 
         self.stdout.write(
             self.style.SUCCESS("Successfully imported all edinet code from CSV")

@@ -3,6 +3,7 @@ from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.management.base import CommandError
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
@@ -92,7 +93,14 @@ class EdinetCodeUploadView(FormView):
 
     def form_valid(self, form):
         service = UploadService(self.request)
-        service.upload()
+        try:
+            service.upload()
+        except (CommandError, FileNotFoundError, ValueError) as error:
+            form.add_error(
+                None,
+                "EDINETコードリストの取込に失敗しました。" f" {error}",
+            )
+            return self.form_invalid(form)
         return super().form_valid(form)
 
 
@@ -101,5 +109,18 @@ class EdinetCodeUploadSuccessView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # context["import_errors"] = SoilHardnessMeasurementImportErrors.objects.all()
+        context["companies"] = Company.objects.order_by("submitter_name", "edinet_code")
+        return context
+
+
+class CompanyListView(ListView):
+    template_name = "securities/company_list.html"
+    model = Company
+    context_object_name = "companies"
+
+    def get_queryset(self):
+        return Company.objects.order_by("submitter_name", "edinet_code")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         return context
