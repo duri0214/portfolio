@@ -1,5 +1,6 @@
 import json
-from datetime import datetime
+from datetime import date, datetime
+from urllib.parse import urlencode
 
 from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ObjectDoesNotExist
@@ -36,13 +37,34 @@ class IndexView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        current_time = now()
-        context["start_date"] = current_time - relativedelta(months=2)  # 2 months ago
-        context["end_date"] = current_time - relativedelta(days=1)  # yesterday
+        start_date, end_date = self._get_search_dates()
+        context["start_date"] = start_date
+        context["end_date"] = end_date
+        context["search_query"] = urlencode(
+            {
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+            }
+        )
         context["setup_required"] = self.request.GET.get("setup_required") == "1"
         context["searched"] = self.request.GET.get("searched") == "1"
 
         return context
+
+    def _get_search_dates(self):
+        current_time = now()
+        default_start_date = (current_time - relativedelta(months=2)).date()
+        default_end_date = (current_time - relativedelta(days=1)).date()
+        start_date_str = self.request.GET.get("start_date")
+        end_date_str = self.request.GET.get("end_date")
+
+        try:
+            start_date = date.fromisoformat(start_date_str)
+            end_date = date.fromisoformat(end_date_str)
+        except (TypeError, ValueError):
+            return default_start_date, default_end_date
+
+        return start_date, end_date
 
     @staticmethod
     def post(request, **kwargs):
@@ -60,7 +82,14 @@ class IndexView(ListView):
             RequestData(start_date=start_date, end_date=end_date)
         )
         ReportDocument.objects.bulk_create(report_document_list)
-        return redirect(f"{reverse('sec:index')}?searched=1")
+        query = urlencode(
+            {
+                "searched": "1",
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+            }
+        )
+        return redirect(f"{reverse('sec:index')}?{query}")
 
 
 class CountingView(ListView):
