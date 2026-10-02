@@ -16,19 +16,27 @@
         <p class="mb-0">人物同定: {{ person.get_identity_status_display }}。同姓同名を自動統合していません。</p>
     </div>
 
+    {% if focused_period %}
+    <p><a href="{% url 'kokkai:politician_timeline' person.pk %}">この人物の全観測区間を見る</a></p>
+    {% elif missing_period %}
+    <div class="alert alert-warning" role="alert">指定された観測区間は見つかりません。現在の全観測区間を表示します。</div>
+    {% endif %}
+
+    {% if summary and not focused_period %}
     <div class="row row-cols-2 row-cols-md-4 g-3 mb-4" aria-label="会派観測集計">
         <div class="col"><div class="border rounded p-3 h-100"><div class="small text-muted">最初の観測日</div>{{ summary.first_observed_on|date:"Y-m-d" }}</div></div>
         <div class="col"><div class="border rounded p-3 h-100"><div class="small text-muted">最後の観測日</div>{{ summary.last_observed_on|date:"Y-m-d" }}</div></div>
         <div class="col"><div class="border rounded p-3 h-100"><div class="small text-muted">会派変更（観測上）</div>{{ summary.affiliation_change_count }}回</div></div>
         <div class="col"><div class="border rounded p-3 h-100"><div class="small text-muted">会派数 / 発言・観測件数</div>{{ summary.affiliation_count }}会派 / {{ summary.speech_count }}件・{{ summary.observation_count }}件</div></div>
     </div>
+    {% endif %}
 
     <div class="alert alert-info" role="alert">
         下の区間は同じ会派が連続して観測された日をまとめた表示です。区間の間や、同じ会派の最初と最後の観測日の間も所属継続を示すものではありません。
     </div>
 
     <section aria-labelledby="timeline-heading">
-        <h2 id="timeline-heading" class="h4">会派観測タイムライン</h2>
+        <h2 id="timeline-heading" class="h4">{% if focused_period %}選択した会派観測区間{% else %}会派観測タイムライン{% endif %}</h2>
         {% for period in periods %}
         <article class="card mb-3">
             <div class="card-header d-flex flex-column flex-md-row justify-content-between gap-1">
@@ -60,6 +68,8 @@
                 </div>
             </div>
         </article>
+        {% empty %}
+        <p>この人物の会派観測は現在ありません。</p>
         {% endfor %}
     </section>
 </div>

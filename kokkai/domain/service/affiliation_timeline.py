@@ -37,10 +37,12 @@ class AffiliationTimelineService:
 
     def get_timeline(
         self, person: ObservedPerson
-    ) -> tuple[PoliticianSummaryData, list[AffiliationPeriodData]]:
-        """観測対象の集計値と、同会派の連続観測区間を返す。"""
+    ) -> tuple[PoliticianSummaryData | None, list[AffiliationPeriodData]]:
+        """観測対象の集計値と連続観測区間を返し、観測がなければ空で返す。"""
 
         observations = list(self.repository.list_for_person(person))
+        if not observations:
+            return None, []
         return self._summary_for(person, observations), self._periods_for(observations)
 
     def get_chart(
@@ -187,6 +189,7 @@ class AffiliationTimelineService:
             segments.append(
                 AffiliationChartSegmentData(
                     affiliation_label=period.affiliation_label,
+                    first_observation_id=period.first_observation_id,
                     first_observed_on=period.first_observed_on,
                     last_observed_on=period.last_observed_on,
                     left_percent=left_percent,

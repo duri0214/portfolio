@@ -324,7 +324,7 @@ class AffiliationImportStepView(View):
 
 
 class PoliticianTimelineView(DetailView):
-    """観測対象ごとの会派観測履歴と一次資料根拠を表示する。"""
+    """観測対象の全区間、またはバーに対応する一区間の根拠を表示する。"""
 
     model = ObservedPerson
     template_name = "kokkai/politician_timeline.html"
@@ -334,6 +334,17 @@ class PoliticianTimelineView(DetailView):
         context = super().get_context_data(**kwargs)
         summary, periods = AffiliationTimelineService().get_timeline(self.object)
         context["summary"] = summary
+        selected_id = self.request.GET.get("period")
+        if selected_id is not None:
+            selected_periods = [
+                period
+                for period in periods
+                if str(period.first_observation_id) == selected_id
+            ]
+            context["focused_period"] = bool(selected_periods)
+            context["missing_period"] = not selected_periods
+            if selected_periods:
+                periods = selected_periods
         context["periods"] = periods
         return context
 

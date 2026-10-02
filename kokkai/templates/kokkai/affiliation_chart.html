@@ -2,7 +2,7 @@
     <div class="d-flex justify-content-between align-items-end mb-2">
         <div>
             <h2 id="chart-heading" class="h4 mb-1">政治家別 会派観測ガントチャート</h2>
-            <p class="text-muted small mb-0">人物を縦、観測日を横に表示します。バーは同じ会派が連続して観測された最初と最後の日の間を示します。バーをクリックすると詳細を開きます。</p>
+            <p class="text-muted small mb-0">人物を縦、観測日を横に表示します。バーは同じ会派が連続して観測された最初と最後の日の間を示します。バーをクリックすると該当区間の詳細を開きます。</p>
         </div>
         {% if chart %}<span class="small text-muted">{{ chart.start_date|date:"Y-m-d" }} 〜 {{ chart.end_date|date:"Y-m-d" }} / {{ chart.total_row_count }}人</span>{% endif %}
     </div>
@@ -30,7 +30,7 @@
                     <span class="affiliation-gantt-guide" style="left: {{ tick.left_percent }}%" aria-hidden="true"></span>
                     {% endfor %}
                     {% for segment in row.segments %}
-                    <a href="{% url 'kokkai:politician_timeline' row.person.pk %}"
+                    <a href="{% url 'kokkai:politician_timeline' row.person.pk %}?period={{ segment.first_observation_id }}"
                        class="affiliation-gantt-bar affiliation-color-{{ segment.color_index }} px-2"
                        style="left: {{ segment.left_percent }}%; width: {{ segment.width_percent }}%; --lane: {{ segment.lane }}"
                        title="{{ segment.affiliation_label }}: {{ segment.first_observed_on|date:'Y-m-d' }} 〜 {{ segment.last_observed_on|date:'Y-m-d' }}">
