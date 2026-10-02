@@ -7,7 +7,7 @@ import requests
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Count, Q
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
@@ -395,11 +395,29 @@ class ReadingSupportEntryDeleteView(KokkaiManagementRequiredMixin, DeleteView):
         return response
 
 
-class ReadingSupportCsvImportView(KokkaiManagementRequiredMixin, FormView):
+class ReadingSupportCsvImportView(FormView):
     """KOKKAI内で辞書CSVを取り込み、または候補CSVを生成する画面。"""
 
     template_name = "kokkai/reading_support/csv_import.html"
     form_class = ReadingSupportCsvImportForm
+
+    def _can_manage(self):
+        return self.request.user.is_authenticated and self.request.user.is_superuser
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.method != "GET" and not self._can_manage():
+            return HttpResponseForbidden()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["can_generate_candidates"] = self._can_manage()
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["can_manage_reading_support"] = self._can_manage()
+        return context
 
     def post(self, request, *args, **kwargs):
         """プレビュー済み候補CSVのダウンロードはGPTとDBを呼ばない。"""

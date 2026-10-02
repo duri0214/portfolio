@@ -166,7 +166,9 @@ class ReadingSupportCandidateServiceTests(TestCase):
         self.assertEqual(rows[1]["description"], "子供の別表記")
         self.assertEqual(rows[1]["source_url"], "")
         self.assertEqual(result.warnings[0].line_number, 3)
-        self.assertTrue(ReadingSupportCsvImporter().import_csv(result.to_csv()).is_success)
+        self.assertTrue(
+            ReadingSupportCsvImporter().import_csv(result.to_csv()).is_success
+        )
 
     def test_failure_keeps_original_and_reports_line(self):
         """
@@ -248,11 +250,75 @@ class ReadingSupportManagementViewTests(TestCase):
         self.client.force_login(self.regular_user)
         for view_name in (
             "kokkai:reading_support_management",
-            "kokkai:reading_support_csv_import",
             "kokkai:reading_support_csv_template",
         ):
             response = self.client.get(reverse(view_name))
             self.assertEqual(response.status_code, 403)
+
+    def test_csv_import_form_is_visible_but_disabled_without_superuser(self):
+        """
+        シナリオ:
+        - 入力: 未ログイン利用者または一般ユーザーによるCSV取り込み画面の表示。
+        - 処理: CSV取り込み画面を開く。
+        - 期待値: GPT候補生成のチェックボックスと実行ボタンが無効になり、トークン利用の説明を確認できる。
+        """
+        for user in (None, self.regular_user):
+            if user is None:
+                self.client.logout()
+            else:
+                self.client.force_login(user)
+
+            response = self.client.get(reverse("kokkai:reading_support_csv_import"))
+
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(
+                response,
+                'name="generate_candidates" class="form-check-input" disabled',
+            )
+            self.assertContains(
+                response, "トークンを消費し、API利用料金が発生する場合があります"
+            )
+            self.assertContains(
+                response,
+                'id="csv-submit" type="submit" class="btn btn-primary" disabled',
+            )
+
+    def test_csv_import_form_is_enabled_for_superuser(self):
+        """
+        シナリオ:
+        - 入力: スーパーユーザーによるCSV取り込み画面の表示。
+        - 処理: CSV取り込み画面を開く。
+        - 期待値: GPT候補生成のチェックボックスと実行ボタンを操作できる。
+        """
+        self.client.force_login(self.admin_user)
+
+        response = self.client.get(reverse("kokkai:reading_support_csv_import"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response, 'name="generate_candidates" class="form-check-input"'
+        )
+        self.assertNotContains(
+            response,
+            'name="generate_candidates" class="form-check-input" disabled',
+        )
+        self.assertNotContains(
+            response,
+            'id="csv-submit" type="submit" class="btn btn-primary" disabled',
+        )
+
+    def test_csv_import_post_is_rejected_without_superuser(self):
+        """
+        シナリオ:
+        - 入力: 一般ユーザーによるCSV取り込みPOST。
+        - 処理: CSV取り込みを要求する。
+        - 期待値: サーバー側でHTTP 403を返し、権限を迂回できない。
+        """
+        self.client.force_login(self.regular_user)
+
+        response = self.client.post(reverse("kokkai:reading_support_csv_import"))
+
+        self.assertEqual(response.status_code, 403)
 
     def test_manual_create_page_is_not_available(self):
         """
