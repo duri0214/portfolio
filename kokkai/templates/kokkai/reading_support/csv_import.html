@@ -5,7 +5,9 @@
     <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
         <ol class="breadcrumb mb-0 small">
             <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">会議録一覧</a></li>
+            {% if can_manage_reading_support %}
             <li class="breadcrumb-item"><a href="{% url 'kokkai:reading_support_management' %}">読み仮名支援辞書</a></li>
+            {% endif %}
             <li class="breadcrumb-item active" aria-current="page">CSVから取り込む</li>
         </ol>
     </nav>
@@ -15,7 +17,14 @@
     <div class="card mb-3">
         <div class="card-header bg-white d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
             <h2 class="h5 mb-0">CSVの形式</h2>
+            {% if can_manage_reading_support %}
             <a href="{% url 'kokkai:reading_support_csv_template' %}" class="btn btn-outline-secondary">CSVテンプレート（サンプル付き）をダウンロード</a>
+            {% else %}
+            <div class="d-flex flex-column align-items-sm-end gap-1">
+                <button type="button" class="btn btn-outline-secondary" disabled>CSVテンプレート（サンプル付き）をダウンロード</button>
+                <span class="small text-muted">スーパーユーザー権限が必要です。</span>
+            </div>
+            {% endif %}
         </div>
         <div class="card-body">
             <p>UTF-8のカンマ区切りCSVを使用します。CSVの列名と画面の項目名は次の対応です。</p>
@@ -61,7 +70,7 @@
         <div class="card-body">
             {% if not can_manage_reading_support %}
             <div class="alert alert-secondary" role="status">
-                CSVの取り込みと表記揺れ候補の生成はスーパーユーザーだけが実行できます。
+                CSVの取り込みと表記揺れ候補の生成には、スーパーユーザーでのログインが必要です。
             </div>
             {% endif %}
             {{ form.non_field_errors }}
@@ -82,7 +91,11 @@
         </div>
         <div class="card-footer d-flex flex-wrap gap-2">
             <button id="csv-submit" type="submit" class="btn btn-primary"{% if not can_manage_reading_support %} disabled{% endif %}>取り込む</button>
+            {% if can_manage_reading_support %}
             <a href="{% url 'kokkai:reading_support_management' %}" class="btn btn-secondary">読み仮名支援辞書へ戻る</a>
+            {% else %}
+            <a href="{% url 'kokkai:index' %}" class="btn btn-secondary">会議録一覧へ戻る</a>
+            {% endif %}
         </div>
     </form>
 

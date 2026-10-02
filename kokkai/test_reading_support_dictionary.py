@@ -244,7 +244,7 @@ class ReadingSupportManagementViewTests(TestCase):
         """
         シナリオ:
         - 入力: 一般ユーザーによる辞書管理画面へのアクセス。
-        - 処理: 一覧とCSV取り込み画面を開く。
+        - 処理: 辞書一覧とCSVテンプレートを開く。
         - 期待値: どちらもHTTP 403になる。
         """
         self.client.force_login(self.regular_user)
@@ -269,8 +269,16 @@ class ReadingSupportManagementViewTests(TestCase):
                 self.client.force_login(user)
 
             response = self.client.get(reverse("kokkai:reading_support_csv_import"))
+            index = self.client.get(reverse("kokkai:index"))
 
             self.assertEqual(response.status_code, 200)
+            self.assertContains(
+                index,
+                f'href="{reverse("kokkai:reading_support_csv_import")}"',
+            )
+            self.assertContains(
+                response, 'name="file" class="form-control" required disabled'
+            )
             self.assertContains(
                 response,
                 'name="generate_candidates" class="form-check-input" disabled',
@@ -281,6 +289,14 @@ class ReadingSupportManagementViewTests(TestCase):
             self.assertContains(
                 response,
                 'id="csv-submit" type="submit" class="btn btn-primary" disabled',
+            )
+            self.assertContains(
+                response,
+                'type="button" class="btn btn-outline-secondary" disabled>CSVテンプレート',
+            )
+            self.assertNotContains(
+                response,
+                f'href="{reverse("kokkai:reading_support_management")}"',
             )
 
     def test_csv_import_form_is_enabled_for_superuser(self):
@@ -295,6 +311,7 @@ class ReadingSupportManagementViewTests(TestCase):
         response = self.client.get(reverse("kokkai:reading_support_csv_import"))
 
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="file" class="form-control" required')
         self.assertContains(
             response, 'name="generate_candidates" class="form-check-input"'
         )
@@ -310,15 +327,20 @@ class ReadingSupportManagementViewTests(TestCase):
     def test_csv_import_post_is_rejected_without_superuser(self):
         """
         シナリオ:
-        - 入力: 一般ユーザーによるCSV取り込みPOST。
-        - 処理: CSV取り込みを要求する。
+        - 入力: 未ログイン利用者と一般ユーザーによるCSV取り込み・候補CSVダウンロードPOST。
+        - 処理: それぞれのPOSTを要求する。
         - 期待値: サーバー側でHTTP 403を返し、権限を迂回できない。
         """
-        self.client.force_login(self.regular_user)
-
-        response = self.client.post(reverse("kokkai:reading_support_csv_import"))
-
-        self.assertEqual(response.status_code, 403)
+        for user in (None, self.regular_user):
+            if user is None:
+                self.client.logout()
+            else:
+                self.client.force_login(user)
+            for payload in ({"generate_candidates": "on"}, {"candidate_csv": ""}):
+                response = self.client.post(
+                    reverse("kokkai:reading_support_csv_import"), payload
+                )
+                self.assertEqual(response.status_code, 403)
 
     def test_manual_create_page_is_not_available(self):
         """
