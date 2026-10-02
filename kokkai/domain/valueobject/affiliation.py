@@ -73,6 +73,12 @@ class AffiliationPeriodData:
 
         return len(self.observations)
 
+    @property
+    def first_observation_id(self) -> int:
+        """チャートと詳細で同じ区間を指す先頭観測のIDを返す。"""
+
+        return self.observations[0].pk
+
 
 @dataclass(frozen=True)
 class AffiliationChartSegmentData:
@@ -81,6 +87,7 @@ class AffiliationChartSegmentData:
 
     Attributes:
         affiliation_label: バーに表示する会派名。
+        first_observation_id: 区間の先頭観測ID。詳細画面の絞り込みに使う。
         first_observed_on: バーの開始となる最初の観測日。
         last_observed_on: バーの終了となる最後の観測日。
         left_percent: チャート全体におけるバー左端の位置。
@@ -90,6 +97,7 @@ class AffiliationChartSegmentData:
     """
 
     affiliation_label: str
+    first_observation_id: int
     first_observed_on: date
     last_observed_on: date
     left_percent: float

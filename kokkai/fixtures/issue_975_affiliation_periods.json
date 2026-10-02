@@ -1,0 +1,60 @@
+[
+  {
+    "model": "kokkai.observedperson",
+    "pk": 975001,
+    "fields": {
+      "name": "検証用議員975",
+      "name_yomi": "けんしょうようぎいん",
+      "identity_status": "unconfirmed",
+      "created_at": "2024-01-26T00:00:00Z"
+    }
+  },
+  {
+    "model": "kokkai.affiliationobservation",
+    "pk": 975001,
+    "fields": {
+      "person": 975001,
+      "meeting": null,
+      "observed_on": "2024-01-26",
+      "source_type": "speech",
+      "affiliation": "会派A",
+      "speech_count": 1,
+      "source_meeting_id": "sample-975-01",
+      "source_url": "https://example.com/sample-975-01",
+      "created_at": "2024-01-26T00:00:00Z",
+      "updated_at": "2024-01-26T00:00:00Z"
+    }
+  },
+  {
+    "model": "kokkai.affiliationobservation",
+    "pk": 975002,
+    "fields": {
+      "person": 975001,
+      "meeting": null,
+      "observed_on": "2024-01-26",
+      "source_type": "speech",
+      "affiliation": "会派B",
+      "speech_count": 1,
+      "source_meeting_id": "sample-975-02",
+      "source_url": "https://example.com/sample-975-02",
+      "created_at": "2024-01-26T00:00:00Z",
+      "updated_at": "2024-01-26T00:00:00Z"
+    }
+  },
+  {
+    "model": "kokkai.affiliationobservation",
+    "pk": 975003,
+    "fields": {
+      "person": 975001,
+      "meeting": null,
+      "observed_on": "2024-01-27",
+      "source_type": "speech",
+      "affiliation": "会派A",
+      "speech_count": 1,
+      "source_meeting_id": "sample-975-03",
+      "source_url": "https://example.com/sample-975-03",
+      "created_at": "2024-01-27T00:00:00Z",
+      "updated_at": "2024-01-27T00:00:00Z"
+    }
+  }
+]

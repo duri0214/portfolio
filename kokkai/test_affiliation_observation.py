@@ -358,3 +358,95 @@ class AffiliationTraceabilityViewTests(TestCase):
         self.assertEqual(
             {segment.affiliation_label for segment in row.segments}, {"会派A", "会派B"}
         )
+
+    def test_chart_bar_opens_only_its_observation_period(self):
+        """
+        シナリオ:
+        - 入力: 同日に会派A・B、翌日に再び会派Aを観測した人物。
+        - 処理: 各バーのリンクと人物名のリンクから詳細を開く。
+        - 期待値: バーからは対応する一区間だけ、人物名からは全区間を表示する。
+        """
+        second = AffiliationObservation.objects.create(
+            person=self.person,
+            observed_on=date(2024, 1, 26),
+            affiliation="会派B",
+            source_meeting_id="meeting-b",
+        )
+        third = AffiliationObservation.objects.create(
+            person=self.person,
+            observed_on=date(2024, 1, 27),
+            affiliation="会派A",
+            source_meeting_id="meeting-a-again",
+        )
+        first = self.person.affiliation_observations.get(
+            affiliation="会派A", observed_on=date(2024, 1, 26)
+        )
+        timeline_url = reverse("kokkai:politician_timeline", args=[self.person.pk])
+        chart = self.client.get(reverse("kokkai:affiliation_traceability"))
+
+        self.assertContains(chart, f'href="{timeline_url}"')
+        for selected, excluded in (
+            (first, (second, third)),
+            (second, (first, third)),
+            (third, (first, second)),
+        ):
+            self.assertContains(chart, f'href="{timeline_url}?period={selected.pk}"')
+            detail = self.client.get(timeline_url, {"period": selected.pk})
+            self.assertContains(detail, "選択した会派観測区間")
+            self.assertContains(
+                detail, f"<td>{selected.source_meeting_id}</td>", html=True
+            )
+            self.assertEqual(len(detail.context["periods"]), 1)
+            for other in excluded:
+                self.assertNotContains(
+                    detail, f"<td>{other.source_meeting_id}</td>", html=True
+                )
+
+        all_periods = self.client.get(timeline_url)
+        self.assertEqual(len(all_periods.context["periods"]), 3)
+
+    def test_missing_chart_period_keeps_person_detail_available(self):
+        """
+        シナリオ:
+        - 入力: バーのリンクを得た後に、その区間の観測を削除する。
+        - 処理: 古い区間ID付きで人物詳細を開く。
+        - 期待値: 見つからない旨を示し、人物の現在の全観測区間を表示する。
+        """
+        remaining = AffiliationObservation.objects.create(
+            person=self.person,
+            observed_on=date(2024, 1, 27),
+            affiliation="会派B",
+            source_meeting_id="meeting-remaining",
+        )
+        removed_id = self.person.affiliation_observations.get(affiliation="会派A").pk
+        self.person.affiliation_observations.filter(pk=removed_id).delete()
+
+        detail = self.client.get(
+            reverse("kokkai:politician_timeline", args=[self.person.pk]),
+            {"period": removed_id},
+        )
+
+        self.assertContains(detail, "指定された観測区間は見つかりません")
+        self.assertContains(
+            detail, f"<td>{remaining.source_meeting_id}</td>", html=True
+        )
+        self.assertEqual(len(detail.context["periods"]), 1)
+
+    def test_deleted_last_observation_still_opens_person_detail(self):
+        """
+        シナリオ:
+        - 入力: 人物に残る唯一の観測を削除し、古いバーのリンクを開く。
+        - 処理: 区間ID付きの人物詳細を取得する。
+        - 期待値: 人物ページを開き、観測がなくなったことを表示する。
+        """
+        observation = self.person.affiliation_observations.get()
+        removed_id = observation.pk
+        observation.delete()
+
+        detail = self.client.get(
+            reverse("kokkai:politician_timeline", args=[self.person.pk]),
+            {"period": removed_id},
+        )
+
+        self.assertContains(detail, "指定された観測区間は見つかりません")
+        self.assertContains(detail, "この人物の会派観測は現在ありません")
