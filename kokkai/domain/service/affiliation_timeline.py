@@ -44,13 +44,13 @@ class AffiliationTimelineService:
         return self._summary_for(person, observations), self._periods_for(observations)
 
     def get_chart(
-        self, offset: int = 0, limit: int | None = None
+        self, offset: int = 0, limit: int | None = None, query: str = ""
     ) -> AffiliationChartData | None:
-        """全人物の会派観測を比較できるガントチャート用の描画データを返す。"""
+        """氏名・よみで絞った人物の会派観測を共通の横軸で描くデータを返す。"""
 
         observations_by_person: dict[int, list] = {}
         people_by_id: dict[int, ObservedPerson] = {}
-        for observation in self.repository.list_all():
+        for observation in self.repository.list_all(query=query):
             observations_by_person.setdefault(observation.person_id, []).append(
                 observation
             )

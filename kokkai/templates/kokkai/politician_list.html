@@ -67,62 +67,12 @@
     </div>
 
     <section aria-labelledby="chart-heading">
-        <div class="d-flex justify-content-between align-items-end mb-2">
-            <div>
-                <h2 id="chart-heading" class="h4 mb-1">政治家別 会派観測ガントチャート</h2>
-                <p class="text-muted small mb-0">人物を縦、観測日を横に表示します。バーは同じ会派が連続して観測された最初と最後の日の間を示します。バーをクリックすると詳細を開きます。</p>
-            </div>
-            {% if chart %}<span class="small text-muted">{{ chart.start_date|date:"Y-m-d" }} 〜 {{ chart.end_date|date:"Y-m-d" }} / {{ chart.total_row_count }}人</span>{% endif %}
-        </div>
-
-        {% if chart %}
-        <div class="affiliation-gantt-scroll border rounded">
-            <div class="affiliation-gantt">
-                <div class="affiliation-gantt-header">
-                    <div class="affiliation-gantt-person fw-semibold">人物</div>
-                    <div class="affiliation-gantt-axis" aria-label="観測日">
-                        {% for tick in chart.ticks %}
-                        <div class="affiliation-gantt-tick" style="left: {{ tick.left_percent }}%"><span>{{ tick.label }}</span></div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% for row in chart.rows %}
-                <div class="affiliation-gantt-row">
-                    <div class="affiliation-gantt-person">
-                        <a href="{% url 'kokkai:politician_timeline' row.person.pk %}">{{ row.person.name }}</a>
-                        {% if row.person.name_yomi %}<div class="small text-muted">{{ row.person.name_yomi }}</div>{% endif %}
-                    </div>
-                    <div class="affiliation-gantt-track" style="--lane-count: {{ row.lane_count }}">
-                        {% for tick in chart.ticks %}
-                        <span class="affiliation-gantt-guide" style="left: {{ tick.left_percent }}%" aria-hidden="true"></span>
-                        {% endfor %}
-                        {% for segment in row.segments %}
-                        <a href="{% url 'kokkai:politician_timeline' row.person.pk %}"
-                           class="affiliation-gantt-bar affiliation-color-{{ segment.color_index }} px-2"
-                           style="left: {{ segment.left_percent }}%; width: {{ segment.width_percent }}%; --lane: {{ segment.lane }}"
-                           title="{{ segment.affiliation_label }}: {{ segment.first_observed_on|date:'Y-m-d' }} 〜 {{ segment.last_observed_on|date:'Y-m-d' }}">
-                            {{ segment.affiliation_label }}
-                        </a>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        <nav aria-label="会派ガントチャートのページ" class="mt-3">
-            <div class="d-flex justify-content-center align-items-center gap-3">
-                {% if chart_has_previous %}
-                <a class="btn btn-sm btn-outline-secondary" href="?chart_page={{ chart_page|add:'-1' }}">前の100人</a>
-                {% endif %}
-                <span class="small text-muted">{{ chart_page }}ページ目（{{ chart_page_size }}人ずつ）</span>
-                {% if chart_has_next %}
-                <a class="btn btn-sm btn-outline-secondary" href="?chart_page={{ chart_page|add:'1' }}">次の100人</a>
-                {% endif %}
-            </div>
-        </nav>
-        {% else %}
-        <p class="text-center border rounded py-4">会派情報を含む発言はまだ取り込まれていません。</p>
-        {% endif %}
+        <form id="affiliation-chart-search" method="get" class="mb-3">
+            <label for="affiliation-chart-query" class="form-label">政治家を検索（氏名・よみ）</label>
+            <input id="affiliation-chart-query" name="q" type="search" class="form-control" value="{{ chart_query }}" autocomplete="off" aria-controls="affiliation-chart-results">
+        </form>
+        <p id="affiliation-chart-loading" class="small text-muted d-none" role="status">検索中…</p>
+        {% include 'kokkai/affiliation_chart.html' %}
     </section>
 </div>
 {% endblock %}
@@ -140,6 +90,112 @@
                 button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>開始中…';
             });
         }
+
+        const searchForm = document.getElementById("affiliation-chart-search");
+        const searchInput = document.getElementById("affiliation-chart-query");
+        const chartSection = searchForm.closest("section");
+        const searchLoading = document.getElementById("affiliation-chart-loading");
+        const initialPage = new URL(window.location.href).searchParams.get("chart_page");
+        let defaultChartHtml = searchInput.value.trim() || (initialPage && initialPage !== "1")
+            ? null
+            : chartSection.querySelector("#affiliation-chart-results").outerHTML;
+        let searchTimer;
+        let searchController;
+
+        async function updateChart(url, updateHistory = true) {
+            if (searchController) {
+                searchController.abort();
+            }
+            const controller = new AbortController();
+            searchController = controller;
+            const requestUrl = new URL(url, window.location.href);
+            requestUrl.searchParams.set("chart_only", "1");
+            chartSection.setAttribute("aria-busy", "true");
+            searchLoading.classList.remove("d-none");
+            try {
+                const response = await fetch(requestUrl, {
+                    signal: controller.signal,
+                    headers: {"Accept": "text/html"},
+                    credentials: "same-origin"
+                });
+                if (!response.ok) {
+                    throw new Error("検索に失敗しました。");
+                }
+                const html = await response.text();
+                if (controller.signal.aborted) {
+                    return;
+                }
+                chartSection.querySelector("#affiliation-chart-results").outerHTML = html;
+                if (!requestUrl.searchParams.get("q") && !requestUrl.searchParams.has("chart_page")) {
+                    defaultChartHtml = html;
+                }
+                requestUrl.searchParams.delete("chart_only");
+                if (updateHistory) {
+                    window.history.replaceState(null, "", requestUrl);
+                }
+            } catch (error) {
+                if (error.name !== "AbortError") {
+                    chartSection.querySelector("#affiliation-chart-results").innerHTML =
+                        '<p class="alert alert-danger mb-0" role="alert">検索に失敗しました。入力し直すか、ページを再読み込みしてください。</p>';
+                }
+            } finally {
+                if (!controller.signal.aborted) {
+                    chartSection.removeAttribute("aria-busy");
+                    searchLoading.classList.add("d-none");
+                }
+            }
+        }
+
+        function restoreDefaultChart() {
+            window.clearTimeout(searchTimer);
+            if (searchController) {
+                searchController.abort();
+            }
+            const url = new URL(window.location.href);
+            url.searchParams.set("q", "");
+            url.searchParams.delete("chart_page");
+            if (defaultChartHtml) {
+                chartSection.querySelector("#affiliation-chart-results").outerHTML = defaultChartHtml;
+                chartSection.removeAttribute("aria-busy");
+                searchLoading.classList.add("d-none");
+                window.history.replaceState(null, "", url);
+            } else {
+                updateChart(url);
+            }
+        }
+
+        searchForm.addEventListener("submit", function (event) {
+            event.preventDefault();
+            window.clearTimeout(searchTimer);
+            if (!searchInput.value.trim()) {
+                restoreDefaultChart();
+                return;
+            }
+            const url = new URL(window.location.href);
+            url.searchParams.set("q", searchInput.value.trim());
+            url.searchParams.delete("chart_page");
+            updateChart(url);
+        });
+        searchInput.addEventListener("input", function () {
+            window.clearTimeout(searchTimer);
+            if (!searchInput.value.trim()) {
+                restoreDefaultChart();
+                return;
+            }
+            if (searchController) {
+                searchController.abort();
+            }
+            searchTimer = window.setTimeout(function () {
+                searchForm.requestSubmit();
+            }, 250);
+        });
+        chartSection.addEventListener("click", function (event) {
+            const link = event.target.closest('nav[aria-label="会派ガントチャートのページ"] a');
+            if (link) {
+                event.preventDefault();
+                updateChart(link.href);
+            }
+        });
 
         const progress = document.getElementById("affiliation-import-progress");
         if (!progress) {

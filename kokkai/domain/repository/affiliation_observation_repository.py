@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+from django.db.models import Q
+
 from ...models import (
     AffiliationObservation,
     AffiliationObservationEvidence,
@@ -103,10 +105,15 @@ class AffiliationObservationRepository:
             .order_by("observed_on", "source_meeting_id", "affiliation", "pk")
         )
 
-    def list_all(self):
-        """ガントチャート表示に必要な全人物の会派観測を時系列で取得する。"""
+    def list_all(self, query: str = ""):
+        """氏名・よみで絞った観測対象の会派観測を時系列で取得する。"""
 
-        return AffiliationObservation.objects.select_related("person").order_by(
+        observations = AffiliationObservation.objects.select_related("person")
+        if query:
+            observations = observations.filter(
+                Q(person__name__icontains=query) | Q(person__name_yomi__icontains=query)
+            )
+        return observations.order_by(
             "person__name",
             "person__name_yomi",
             "person_id",
