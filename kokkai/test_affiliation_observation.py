@@ -186,13 +186,13 @@ class AffiliationTraceabilityViewTests(TestCase):
     def test_chart_search_matches_name_and_yomi_across_pages(self):
         """
         シナリオ:
-        - 入力: 通常一覧の後続ページにある人物と、その氏名・よみの一部。
+        - 入力: 通常一覧の130人目にある人物と、その氏名・よみの一部。
         - 処理: 検索条件付きでチャート部分を取得する。
         - 期待値: 一致する人物の行と詳細リンクだけを返し、ページ数を検索結果に合わせる。
         """
         people = [
             ObservedPerson(name=f"人物{i:03d}", name_yomi=f"じんぶつ{i:03d}")
-            for i in range(101)
+            for i in range(130)
         ]
         ObservedPerson.objects.bulk_create(people)
         people = list(ObservedPerson.objects.filter(name__startswith="人物"))
@@ -207,30 +207,36 @@ class AffiliationTraceabilityViewTests(TestCase):
         )
         url = reverse("kokkai:affiliation_traceability")
 
-        by_name = self.client.get(url, {"q": "人物100", "chart_only": "1"})
-        by_yomi = self.client.get(url, {"q": "じんぶつ100", "chart_only": "1"})
+        by_name = self.client.get(url, {"q": "人物129", "chart_only": "1"})
+        by_yomi = self.client.get(url, {"q": "じんぶつ129", "chart_only": "1"})
+        normal_first_page = self.client.get(url, {"chart_only": "1"})
+        normal_second_page = self.client.get(
+            url, {"chart_page": "2", "chart_only": "1"}
+        )
         first_page = self.client.get(url, {"q": "人物", "chart_only": "1"})
         second_page = self.client.get(
             url, {"q": "人物", "chart_page": "2", "chart_only": "1"}
         )
 
         for response in (by_name, by_yomi):
-            self.assertContains(response, "人物100")
+            self.assertContains(response, "人物129")
             self.assertContains(response, "1人")
-            self.assertNotContains(response, "人物099")
+            self.assertNotContains(response, "人物128")
             self.assertNotContains(response, "次の100人")
             self.assertContains(
                 response,
                 reverse(
                     "kokkai:politician_timeline",
                     args=[
-                        next(person.pk for person in people if person.name == "人物100")
+                        next(person.pk for person in people if person.name == "人物129")
                     ],
                 ),
             )
+        self.assertNotContains(normal_first_page, "人物129")
+        self.assertContains(normal_second_page, "人物129")
         self.assertContains(first_page, "次の100人")
         self.assertContains(first_page, "q=%E4%BA%BA%E7%89%A9")
-        self.assertContains(second_page, "人物100")
+        self.assertContains(second_page, "人物129")
         self.assertContains(second_page, "前の100人")
 
     def test_chart_search_empty_result_and_clear_query(self):
