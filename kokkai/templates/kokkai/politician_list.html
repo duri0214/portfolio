@@ -95,6 +95,10 @@
         const searchInput = document.getElementById("affiliation-chart-query");
         const chartSection = searchForm.closest("section");
         const searchLoading = document.getElementById("affiliation-chart-loading");
+        const initialPage = new URL(window.location.href).searchParams.get("chart_page");
+        let defaultChartHtml = searchInput.value.trim() || (initialPage && initialPage !== "1")
+            ? null
+            : chartSection.querySelector("#affiliation-chart-results").outerHTML;
         let searchTimer;
         let searchController;
 
@@ -118,7 +122,13 @@
                     throw new Error("検索に失敗しました。");
                 }
                 const html = await response.text();
+                if (controller.signal.aborted) {
+                    return;
+                }
                 chartSection.querySelector("#affiliation-chart-results").outerHTML = html;
+                if (!requestUrl.searchParams.get("q") && !requestUrl.searchParams.has("chart_page")) {
+                    defaultChartHtml = html;
+                }
                 requestUrl.searchParams.delete("chart_only");
                 if (updateHistory) {
                     window.history.replaceState(null, "", requestUrl);
@@ -136,9 +146,31 @@
             }
         }
 
+        function restoreDefaultChart() {
+            window.clearTimeout(searchTimer);
+            if (searchController) {
+                searchController.abort();
+            }
+            const url = new URL(window.location.href);
+            url.searchParams.set("q", "");
+            url.searchParams.delete("chart_page");
+            if (defaultChartHtml) {
+                chartSection.querySelector("#affiliation-chart-results").outerHTML = defaultChartHtml;
+                chartSection.removeAttribute("aria-busy");
+                searchLoading.classList.add("d-none");
+                window.history.replaceState(null, "", url);
+            } else {
+                updateChart(url);
+            }
+        }
+
         searchForm.addEventListener("submit", function (event) {
             event.preventDefault();
             window.clearTimeout(searchTimer);
+            if (!searchInput.value.trim()) {
+                restoreDefaultChart();
+                return;
+            }
             const url = new URL(window.location.href);
             url.searchParams.set("q", searchInput.value.trim());
             url.searchParams.delete("chart_page");
@@ -146,6 +178,13 @@
         });
         searchInput.addEventListener("input", function () {
             window.clearTimeout(searchTimer);
+            if (!searchInput.value.trim()) {
+                restoreDefaultChart();
+                return;
+            }
+            if (searchController) {
+                searchController.abort();
+            }
             searchTimer = window.setTimeout(function () {
                 searchForm.requestSubmit();
             }, 250);
