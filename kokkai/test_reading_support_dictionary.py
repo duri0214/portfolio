@@ -272,7 +272,7 @@ class ReadingSupportManagementViewTests(TestCase):
             index = self.client.get(reverse("kokkai:index"))
 
             self.assertEqual(response.status_code, 200)
-            self.assertContains(
+            self.assertNotContains(
                 index,
                 f'href="{reverse("kokkai:reading_support_csv_import")}"',
             )

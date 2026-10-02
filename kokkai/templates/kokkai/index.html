@@ -91,7 +91,6 @@
             <a href="{% url 'kokkai:reading_support_management' %}" class="btn btn-outline-primary">読み仮名支援辞書</a>
             {% else %}
             <button type="button" class="btn btn-outline-secondary" disabled>読み仮名支援辞書</button>
-            <a href="{% url 'kokkai:reading_support_csv_import' %}" class="btn btn-outline-secondary">CSV取り込みの説明を見る</a>
             {% endif %}
         </div>
         {% if not can_manage_reading_support %}
