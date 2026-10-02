@@ -182,11 +182,17 @@ class AffiliationTraceabilityView(TemplateView):
 
     Attributes:
         DEFAULT_YEARS_BACK: 初期表示で今日から遡る年数。
+        CHART_PAGE_SIZE: 一度に描画するガントチャートの人物数。
     """
 
     template_name = "kokkai/politician_list.html"
     DEFAULT_YEARS_BACK = 10
     CHART_PAGE_SIZE = 100
+
+    def get_template_names(self):
+        if self.request.GET.get("chart_only") == "1":
+            return ["kokkai/affiliation_chart.html"]
+        return [self.template_name]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -194,7 +200,9 @@ class AffiliationTraceabilityView(TemplateView):
         context["chart"] = AffiliationTimelineService().get_chart(
             offset=(chart_page - 1) * self.CHART_PAGE_SIZE,
             limit=self.CHART_PAGE_SIZE,
+            query=self.request.GET.get("q", "").strip(),
         )
+        context["chart_query"] = self.request.GET.get("q", "").strip()
         context["chart_page"] = chart_page
         context["chart_page_size"] = self.CHART_PAGE_SIZE
         context["chart_has_previous"] = chart_page > 1

@@ -183,6 +183,73 @@ class AffiliationTraceabilityViewTests(TestCase):
         self.assertContains(timeline_response, "会派観測タイムライン")
         self.assertContains(timeline_response, "発言 121305254X00120240126_001")
 
+    def test_chart_search_matches_name_and_yomi_across_pages(self):
+        """
+        シナリオ:
+        - 入力: 通常一覧の後続ページにある人物と、その氏名・よみの一部。
+        - 処理: 検索条件付きでチャート部分を取得する。
+        - 期待値: 一致する人物の行と詳細リンクだけを返し、ページ数を検索結果に合わせる。
+        """
+        people = [
+            ObservedPerson(name=f"人物{i:03d}", name_yomi=f"じんぶつ{i:03d}")
+            for i in range(101)
+        ]
+        ObservedPerson.objects.bulk_create(people)
+        people = list(ObservedPerson.objects.filter(name__startswith="人物"))
+        AffiliationObservation.objects.bulk_create(
+            AffiliationObservation(
+                person=person,
+                observed_on=date(2024, 1, 26),
+                affiliation="会派A",
+                source_meeting_id=f"meeting-{index}",
+            )
+            for index, person in enumerate(people)
+        )
+        url = reverse("kokkai:affiliation_traceability")
+
+        by_name = self.client.get(url, {"q": "人物100", "chart_only": "1"})
+        by_yomi = self.client.get(url, {"q": "じんぶつ100", "chart_only": "1"})
+        first_page = self.client.get(url, {"q": "人物", "chart_only": "1"})
+        second_page = self.client.get(
+            url, {"q": "人物", "chart_page": "2", "chart_only": "1"}
+        )
+
+        for response in (by_name, by_yomi):
+            self.assertContains(response, "人物100")
+            self.assertContains(response, "1人")
+            self.assertNotContains(response, "人物099")
+            self.assertNotContains(response, "次の100人")
+            self.assertContains(
+                response,
+                reverse(
+                    "kokkai:politician_timeline",
+                    args=[
+                        next(person.pk for person in people if person.name == "人物100")
+                    ],
+                ),
+            )
+        self.assertContains(first_page, "次の100人")
+        self.assertContains(first_page, "q=%E4%BA%BA%E7%89%A9")
+        self.assertContains(second_page, "人物100")
+        self.assertContains(second_page, "前の100人")
+
+    def test_chart_search_empty_result_and_clear_query(self):
+        """
+        シナリオ:
+        - 入力: 一致しない検索語と、検索語を消した空文字列。
+        - 処理: チャート部分を順に取得する。
+        - 期待値: 該当なしを明示し、空文字列では通常のチャートに戻る。
+        """
+        url = reverse("kokkai:affiliation_traceability")
+
+        empty = self.client.get(url, {"q": "存在しない氏名", "chart_only": "1"})
+        restored = self.client.get(url, {"q": "", "chart_only": "1"})
+
+        self.assertContains(empty, "一致する人物は見つかりませんでした")
+        self.assertNotContains(empty, "会派情報を含む発言はまだ")
+        self.assertContains(restored, "議員A")
+        self.assertNotContains(restored, "一致する人物は見つかりませんでした")
+
     def test_period_submission_creates_resumable_monthly_import_job(self):
         """
         シナリオ:
