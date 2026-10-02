@@ -1,3 +1,7 @@
+import csv
+import io
+from unittest.mock import Mock, patch
+
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -5,6 +9,10 @@ from django.test import TestCase
 from django.urls import NoReverseMatch, reverse
 
 from kokkai.domain.service.reading_support import ReadingSupportService
+from kokkai.domain.service.reading_support_candidates import (
+    CandidateGenerationError,
+    ReadingSupportCandidateService,
+)
 from kokkai.domain.service.reading_support_import import ReadingSupportCsvImporter
 from kokkai.models import ReadingSupportEntry
 
@@ -123,6 +131,97 @@ class ReadingSupportCsvImporterTests(TestCase):
         self.assertFalse(result.is_success)
         self.assertEqual(result.errors[0].line_number, 3)
         self.assertFalse(ReadingSupportEntry.objects.filter(word="NISA").exists())
+
+
+class ReadingSupportCandidateServiceTests(TestCase):
+    """候補CSVの元行保持、重複除去、失敗時の扱いを確認する。"""
+
+    HEADER = "word,reading,description,source_url\n"
+
+    def test_generates_distinct_variant_and_preserves_original_rows(self):
+        """
+        シナリオ:
+        - 入力: 子どもとFOIPの元行、同義候補と表記差だけの候補。
+        - 処理: 行ごとに候補を生成し、既存取り込み形式のCSVを作る。
+        - 期待値: 元行を保ち、こどもだけ追加し、候補の出典は空欄になる。
+        """
+        generator = Mock()
+        generator.generate.side_effect = [
+            ["こども", "子ども", "FOIP"],
+            ["ＦＯＩＰ", "foip"],
+        ]
+        service = ReadingSupportCandidateService(generator=generator)
+
+        result = service.generate_csv(
+            self.HEADER
+            + "子ども,こども,子供の別表記,https://example.com/child\n"
+            + "FOIP,フォイップ,外交構想,\n"
+        )
+        rows = list(csv.DictReader(io.StringIO(result.to_csv())))
+
+        self.assertFalse(result.errors)
+        self.assertEqual([row["word"] for row in rows], ["子ども", "こども", "FOIP"])
+        self.assertEqual(rows[0]["source_url"], "https://example.com/child")
+        self.assertEqual(rows[1]["reading"], "こども")
+        self.assertEqual(rows[1]["description"], "子供の別表記")
+        self.assertEqual(rows[1]["source_url"], "")
+        self.assertEqual(result.warnings[0].line_number, 3)
+        self.assertTrue(ReadingSupportCsvImporter().import_csv(result.to_csv()).is_success)
+
+    def test_failure_keeps_original_and_reports_line(self):
+        """
+        シナリオ:
+        - 入力: GPTが生成に失敗する有効な辞書行。
+        - 処理: 候補CSVを作る。
+        - 期待値: 元行だけを出力し、行番号と理由を確認できる。
+        """
+        generator = Mock()
+        generator.generate.side_effect = CandidateGenerationError(
+            "APIが利用できません。"
+        )
+
+        result = ReadingSupportCandidateService(generator).generate_csv(
+            self.HEADER + "子ども,こども,子供の別表記,\n"
+        )
+
+        self.assertEqual(len(result.rows), 1)
+        self.assertEqual(result.rows[0].word, "子ども")
+        self.assertTrue(result.generation_failed)
+        self.assertEqual(result.warnings[0].line_number, 2)
+        self.assertIn("APIが利用できません", result.warnings[0].message)
+
+    def test_no_candidate_keeps_original_and_explains_result(self):
+        """
+        シナリオ:
+        - 入力: GPTが別表記なしと返す辞書行。
+        - 処理: 候補CSVを作る。
+        - 期待値: 元行を残し、候補がない理由を表示する。
+        """
+        generator = Mock()
+        generator.generate.return_value = []
+
+        result = ReadingSupportCandidateService(generator).generate_csv(
+            self.HEADER + "FOIP,フォイップ,外交構想,\n"
+        )
+
+        self.assertEqual([row.word for row in result.rows], ["FOIP"])
+        self.assertIn("候補は見つかりません", result.warnings[0].message)
+
+    def test_invalid_csv_does_not_call_gpt(self):
+        """
+        シナリオ:
+        - 入力: 読みが空の行と正規化後に重複する行。
+        - 処理: 候補生成前に入力CSVを検証する。
+        - 期待値: 行ごとのエラーを返し、GPTを呼ばない。
+        """
+        generator = Mock()
+
+        result = ReadingSupportCandidateService(generator).generate_csv(
+            self.HEADER + "FOIP,,説明,\nＦＯＩＰ,ふぉいっぷ,説明,\n"
+        )
+
+        self.assertEqual([error.line_number for error in result.errors], [2, 3])
+        generator.generate.assert_not_called()
 
 
 class ReadingSupportManagementViewTests(TestCase):
@@ -295,7 +394,10 @@ class ReadingSupportManagementViewTests(TestCase):
         entry.refresh_from_db()
         self.assertEqual(entry.description, "更新後の説明")
 
-    def test_csv_import_view_imports_uploaded_file(self):
+    @patch(
+        "kokkai.domain.service.reading_support_candidates.OpenAIVariantGenerator.generate"
+    )
+    def test_csv_import_view_imports_uploaded_file(self, generate):
         """
         シナリオ:
         - 入力: スーパーユーザーと有効な辞書CSV。
@@ -320,3 +422,112 @@ class ReadingSupportManagementViewTests(TestCase):
 
         self.assertRedirects(response, reverse("kokkai:reading_support_management"))
         self.assertTrue(ReadingSupportEntry.objects.filter(word="csv-term").exists())
+        generate.assert_not_called()
+
+    @patch(
+        "kokkai.domain.service.reading_support_candidates.OpenAIVariantGenerator.generate",
+        return_value=["こども"],
+    )
+    def test_candidate_mode_previews_and_downloads_without_db_changes(self, generate):
+        """
+        シナリオ:
+        - 入力: スーパーユーザー、子どものCSV、候補生成チェック。
+        - 処理: プレビューを表示し、候補CSVをダウンロードする。
+        - 期待値: 元行と候補行を得て、辞書DBを変更しない。
+        """
+        self.client.force_login(self.admin_user)
+        before = list(ReadingSupportEntry.objects.values_list("pk", flat=True))
+        response = self.client.post(
+            reverse("kokkai:reading_support_csv_import"),
+            {
+                "file": SimpleUploadedFile(
+                    "dictionary.csv",
+                    (
+                        "word,reading,description,source_url\n"
+                        "子ども,こども,子供の別表記,https://example.com/child\n"
+                    ).encode("utf-8"),
+                ),
+                "generate_candidates": "on",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "辞書を変更していません")
+        self.assertEqual(len(response.context["candidate_result"].rows), 2)
+        download = self.client.post(
+            reverse("kokkai:reading_support_csv_import"),
+            {"candidate_csv": response.context["candidate_csv"]},
+        )
+        downloaded = list(
+            csv.DictReader(io.StringIO(download.content.decode("utf-8-sig")))
+        )
+        self.assertEqual(download.status_code, 200)
+        self.assertEqual([row["word"] for row in downloaded], ["子ども", "こども"])
+        self.assertEqual(downloaded[1]["source_url"], "")
+        self.assertEqual(
+            before, list(ReadingSupportEntry.objects.values_list("pk", flat=True))
+        )
+        generate.assert_called_once()
+
+    def test_candidate_mode_rejects_invalid_csv_without_db_changes(self):
+        """
+        シナリオ:
+        - 入力: 説明が空のCSVと候補生成チェック。
+        - 処理: 候補生成を要求する。
+        - 期待値: HTTP 400と行の理由を返し、辞書DBを変更しない。
+        """
+        self.client.force_login(self.admin_user)
+        before = ReadingSupportEntry.objects.count()
+
+        response = self.client.post(
+            reverse("kokkai:reading_support_csv_import"),
+            {
+                "file": SimpleUploadedFile(
+                    "dictionary.csv",
+                    "word,reading,description,source_url\n子ども,こども,,\n".encode(
+                        "utf-8"
+                    ),
+                ),
+                "generate_candidates": "on",
+            },
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertContains(response, "説明を入力してください", status_code=400)
+        self.assertEqual(ReadingSupportEntry.objects.count(), before)
+
+    @patch(
+        "kokkai.domain.service.reading_support_candidates.OpenAIVariantGenerator.generate",
+        side_effect=CandidateGenerationError("GPTが利用できません。"),
+    )
+    def test_candidate_generation_failure_returns_original_csv(self, generate):
+        """
+        シナリオ:
+        - 入力: GPTが失敗する有効なCSVと候補生成チェック。
+        - 処理: 失敗理由を表示し、元行だけのCSVを取得する。
+        - 期待値: HTTP 502で理由を示し、DB変更なしで元行をダウンロードできる。
+        """
+        self.client.force_login(self.admin_user)
+        before = ReadingSupportEntry.objects.count()
+        response = self.client.post(
+            reverse("kokkai:reading_support_csv_import"),
+            {
+                "file": SimpleUploadedFile(
+                    "dictionary.csv",
+                    "word,reading,description,source_url\n子ども,こども,子供の別表記,\n".encode(
+                        "utf-8"
+                    ),
+                ),
+                "generate_candidates": "on",
+            },
+        )
+
+        self.assertContains(response, "GPTが利用できません", status_code=502)
+        download = self.client.post(
+            reverse("kokkai:reading_support_csv_import"),
+            {"candidate_csv": response.context["candidate_csv"]},
+        )
+        rows = list(csv.DictReader(io.StringIO(download.content.decode("utf-8-sig"))))
+        self.assertEqual([row["word"] for row in rows], ["子ども"])
+        self.assertEqual(ReadingSupportEntry.objects.count(), before)
+        generate.assert_called_once()

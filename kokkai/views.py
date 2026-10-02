@@ -1,3 +1,5 @@
+import base64
+import binascii
 from datetime import date, datetime, timedelta
 from urllib.parse import urlencode
 
@@ -25,6 +27,7 @@ from .domain.service.meeting_catalog import MeetingCatalogService
 from .domain.service.pipeline import KokkaiPipeline
 from .domain.service.participant_query import ParticipantQueryService
 from .domain.service.reading_support import ReadingSupportService
+from .domain.service.reading_support_candidates import ReadingSupportCandidateService
 from .domain.service.reading_support_import import ReadingSupportCsvImporter
 from .domain.service.scenario import ScenarioGenerationError, ScenarioService
 from .domain.service.scenario_play import ScenarioPlayError, ScenarioPlayService
@@ -393,12 +396,50 @@ class ReadingSupportEntryDeleteView(KokkaiManagementRequiredMixin, DeleteView):
 
 
 class ReadingSupportCsvImportView(KokkaiManagementRequiredMixin, FormView):
-    """KOKKAI内で読み仮名支援辞書CSVを検証して取り込む画面。"""
+    """KOKKAI内で辞書CSVを取り込み、または候補CSVを生成する画面。"""
 
     template_name = "kokkai/reading_support/csv_import.html"
     form_class = ReadingSupportCsvImportForm
 
+    def post(self, request, *args, **kwargs):
+        """プレビュー済み候補CSVのダウンロードはGPTとDBを呼ばない。"""
+        if "candidate_csv" in request.POST:
+            try:
+                csv_content = base64.b64decode(
+                    request.POST["candidate_csv"], validate=True
+                ).decode("utf-8")
+            except (binascii.Error, UnicodeDecodeError):
+                return HttpResponse("CSVデータが正しくありません。", status=400)
+            response = HttpResponse(
+                "\ufeff" + csv_content, content_type="text/csv; charset=utf-8"
+            )
+            response["Content-Disposition"] = (
+                'attachment; filename="reading-support-dictionary-candidates.csv"'
+            )
+            return response
+        return super().post(request, *args, **kwargs)
+
     def form_valid(self, form):
+        if form.cleaned_data["generate_candidates"]:
+            result = ReadingSupportCandidateService().generate_csv(
+                form.cleaned_data["file"].read()
+            )
+            if result.errors:
+                return self.render_to_response(
+                    self.get_context_data(form=form, candidate_result=result),
+                    status=400,
+                )
+            candidate_csv = base64.b64encode(result.to_csv().encode("utf-8")).decode(
+                "ascii"
+            )
+            return self.render_to_response(
+                self.get_context_data(
+                    form=form,
+                    candidate_result=result,
+                    candidate_csv=candidate_csv,
+                ),
+                status=502 if result.generation_failed else 200,
+            )
         result = ReadingSupportCsvImporter().import_csv(
             form.cleaned_data["file"].read()
         )
