@@ -32,7 +32,16 @@ NISA,ニーサ,少額投資非課税制度,https://example.com/nisa
 .venv\Scripts\python.exe manage.py testserver kokkai/fixtures/issue_975_affiliation_periods.json --noinput
 ```
 
-`http://127.0.0.1:8000/kokkai/traceability/?q=975` で3本のバーを開き、それぞれ `sample-975-01`、`sample-975-02`、`sample-975-03` だけが詳細に表示されることを確認します。人物名を開くと3区間すべてが表示されます。
+1. `http://127.0.0.1:8000/kokkai/traceability/?q=975` をブラウザで開きます。「検証用議員975」の行に3本のバーが表示されます。
+2. バーを1本ずつクリックし、詳細画面の「会議録」欄が次の1件だけになっていることを確認します。戻るボタンで一覧へ戻り、次のバーを開きます。
+
+   | クリックするバー | 詳細画面の会議録 |
+   | --- | --- |
+   | 会派A（2024-01-26） | `sample-975-01` |
+   | 会派B（2024-01-26） | `sample-975-02` |
+   | 会派A（2024-01-27） | `sample-975-03` |
+
+3. 人物名「検証用議員975」をクリックすると、3区間すべてが表示されることを確認します。
 
 `testserver` を終了しても `test_portfolio_db` は残ります。次に非対話でテストを実行する前に、`.codex/rules/django.md` に従ってこのテストDBを削除してください。
 
