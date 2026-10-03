@@ -123,6 +123,7 @@ class StoredViewerTests(SimpleTestCase):
         """入力: ハイライト付き結果。処理: 一覧・詳細GET。期待値: 操作と開始位置が表示される。"""
         response = views.index(self.request())
         self.assertContains(response, "録画 0001")
+        self.assertContains(response, "/static/video_cue/s_v.ico")
         response = views.detail(self.request(), "0001")
         self.assertContains(response, '"highlight_start": 5.2')
         self.assertContains(response, "/video_cue/0001/media/highlight/")
@@ -160,7 +161,9 @@ class StoredViewerTests(SimpleTestCase):
         )
         self.assertContains(views.index(self.request()), "JSON が壊れています")
         with override_settings(MEDIA_ROOT=self.root / "empty"):
-            self.assertContains(views.index(self.request()), "解析結果はまだありません")
+            response = views.index(self.request())
+            self.assertContains(response, "video-cue-engine")
+            self.assertContains(response, "元動画のアップロードは不要です")
 
     def test_oversized_json_is_rejected(self):
         """入力: 上限を超えるJSON。処理: 読み込み。期待値: サイズ制限で拒否。"""
@@ -184,6 +187,14 @@ class StoredViewerTests(SimpleTestCase):
             ]:
                 with self.subTest(user=user, view=view):
                     self.assertEqual(view(request, *args).status_code, 403)
+
+    def test_access_page_uses_navigation_login_only(self):
+        """アクセス拒否画面にはナビゲーションのログイン導線だけを表示する。"""
+        request = self.request()
+        request.user = AnonymousUser()
+        response = views.index(request)
+        self.assertEqual(response.status_code, 403)
+        self.assertNotContains(response, "ログイン</a>", status_code=403)
 
     def test_path_escape_and_source_are_rejected(self):
         """入力: 親参照・絶対パス・元動画。処理: 解決。期待値: 配信しない。"""
