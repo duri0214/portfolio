@@ -1,0 +1,66 @@
+{% extends 'video_cue/base.html' %}
+{% load static %}
+{% block title %}録画 {{ key }} | VIDEO CUE{% endblock %}
+{% block content %}
+<a class="text-secondary small" href="{% url 'video_cue:index' %}">← 録画一覧</a>
+<div class="d-flex flex-wrap align-items-end justify-content-between gap-2 my-3">
+    <div><h1 class="h3 fw-bold mb-1">録画 {{ key }}</h1><p class="text-secondary mb-0">気になる区間を選んで、映像を確認。</p></div>
+    {% if analysis %}<div class="d-flex gap-2"><span class="badge text-bg-dark">{{ events|length }} イベント</span><span class="badge text-bg-light border">元動画 {{ analysis.duration|floatformat:1 }} 秒</span></div>{% endif %}
+</div>
+{% if error %}<div class="alert alert-warning" role="alert">{{ error }}</div>
+{% else %}
+{% if highlight_missing %}<div class="alert alert-warning">ハイライト動画が見つかりません。元動画または利用可能な個別クリップで確認してください。</div>{% endif %}
+{% if not events %}<div class="alert alert-info">動きは検出されませんでした（イベント0件）。{% if source_url %}元動画は再生できます。{% endif %}</div>{% endif %}
+<div class="row g-4">
+    <section class="col-xl-8" aria-label="動画プレイヤー">
+        <div class="cue-deck rounded-4 overflow-hidden shadow-sm">
+            <div class="d-flex align-items-center justify-content-between px-3 py-3 border-bottom border-secondary">
+                <span id="mode-label" class="small fw-bold">再生する動画を確認中</span><span class="cue-lamp small">● READY</span>
+            </div>
+            <video id="cue-video" class="w-100 d-block" controls playsinline preload="metadata" aria-label="録画プレイヤー"></video>
+            <div class="p-3 p-lg-4">
+                <div id="playback-error" class="alert alert-warning" role="alert" hidden></div>
+                <div class="row g-3 mb-4 cue-readout">
+                    <div class="col-6 col-md-4"><div id="position-label" class="small text-light opacity-75">再生位置</div><output id="position" class="fs-4">00:00.0</output></div>
+                    <div class="col-6 col-md-4"><div class="small text-light opacity-75">元動画の時刻</div><output id="source-time" class="fs-4">—</output></div>
+                    <div class="col-12 col-md-4"><div class="small text-light opacity-75">現在のイベント</div><output id="current-event">—</output></div>
+                </div>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                    <button id="previous-event" class="btn btn-outline-light" disabled>⏮ 前</button>
+                    <button id="toggle-play" class="btn btn-light px-4" disabled>▶ 再生</button>
+                    <button id="next-event" class="btn btn-outline-light" disabled>次 ⏭</button>
+                    <label for="playback-rate" class="ms-auto small">再生速度</label>
+                    <select id="playback-rate" class="form-select form-select-sm cue-rate" disabled><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>
+                </div>
+                <label for="seek" class="small mb-1">再生位置を移動</label>
+                <input id="seek" class="form-range" type="range" min="0" max="1" step="0.01" value="0" disabled>
+                <div id="timeline" class="cue-timeline" aria-label="イベントのタイムライン"></div>
+                <p id="timeline-note" class="small text-light opacity-75 mt-2 mb-0">番号を選択すると、そのイベントへ移動します。</p>
+            </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <button id="show-highlight" class="btn btn-outline-dark" {% if not highlight_url %}disabled{% endif %}>ハイライトを再生</button>
+            <button id="show-source" class="btn btn-outline-dark" {% if not source_url %}disabled{% endif %}>元動画で確認</button>
+        </div>
+        {% if not source_url %}<p class="small text-secondary mt-2">元動画は未接続、または見つかりません。利用可能なハイライト・クリップで確認できます。</p>{% endif %}
+        <p class="small text-secondary mt-2">元動画の時刻は、対応が分かる動き区間内で表示します。ハイライトの余白では「区間外」と表示します。</p>
+    </section>
+    <aside class="col-xl-4" aria-label="イベント一覧">
+        <div class="card h-100 rounded-4">
+            <div class="card-body flex-grow-0 border-bottom"><h2 class="h5 mb-1">検出された動き</h2><p class="small text-secondary mb-0">元動画の区間・継続時間・最大変化量</p></div>
+            <div id="event-list" class="list-group list-group-flush cue-events">
+                {% for event in events %}
+                <button type="button" class="list-group-item list-group-item-action px-3 py-3 event-button" data-index="{{ forloop.counter0 }}" {% if not highlight_url and not source_url and not event.clip_url %}disabled{% endif %}>
+                    <div class="d-flex justify-content-between align-items-center mb-1"><strong>イベント {{ forloop.counter|stringformat:'02d' }}</strong><span class="badge bg-light text-dark border">{{ event.duration|floatformat:1 }} 秒</span></div>
+                    <div class="event-times small" data-start="{{ event.start }}" data-end="{{ event.end }}">{{ event.start|floatformat:1 }} → {{ event.end|floatformat:1 }} 秒</div>
+                    <div class="small opacity-75 mt-1">最大変化量 {{ event.peak|floatformat:4 }}{% if not highlight_url and not source_url %} · {% if event.clip_url %}個別クリップ{% else %}動画なし{% endif %}{% endif %}</div>
+                </button>
+                {% empty %}<p class="text-secondary p-3">この録画には動き区間がありません。</p>{% endfor %}
+            </div>
+        </div>
+    </aside>
+</div>
+{{ player|json_script:'cue-data' }}
+{% endif %}
+{% endblock %}
+{% block scripts %}{% if player %}<script type="module" src="{% static 'video_cue/viewer.mjs' %}"></script>{% endif %}{% endblock %}
