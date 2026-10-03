@@ -1,0 +1,20 @@
+{% extends 'video_cue/base.html' %}
+{% block content %}
+<div class="mb-4"><h1 class="h2 fw-bold">動きのあった場面から、見直す。</h1>
+<p class="text-secondary">録画を選ぶと、検出された区間をまとめて確認できます。</p></div>
+{% if error %}<div class="alert alert-warning" role="alert">{{ error }}</div>{% endif %}
+<div class="row g-3">
+{% for result in results %}
+    <div class="col-md-6 col-xl-4">
+        <a class="card cue-result h-100 p-4 text-decoration-none" href="{% url 'video_cue:detail' result.key %}">
+            <div class="d-flex justify-content-between mb-4"><span class="text-secondary small">RECORDING</span><span aria-hidden="true">↗</span></div>
+            <h2 class="h4">録画 {{ result.key }}</h2>
+            {% if result.error %}<p class="text-danger mb-0">{{ result.error }}</p>
+            {% else %}<p class="text-secondary mb-3">元動画 {{ result.analysis.duration|floatformat:1 }} 秒</p>
+            <div><span class="badge text-bg-dark">{{ result.analysis.events|length }} イベント</span>
+            {% if not result.analysis.events %}<span class="ms-2 text-secondary small">動きは検出されませんでした</span>{% endif %}</div>{% endif %}
+        </a>
+    </div>
+{% empty %}{% if not error %}<p class="text-secondary">解析結果はまだありません。解析の出力完了後に再読み込みしてください。</p>{% endif %}{% endfor %}
+</div>
+{% endblock %}

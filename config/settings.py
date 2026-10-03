@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "welfare_services",
     "kokkai",
     "bank",
+    "video_cue",
 ]
 
 MIDDLEWARE = [
@@ -164,6 +165,10 @@ STATIC_ROOT = BASE_DIR / "static"
 STATIC_URL = "/static/"
 MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
+
+# Rust の解析済み出力と、任意で参照する元動画の許可ディレクトリ。
+VIDEO_CUE_RESULTS_ROOT = os.getenv("VIDEO_CUE_RESULTS_ROOT", "")
+VIDEO_CUE_SOURCE_ROOT = os.getenv("VIDEO_CUE_SOURCE_ROOT", "")
 
 # Matplotlib キャッシュディレクトリの設定
 # 本番環境（Apache/WSGI）での権限エラーを回避するために環境変数を設定します
