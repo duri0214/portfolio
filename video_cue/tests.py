@@ -123,6 +123,7 @@ class StoredViewerTests(SimpleTestCase):
         """入力: ハイライト付き結果。処理: 一覧・詳細GET。期待値: 操作と開始位置が表示される。"""
         response = views.index(self.request())
         self.assertContains(response, "録画 0001")
+        self.assertContains(response, "/static/video_cue/s_v.ico")
         response = views.detail(self.request(), "0001")
         self.assertContains(response, '"highlight_start": 5.2')
         self.assertContains(response, "/video_cue/0001/media/highlight/")
