@@ -163,6 +163,7 @@ class ReadingSupportCsvImporter:
         reading = values.get("reading", "")
         description = values.get("description", "")
         source_url = values.get("source_url", "")
+        generated_by_model = values.get("generated_by_model", "")
 
         return ReadingSupportEntry(
             word=word,
@@ -170,6 +171,7 @@ class ReadingSupportCsvImporter:
             reading=reading,
             description=description,
             source_url=source_url,
+            generated_by_model=generated_by_model,
         )
 
     @staticmethod
@@ -179,6 +181,7 @@ class ReadingSupportCsvImporter:
         target.reading = source.reading
         target.description = source.description
         target.source_url = source.source_url
+        target.generated_by_model = source.generated_by_model
 
     @staticmethod
     def _error_message(error: ValidationError | ValueError) -> str:

@@ -38,14 +38,14 @@ class VariantGenerator(Protocol):
 class OpenAIVariantGenerator:
     """共通LLMサービスで辞書の1行ごとに別表記を提案する。"""
 
+    model_name = ModelDefaults.TEXT_MODEL
+
     def generate(self, row: ReadingSupportDefinition) -> list[str]:
         """元行の読みと説明から、同義・同音の表記だけをJSONで受け取る。"""
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise CandidateGenerationError("OPENAI_API_KEY が設定されていません。")
-        profile = LlmModelProfile(
-            model=ModelDefaults.TEXT_MODEL, reasoning_effort="low"
-        )
+        profile = LlmModelProfile(model=self.model_name, reasoning_effort="low")
         messages = [
             Message(
                 role=RoleType.SYSTEM,
@@ -121,6 +121,7 @@ class ReadingSupportCandidateService:
                 reading=values["reading"],
                 description=values["description"],
                 source_url=values["source_url"],
+                generated_by_model=values.get("generated_by_model", ""),
             )
             error = self._validate_original(row)
             normalized = normalize_word(row.word)
@@ -136,6 +137,9 @@ class ReadingSupportCandidateService:
         rows: list[ReadingSupportDefinition] = []
         warnings: list[ReadingSupportImportError] = []
         generation_failed = False
+        model_name = getattr(self.generator, "model_name", "")
+        if not isinstance(model_name, str):
+            model_name = ""
         for line_number, original in originals:
             rows.append(original)
             try:
@@ -169,6 +173,7 @@ class ReadingSupportCandidateService:
                         reading=original.reading,
                         description=original.description,
                         source_url="",
+                        generated_by_model=model_name,
                     )
                 )
             if candidate_count == 0:
@@ -200,4 +205,6 @@ class ReadingSupportCandidateService:
                 URLValidator()(row.source_url.strip())
             except ValidationError:
                 return "出典URLの形式が正しくありません。"
+        if len(row.generated_by_model.strip()) > 100:
+            return "生成モデルは100文字以内にしてください。"
         return ""

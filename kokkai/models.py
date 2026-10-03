@@ -598,6 +598,7 @@ class ReadingSupportEntry(models.Model):
         reading: 本文で優先して表示する読み。
         description: 用語の説明。辞書項目では必須。
         source_url: 説明の根拠となるURL。任意。
+        generated_by_model: 候補生成に使用したモデル名。任意。
     """
 
     word = models.CharField("単語", max_length=255)
@@ -607,6 +608,7 @@ class ReadingSupportEntry(models.Model):
     reading = models.CharField("読み", max_length=255)
     description = models.TextField("説明")
     source_url = models.URLField("出典URL", blank=True)
+    generated_by_model = models.CharField("生成モデル", max_length=100, blank=True)
     created_at = models.DateTimeField("登録日時", auto_now_add=True)
     updated_at = models.DateTimeField("更新日時", auto_now=True)
 
@@ -622,6 +624,7 @@ class ReadingSupportEntry(models.Model):
         self.reading = (self.reading or "").strip()
         self.description = (self.description or "").strip()
         self.source_url = (self.source_url or "").strip()
+        self.generated_by_model = (self.generated_by_model or "").strip()
         self.normalized_word = normalize_word(self.word)
 
         errors: dict[str, str] = {}
@@ -650,5 +653,6 @@ class ReadingSupportEntry(models.Model):
         self.reading = (self.reading or "").strip()
         self.description = (self.description or "").strip()
         self.source_url = (self.source_url or "").strip()
+        self.generated_by_model = (self.generated_by_model or "").strip()
         self.normalized_word = normalize_word(self.word)
         return super().save(*args, **kwargs)

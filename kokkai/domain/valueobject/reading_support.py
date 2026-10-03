@@ -16,12 +16,14 @@ class ReadingSupportDefinition:
         reading: Janomeの結果より優先して表示する読み。
         description: 用語の短い説明。
         source_url: 説明の根拠となる公式資料のURL。空ならリンクを表示しない。
+        generated_by_model: この表記候補を生成したモデル名。任意。
     """
 
     word: str
     reading: str
     description: str
     source_url: str
+    generated_by_model: str = ""
 
 
 @dataclass(frozen=True)
@@ -76,7 +78,7 @@ class ReadingSupportCandidateResult:
     """辞書CSVの元行と確認待ち候補、検証・生成時の理由を保持する。
 
     Attributes:
-        rows: 元行と採用した候補行。元行の4列は入力値を保つ。
+        rows: 元行と採用した候補行。元行の入力値を保つ。
         errors: CSV形式に問題があり、生成を始められない理由。
         warnings: 行ごとの生成失敗など、元行を残して続行した理由。
         generation_failed: GPTの障害で少なくとも1行の生成に失敗したか。
@@ -88,12 +90,22 @@ class ReadingSupportCandidateResult:
     generation_failed: bool = False
 
     def to_csv(self) -> str:
-        """既存取り込みと同じ4列のUTF-8 CSVテキストを返す。"""
+        """生成モデル列を加えた、再取り込み可能なUTF-8 CSVを返す。"""
         output = io.StringIO(newline="")
         writer = csv.writer(output)
-        writer.writerow(("word", "reading", "description", "source_url"))
+        writer.writerow(
+            ("word", "reading", "description", "source_url", "generated_by_model")
+        )
         for row in self.rows:
-            writer.writerow((row.word, row.reading, row.description, row.source_url))
+            writer.writerow(
+                (
+                    row.word,
+                    row.reading,
+                    row.description,
+                    row.source_url,
+                    row.generated_by_model,
+                )
+            )
         return output.getvalue()
 
 

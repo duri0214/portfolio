@@ -27,7 +27,7 @@
             {% endif %}
         </div>
         <div class="card-body">
-            <p>UTF-8のカンマ区切りCSVを使用します。CSVの列名と画面の項目名は次の対応です。</p>
+            <p>UTF-8のカンマ区切りCSVを使用します。従来の4列に加え、候補CSVには任意の生成モデル列が付きます。</p>
             <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0">
                     <thead>
@@ -40,7 +40,8 @@
                         <tr><th scope="row"><code>word</code>（単語）</th><td>必須</td></tr>
                         <tr><th scope="row"><code>reading</code>（読み）</th><td>必須</td></tr>
                         <tr><th scope="row"><code>description</code>（説明）</th><td>必須</td></tr>
-                        <tr><th scope="row"><code>source_url</code>（出典）</th><td>任意</td></tr>
+                        <tr><th scope="row"><code>source_url</code>（出典URL）</th><td>任意</td></tr>
+                        <tr><th scope="row"><code>generated_by_model</code>（生成モデル）</th><td>任意</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -51,7 +52,7 @@
         <h2 class="h5">取り込み時の扱い</h2>
         <ul class="mb-0">
             <li>新しいwordは辞書に追加します。</li>
-            <li><strong>wordだけ</strong>で同じ辞書項目かを判定します。全角・半角、英字の大小文字、空白の違いは同じwordとして扱い、reading、description、source_urlをCSVの値で上書きします。source_urlを空欄にすると、登録済みの出典も空欄になります。</li>
+            <li><strong>wordだけ</strong>で同じ辞書項目かを判定します。全角・半角、英字の大小文字、空白の違いは同じwordとして扱い、reading、description、source_url、generated_by_modelをCSVの値で上書きします。source_urlを空欄にすると、登録済みの出典URLも空欄になります。</li>
             <li>同じCSV内に同じwordが複数ある場合はエラーです。CSV全体を取り込まず、行を1つにまとめてから再度取り込んでください。</li>
         </ul>
     </div>
@@ -87,7 +88,7 @@
                 {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
             </div>
             {% endfor %}
-            <p id="candidate-mode-note" class="alert alert-warning mb-0" role="note" hidden>候補生成では辞書へ登録しません。GPTが提案した行はすべて確認対象です。意味・読み・出典を確かめ、不要な行をCSVから削除・修正してから、チェックを外して取り込んでください。生成した候補行の出典は空欄です。</p>
+            <p id="candidate-mode-note" class="alert alert-warning mb-0" role="note" hidden>候補生成では辞書へ登録しません。GPTが提案した行はすべて確認対象です。意味・読み・出典を確かめ、不要な行をCSVから削除・修正してから、チェックを外して取り込んでください。生成した候補行には生成モデル名を記録し、根拠資料の出典URLは空欄にします。</p>
         </div>
         <div class="card-footer d-flex flex-wrap gap-2">
             <button id="csv-submit" type="submit" class="btn btn-primary"{% if not can_manage_reading_support %} disabled{% endif %}>取り込む</button>
@@ -131,8 +132,8 @@
             {% endif %}
             <div class="table-responsive">
                 <table class="table table-sm align-middle">
-                    <thead><tr><th>word</th><th>reading</th><th>description</th><th>source_url</th></tr></thead>
-                    <tbody>{% for row in candidate_result.rows %}<tr><td>{{ row.word }}</td><td>{{ row.reading }}</td><td>{{ row.description }}</td><td>{{ row.source_url }}</td></tr>{% endfor %}</tbody>
+                    <thead><tr><th>word</th><th>reading</th><th>description</th><th>source_url</th><th>generated_by_model</th></tr></thead>
+                    <tbody>{% for row in candidate_result.rows %}<tr><td>{{ row.word }}</td><td>{{ row.reading }}</td><td>{{ row.description }}</td><td>{{ row.source_url }}</td><td>{{ row.generated_by_model }}</td></tr>{% endfor %}</tbody>
                 </table>
             </div>
             <form method="post">
