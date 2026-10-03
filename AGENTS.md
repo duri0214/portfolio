@@ -53,7 +53,7 @@
 2. ブランチ名の先頭の数字をIssue番号として扱い、Issueのタイトル、本文、ラベル、assignee、Projectを確認する。
 3. `git diff --stat origin/<base>..HEAD`、`git diff --name-status origin/<base>..HEAD` でPRの差分を確認する。
 4. PR本文は日本語で、概要、主な変更点、目検手順、自動テストの範囲、`Closes #<Issue番号>` を含める。
-5. 目検手順は操作と期待値を `- [ ]` 形式で書き、実行していない確認を `[x]` にしない。
+5. 目検手順は操作と期待値を `- [ ]` 形式で書く。ユーザーが提示した画面や操作結果で期待値を確認できた項目は、確認した証跡と範囲をPR本文に記して `[x]` に更新する。未確認の操作や期待値が同じ項目に含まれる場合はチェック欄を分割し、未確認分を `[ ]` に残す。実行・確認していない項目を `[x]` にしない。
 6. 現在のブランチにPRがなければ `gh pr create --base <base> --head <current-branch> --title "#<Issue番号> <Issueタイトル>" --body-file <body-file>` で作成する。既存PRがあれば `gh pr edit <番号> --body-file <body-file>` で更新する。
 7. 作成・更新後に `gh issue view <Issue番号> --json assignees,labels,projectItems` と `gh pr view <PR番号> --json url,assignees,labels,projectItems` を実行し、IssueとPRのassignee、ラベル、Project名、Project statusを照合する。PR側に不足があれば `gh pr edit <PR番号> --add-assignee <login> --add-label <ラベル名> --add-project <Project名>` などで補う。Project statusは `gh project item-edit <Project番号> --owner <owner> --url <PR URL> --field Status --value <Issueのstatus>` で揃える。両方を再取得して反映を確認し、失敗した項目は原因と現在の値を報告する。変更依頼では、明示的な `PR不要` 指定がない限り作成または更新まで進める。
 
