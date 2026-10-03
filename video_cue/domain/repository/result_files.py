@@ -10,27 +10,21 @@ MAX_JSON_BYTES = 8 * 1024 * 1024
 
 
 class ResultUnavailable(ValueError):
-    """1件の結果または設定された出力フォルダーを読み込めないことを表す。"""
+    """1件の結果または media 保存先を読み込めないことを表す。"""
 
 
-class LocalResults:
-    """設定された出力フォルダーから解析結果をコピーせずに取得する。
+class ResultFiles:
+    """Django が管理する結果フォルダーから解析結果を取得する。
 
     Attributes:
         root: 動画ごとの結果フォルダーを含む許可ディレクトリ。
-        source_root: 元動画を配信できる許可ディレクトリ。未設定なら配信しない。
     """
 
-    def __init__(self, root: str, source_root: str = ""):
-        if not root:
-            raise ResultUnavailable(
-                "解析結果のフォルダーが未設定です。管理者に設定を依頼してください。"
-            )
+    def __init__(self, root: str):
         self.root = Path(root).resolve()
-        self.source_root = Path(source_root).resolve() if source_root else None
         if not self.root.is_dir():
             raise ResultUnavailable(
-                "解析結果のフォルダーがありません。設定と接続を確認してください。"
+                "解析結果の保存先がありません。管理者に確認してください。"
             )
 
     def directory(self, key: str) -> Path:
@@ -87,18 +81,14 @@ class LocalResults:
                 "解析 JSON を読み取れません。アクセス権を確認してください。"
             ) from exc
 
-    def video(
-        self, key: str, reference: str | None, *, source: bool = False
-    ) -> Path | None:
+    def video(self, key: str, reference: str | None) -> Path | None:
         """JSON の参照を許可範囲内の MP4 に限定する。欠損・範囲外は None。"""
         if not reference:
             return None
-        root = self.source_root if source else self.directory(key)
-        if root is None:
-            return None
+        root = self.directory(key)
         try:
             relative = Path(reference)
-            if not source and (relative.is_absolute() or relative.drive):
+            if relative.is_absolute() or relative.drive:
                 return None
             path = (root / relative).resolve()
             if (

@@ -7,21 +7,19 @@ export function timecode(seconds) {
     return `${hours ? `${String(hours).padStart(2, '0')}:` : ''}${String(minutes).padStart(2, '0')}:${String(rest).padStart(2, '0')}.${tenths % 10}`;
 }
 
-export function eventAt(events, mode, seconds) {
-    if (mode === 'clip') return -1;
+export function eventAt(events, seconds) {
     return events.findIndex(event => {
-        const start = mode === 'highlight' ? event.highlight_start : event.start;
+        const start = event.highlight_start;
         return start !== null && seconds >= start && seconds < start + event.duration;
     });
 }
 
-export function adjacentEvent(events, mode, seconds, direction, selected = -1) {
-    if (mode === 'clip') return selected + direction;
+export function adjacentEvent(events, seconds, direction) {
     if (direction > 0) {
-        return events.findIndex(event => (mode === 'highlight' ? event.highlight_start : event.start) > seconds + 0.05);
+        return events.findIndex(event => event.highlight_start > seconds + 0.05);
     }
     for (let i = events.length - 1; i >= 0; i--) {
-        const start = mode === 'highlight' ? events[i].highlight_start : events[i].start;
+        const start = events[i].highlight_start;
         if (start !== null && start < seconds - 0.05) return i;
     }
     return -1;

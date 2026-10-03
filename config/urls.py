@@ -25,6 +25,11 @@ from config.sitemap import sitemap_xml
 from vietnam_research.views import CustomLoginView
 
 
+def private_video_cue_media(_request, _path):
+    """Django の開発用 media 配信でも成果物の直接公開を防ぐ。"""
+    return HttpResponse(status=404)
+
+
 def robots_txt(_request):
     content = (
         "User-agent: *\n"
@@ -56,6 +61,7 @@ urlpatterns = [
     path("kokkai/", include("kokkai.urls")),
     path("bank/", include("bank.urls")),
     path("video_cue/", include("video_cue.urls")),
+    path("media/video_cue/<path:_path>", private_video_cue_media),
     path("admin/", admin.site.urls),
     path("accounts/login/", CustomLoginView.as_view(), name="login"),
     path("accounts/logout/", LogoutView.as_view(), name="logout"),

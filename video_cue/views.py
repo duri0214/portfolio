@@ -1,13 +1,24 @@
+import logging
 import re
 from functools import wraps
+from hmac import compare_digest
 
 from django.conf import settings
-from django.http import FileResponse, Http404, HttpResponse
+from django.core.exceptions import RequestDataTooBig, SuspiciousOperation
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
+from django.http.multipartparser import MultiPartParserError
 from django.shortcuts import render
 from django.urls import reverse
-from django.views.decorators.http import require_safe
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST, require_safe
 
-from video_cue.domain.repository.local_results import LocalResults, ResultUnavailable
+from video_cue.domain.repository.result_files import ResultUnavailable
+from video_cue.domain.repository.stored_results import (
+    MAX_HIGHLIGHT_BYTES,
+    DuplicateResult,
+    StoredResults,
+    UploadError,
+)
 from video_cue.domain.valueobject.analysis import InvalidAnalysis
 
 
@@ -21,14 +32,14 @@ def staff_view(view):
     return require_safe(wrapped)
 
 
-def repository() -> LocalResults:
-    return LocalResults(settings.VIDEO_CUE_RESULTS_ROOT, settings.VIDEO_CUE_SOURCE_ROOT)
+logger = logging.getLogger(__name__)
 
 
 @staff_view
 def index(request):
     try:
-        return render(request, "video_cue/index.html", {"results": repository().list()})
+        results = StoredResults(settings.MEDIA_ROOT).list()
+        return render(request, "video_cue/index.html", {"results": results})
     except ResultUnavailable as exc:
         return render(request, "video_cue/index.html", {"error": str(exc)}, status=503)
 
@@ -36,7 +47,7 @@ def index(request):
 @staff_view
 def detail(request, key: str):
     try:
-        repo = repository()
+        repo = StoredResults(settings.MEDIA_ROOT)
         repo.directory(key)
     except ResultUnavailable as exc:
         raise Http404(str(exc)) from exc
@@ -51,15 +62,12 @@ def detail(request, key: str):
             status=status,
         )
 
-    def media_url(
-        kind: str, reference: str | None, *, source: bool = False
-    ) -> str | None:
-        if repo.video(key, reference, source=source):
-            return reverse("video_cue:media", args=[key, kind])
-        return None
-
-    highlight = media_url("highlight", analysis.highlight)
-    source = media_url("source", analysis.source, source=True)
+    highlight = (
+        reverse("video_cue:media", args=[key])
+        if analysis.highlight == "highlights.mp4"
+        and repo.video(key, analysis.highlight)
+        else None
+    )
     events = [
         {
             "start": event.start,
@@ -67,11 +75,10 @@ def detail(request, key: str):
             "duration": event.duration,
             "peak": event.peak,
             "highlight_start": event.highlight_start,
-            "clip_url": media_url(str(index), event.clip),
         }
-        for index, event in enumerate(analysis.events)
+        for event in analysis.events
     ]
-    player = {"events": events, "highlight_url": highlight, "source_url": source}
+    player = {"events": events, "highlight_url": highlight}
     return render(
         request,
         "video_cue/detail.html",
@@ -81,7 +88,6 @@ def detail(request, key: str):
             "events": events,
             "player": player,
             "highlight_url": highlight,
-            "source_url": source,
             "highlight_missing": bool(analysis.highlight and not highlight),
         },
     )
@@ -100,22 +106,13 @@ def file_chunks(stream, remaining: int):
 
 
 @staff_view
-def media(request, key: str, kind: str):
+def media(request, key: str):
     """許可済み参照だけを配信し、ブラウザーの単一 byte Range に応答する。"""
     try:
-        repo = repository()
+        repo = StoredResults(settings.MEDIA_ROOT)
         analysis = repo.read(key)
-        if kind == "highlight":
+        if analysis.highlight == "highlights.mp4":
             path = repo.video(key, analysis.highlight)
-        elif kind == "source":
-            path = repo.video(key, analysis.source, source=True)
-        elif (
-            kind.isascii()
-            and kind.isdecimal()
-            and len(kind) < 10
-            and int(kind) < len(analysis.events)
-        ):
-            path = repo.video(key, analysis.events[int(kind)].clip)
         else:
             path = None
         if path is None:
@@ -169,3 +166,62 @@ def media(request, key: str, kind: str):
     if range_header:
         response["Content-Range"] = f"bytes {start}-{end}/{size}"
     return response
+
+
+@csrf_exempt
+@require_POST
+def upload(request, key: str):
+    """Bearer 認証された engine の成果物を動画 ID ごとに登録する。
+
+    認証には settings.VIDEO_CUE_UPLOAD_TOKEN を使い、engine 側と同じ秘密値を
+    Authorization ヘッダーで共有する。保存先は認証情報とは別に MEDIA_ROOT で決まる。
+    """
+    expected = settings.VIDEO_CUE_UPLOAD_TOKEN
+    auth = request.headers.get("Authorization", "")
+    if not expected or not compare_digest(
+        auth.encode("utf-8"), f"Bearer {expected}".encode("utf-8")
+    ):
+        response = JsonResponse({"error": "認証に失敗しました。"}, status=401)
+        response["WWW-Authenticate"] = "Bearer"
+        return response
+    max_body = MAX_HIGHLIGHT_BYTES + 10 * 1024 * 1024
+    if request.META.get("CONTENT_LENGTH"):
+        try:
+            if int(request.META["CONTENT_LENGTH"]) > max_body:
+                return JsonResponse(
+                    {"error": "送信データが容量上限を超えています。"}, status=413
+                )
+        except ValueError:
+            return JsonResponse({"error": "Content-Length が不正です。"}, status=400)
+    if not request.content_type.startswith("multipart/form-data"):
+        return JsonResponse({"error": "multipart/form-data が必要です。"}, status=415)
+    try:
+        if set(request.FILES) - {"analysis", "highlight"} or set(request.POST):
+            raise UploadError("許可されていない項目があります。")
+        if (
+            len(request.FILES.getlist("analysis")) != 1
+            or len(request.FILES.getlist("highlight")) > 1
+        ):
+            raise UploadError("同じ項目を複数送信できません。")
+        analysis = request.FILES.get("analysis")
+        if analysis is None:
+            raise UploadError("analysis ファイルが必要です。")
+        created = StoredResults(settings.MEDIA_ROOT).save(
+            key, analysis, request.FILES.get("highlight")
+        )
+    except DuplicateResult as exc:
+        return JsonResponse({"error": str(exc)}, status=409)
+    except UploadError as exc:
+        status = 413 if "上限" in str(exc) else 422
+        return JsonResponse({"error": str(exc)}, status=status)
+    except (MultiPartParserError, SuspiciousOperation) as exc:
+        logger.warning("Invalid video cue multipart request: %s", exc)
+        status = 413 if isinstance(exc, RequestDataTooBig) else 400
+        return JsonResponse(
+            {"error": "multipart データが不正か、上限を超えています。"}, status=status
+        )
+    except (OSError, ResultUnavailable):
+        logger.exception("Cannot save video cue upload for %s", key)
+        return JsonResponse({"error": "成果物を保存できませんでした。"}, status=503)
+    status = 201 if created else 200
+    return JsonResponse({"key": key, "created": created}, status=status)

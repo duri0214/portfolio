@@ -10,7 +10,7 @@
             <div class="d-flex justify-content-between mb-4"><span class="text-secondary small">RECORDING</span><span aria-hidden="true">↗</span></div>
             <h2 class="h4">録画 {{ result.key }}</h2>
             {% if result.error %}<p class="text-danger mb-0">{{ result.error }}</p>
-            {% else %}<p class="text-secondary mb-3">元動画 {{ result.analysis.duration|floatformat:1 }} 秒</p>
+            {% else %}<p class="text-secondary mb-3">録画時間 {{ result.analysis.duration|floatformat:1 }} 秒</p>
             <div><span class="badge text-bg-dark">{{ result.analysis.events|length }} イベント</span>
             {% if not result.analysis.events %}<span class="ms-2 text-secondary small">動きは検出されませんでした</span>{% endif %}</div>{% endif %}
         </a>
