@@ -171,7 +171,11 @@ def media(request, key: str):
 @csrf_exempt
 @require_POST
 def upload(request, key: str):
-    """Bearer 認証された engine の成果物を動画 ID ごとに登録する。"""
+    """Bearer 認証された engine の成果物を動画 ID ごとに登録する。
+
+    認証には settings.VIDEO_CUE_UPLOAD_TOKEN を使い、engine 側と同じ秘密値を
+    Authorization ヘッダーで共有する。保存先は認証情報とは別に MEDIA_ROOT で決まる。
+    """
     expected = settings.VIDEO_CUE_UPLOAD_TOKEN
     auth = request.headers.get("Authorization", "")
     if not expected or not compare_digest(
