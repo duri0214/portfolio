@@ -21,17 +21,64 @@ API は CSRF 免除で Bearer トークンを検証します。HTTPS 経由で�
 `/media/video_cue/` を Web サーバーから直接公開しないでください。再生はスタッフ権限付きの
 `/video_cue/<動画ID>/media/highlight/` を使います。
 
-## 起動と確認
+## 目検手順（上から順に実施）
 
-`.env` に `VIDEO_CUE_UPLOAD_TOKEN` を設定し、engine に同じ値と送信先 URL を設定します。
-管理者はトークンを安全なランダム文字列として発行してください。ブラウザーで
-`/video_cue/` を開くスタッフアカウント（`is_staff=True`）を用意します。
+この手順は Django と engine #7 の送信機能が使える環境で実施します。engine #7 が未実装の場合は、自動テストまでを実施し、engine 送信以降を未実施として PR に記録します。
 
-1. engine でイベントを含む動画を解析し、送信を有効化する。201が返り、一覧に動画 ID が現れる。
-2. 詳細でハイライトを再生し、前／再生／次、一覧、タイムラインからイベントに移動できることを確認する。
-3. 同じ成果物を再送して200、内容を変えて同じ ID に送って409を確認する。元の結果は再生できる。
-4. イベント0件を送信し、動画なしの結果と「イベント0件」の説明が表示されることを確認する。
-5. トークンを誤らせて401を確認する。スタッフ以外の閲覧は403となる。
+### 事前準備
+
+1. `.env` に `VIDEO_CUE_UPLOAD_TOKEN` を設定し、engine 側にも同じ値を設定する。開発環境の例は `dev1234`。
+2. スタッフアカウントを用意する。未作成なら別の PowerShell で `.venv\Scripts\python.exe manage.py createsuperuser` を実行する。
+3. Django を起動する。
+
+```powershell
+Set-Location C:\Users\yoshi\OneDrive\dev\portfolio
+.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
+```
+
+4. ブラウザーで `http://127.0.0.1:8000/accounts/login/?next=/video_cue/` を開き、スタッフでログインする。
+5. engine のイベントあり結果から、`analysis.json` と同じフォルダーの `highlights.mp4` の絶対パスを確認する。
+
+### 1. 正常送信と表示
+
+engine の送信機能を使うか、次の PowerShell で API に送信する。`$analysisPath` と `$highlightPath` は実際の結果に置き換える。
+
+```powershell
+$env:VIDEO_CUE_UPLOAD_TOKEN = 'dev1234'
+$analysisPath = 'C:\path\to\0001\analysis.json'
+$highlightPath = 'C:\path\to\0001\highlights.mp4'
+curl.exe -i -X POST 'http://127.0.0.1:8000/video_cue/api/results/0001/' `
+  -H "Authorization: Bearer $env:VIDEO_CUE_UPLOAD_TOKEN" `
+  -F "analysis=@$analysisPath;type=application/json" `
+  -F "highlight=@$highlightPath;type=video/mp4"
+```
+
+期待値は HTTP 201 と `created: true`。ログイン済みブラウザーで `/video_cue/` を再読み込みし、`録画 0001` を開く。
+ハイライトが表示され、イベント一覧、タイムライン、「前」「再生」「次」で頭出しできることを確認する。
+元動画・個別クリップの切替ボタンが表示されないことも確認する。
+
+### 2. 同じ内容の再送
+
+同じコマンドをもう一度実行する。期待値は HTTP 200 と `created: false`。一覧に重複が増えず、既存のハイライトを再生できることを確認する。
+
+### 3. 異なる内容の重複送信
+
+`analysis.json` のイベント時刻または変化量を有効な範囲で変更したコピーを作り、同じ動画 ID `0001` に送信する。
+期待値は HTTP 409。元の `0001` の JSON とハイライトが変更されていないことを確認する。
+
+### 4. イベント0件
+
+engine のイベント0件の結果（`events: []`、`highlight_path: null`）を `analysis` だけで `0002` に送信する。
+期待値は HTTP 201。`録画 0002` を開き、「イベント0件」と「再生するハイライトはありません」が表示されることを確認する。
+
+### 5. 認証と権限
+
+1. 正常な送信コマンドの Bearer 値を `wrong` に変える。期待値は HTTP 401。
+2. ブラウザーからログアウトするかシークレットウィンドウで `/video_cue/` を開く。期待値は HTTP 403 とログイン案内。
+
+### 6. 狭い画面幅
+
+ブラウザー幅を390px程度にして `0001` を開き、プレイヤー、前・再生・次、イベント一覧を横スクロールなしで操作できることを確認する。
 
 一覧は `MEDIA_ROOT/video_cue/` の完成済み成果物だけを参照します。
 外部フォルダーを指定する設定はありません。元動画と個別クリップの再生経路もありません。
