@@ -12,7 +12,7 @@
 {% include 'shared/header.html' %}
 <main class="container-fluid cue-main px-3 px-lg-5 pb-5">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
-        <a class="cue-brand text-decoration-none" href="{% url 'video_cue:index' %}">◉ VIDEO CUE <span class="text-secondary fw-normal small ms-2">録画レビュー</span></a>
+        <a class="cue-brand text-decoration-none" href="{% url 'video_cue:index' %}"><span class="cue-rec-indicator" aria-hidden="true">◉</span> VIDEO CUE <span class="text-secondary fw-normal small ms-2">録画レビュー</span></a>
         <span class="badge rounded-pill text-bg-light border">解析済みの映像を閲覧</span>
     </div>
     {% block content %}{% endblock %}

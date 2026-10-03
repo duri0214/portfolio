@@ -1,6 +1,7 @@
 body { background: #f3f5f7; color: #18222f; }
 .cue-main { padding-top: 88px; max-width: 1640px; }
 .cue-brand { color: #18222f; font-weight: 800; letter-spacing: .06em; }
+.cue-rec-indicator { color: #dc3545; }
 .cue-result { border-color: #e0e4e9; transition: border-color .15s, transform .15s; }
 .cue-result:hover { border-color: #596f80; transform: translateY(-2px); }
 .cue-deck { background: #15212c; color: #f1f5f8; }
