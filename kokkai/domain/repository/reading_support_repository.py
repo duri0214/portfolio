@@ -31,7 +31,6 @@ class ReadingSupportRepository:
                     reading=entry.reading,
                     description=entry.description,
                     source_url=entry.source_url,
-                    generated_by_model=entry.generated_by_model,
                 )
                 for entry in entries
             )

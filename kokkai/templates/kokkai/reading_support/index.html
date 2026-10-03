@@ -59,8 +59,7 @@
                                     <th scope="col">単語（word）</th>
                                     <th scope="col">読み（reading）</th>
                                     <th scope="col">説明（description）</th>
-                                    <th scope="col">出典URL（source_url）</th>
-                                    <th scope="col">生成モデル</th>
+                                    <th scope="col">出典（source_url）</th>
                                     <th scope="col"><span class="visually-hidden">操作</span></th>
                                 </tr>
                             </thead>
@@ -71,7 +70,6 @@
                                     <td>{{ entry.reading }}</td>
                                     <td>{{ entry.description|truncatechars:40 }}</td>
                                     <td>{% if entry.source_url %}<a href="{{ entry.source_url }}" target="_blank" rel="noopener">確認する</a>{% else %}-{% endif %}</td>
-                                    <td>{{ entry.generated_by_model|default:"-" }}</td>
                                     <td class="text-end">
                                         <a href="{% url 'kokkai:reading_support_entry_update' entry.pk %}" class="btn btn-sm btn-outline-primary">編集</a>
                                         <form method="post" action="{% url 'kokkai:reading_support_entry_delete' entry.pk %}" class="d-inline" onsubmit="return confirm('この辞書項目を削除しますか？');">

@@ -13,14 +13,12 @@ class ReadingSupportEntryForm(forms.ModelForm):
             "reading",
             "description",
             "source_url",
-            "generated_by_model",
         )
         widgets = {
             "word": forms.TextInput(attrs={"class": "form-control"}),
             "reading": forms.TextInput(attrs={"class": "form-control"}),
             "description": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
             "source_url": forms.URLInput(attrs={"class": "form-control"}),
-            "generated_by_model": forms.TextInput(attrs={"class": "form-control"}),
         }
 
 

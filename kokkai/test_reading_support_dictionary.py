@@ -143,10 +143,9 @@ class ReadingSupportCandidateServiceTests(TestCase):
         シナリオ:
         - 入力: 子どもとFOIPの元行、同義候補と表記差だけの候補。
         - 処理: 行ごとに候補を生成し、既存取り込み形式のCSVを作る。
-        - 期待値: 元行を保ち、こどもだけ追加し、生成モデルと出典URLを別に記録する。
+        - 期待値: 元行を保ち、こどもだけ追加し、候補の出典は空欄になる。
         """
         generator = Mock()
-        generator.model_name = "gpt-5.6-luna"
         generator.generate.side_effect = [
             ["こども", "子ども", "FOIP"],
             ["ＦＯＩＰ", "foip"],
@@ -166,15 +165,9 @@ class ReadingSupportCandidateServiceTests(TestCase):
         self.assertEqual(rows[1]["reading"], "こども")
         self.assertEqual(rows[1]["description"], "子供の別表記")
         self.assertEqual(rows[1]["source_url"], "")
-        self.assertEqual(rows[0]["generated_by_model"], "")
-        self.assertEqual(rows[1]["generated_by_model"], "gpt-5.6-luna")
         self.assertEqual(result.warnings[0].line_number, 3)
         self.assertTrue(
             ReadingSupportCsvImporter().import_csv(result.to_csv()).is_success
-        )
-        self.assertEqual(
-            ReadingSupportEntry.objects.get(word="こども").generated_by_model,
-            "gpt-5.6-luna",
         )
 
     def test_failure_keeps_original_and_reports_line(self):
@@ -453,12 +446,11 @@ class ReadingSupportManagementViewTests(TestCase):
         self.assertContains(response, "<code>word</code>（単語）")
         self.assertContains(response, "<code>reading</code>（読み）")
         self.assertContains(response, "<code>description</code>（説明）")
-        self.assertContains(response, "<code>source_url</code>（出典URL）")
-        self.assertContains(response, "<code>generated_by_model</code>（生成モデル）")
+        self.assertContains(response, "<code>source_url</code>（出典）")
         self.assertContains(response, "wordだけ")
         self.assertContains(
             response,
-            "reading、description、source_url、generated_by_modelをCSVの値で上書き",
+            "reading、description、source_urlをCSVの値で上書き",
         )
         self.assertContains(response, "同じCSV内に同じwordが複数ある場合はエラー")
 
@@ -561,7 +553,6 @@ class ReadingSupportManagementViewTests(TestCase):
         self.assertEqual(download.status_code, 200)
         self.assertEqual([row["word"] for row in downloaded], ["子ども", "こども"])
         self.assertEqual(downloaded[1]["source_url"], "")
-        self.assertEqual(downloaded[1]["generated_by_model"], "gpt-5.6-luna")
         self.assertEqual(
             before, list(ReadingSupportEntry.objects.values_list("pk", flat=True))
         )
