@@ -5,7 +5,9 @@
     <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
         <ol class="breadcrumb mb-0 small">
             <li class="breadcrumb-item"><a href="{% url 'kokkai:index' %}">会議録一覧</a></li>
+            {% if can_manage_reading_support %}
             <li class="breadcrumb-item"><a href="{% url 'kokkai:reading_support_management' %}">読み仮名支援辞書</a></li>
+            {% endif %}
             <li class="breadcrumb-item active" aria-current="page">CSVから取り込む</li>
         </ol>
     </nav>
@@ -15,7 +17,14 @@
     <div class="card mb-3">
         <div class="card-header bg-white d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
             <h2 class="h5 mb-0">CSVの形式</h2>
+            {% if can_manage_reading_support %}
             <a href="{% url 'kokkai:reading_support_csv_template' %}" class="btn btn-outline-secondary">CSVテンプレート（サンプル付き）をダウンロード</a>
+            {% else %}
+            <div class="d-flex flex-column align-items-sm-end gap-1">
+                <button type="button" class="btn btn-outline-secondary" disabled>CSVテンプレート（サンプル付き）をダウンロード</button>
+                <span class="small text-muted">スーパーユーザー権限が必要です。</span>
+            </div>
+            {% endif %}
         </div>
         <div class="card-body">
             <p>UTF-8のカンマ区切りCSVを使用します。CSVの列名と画面の項目名は次の対応です。</p>
@@ -59,6 +68,11 @@
             <h2 class="h5 mb-0">CSVファイルを選択して取り込む</h2>
         </div>
         <div class="card-body">
+            {% if not can_manage_reading_support %}
+            <div class="alert alert-secondary" role="status">
+                CSVの取り込みと表記揺れ候補の生成には、スーパーユーザーでのログインが必要です。
+            </div>
+            {% endif %}
             {{ form.non_field_errors }}
             {% for field in form %}
             <div class="mb-3{% if field.field.widget.input_type == 'checkbox' %} form-check{% endif %}">
@@ -73,10 +87,15 @@
                 {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
             </div>
             {% endfor %}
+            <p id="candidate-mode-note" class="alert alert-warning mb-0" role="note" hidden>候補生成では辞書へ登録しません。GPTが提案した行はすべて確認対象です。意味・読み・出典を確かめ、不要な行をCSVから削除・修正してから、チェックを外して取り込んでください。生成した候補行の出典は空欄です。</p>
         </div>
         <div class="card-footer d-flex flex-wrap gap-2">
-            <button type="submit" class="btn btn-primary">取り込む</button>
+            <button id="csv-submit" type="submit" class="btn btn-primary"{% if not can_manage_reading_support %} disabled{% endif %}>取り込む</button>
+            {% if can_manage_reading_support %}
             <a href="{% url 'kokkai:reading_support_management' %}" class="btn btn-secondary">読み仮名支援辞書へ戻る</a>
+            {% else %}
+            <a href="{% url 'kokkai:index' %}" class="btn btn-secondary">会議録一覧へ戻る</a>
+            {% endif %}
         </div>
     </form>
 
@@ -90,5 +109,53 @@
         </ul>
     </div>
     {% endif %}
+
+    {% if candidate_result %}
+    {% if candidate_result.errors %}
+    <div class="alert alert-danger" role="alert">
+        <h2 class="h5">候補生成を開始できませんでした</h2>
+        <ul class="mb-0">
+            {% for error in candidate_result.errors %}<li>{{ error.line_number }}行目: {{ error.message }}</li>{% endfor %}
+        </ul>
+    </div>
+    {% else %}
+    <div class="card mb-4">
+        <div class="card-header bg-white"><h2 class="h5 mb-0">候補CSVの確認</h2></div>
+        <div class="card-body">
+            <p>元の行と候補行を合わせて{{ candidate_result.rows|length }}行出力します。この操作では辞書を変更していません。ダウンロード後、候補の意味・読み・出典を確認してCSVを編集してください。</p>
+            {% if candidate_result.warnings %}
+            <div class="alert alert-warning" role="alert">
+                <h3 class="h6">候補を作れなかった行</h3>
+                <ul class="mb-0">{% for warning in candidate_result.warnings %}<li>{{ warning.line_number }}行目: {{ warning.message }}</li>{% endfor %}</ul>
+            </div>
+            {% endif %}
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead><tr><th>word</th><th>reading</th><th>description</th><th>source_url</th></tr></thead>
+                    <tbody>{% for row in candidate_result.rows %}<tr><td>{{ row.word }}</td><td>{{ row.reading }}</td><td>{{ row.description }}</td><td>{{ row.source_url }}</td></tr>{% endfor %}</tbody>
+                </table>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="candidate_csv" value="{{ candidate_csv }}">
+                <button type="submit" class="btn btn-primary">候補CSVをダウンロード</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const checkbox = document.getElementById('id_generate_candidates');
+    const note = document.getElementById('candidate-mode-note');
+    const submit = document.getElementById('csv-submit');
+    function updateMode() {
+        note.hidden = !checkbox.checked;
+        submit.textContent = checkbox.checked ? '候補CSVを作る' : '取り込む';
+    }
+    checkbox.addEventListener('change', updateMode);
+    updateMode();
+});
+</script>
 {% endblock %}

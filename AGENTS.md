@@ -36,7 +36,7 @@
 3. 未コミット変更がある場合は `git stash push -u -m "branch:<Issue番号>"` で退避する。既存作業を壊す可能性がある変更は、復元先を判断するまで stash に残す。
 4. `gh repo view --json defaultBranchRef --jq .defaultBranchRef.name` で既定ブランチを確認し、`git fetch origin --prune` で最新化する。
 5. 既定ブランチを起点に、`<Issue番号>-<英小文字と数字の短い説明>` 形式のトピックブランチを作成する。例: `955-integrate-codex-hotl`。
-6. Issue の assignee、Project、Project status を設定できる範囲で更新し、着手後は `In progress` にする。
+6. Issue の assignee、Project、Project status を確認する。未設定なら `gh issue edit <Issue番号> --add-assignee <login> --add-project <Project名>` などで設定する。着手後の Project status は `gh project item-edit <Project番号> --owner <owner> --url <Issue URL> --field Status --value "In progress"` で更新する。`gh issue view <Issue番号> --json assignees,projectItems` で反映を再確認する。
 
 ### コミットと push
 
@@ -53,8 +53,8 @@
 2. ブランチ名の先頭の数字をIssue番号として扱い、Issueのタイトル、本文、ラベル、assignee、Projectを確認する。
 3. `git diff --stat origin/<base>..HEAD`、`git diff --name-status origin/<base>..HEAD` でPRの差分を確認する。
 4. PR本文は日本語で、概要、主な変更点、目検手順、自動テストの範囲、`Closes #<Issue番号>` を含める。
-5. 目検手順は操作と期待値を `- [ ]` 形式で書き、実行していない確認を `[x]` にしない。
+5. 目検手順は操作と期待値を `- [ ]` 形式で書く。ユーザーが提示した画面や操作結果で期待値を確認できた項目は、確認した証跡と範囲をPR本文に記して `[x]` に更新する。未確認の操作や期待値が同じ項目に含まれる場合はチェック欄を分割し、未確認分を `[ ]` に残す。実行・確認していない項目を `[x]` にしない。
 6. 現在のブランチにPRがなければ `gh pr create --base <base> --head <current-branch> --title "#<Issue番号> <Issueタイトル>" --body-file <body-file>` で作成する。既存PRがあれば `gh pr edit <番号> --body-file <body-file>` で更新する。
-7. 作成・更新後にURL、assignee、ラベル、Projectを確認する。変更依頼では、明示的な `PR不要` 指定がない限り作成または更新まで進める。
+7. 作成・更新後に `gh issue view <Issue番号> --json assignees,labels,projectItems` と `gh pr view <PR番号> --json url,assignees,labels,projectItems` を実行し、IssueとPRのassignee、ラベル、Project名、Project statusを照合する。PR側に不足があれば `gh pr edit <PR番号> --add-assignee <login> --add-label <ラベル名> --add-project <Project名>` などで補う。Project statusは `gh project item-edit <Project番号> --owner <owner> --url <PR URL> --field Status --value <Issueのstatus>` で揃える。両方を再取得して反映を確認し、失敗した項目は原因と現在の値を報告する。変更依頼では、明示的な `PR不要` 指定がない限り作成または更新まで進める。
 
 git や gh の操作が失敗した場合は、API で迂回せず原因を切り分けて報告する。Project操作の権限が不足する場合は、`gh auth refresh -s read:project -s project` が必要であることを伝える。

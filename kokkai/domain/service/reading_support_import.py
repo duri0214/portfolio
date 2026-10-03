@@ -34,45 +34,16 @@ class ReadingSupportCsvImporter:
         source: bytes | str | TextIO,
     ) -> ReadingSupportImportResult:
         """CSV全体を検証し、エラーがなければ一括保存する。"""
-        try:
-            csv_text = self._decode_source(source)
-        except UnicodeDecodeError:
-            return ReadingSupportImportResult(
-                errors=(
-                    ReadingSupportImportError(
-                        line_number=1,
-                        message="CSVはUTF-8で保存してください。",
-                    ),
-                )
-            )
-
-        reader = csv.DictReader(io.StringIO(csv_text, newline=""))
-        fieldnames = [field.strip() for field in (reader.fieldnames or [])]
-        missing_columns = [
-            column for column in self.REQUIRED_COLUMNS if column not in fieldnames
-        ]
-        if missing_columns:
-            return ReadingSupportImportResult(
-                errors=(
-                    ReadingSupportImportError(
-                        line_number=1,
-                        message=(
-                            "必須列が不足しています: " + ", ".join(missing_columns)
-                        ),
-                    ),
-                )
-            )
+        rows, parse_errors = self.read_rows(source)
+        if parse_errors:
+            return ReadingSupportImportResult(errors=tuple(parse_errors))
 
         entries_to_save: list[tuple[ReadingSupportEntry, bool]] = []
         errors: list[ReadingSupportImportError] = []
         seen_words: set[str] = set()
 
-        for row in reader:
-            line_number = reader.line_num
-            if self._is_empty_row(row):
-                continue
+        for line_number, values in rows:
             try:
-                values = self._row_values(row)
                 entry = self._build_entry(values)
                 normalized_word = entry.normalized_word
                 if normalized_word in seen_words:
@@ -112,6 +83,45 @@ class ReadingSupportCsvImporter:
             updated=updated,
         )
 
+    @classmethod
+    def read_rows(
+        cls, source: bytes | str | TextIO, *, preserve_values: bool = False
+    ) -> tuple[list[tuple[int, dict[str, str]]], list[ReadingSupportImportError]]:
+        """UTF-8の辞書CSVから列名と行構造を検証して値を返す。"""
+        try:
+            csv_text = cls._decode_source(source)
+        except UnicodeDecodeError:
+            return [], [ReadingSupportImportError(1, "CSVはUTF-8で保存してください。")]
+
+        reader = csv.DictReader(io.StringIO(csv_text, newline=""))
+        fieldnames = [field.strip() for field in (reader.fieldnames or [])]
+        missing_columns = [
+            column for column in cls.REQUIRED_COLUMNS if column not in fieldnames
+        ]
+        if missing_columns:
+            return [], [
+                ReadingSupportImportError(
+                    1, "必須列が不足しています: " + ", ".join(missing_columns)
+                )
+            ]
+
+        rows: list[tuple[int, dict[str, str]]] = []
+        errors: list[ReadingSupportImportError] = []
+        for row in reader:
+            line_number = reader.line_num
+            if cls._is_empty_row(row):
+                continue
+            try:
+                rows.append((line_number, cls._row_values(row, preserve_values)))
+            except ValueError as error:
+                errors.append(
+                    ReadingSupportImportError(
+                        line_number=line_number,
+                        message=str(error),
+                    )
+                )
+        return rows, errors
+
     @staticmethod
     def _decode_source(source: bytes | str | TextIO) -> str:
         if isinstance(source, bytes):
@@ -134,11 +144,16 @@ class ReadingSupportCsvImporter:
         return True
 
     @staticmethod
-    def _row_values(row: dict[str | None, str | list[str] | None]) -> dict[str, str]:
+    def _row_values(
+        row: dict[str | None, str | list[str] | None],
+        preserve_values: bool = False,
+    ) -> dict[str, str]:
         if None in row and row[None]:
             raise ValueError("列数がヘッダーと一致しません。")
         return {
-            str(key).strip(): (value or "").strip()
+            str(key).strip(): (
+                (value or "") if preserve_values else (value or "").strip()
+            )
             for key, value in row.items()
             if key is not None
         }

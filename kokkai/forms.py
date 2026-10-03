@@ -23,9 +23,24 @@ class ReadingSupportEntryForm(forms.ModelForm):
 
 
 class ReadingSupportCsvImportForm(forms.Form):
-    """読み仮名支援辞書のCSVを取り込むフォーム。"""
+    """辞書CSVの取り込みか、表記揺れ候補CSVの生成を選ぶフォーム。"""
+
+    def __init__(self, *args, can_manage_csv=True, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["file"].disabled = not can_manage_csv
+        self.fields["generate_candidates"].disabled = not can_manage_csv
 
     file = forms.FileField(
         label="CSVファイル",
         widget=forms.FileInput(attrs={"class": "form-control"}),
+    )
+    generate_candidates = forms.BooleanField(
+        label="表記揺れ候補CSVを作る",
+        help_text=(
+            "チェックすると辞書には登録せず、CSVの単語・読み・説明をGPT（OpenAI API）へ送信して候補を作ります。"
+            "入力行ごとにトークンを消費し、API利用料金が発生する場合があります。"
+            "候補を確認してCSVをダウンロードできます。"
+        ),
+        required=False,
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
     )

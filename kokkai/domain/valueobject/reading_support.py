@@ -1,4 +1,6 @@
 import re
+import csv
+import io
 from dataclasses import dataclass
 
 import jaconv
@@ -67,6 +69,32 @@ class ReadingSupportImportResult:
     def is_success(self) -> bool:
         """検証エラーがなく、取り込みに成功した結果かを返す。"""
         return not self.errors
+
+
+@dataclass(frozen=True)
+class ReadingSupportCandidateResult:
+    """辞書CSVの元行と確認待ち候補、検証・生成時の理由を保持する。
+
+    Attributes:
+        rows: 元行と採用した候補行。元行の入力値を保つ。
+        errors: CSV形式に問題があり、生成を始められない理由。
+        warnings: 行ごとの生成失敗など、元行を残して続行した理由。
+        generation_failed: GPTの障害で少なくとも1行の生成に失敗したか。
+    """
+
+    rows: tuple[ReadingSupportDefinition, ...] = ()
+    errors: tuple[ReadingSupportImportError, ...] = ()
+    warnings: tuple[ReadingSupportImportError, ...] = ()
+    generation_failed: bool = False
+
+    def to_csv(self) -> str:
+        """既存取り込みと同じ4列のUTF-8 CSVテキストを返す。"""
+        output = io.StringIO(newline="")
+        writer = csv.writer(output)
+        writer.writerow(("word", "reading", "description", "source_url"))
+        for row in self.rows:
+            writer.writerow((row.word, row.reading, row.description, row.source_url))
+        return output.getvalue()
 
 
 _WHITESPACE_PATTERN = re.compile(r"\s+")
