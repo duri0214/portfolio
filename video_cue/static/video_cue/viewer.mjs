@@ -4,8 +4,6 @@ const data = JSON.parse(document.getElementById('cue-data').textContent);
 const video = document.getElementById('cue-video');
 const byId = id => document.getElementById(id);
 const buttons = [...document.querySelectorAll('.event-button')];
-let mode = data.highlight_url ? 'highlight' : data.source_url ? 'source' : 'clip';
-let selected = -1;
 let pendingSeek = null;
 let pendingPlay = false;
 let markers = [];
@@ -20,15 +18,14 @@ async function play() {
     catch { showError('再生を開始できませんでした。再生ボタンを押すか、動画の形式・接続を確認してください。'); }
 }
 
-function load(url, nextMode, position = 0, resume = false) {
-    mode = nextMode;
+function load(position = 0, resume = false) {
     byId('playback-error').hidden = true;
-    byId('mode-label').textContent = {highlight: 'HIGHLIGHT / ハイライト', source: 'ORIGINAL / 元動画', clip: 'CLIP / 個別クリップ'}[mode];
-    byId('position-label').textContent = {highlight: 'ハイライト内の位置', source: '元動画の再生位置', clip: 'クリップ内の位置'}[mode];
-    if (video.getAttribute('src') !== url) {
+    byId('mode-label').textContent = 'HIGHLIGHT / ハイライト';
+    byId('position-label').textContent = 'ハイライト内の位置';
+    if (video.getAttribute('src') !== data.highlight_url) {
         pendingSeek = position;
         pendingPlay = resume;
-        video.src = url;
+        video.src = data.highlight_url;
         byId('toggle-play').disabled = true;
         byId('seek').disabled = true;
         video.load();
@@ -40,22 +37,13 @@ function load(url, nextMode, position = 0, resume = false) {
     update();
 }
 
-function selectEvent(index, requestedMode = mode) {
+function selectEvent(index) {
     const event = data.events[index];
-    if (!event) return;
-    const resume = !video.paused;
-    selected = index;
-    if (requestedMode === 'highlight' && data.highlight_url) load(data.highlight_url, 'highlight', event.highlight_start, resume);
-    else if (requestedMode === 'source' && data.source_url) load(data.source_url, 'source', event.start, resume);
-    else if (event.clip_url) load(event.clip_url, 'clip', 0, resume);
-    else showError('このイベントの動画が見つかりません。動画の配置を確認してください。');
+    if (event && data.highlight_url) load(event.highlight_start, !video.paused);
 }
 
 function adjacent(direction) {
-    let index = adjacentEvent(data.events, mode, video.currentTime, direction, selected);
-    if (mode === 'clip') {
-        while (index >= 0 && index < data.events.length && !data.events[index].clip_url) index += direction;
-    }
+    const index = adjacentEvent(data.events, video.currentTime, direction);
     return index >= 0 && index < data.events.length ? index : -1;
 }
 
@@ -63,43 +51,36 @@ function drawTimeline() {
     const timeline = byId('timeline');
     timeline.replaceChildren();
     markers = [];
-    if (mode !== 'clip' && !Number.isFinite(video.duration)) return;
+    if (!Number.isFinite(video.duration)) return;
     data.events.forEach((event, index) => {
         const marker = document.createElement('button');
         marker.type = 'button';
         marker.className = 'cue-marker';
         marker.textContent = index + 1;
         marker.setAttribute('aria-label', `イベント ${index + 1} へ移動`);
-        const start = mode === 'highlight' ? event.highlight_start : event.start;
-        const percent = mode === 'clip' ? (index + .5) / data.events.length * 100 : start / video.duration * 100;
-        marker.style.left = `${Math.min(100, Math.max(0, percent))}%`;
-        marker.disabled = mode === 'clip' && !event.clip_url;
+        marker.style.left = `${Math.min(100, Math.max(0, event.highlight_start / video.duration * 100))}%`;
         marker.addEventListener('click', () => selectEvent(index));
         timeline.append(marker);
         markers.push(marker);
     });
-    byId('timeline-note').textContent = mode === 'clip' ? '個別クリップの順番です。番号を選ぶと切り替わります。' : '番号はイベントの開始位置です。選択すると頭出しします。';
 }
 
 function update() {
-    const active = mode === 'clip' ? selected : eventAt(data.events, mode, video.currentTime);
-    if (active >= 0) selected = active;
+    const active = eventAt(data.events, video.currentTime);
     byId('position').textContent = timecode(video.currentTime);
     byId('seek').value = video.currentTime;
     byId('current-event').textContent = active >= 0 ? `${String(active + 1).padStart(2, '0')} / ${data.events.length}` : '区間外';
-    let original = mode === 'source' ? timecode(video.currentTime) : '区間外';
-    if (mode === 'highlight' && active >= 0) {
-        const event = data.events[active];
-        original = timecode(event.start + video.currentTime - event.highlight_start);
-    } else if (mode === 'clip' && selected >= 0) original = '対応時刻なし';
-    byId('source-time').textContent = original;
+    const event = data.events[active];
+    byId('source-time').textContent = event
+        ? timecode(event.start + video.currentTime - event.highlight_start)
+        : '区間外';
     buttons.forEach((button, index) => {
         button.classList.toggle('active', index === active);
         button.setAttribute('aria-current', String(index === active));
     });
     markers.forEach((marker, index) => marker.setAttribute('aria-current', String(index === active)));
-    byId('previous-event').disabled = adjacent(-1) < 0;
-    byId('next-event').disabled = adjacent(1) < 0;
+    byId('previous-event').disabled = !data.highlight_url || adjacent(-1) < 0;
+    byId('next-event').disabled = !data.highlight_url || adjacent(1) < 0;
 }
 
 buttons.forEach((button, index) => button.addEventListener('click', () => selectEvent(index)));
@@ -111,8 +92,6 @@ byId('previous-event').addEventListener('click', () => selectEvent(adjacent(-1))
 byId('next-event').addEventListener('click', () => selectEvent(adjacent(1)));
 byId('seek').addEventListener('input', event => { video.currentTime = Number(event.target.value); });
 byId('playback-rate').addEventListener('change', event => { video.playbackRate = Number(event.target.value); });
-byId('show-highlight').addEventListener('click', () => selected >= 0 ? selectEvent(selected, 'highlight') : load(data.highlight_url, 'highlight'));
-byId('show-source').addEventListener('click', () => selected >= 0 ? selectEvent(selected, 'source') : load(data.source_url, 'source'));
 video.addEventListener('loadedmetadata', () => {
     if (pendingSeek !== null) { video.currentTime = Math.min(pendingSeek, video.duration); pendingSeek = null; }
     video.playbackRate = Number(byId('playback-rate').value);
@@ -132,13 +111,8 @@ video.addEventListener('error', () => {
     byId('seek').disabled = true;
     showError('動画を読み込めません。ファイルの存在・アクセス権・再生形式を確認してください。');
 });
-if (data.highlight_url) load(data.highlight_url, 'highlight');
-else if (data.source_url) load(data.source_url, 'source');
+if (data.highlight_url) load();
 else {
-    const first = data.events.findIndex(event => event.clip_url);
-    if (first >= 0) selectEvent(first);
-    else {
-        byId('mode-label').textContent = '再生可能な動画がありません';
-        showError(data.events.length ? '動画が見つかりません。出力ファイルの配置を確認してください。' : '動き区間がないため、ハイライト動画はありません。');
-    }
+    byId('mode-label').textContent = '再生可能なハイライトがありません';
+    showError(data.events.length ? 'ハイライト動画が見つかりません。保存済み成果物を確認してください。' : '動き区間がないため、ハイライト動画はありません。');
 }

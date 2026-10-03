@@ -6,10 +6,10 @@ import tempfile
 from itertools import zip_longest
 from pathlib import Path
 
-from video_cue.domain.repository.local_results import (
-    LocalResults,
+from video_cue.domain.repository.result_files import (
     MAX_JSON_BYTES,
     ResultUnavailable,
+    ResultFiles,
 )
 from video_cue.domain.valueobject.analysis import Analysis
 
@@ -29,7 +29,7 @@ class DuplicateResult(UploadError):
     """同じ ID に異なる解析結果が既に保存されていることを表す。"""
 
 
-class StoredResults(LocalResults):
+class StoredResults(ResultFiles):
     """Django の media 配下に完成済みの解析結果だけを保存・取得する。"""
 
     def __init__(self, media_root: str | Path):
@@ -54,9 +54,6 @@ class StoredResults(LocalResults):
             parsed = Analysis.from_dict(data)
         except (UnicodeError, ValueError, RecursionError) as exc:
             raise UploadError("解析 JSON の形式が不正です。") from exc
-        if type(data["schema_version"]) is not int or data["schema_version"] != 2:
-            raise UploadError("アップロードには schema_version 2 が必要です。")
-
         if parsed.events:
             if parsed.highlight != "highlights.mp4" or highlight_file is None:
                 raise UploadError("イベントがある場合は highlights.mp4 が必要です。")

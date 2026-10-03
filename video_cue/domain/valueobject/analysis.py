@@ -22,21 +22,19 @@ def file_reference(value: object, *, optional: bool = False) -> str | None:
 
 @dataclass(frozen=True)
 class Event:
-    """元動画上の1つの動き区間と再生用参照。
+    """解析対象上の1つの動き区間とハイライト内の位置。
 
     Attributes:
-        start: 元動画上の開始秒。
-        end: 元動画上の終了秒。
+        start: 録画内の開始秒。
+        end: 録画内の終了秒。
         peak: 最大変化量（0〜1）。
-        clip: 個別クリップの相対パス。
-        highlight_start: ハイライト内のイベント開始秒。旧形式では None。
+        highlight_start: ハイライト内のイベント開始秒。
     """
 
     start: float
     end: float
     peak: float
-    clip: str | None
-    highlight_start: float | None
+    highlight_start: float
 
     @property
     def duration(self) -> float:
@@ -48,8 +46,8 @@ class Analysis:
     """1件の検証済み解析結果。ファイルの存在確認は Repository が担当する。
 
     Attributes:
-        source: 元動画の参照先。
-        duration: 元動画の長さ（秒）。
+        source: 解析対象のファイル名。
+        duration: 解析対象の長さ（秒）。
         highlight: ハイライトの相対パス。
         events: 時刻順のイベント。
     """
@@ -61,14 +59,14 @@ class Analysis:
 
     @classmethod
     def from_dict(cls, data: object) -> "Analysis":
-        """engine の schema 1/2 を読み込み、不正な時刻・順序・型を拒否する。"""
+        """engine の schema 2 を読み込み、不正な時刻・順序・型を拒否する。"""
         try:
             if not isinstance(data, dict):
                 raise InvalidAnalysis(
                     "JSON のルートはオブジェクトである必要があります。"
                 )
             version = data["schema_version"]
-            if type(version) is not int or version not in (1, 2):
+            if type(version) is not int or version != 2:
                 raise InvalidAnalysis("未対応の schema_version です。")
             source = file_reference(data["input"]["path"])
             duration = number(data["input"]["duration_seconds"])
@@ -81,17 +79,17 @@ class Analysis:
             for raw in data["events"]:
                 start, end = number(raw["start_seconds"]), number(raw["end_seconds"])
                 peak = number(raw["peak_change_ratio"])
-                clip = file_reference(raw.get("clip_path"), optional=True)
                 offset = raw.get("highlight_start_seconds")
-                offset = number(offset) if offset is not None else None
+                offset = number(offset)
                 if start < previous_end or end <= start or end > duration or peak > 1:
                     raise InvalidAnalysis("イベントの時刻・順序・変化量が不正です。")
-                if highlight and (offset is None or offset <= previous_highlight):
+                if highlight and offset <= previous_highlight:
                     raise InvalidAnalysis("ハイライト内の開始位置が不正です。")
-                events.append(Event(start, end, peak, clip, offset))
+                events.append(Event(start, end, peak, offset))
                 previous_end = end
-                if offset is not None:
-                    previous_highlight = offset
+                previous_highlight = offset
+            if bool(events) != bool(highlight):
+                raise InvalidAnalysis("イベントとハイライトの指定が一致しません。")
             return cls(source, duration, highlight, tuple(events))
         except (KeyError, TypeError, OverflowError) as exc:
             raise InvalidAnalysis(

@@ -166,9 +166,6 @@ STATIC_URL = "/static/"
 MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
 
-# Rust の解析済み出力と、任意で参照する元動画の許可ディレクトリ。
-VIDEO_CUE_RESULTS_ROOT = os.getenv("VIDEO_CUE_RESULTS_ROOT", "")
-VIDEO_CUE_SOURCE_ROOT = os.getenv("VIDEO_CUE_SOURCE_ROOT", "")
 VIDEO_CUE_UPLOAD_TOKEN = os.getenv("VIDEO_CUE_UPLOAD_TOKEN", "")
 
 # Matplotlib キャッシュディレクトリの設定

@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_safe
 
-from video_cue.domain.repository.local_results import LocalResults, ResultUnavailable
+from video_cue.domain.repository.result_files import ResultUnavailable
 from video_cue.domain.repository.stored_results import (
     MAX_HIGHLIGHT_BYTES,
     DuplicateResult,
@@ -35,38 +35,11 @@ def staff_view(view):
 logger = logging.getLogger(__name__)
 
 
-def repository(key: str | None = None) -> LocalResults:
-    stored = StoredResults(settings.MEDIA_ROOT)
-    if key is not None:
-        try:
-            stored.directory(key)
-            return stored
-        except ResultUnavailable:
-            pass
-    if settings.VIDEO_CUE_RESULTS_ROOT:
-        return LocalResults(
-            settings.VIDEO_CUE_RESULTS_ROOT, settings.VIDEO_CUE_SOURCE_ROOT
-        )
-    return stored
-
-
 @staff_view
 def index(request):
     try:
-        stored = StoredResults(settings.MEDIA_ROOT).list()
-        error = None
-        if settings.VIDEO_CUE_RESULTS_ROOT:
-            try:
-                legacy = LocalResults(
-                    settings.VIDEO_CUE_RESULTS_ROOT, settings.VIDEO_CUE_SOURCE_ROOT
-                ).list()
-                keys = {item["key"] for item in stored}
-                stored.extend(item for item in legacy if item["key"] not in keys)
-            except ResultUnavailable as exc:
-                error = str(exc)
-        return render(
-            request, "video_cue/index.html", {"results": stored, "error": error}
-        )
+        results = StoredResults(settings.MEDIA_ROOT).list()
+        return render(request, "video_cue/index.html", {"results": results})
     except ResultUnavailable as exc:
         return render(request, "video_cue/index.html", {"error": str(exc)}, status=503)
 
@@ -74,7 +47,7 @@ def index(request):
 @staff_view
 def detail(request, key: str):
     try:
-        repo = repository(key)
+        repo = StoredResults(settings.MEDIA_ROOT)
         repo.directory(key)
     except ResultUnavailable as exc:
         raise Http404(str(exc)) from exc
@@ -89,15 +62,12 @@ def detail(request, key: str):
             status=status,
         )
 
-    def media_url(
-        kind: str, reference: str | None, *, source: bool = False
-    ) -> str | None:
-        if repo.video(key, reference, source=source):
-            return reverse("video_cue:media", args=[key, kind])
-        return None
-
-    highlight = media_url("highlight", analysis.highlight)
-    source = media_url("source", analysis.source, source=True)
+    highlight = (
+        reverse("video_cue:media", args=[key])
+        if analysis.highlight == "highlights.mp4"
+        and repo.video(key, analysis.highlight)
+        else None
+    )
     events = [
         {
             "start": event.start,
@@ -105,11 +75,10 @@ def detail(request, key: str):
             "duration": event.duration,
             "peak": event.peak,
             "highlight_start": event.highlight_start,
-            "clip_url": media_url(str(index), event.clip),
         }
-        for index, event in enumerate(analysis.events)
+        for event in analysis.events
     ]
-    player = {"events": events, "highlight_url": highlight, "source_url": source}
+    player = {"events": events, "highlight_url": highlight}
     return render(
         request,
         "video_cue/detail.html",
@@ -119,7 +88,6 @@ def detail(request, key: str):
             "events": events,
             "player": player,
             "highlight_url": highlight,
-            "source_url": source,
             "highlight_missing": bool(analysis.highlight and not highlight),
         },
     )
@@ -138,22 +106,13 @@ def file_chunks(stream, remaining: int):
 
 
 @staff_view
-def media(request, key: str, kind: str):
+def media(request, key: str):
     """許可済み参照だけを配信し、ブラウザーの単一 byte Range に応答する。"""
     try:
-        repo = repository(key)
+        repo = StoredResults(settings.MEDIA_ROOT)
         analysis = repo.read(key)
-        if kind == "highlight":
+        if analysis.highlight == "highlights.mp4":
             path = repo.video(key, analysis.highlight)
-        elif kind == "source":
-            path = repo.video(key, analysis.source, source=True)
-        elif (
-            kind.isascii()
-            and kind.isdecimal()
-            and len(kind) < 10
-            and int(kind) < len(analysis.events)
-        ):
-            path = repo.video(key, analysis.events[int(kind)].clip)
         else:
             path = None
         if path is None:
