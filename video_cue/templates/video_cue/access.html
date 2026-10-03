@@ -3,7 +3,6 @@
 <section class="card p-4">
     <h1 class="h4">録画の閲覧にはスタッフ権限が必要です</h1>
     <p class="text-secondary">録画データを確認するには、スタッフアカウントでログインしてください。</p>
-    <div><button class="btn btn-secondary" disabled>録画を開く</button>
-    <a class="btn btn-primary" href="{% url 'login' %}?next={% url 'video_cue:index' %}">ログイン</a></div>
+    <div><button class="btn btn-secondary" disabled>録画を開く</button></div>
 </section>
 {% endblock %}

@@ -187,6 +187,14 @@ class StoredViewerTests(SimpleTestCase):
                 with self.subTest(user=user, view=view):
                     self.assertEqual(view(request, *args).status_code, 403)
 
+    def test_access_page_uses_navigation_login_only(self):
+        """アクセス拒否画面にはナビゲーションのログイン導線だけを表示する。"""
+        request = self.request()
+        request.user = AnonymousUser()
+        response = views.index(request)
+        self.assertEqual(response.status_code, 403)
+        self.assertNotContains(response, "ログイン</a>", status_code=403)
+
     def test_path_escape_and_source_are_rejected(self):
         """入力: 親参照・絶対パス・元動画。処理: 解決。期待値: 配信しない。"""
         for reference in [
