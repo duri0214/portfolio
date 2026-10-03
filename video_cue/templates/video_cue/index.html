@@ -15,6 +15,16 @@
             {% if not result.analysis.events %}<span class="ms-2 text-secondary small">動きは検出されませんでした</span>{% endif %}</div>{% endif %}
         </a>
     </div>
-{% empty %}{% if not error %}<p class="text-secondary">解析結果はまだありません。解析の出力完了後に再読み込みしてください。</p>{% endif %}{% endfor %}
+{% empty %}{% if not error %}
+    <div class="alert alert-info" role="status">
+        <h2 class="h5">解析結果を受け取ると録画が表示されます</h2>
+        <ol class="mb-2">
+            <li><code>video-cue-engine</code> で動画を解析します。</li>
+            <li>解析完了後、解析結果と生成済みハイライトを VIDEO CUE に送信します。</li>
+            <li>この画面を再読み込みし、表示された録画を選択します。</li>
+        </ol>
+        <p class="mb-0">元動画のアップロードは不要です。</p>
+    </div>
+{% endif %}{% endfor %}
 </div>
 {% endblock %}
