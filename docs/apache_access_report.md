@@ -2,17 +2,109 @@
 
 スーパーユーザーは共通ナビバーから、直近24時間のアクセス傾向を固定の管理者宛先へ送れます。メールには件数、対象期間、生成時刻だけを載せます。集計値は調査のきっかけであり、攻撃や情報漏えいの判定ではありません。
 
-## 本番で有効にする前の確認
+## 事前準備（一度だけ、サーバー管理者が実施）
 
-1. Apache の `LogFormat` / `CustomLog` と VirtualHost ごとの出力先を確認する。集計コマンドは combined 形式（送信元、時刻、引用符付きリクエスト、HTTP ステータス）を前提とする。リバースプロキシを使う場合は、ログの先頭が信頼できる実クライアント IP になっているか確認する。
-2. `access.log*` のローテーション時刻、ファイル名、gzip 圧縮を確認する。集計対象の24時間に現行・ローテート済みの全ファイルが入るよう、`.env` の `APACHE_ACCESS_LOG_GLOBS` にカンマ区切りで絶対パスの glob を設定する。例: `/var/log/apache2/access.log*,/var/log/apache2/other_access.log*`。異なる VirtualHost で同じリクエストを二重記録していないかも確認する。
-3. 実ログの件数と時間帯別分布を確認し、24時間の対象期間と1時間ごとの更新が適切か決める。定期処理が失敗した場合は、生成から2時間を超えた集計を送れない。
-4. 定期コマンド専用の実行ユーザーに、対象のアクセスログだけの読み取り権限を与える。ローテート後のファイルにも権限が残ることを確認する。Web 実行ユーザーには Apache ログの読み取り権限を付けない。
-5. 定期実行ユーザーが `.venv/bin/python`、`manage.py`、DB 接続設定を使えることを確認する。集計結果は `home_apacheaccessreport` テーブルに数値だけを保存するため、Web 側は既存の DB 接続から参照できる。`home_apachereportdispatch` テーブルは15分の送信間隔を管理する。`python manage.py migrate` を先に実行する。
-6. `.env` の `APACHE_REPORT_RECIPIENT` に管理者のメールアドレスを固定し、既存の `MAIL_SMTP_*` と `MAIL_USE_TLS` を設定する。Web 画面から宛先は変更できない。
+以下は `/var/www/html/portfolio` に配置し、定期処理ユーザーを既存運用どおり `ubuntu` とする場合の手順です。別の配置先・ユーザーを使う場合は、以降のコマンド中の値をすべて同じ値へ置き換えます。
 
-## 実行と監視
+### 1. Apache のログ形式と出力先を確認する
 
-定期実行ユーザーで `.venv/bin/python manage.py aggregate_apache_access` を実行する。標準出力の成功表示と終了コードを確認する。ログが見つからない、読めない、形式を解析できない場合は失敗して既存の集計を更新しない。解析できない行数はメールに示される。実データの確認と cron の時刻・実行ユーザーの決定後、既存ジョブと重ならない時間に1時間ごとで登録する。
+```bash:console
+$ sudo apache2ctl -S
+$ sudo grep -R "^[[:space:]]*\(LogFormat\|CustomLog\)" /etc/apache2
+```
 
-Web 側の送信失敗は HTTP 502、設定不足・集計なし・古い集計は HTTP 503、15分以内の再送は HTTP 429 で表示する。SMTP の詳細なエラーはサーバーログで確認し、画面やメールには載せない。送信の POST には CSRF トークンとスーパーユーザー権限が必要。
+`CustomLog` の実ファイルが `/var/log/apache2/access.log` とローテート済みの `access.log.*` であること、`LogFormat` が combined 相当であることを確認します。リバースプロキシを使っている場合は、ログ先頭の送信元値が信頼できる実クライアント値か確認します。形式が異なる場合は、コマンドを本番で登録せずに停止します。
+
+### 2. 集計対象とメールを `.env` に設定する
+
+サーバー上の `/var/www/html/portfolio/.env` に次を設定します。SMTP の実値は Git、Issue、PR、ログへ書きません。
+
+```dotenv:/var/www/html/portfolio/.env
+APACHE_ACCESS_LOG_GLOBS=/var/log/apache2/access.log*
+APACHE_REPORT_RECIPIENT=管理者の固定メールアドレス
+MAIL_SMTP_HOST=smtp.example.com
+MAIL_SMTP_PORT=587
+MAIL_SMTP_USER=送信用アカウント
+MAIL_SMTP_PASSWORD=送信用パスワードまたはアプリパスワード
+MAIL_USE_TLS=True
+```
+
+`APACHE_ACCESS_LOG_GLOBS` は現行ファイルと直近24時間に必要なローテート済みファイルを含む絶対パスの glob にします。VirtualHost が別ファイルへ出力する場合はカンマ区切りで追加します。設定後、`.env` の所有者と権限を確認します。
+
+```bash:console
+$ sudo chown ubuntu:ubuntu /var/www/html/portfolio/.env
+$ sudo chmod 600 /var/www/html/portfolio/.env
+```
+
+### 3. マイグレーションと Apache の設定を反映する
+
+```bash:console
+$ cd /var/www/html/portfolio
+$ sudo -u ubuntu .venv/bin/python manage.py migrate
+$ sudo apache2ctl configtest
+# 期待値: Syntax OK
+$ sudo systemctl restart apache2
+```
+
+`migrate` が失敗した場合は cron を登録しません。`configtest` が `Syntax OK` でない場合も Apache を再起動せず原因を修正します。
+
+### 4. 定期処理ユーザーだけにログの読み取り権限を付与する
+
+Web プロセス（通常 `www-data`）には Apache ログの読み取り権限を付けません。ログディレクトリの実際の所有者・グループを確認し、`ubuntu` が対象の現行・ローテート済みファイルだけを読める状態にします。
+
+```bash:console
+$ sudo namei -l /var/log/apache2/access.log
+$ sudo -u ubuntu test -r /var/log/apache2/access.log && echo OK_current || echo NG_current
+$ sudo -u www-data test -r /var/log/apache2/access.log && echo NG_web_can_read || echo OK_web_blocked
+```
+
+`NG_current` の場合は、全ログを読める `adm` グループへ安易に追加せず、Apache/logrotate の専用グループまたは ACL で `access.log` と `access.log.*` だけへ読み取り権限を付与します。ローテーション後にも同じ権限が付くことを確認してから次へ進みます。
+
+## 定期実行の登録（サーバー管理者が一度だけ実施）
+
+まず手動で一回実行し、成功することを確認します。
+
+```bash:console
+$ sudo -u ubuntu -H bash -lc 'cd /var/www/html/portfolio && .venv/bin/python manage.py aggregate_apache_access'
+# 期待値: Apache アクセス集計を保存しました。
+```
+
+ログが見つからない、読めない、形式を解析できない場合は終了コードが失敗になり、既存の集計結果は更新されません。成功を確認したら `ubuntu` の crontab に1時間ごとの行を追加します。
+
+```bash:console
+$ sudo install -d -o ubuntu -g ubuntu -m 750 /var/log/portfolio
+$ sudo touch /var/log/portfolio/apache-access-report.log
+$ sudo chown ubuntu:ubuntu /var/log/portfolio/apache-access-report.log
+$ sudo chmod 640 /var/log/portfolio/apache-access-report.log
+$ sudo -u ubuntu crontab -e
+```
+
+```vim:crontab
+0 * * * * cd /var/www/html/portfolio && /var/www/html/portfolio/.venv/bin/python manage.py aggregate_apache_access >> /var/log/portfolio/apache-access-report.log 2>&1
+```
+
+`/var/log/portfolio` が存在し、`ubuntu` が書き込めることを先に確認します。登録後は次のコマンドで行が残っていることを確認します。
+
+```bash:console
+$ sudo -u ubuntu crontab -l | grep aggregate_apache_access
+```
+
+cron の実行時刻は、既存のバッチと重ならない時刻へ変更して構いません。変更する場合も、1時間に1回を上限とし、同じコマンドを二重登録しません。
+
+## 毎回のメール送信操作（スーパーユーザーがブラウザで実施）
+
+1. cron または手動実行が成功したことを確認する。
+2. portfolio にスーパーユーザーでログインする。
+3. 共通ナビバーの「アクセス集計をメール送信」を1回だけ押す。
+4. 「集計メールを送信しました。」と表示され、固定宛先へ期間・生成時刻・件数を含む HTML/プレーンテキストメールが届くことを確認する。
+
+同じ操作を15分以内に繰り返すと HTTP 429 相当の再送抑止画面になります。未ログイン・一般ユーザー・スタッフユーザーは送信できません。`APACHE_REPORT_RECIPIENT` が未設定の場合は「宛先が設定されていません。」と表示されます。
+
+## 失敗時の確認順
+
+1. 画面が「集計結果がありません」「集計結果が古い」と表示する場合、cron の実行結果と `home_apacheaccessreport` の生成時刻を確認する。
+2. `aggregate_apache_access` が失敗する場合、`APACHE_ACCESS_LOG_GLOBS`、combined 形式、ログファイルの読み取り権限を確認する。
+3. SMTP 送信が失敗する場合、`MAIL_SMTP_*`、TLS、送信先アドレス、Apache のエラーログを確認する。SMTP パスワードやログ行を画面・Issue・PRへ貼り付けない。
+4. 設定を直した後、手動集計 → スーパーユーザーの送信操作の順に再実行する。
+
+Web 側の送信失敗は HTTP 502、設定不足・集計なし・古い集計は HTTP 503、15分以内の再送は HTTP 429 で表示します。生ログは Web アプリへ渡さず、メールと保存結果にも IP、クエリ文字列、ログ行、詳細なエラー文を含めません。
