@@ -22,7 +22,7 @@ from django.http import HttpResponse
 from django.urls import include, path
 
 from config.sitemap import sitemap_xml
-from config.views import send_apache_access_report
+from lib.apache_access.web import send_apache_access_report
 from vietnam_research.views import CustomLoginView
 
 

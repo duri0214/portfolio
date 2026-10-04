@@ -61,7 +61,7 @@ git や gh の操作が失敗した場合は、API で迂回せず原因を切�
 
 ## Apacheアクセス集計メールの運用（Issue #954）
 
-この機能を本番で有効化するときは、実装確認とサーバー運用確認を分け、次の順序を守る。詳細なコマンドは [`docs/apache_access_report.md`](docs/apache_access_report.md) に集約する。
+この機能を本番で有効化するときは、実装確認とサーバー運用確認を分け、次の順序を守る。詳細なコマンドは [`lib/apache_access/README.md`](lib/apache_access/README.md) に集約し、`docs/apache_access_report.md` は仕様だけを記載する。
 
 1. この処理は `lib/apache_access` に置き、Djangoアプリ、モデル、migration、専用画面を追加しない。`home` はコンテンツカタログの責務だけを持つ。ブラウザ操作が必要な場合も、共通ナビバーからライブラリを呼び、元のページへ結果を通知する薄い入口に限る。
 2. サーバー管理者が Apache の `LogFormat` / `CustomLog`、VirtualHost ごとの出力先、リバースプロキシ経由の送信元、ローテーション形式を確認する。combined 形式でない場合や対象ログが特定できない場合は登録を進めない。

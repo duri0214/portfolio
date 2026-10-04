@@ -168,7 +168,7 @@ class ApacheAccessReportViewTests(TestCase):
         )
         self.url = reverse("send_apache_access_report")
 
-    @patch("config.views.ApacheAccessReportService.from_environment")
+    @patch("lib.apache_access.web.ApacheAccessReportService.from_environment")
     def test_permission_method_and_csrf(self, service_factory):
         """入力: 権限別アクセス。処理: 送信URL。期待値: CSRF付き管理者POSTだけ送信する。"""
         self.assertEqual(self.client.post(self.url).status_code, 403)
@@ -189,7 +189,7 @@ class ApacheAccessReportViewTests(TestCase):
         self.assertRedirects(response, "/?apache_report=sent")
         service_factory.return_value.send_latest_report.assert_called_once()
 
-    @patch("config.views.ApacheAccessReportService.from_environment")
+    @patch("lib.apache_access.web.ApacheAccessReportService.from_environment")
     def test_operation_failures_are_visible(self, service_factory):
         """入力: 未設定・再送制限・SMTP失敗。処理: 管理者POST。期待値: 元画面へ失敗を通知する。"""
         self.client.force_login(self.superuser)
@@ -210,7 +210,7 @@ class ApacheAccessReportViewTests(TestCase):
             with self.subTest(result=result):
                 service_factory.return_value.send_latest_report.side_effect = error
                 with (
-                    self.assertLogs("config.views", level="ERROR")
+                    self.assertLogs("lib.apache_access.web", level="ERROR")
                     if is_logged
                     else nullcontext()
                 ):
@@ -220,7 +220,7 @@ class ApacheAccessReportViewTests(TestCase):
                 self.assertRedirects(response, f"/?apache_report={result}")
                 self.assertNotIn("private detail", response.url)
 
-    @patch("config.views.ApacheAccessReportService.from_environment")
+    @patch("lib.apache_access.web.ApacheAccessReportService.from_environment")
     def test_result_is_a_notice_on_the_originating_page(self, service_factory):
         """入力: 管理者の送信操作。処理: 元画面へ戻る。期待値: 専用画面を作らず結果を通知する。"""
         self.client.force_login(self.superuser)

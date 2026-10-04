@@ -1,4 +1,4 @@
-"""Project-wide operational endpoints that do not belong to a content app."""
+"""Thin Django adapter for sending an Apache access report."""
 
 import logging
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
