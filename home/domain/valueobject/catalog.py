@@ -289,7 +289,7 @@ _CATALOG_DEFINITIONS = (
         "category": "動画",
         "category_class": "primary",
         "title": "VIDEO CUE：動きのあった場面から録画を見直す",
-        "description": "定点カメラなどの長時間録画から、動きのあった区間を優先して確認するツール。Rustの解析エンジンがイベント時刻とハイライト動画を作り、Djangoの画面で結果を一覧・再生できます。",
+        "description": "2026年、定点カメラなどの長時間録画から、動きのあった区間を優先して確認するツールを開発。Rustの解析エンジンがイベント時刻とハイライト動画を作り、Djangoの画面で結果を一覧・再生できます。",
     },
     {
         "slug": "bookman",
