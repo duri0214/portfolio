@@ -113,20 +113,16 @@ class VideoCueHomeTests(SimpleTestCase):
             'alt="録画のタイムラインに動きのあった区間が示されたVIDEO CUEのイメージ"',
         )
 
-    def test_video_cue_detail_explains_workflow_and_links(self):
+    def test_video_cue_detail_explains_workflow_and_app_link(self):
         """
         シナリオ:
         - 入力: VIDEO CUE の紹介ページを GET する。
-        - 処理: 説明とアプリ・Rust エンジンへのリンクを確認する。
-        - 期待値: 解析と閲覧の役割、利用機能、遷移先が表示されること。
+        - 処理: 説明とアプリへのリンクを確認する。
+        - 期待値: 解析と閲覧の役割、利用機能、アプリの遷移先が表示されること。
         """
         response = self.client.get(reverse("home:about_video_cue"))
 
         self.assertContains(response, 'href="/video_cue/"')
-        self.assertContains(
-            response,
-            'href="https://github.com/duri0214/video-cue-engine"',
-        )
         for text in (
             "作った理由",
             "ハイライト動画を再生",
