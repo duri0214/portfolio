@@ -34,7 +34,7 @@ DjangoのUser、View、URL、セッションには依存しないため、Django
 
 ### 単独利用
 
-このディレクトリの `.env.example` を `.env` としてコピーし、SMTP設定を入力します。
+プロジェクトルートの `.env.example` を `.env` としてコピーし、SMTP設定を入力します。
 
 ```text
 MAIL_SMTP_HOST=smtp.example.com
@@ -46,11 +46,9 @@ MAIL_USE_TLS=True
 
 ### Djangoから利用
 
-プロジェクトルートの `.env` に同じ `MAIL_SMTP_*` 設定を記述できます。
-`config/settings.py` がルートの `.env` を先に読み込むため、Django実行時はその設定が利用されます。
-
-`MailService` は、すでに設定されている環境変数を上書きしません。単独実行時は
-`lib/mail/.env` を先に読み込み、プロジェクトルートの `.env` で不足分を補います。
+プロジェクトルートの `.env` に `MAIL_SMTP_*` 設定を記述します。
+`config/settings.py` と `MailService` は同じルートの `.env` を読み込みます。
+`MailService` は、すでに設定されている環境変数を上書きしません。
 
 `ACCOUNT_EMAIL_SEND_ENABLED` は `MailService` の設定ではありません。これは `accounts` が実送信を許可するか判断するためのDjango設定で、初期値は `False` です。
 `False` の場合、`accounts` は `MailService` を呼び出さず、SMTPにも接続しません。

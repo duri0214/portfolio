@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock
 
+from lib.mail import mail_service
 from lib.mail.mail_service import MailService, MailSendError
 
 
@@ -86,6 +87,18 @@ class TestMailService(unittest.TestCase):
         self.assertTrue(success)
         # MIMEMultipart の中身までは深く検証しないが、send_message が呼ばれていることを確認
         mock_server.send_message.assert_called_once()
+
+    @patch("lib.mail.mail_service.load_dotenv")
+    def test_loads_only_project_root_env(self, load_dotenv):
+        """
+        シナリオ:
+        - 入力: メール設定を読み込む。
+        - 操作: 環境変数の読込処理を実行する。
+        - 期待値: プロジェクトルートの .env だけを読むこと。
+        """
+        mail_service._load_mail_environment()
+
+        load_dotenv.assert_called_once_with(mail_service.PROJECT_ROOT / ".env")
 
 
 if __name__ == "__main__":
