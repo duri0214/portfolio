@@ -2,26 +2,9 @@
 
 `lib/apache_access` は、Apache のアクセスログを匿名化した件数へ集計し、既存の `MailService` で管理者へ送信する共通ライブラリです。Djangoアプリ、Djangoモデル、migration、専用画面は追加しません。
 
-## ファイルと責務
-
-- `report_service.py`: 手動で実行する集計 CLI の入口
-- `domain/valueobject/report.py`: 匿名化された集計値とドメイン例外
-- `domain/service/access_log_aggregator.py`: `ApacheAccessLogAggregator` によるApache combined ログの解析・集計
-- `domain/service/report_service.py`: JSON 保存、鮮度・再送制限、`MailService` 呼び出し
-- `domain/service/report_mail.py`: `ApacheAccessReportMailService` によるプレーンテキスト・HTML本文の生成
-- `report_receiver.py`: 共通ナビバーからのPOSTを受け、CSRF・スーパーユーザーを確認し、送信結果を操作元へ返す Django アダプター
-- `test_report_service.py`: 集計、保存、送信、権限、Web 操作のテスト
-
-`config/urls.py` は送信URLと `report_receiver.py` を接続するだけです。共通ナビバーのボタンがこの入口をPOSTで呼び出します。`home` はこの処理を担当しません。
-
 ## `.env` の場所
 
-このライブラリが読む `.env` は、**リポジトリ直下の `manage.py` と同じディレクトリにある `.env`** です。`lib/apache_access/.env` ではありません。
-
-- 本番配置が `/var/www/html/portfolio` の場合: `/var/www/html/portfolio/.env`
-- ローカル環境の場合: チェックアウトした `portfolio` ディレクトリ直下の `.env`
-
-`domain/service/report_service.py` は自身の場所からリポジトリルートを求め、このファイルを明示的に読み込みます。
+Apache固有の設定は、リポジトリ直下の `.env` に設定します。たとえば本番配置が `/var/www/html/portfolio` の場合は `/var/www/html/portfolio/.env`、ローカル環境ではチェックアウトした `portfolio` ディレクトリ直下の `.env` を使用します。
 
 メールの送信先は追加の環境変数を使わず、既存の `lib/mail/.env` にある `MAIL_SMTP_USER` を使います。`lib/mail/.env.example` を `lib/mail/.env` にコピーし、`MAIL_SMTP_USER` にレポートを受信する管理者・運用担当のメールボックス（例: `ops@example.com`）を設定してください。SMTPの送信元と同じメールボックスへ送る前提です。
 
