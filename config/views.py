@@ -1,9 +1,11 @@
 """Project-wide operational endpoints that do not belong to a content app."""
 
 import logging
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from django.http import HttpResponseForbidden
-from django.shortcuts import render
+from django.shortcuts import redirect
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from lib.apache_access.report_service import (
@@ -29,29 +31,40 @@ def send_apache_access_report(request):
     service = ApacheAccessReportService.from_environment()
     try:
         service.send_latest_report()
-    except RecipientNotConfiguredError as error:
+    except RecipientNotConfiguredError:
         logger.error("APACHE_REPORT_RECIPIENT is not configured")
-        return _result(request, str(error), 503)
-    except ReportRateLimitedError as error:
-        return _result(request, str(error), 429)
-    except (ReportNotFoundError, ReportStaleError, ReportStorageError) as error:
+        return _redirect_to_source(request, "recipient-missing")
+    except ReportRateLimitedError:
+        return _redirect_to_source(request, "rate-limited")
+    except ReportNotFoundError:
+        logger.error("Apache access report does not exist", exc_info=True)
+        return _redirect_to_source(request, "report-missing")
+    except ReportStaleError:
+        logger.error("Apache access report is stale", exc_info=True)
+        return _redirect_to_source(request, "report-stale")
+    except ReportStorageError:
         logger.error("Apache access report is unavailable", exc_info=True)
-        return _result(request, str(error), 503)
+        return _redirect_to_source(request, "report-unavailable")
     except (MailSendError, ValueError, OSError):
         logger.exception("Apache access report mail failed")
-        return _result(
-            request,
-            "メールを送信できませんでした。管理者ログを確認してください。",
-            502,
-        )
-    return _result(request, "集計メールを送信しました。", 200)
+        return _redirect_to_source(request, "send-failed")
+    return _redirect_to_source(request, "sent")
 
 
-def _result(request, message: str, status: int):
-    """Render one operation result while preserving its HTTP status."""
-    return render(
-        request,
-        "shared/apache_report_result.html",
-        {"result": message},
-        status=status,
+def _redirect_to_source(request, result: str):
+    """Return to the originating page with a fixed operation-result code."""
+    target = request.POST.get("next", "/")
+    if not url_has_allowed_host_and_scheme(
+        target,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        target = "/"
+
+    parts = urlsplit(target)
+    query = dict(parse_qsl(parts.query, keep_blank_values=True))
+    query["apache_report"] = result
+    location = urlunsplit(
+        (parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment)
     )
+    return redirect(location)

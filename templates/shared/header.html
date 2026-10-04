@@ -37,6 +37,7 @@
                             <li class="nav-item me-2">
                                 <form method="post" action="{% url 'send_apache_access_report' %}">
                                     {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
                                     <button type="submit" class="btn btn-sm btn-outline-secondary">アクセス集計をメール送信</button>
                                 </form>
                             </li>
@@ -63,4 +64,44 @@
             </div>
         </div>
     </nav>
+    {% if request.GET.apache_report %}
+        <div class="container-fluid position-fixed px-3" style="top: 64px; z-index: 1080;">
+            {% if request.GET.apache_report == 'sent' %}
+                <div class="alert alert-success alert-dismissible shadow" role="alert">
+                    集計メールを送信しました。
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
+                </div>
+            {% elif request.GET.apache_report == 'recipient-missing' %}
+                <div class="alert alert-danger alert-dismissible shadow" role="alert">
+                    宛先が設定されていません。
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
+                </div>
+            {% elif request.GET.apache_report == 'rate-limited' %}
+                <div class="alert alert-warning alert-dismissible shadow" role="alert">
+                    前回の送信から15分経過していません。
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
+                </div>
+            {% elif request.GET.apache_report == 'report-missing' %}
+                <div class="alert alert-danger alert-dismissible shadow" role="alert">
+                    集計結果がありません。定期処理を確認してください。
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
+                </div>
+            {% elif request.GET.apache_report == 'report-stale' %}
+                <div class="alert alert-warning alert-dismissible shadow" role="alert">
+                    集計結果が古いため送信しませんでした。定期処理を確認してください。
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
+                </div>
+            {% elif request.GET.apache_report == 'report-unavailable' %}
+                <div class="alert alert-danger alert-dismissible shadow" role="alert">
+                    集計結果を読み取れませんでした。管理者ログを確認してください。
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
+                </div>
+            {% elif request.GET.apache_report == 'send-failed' %}
+                <div class="alert alert-danger alert-dismissible shadow" role="alert">
+                    メールを送信できませんでした。管理者ログを確認してください。
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
 </header>

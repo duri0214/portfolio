@@ -1,6 +1,7 @@
 """Apache access report library and its thin Django endpoint tests."""
 
 import gzip
+from contextlib import nullcontext
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -180,31 +181,58 @@ class ApacheAccessReportViewTests(TestCase):
         self.assertEqual(csrf_client.post(self.url).status_code, 403)
         csrf_client.get(reverse("home:index"))
         token = csrf_client.cookies["csrftoken"].value
-        self.assertEqual(
-            csrf_client.post(self.url, HTTP_X_CSRFTOKEN=token).status_code, 200
+        response = csrf_client.post(
+            self.url,
+            {"next": reverse("home:index")},
+            HTTP_X_CSRFTOKEN=token,
         )
+        self.assertRedirects(response, "/?apache_report=sent")
         service_factory.return_value.send_latest_report.assert_called_once()
 
     @patch("config.views.ApacheAccessReportService.from_environment")
     def test_operation_failures_are_visible(self, service_factory):
-        """入力: 未設定・再送制限・SMTP失敗。処理: 管理者POST。期待値: 対応する失敗を画面表示する。"""
+        """入力: 未設定・再送制限・SMTP失敗。処理: 管理者POST。期待値: 元画面へ失敗を通知する。"""
         self.client.force_login(self.superuser)
         cases = (
-            (RecipientNotConfiguredError("宛先が設定されていません。"), 503),
-            (ReportRateLimitedError("前回の送信から15分経過していません。"), 429),
-            (MailSendError("private detail"), 502),
+            (
+                RecipientNotConfiguredError("宛先が設定されていません。"),
+                "recipient-missing",
+                True,
+            ),
+            (
+                ReportRateLimitedError("前回の送信から15分経過していません。"),
+                "rate-limited",
+                False,
+            ),
+            (MailSendError("private detail"), "send-failed", True),
         )
-        for error, status in cases:
-            with self.subTest(status=status):
+        for error, result, is_logged in cases:
+            with self.subTest(result=result):
                 service_factory.return_value.send_latest_report.side_effect = error
                 with (
                     self.assertLogs("config.views", level="ERROR")
-                    if status != 429
-                    else self.subTest()
+                    if is_logged
+                    else nullcontext()
                 ):
-                    response = self.client.post(self.url)
-                self.assertEqual(response.status_code, status)
-                self.assertNotContains(response, "private detail", status_code=status)
+                    response = self.client.post(
+                        self.url, {"next": reverse("home:index")}
+                    )
+                self.assertRedirects(response, f"/?apache_report={result}")
+                self.assertNotIn("private detail", response.url)
+
+    @patch("config.views.ApacheAccessReportService.from_environment")
+    def test_result_is_a_notice_on_the_originating_page(self, service_factory):
+        """入力: 管理者の送信操作。処理: 元画面へ戻る。期待値: 専用画面を作らず結果を通知する。"""
+        self.client.force_login(self.superuser)
+        response = self.client.post(
+            self.url,
+            {"next": reverse("home:index")},
+            follow=True,
+        )
+
+        self.assertRedirects(response, "/?apache_report=sent")
+        self.assertContains(response, "集計メールを送信しました。")
+        service_factory.return_value.send_latest_report.assert_called_once()
 
     def test_send_button_is_only_in_superuser_navbar(self):
         """入力: 一般スタッフと管理者。処理: 共通ナビバー表示。期待値: 操作は管理者にだけ見える。"""
