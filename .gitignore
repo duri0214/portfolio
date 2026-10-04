@@ -3,6 +3,8 @@ chroma/
 *.log
 db.sqlite3
 .env
+# Local fallback for generated private report artifacts
+.private/
 # Python virtual environments
 .venv/
 venv/

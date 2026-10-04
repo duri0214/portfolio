@@ -93,7 +93,7 @@ class MailService:
 
         try:
             # SMTPサーバーに接続
-            server = smtplib.SMTP(self.host, self.port)
+            server = smtplib.SMTP(self.host, self.port, timeout=20)
             if self.use_tls:
                 server.starttls()
 
