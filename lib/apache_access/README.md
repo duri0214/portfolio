@@ -4,11 +4,9 @@
 
 ## `.env` の場所
 
-Apache固有の設定は、リポジトリ直下の `.env` に設定します。たとえば本番配置が `/var/www/html/portfolio` の場合は `/var/www/html/portfolio/.env`、ローカル環境ではチェックアウトした `portfolio` ディレクトリ直下の `.env` を使用します。
-
-`APACHE_ACCESS_LOG_GLOBS` は任意です。未設定なら `/var/log/apache2/access.log*` を使います。`*` は現在の `access.log` と `access.log.1` などのローテーション済みファイル、`access.log.2.gz` などのgzipファイルを含みます。複数の場所を読む場合はカンマ区切りで指定します。
-
-メール送信は既存の `MailService` を使います。SMTP設定と送信先は `MailService` 側で設定済みであり、送信できることを事前に確認してください。このREADMEではメール設定を追加・複製しません。
+- Apache固有の設定: リポジトリ直下の `.env`
+- `APACHE_ACCESS_LOG_GLOBS`: 任意。未設定なら `/var/log/apache2/access.log*` を使う。ローテーション済み・gzipのログも対象に含む。複数の場所はカンマ区切りで指定する。
+- SMTP設定と送信先: 既存の `MailService` を使う。送信できることを事前に確認する。
 
 ## 事前準備（一度だけ、サーバー管理者が実施）
 
