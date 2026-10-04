@@ -23,15 +23,18 @@ sudo grep -R "^[[:space:]]*\(LogFormat\|CustomLog\)" /etc/apache2
 
 対象が `/var/log/apache2/access.log` とローテート済みの `access.log.*` であり、`LogFormat` が combined 相当であることを確認します。
 
-### 2. Apacheログを読み取り専用で確認する
+### 2. Apacheログに読み取り権限を付与して確認する
 
-ブラウザ送信時のWebプロセスは、Apacheログを読み取って集計し、結果をメモリ上でメール送信します。ログや集計結果の保存先は用意しません。`www-data` には対象ログへの読み取り権限だけを付与します。
+ブラウザ送信時のWebプロセスは、Apacheログを読み取って集計し、結果をメモリ上でメール送信します。ログや集計結果の保存先は用意しません。最初の `namei` は現在の権限の確認、2つの `setfacl` は `www-data` に読み取り権限だけを付与する設定変更、最後の `test -r` は設定後の確認です。
 
 ```bash
+sudo namei -l /var/log/apache2/access.log
 sudo setfacl -m u:www-data:rx /var/log/apache2
 sudo setfacl -m u:www-data:r /var/log/apache2/access.log*
 sudo -u www-data test -r /var/log/apache2/access.log && echo OK_web_read || echo NG_web_read
 ```
+
+`www-data` が対象の `access.log*` を読み取れる状態にします。書き込み権限は付与しません。ローテーション後も読み取りACLが付くように、logrotateの設定を確認します。
 
 ### 3. Apache固有の設定を `/var/www/html/portfolio/.env` に追加する
 
@@ -41,21 +44,7 @@ sudo -u www-data test -r /var/log/apache2/access.log && echo OK_web_read || echo
 APACHE_ACCESS_LOG_GLOBS=/var/log/apache2/access.log*
 ```
 
-```bash
-sudo setfacl -m u:www-data:r /var/www/html/portfolio/.env
-sudo -u www-data test -r /var/www/html/portfolio/.env && echo OK_web_env || echo NG_web_env
-```
-
-### 4. Apache ログの読み取り権限を確認する
-
-```bash
-sudo namei -l /var/log/apache2/access.log
-sudo -u www-data test -r /var/log/apache2/access.log && echo OK_web_read || echo NG_web_read
-```
-
-`www-data` が対象の `access.log*` を読み取れる状態にします。書き込み権限は付与しません。ローテーション後も読み取りACLが付くように、logrotateの設定を確認します。
-
-### 5. Web 側へ変更を反映する
+### 4. Web 側へ変更を反映する
 
 この機能に migration はありません。
 
