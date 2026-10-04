@@ -10,13 +10,11 @@ Apache固有の設定は、リポジトリ直下の `.env` に設定します。
 
 `APACHE_ACCESS_LOG_GLOBS` は任意です。未設定なら `/var/log/apache2/access.log*` を使います。`*` は現在の `access.log` と `access.log.1` などのローテーション済みファイル、`access.log.2.gz` などのgzipファイルを含みます。複数の場所を読む場合はカンマ区切りで指定します。
 
-`APACHE_ACCESS_REPORT_PATH` も任意ですが、本番では `ubuntu`（集計）と `www-data`（ブラウザ送信）が共有できる `/var/lib/portfolio/apache_access_report.json` を明示してください。未設定時はローカル開発用のリポジトリ直下 `.private/apache_access_report.json` に保存します。
-
 `MAIL_SMTP_*` と `MAIL_USE_TLS` は既存の `MailService` の設定を使います。`lib/mail/.env` が存在する環境ではそちらが先に読み込まれるため、SMTP設定を重複させず、既存の設定場所を使用してください。
 
 ## 事前準備（一度だけ、サーバー管理者が実施）
 
-以下は、リポジトリを `/var/www/html/portfolio` に配置し、集計を `ubuntu`、Web を `www-data` で実行する場合の手順です。
+以下は、リポジトリを `/var/www/html/portfolio` に配置し、Web を `www-data` で実行する場合の手順です。
 
 ### 1. Apache のログ形式と出力先を確認する
 
@@ -27,24 +25,20 @@ sudo grep -R "^[[:space:]]*\(LogFormat\|CustomLog\)" /etc/apache2
 
 対象が `/var/log/apache2/access.log` とローテート済みの `access.log.*` であり、`LogFormat` が combined 相当であることを確認します。
 
-### 2. 匿名化済み JSON の保存場所を用意する
+### 2. Apacheログを読み取り専用で確認する
 
-生ログは `ubuntu` だけが読みます。匿名化済み JSON と送信間隔の状態ファイルは、`ubuntu` と `www-data` の両方が読み書きできる専用ディレクトリへ置きます。
+ブラウザ送信時のWebプロセスは、Apacheログを読み取って集計し、結果をメモリ上でメール送信します。ログや集計結果の保存先は用意しません。`www-data` には対象ログへの読み取り権限だけを付与します。
 
 ```bash
-sudo apt install acl -y
-sudo install -d -o ubuntu -g www-data -m 2770 /var/lib/portfolio
-sudo setfacl -m u:ubuntu:rwx,u:www-data:rwx /var/lib/portfolio
-sudo setfacl -d -m u:ubuntu:rwx,u:www-data:rwx /var/lib/portfolio
-sudo -u ubuntu test -w /var/lib/portfolio && echo OK_batch_write || echo NG_batch_write
-sudo -u www-data test -w /var/lib/portfolio && echo OK_web_write || echo NG_web_write
+sudo setfacl -m u:www-data:rx /var/log/apache2
+sudo setfacl -m u:www-data:r /var/log/apache2/access.log*
+sudo -u www-data test -r /var/log/apache2/access.log && echo OK_web_read || echo NG_web_read
 ```
 
 ### 3. `/var/www/html/portfolio/.env` を設定する
 
 ```dotenv
 APACHE_ACCESS_LOG_GLOBS=/var/log/apache2/access.log*
-APACHE_ACCESS_REPORT_PATH=/var/lib/portfolio/apache_access_report.json
 ```
 メール設定は既存の `lib/mail/.env.example` を `lib/mail/.env` にコピーして設定します。`MAIL_SMTP_USER` がSMTP送信元と固定宛先を兼ねます。
 
@@ -61,11 +55,9 @@ MAIL_USE_TLS=True
 ```bash
 sudo chown ubuntu:www-data /var/www/html/portfolio/.env
 sudo chmod 640 /var/www/html/portfolio/.env
-sudo -u ubuntu test -r /var/www/html/portfolio/.env && echo OK_batch_env || echo NG_batch_env
 sudo -u www-data test -r /var/www/html/portfolio/.env && echo OK_web_env || echo NG_web_env
 sudo chown ubuntu:www-data /var/www/html/portfolio/lib/mail/.env
 sudo chmod 640 /var/www/html/portfolio/lib/mail/.env
-sudo -u ubuntu test -r /var/www/html/portfolio/lib/mail/.env && echo OK_batch_mail_env || echo NG_batch_mail_env
 sudo -u www-data test -r /var/www/html/portfolio/lib/mail/.env && echo OK_web_mail_env || echo NG_web_mail_env
 ```
 
@@ -73,11 +65,10 @@ sudo -u www-data test -r /var/www/html/portfolio/lib/mail/.env && echo OK_web_ma
 
 ```bash
 sudo namei -l /var/log/apache2/access.log
-sudo -u ubuntu test -r /var/log/apache2/access.log && echo OK_batch_read || echo NG_batch_read
-sudo -u www-data test -r /var/log/apache2/access.log && echo NG_web_can_read || echo OK_web_blocked
+sudo -u www-data test -r /var/log/apache2/access.log && echo OK_web_read || echo NG_web_read
 ```
 
-`ubuntu` が対象の `access.log*` だけを読め、`www-data` は読めない状態にします。ローテーション後も同じ権限が付くように、専用グループまたは ACL を設定します。
+`www-data` が対象の `access.log*` を読み取れる状態にします。書き込み権限は付与しません。ローテーション後も読み取りACLが付くように、logrotateの設定を確認します。
 
 ### 5. Web 側へ変更を反映する
 
@@ -90,30 +81,28 @@ sudo systemctl restart apache2
 
 `apache2ctl configtest` の期待値は `Syntax OK` です。
 
-## 集計処理を手動確認する
+## 集計・送信を手動確認する
 
 ```bash
 sudo -u ubuntu -H bash -lc 'cd /var/www/html/portfolio && .venv/bin/python -m lib.apache_access.report_service'
-sudo -u www-data test -r /var/lib/portfolio/apache_access_report.json && echo OK_web_read || echo NG_web_read
 ```
 
-集計コマンドの成功時は `Apache アクセス集計を保存しました。` と出力して終了コード0、失敗時は原因を出力して終了コード1を返します。JSON には日時と件数だけを保存し、IP、URL、クエリ、ログ行は保存しません。
+集計コマンドはログを読み取り、匿名化した件数をメモリ上でメール送信します。成功時は `Apache アクセス集計メールを送信しました。` と出力して終了コード0、失敗時は原因を出力して終了コード1を返します。
 
 ## メールを送信する
 
-1. 手動集計が成功していることを確認する。
-2. portfolio にスーパーユーザーでログインする。
-3. 共通ナビバーの「アクセス集計をメール送信」を1回押す。
-4. 元のページに「集計メールを送信しました。」と通知されることを確認する。
-5. 固定宛先へ、対象期間、生成時刻、件数を含む HTML・プレーンテキストメールが届くことを確認する。
+1. portfolio にスーパーユーザーでログインする。
+2. 共通ナビバーの「アクセス集計をメール送信」を1回押す。
+3. 元のページに「集計メールを送信しました。」と通知されることを確認する。
+4. 固定宛先へ、対象期間、生成時刻、件数を含む HTML・プレーンテキストメールが届くことを確認する。
 
-同じ操作を15分以内に繰り返すと再送を拒否します。未ログイン、一般ユーザー、スタッフユーザーは送信できません。
+送信操作はその時点のログを読み取って集計します。未ログイン、一般ユーザー、スタッフユーザーは送信できません。
 
 ## 失敗時の確認順
 
-1. 「集計結果がありません」「集計結果が古い」: `/var/log/portfolio/apache-access-report.log` と `/var/lib/portfolio/apache_access_report.json` の更新時刻を確認する。
-2. 集計コマンドが失敗: `APACHE_ACCESS_LOG_GLOBS`、combined 形式、`ubuntu` のログ読み取り権限を確認する。
-3. メール送信が失敗: `lib/mail/.env` の `MAIL_SMTP_*`、TLS、`MAIL_SMTP_USER`、Apache のエラーログを確認する。
-4. 修正後、手動集計を実行してからブラウザの送信操作を再実行する。
+1. 「Apacheアクセスログが見つかりません」: `APACHE_ACCESS_LOG_GLOBS` と `www-data` のログ読み取り権限を確認する。
+2. 集計コマンドが失敗: combined 形式、ログローテーション後のACL、Apacheのエラーログを確認する。
+3. メール送信が失敗: `lib/mail/.env` の `MAIL_SMTP_*`、TLS、`MAIL_SMTP_USER`、Apacheのエラーログを確認する。
+4. 修正後、同じ送信操作を再実行する。
 
 SMTP パスワード、生ログ、実在する宛先は Issue や PR へ貼りません。

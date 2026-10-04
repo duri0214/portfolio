@@ -1,4 +1,4 @@
-"""Receive the navbar request that sends the latest Apache access report."""
+"""Receive the navbar request that aggregates and sends an Apache report."""
 
 import logging
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
@@ -11,9 +11,7 @@ from django.views.decorators.http import require_POST
 from lib.apache_access.domain.service.report_service import ApacheAccessReportService
 from lib.apache_access.domain.valueobject.report import (
     ReportNotFoundError,
-    ReportRateLimitedError,
-    ReportStaleError,
-    ReportStorageError,
+    ReportReadError,
 )
 from lib.mail.mail_service import MailSendError
 
@@ -23,22 +21,17 @@ logger = logging.getLogger(__name__)
 
 @require_POST
 def send_apache_access_report(request):
-    """Let a superuser send the latest sanitized report to the fixed recipient."""
+    """Let a superuser aggregate readable logs and mail the fixed recipient."""
     if not request.user.is_authenticated or not request.user.is_superuser:
         return HttpResponseForbidden("この操作にはスーパーユーザー権限が必要です。")
 
     service = ApacheAccessReportService.from_environment()
     try:
-        service.send_latest_report()
-    except ReportRateLimitedError:
-        return _redirect_to_source(request, "rate-limited")
+        service.send_report()
     except ReportNotFoundError:
         logger.error("Apache access report does not exist", exc_info=True)
         return _redirect_to_source(request, "report-missing")
-    except ReportStaleError:
-        logger.error("Apache access report is stale", exc_info=True)
-        return _redirect_to_source(request, "report-stale")
-    except ReportStorageError:
+    except ReportReadError:
         logger.error("Apache access report is unavailable", exc_info=True)
         return _redirect_to_source(request, "report-unavailable")
     except (MailSendError, ValueError, OSError):

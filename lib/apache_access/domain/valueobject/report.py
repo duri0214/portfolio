@@ -1,6 +1,6 @@
 """Value objects and domain errors for Apache access reports."""
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime
 
 
@@ -26,19 +26,11 @@ class ApacheAccessReportError(Exception):
 
 
 class ReportNotFoundError(ApacheAccessReportError):
-    """Raised when a source log or sanitized report is unavailable."""
+    """Raised when no source log is available."""
 
 
-class ReportStaleError(ApacheAccessReportError):
-    """Raised when the sanitized report is too old to send."""
-
-
-class ReportRateLimitedError(ApacheAccessReportError):
-    """Raised when a report was sent within the last 15 minutes."""
-
-
-class ReportStorageError(ApacheAccessReportError):
-    """Raised when a sanitized report or state file cannot be handled."""
+class ReportReadError(ApacheAccessReportError):
+    """Raised when Apache access logs cannot be read."""
 
 
 @dataclass(frozen=True)
@@ -61,20 +53,3 @@ class ApacheAccessReport:
     recent_failures: int
     previous_failures: int
     malformed_lines: int
-
-    def to_dict(self) -> dict[str, str | int]:
-        """Return a JSON-safe dictionary containing only dates and counts."""
-        values = asdict(self)
-        for field_name in ("period_start", "period_end", "generated_at"):
-            values[field_name] = values[field_name].isoformat()
-        return values
-
-    @classmethod
-    def from_dict(cls, values: dict[str, object]) -> "ApacheAccessReport":
-        """Restore a report from the identifier-free JSON representation."""
-        dates = {
-            field_name: datetime.fromisoformat(str(values[field_name]))
-            for field_name in ("period_start", "period_end", "generated_at")
-        }
-        counts = {field_name: int(values[field_name]) for field_name in REPORT_FIELDS}
-        return cls(**dates, **counts)

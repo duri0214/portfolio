@@ -1,7 +1,6 @@
 """Apache access report library and its thin Django endpoint tests."""
 
 import gzip
-from contextlib import nullcontext
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -18,8 +17,7 @@ from lib.apache_access.domain.service.report_service import ApacheAccessReportSe
 from lib.apache_access.domain.valueobject.report import (
     ApacheAccessReportError,
     ReportNotFoundError,
-    ReportRateLimitedError,
-    ReportStaleError,
+    ReportReadError,
 )
 from lib.mail.mail_service import MailSendError
 
@@ -63,36 +61,31 @@ class ApacheAccessAggregationTests(SimpleTestCase):
 
 
 class ApacheAccessReportServiceTests(SimpleTestCase):
-    def test_generate_report_writes_only_sanitized_json(self):
-        """入力: combinedログ。処理: レポート生成。期待値: JSONへ日時と件数だけを保存する。"""
+    def test_generate_report_keeps_only_counts_in_memory(self):
+        """入力: combinedログ。処理: レポート生成。期待値: 件数だけをメモリに返す。"""
         now = datetime.now(timezone.utc).replace(microsecond=0)
         stamp = (now - timedelta(seconds=1)).strftime("%d/%b/%Y:%H:%M:%S %z")
         with TemporaryDirectory() as directory:
             base = Path(directory)
             log_path = base / "access.log"
-            report_path = base / "report.json"
             log_path.write_text(
                 f'198.51.100.10 - - [{stamp}] "GET /?private=secret HTTP/1.1" 403 0 "-" "test"\n',
                 encoding="utf-8",
             )
-            service = ApacheAccessReportService((str(log_path),), report_path)
+            service = ApacheAccessReportService((str(log_path),))
             report = service.generate_report(now)
-            stored = report_path.read_text(encoding="utf-8")
 
         self.assertEqual(report.total_requests, 1)
         self.assertEqual(report.status_403, 1)
-        self.assertNotIn("198.51.100.10", stored)
-        self.assertNotIn("secret", stored)
+        self.assertNotIn("198.51.100.10", str(report))
+        self.assertNotIn("secret", str(report))
 
-    def test_missing_and_unparseable_logs_fail_without_report(self):
-        """入力: ログなし・異形式ログ。処理: レポート生成。期待値: 失敗しJSONを作らない。"""
+    def test_missing_and_unparseable_logs_fail_without_writing(self):
+        """入力: ログなし・異形式ログ。処理: レポート生成。期待値: 読み取りだけで失敗する。"""
         now = datetime.now(timezone.utc)
         with TemporaryDirectory() as directory:
             base = Path(directory)
-            report_path = base / "report.json"
-            service = ApacheAccessReportService(
-                (str(base / "access.log*"),), report_path
-            )
+            service = ApacheAccessReportService((str(base / "access.log*"),))
             with self.assertRaises(ReportNotFoundError):
                 service.generate_report(now)
             (base / "access.log").write_text(
@@ -100,10 +93,9 @@ class ApacheAccessReportServiceTests(SimpleTestCase):
             )
             with self.assertRaises(ApacheAccessReportError):
                 service.generate_report(now)
-            self.assertFalse(report_path.exists())
 
-    def test_send_uses_mail_user_as_recipient_and_persists_rate_limit(self):
-        """入力: 最新JSONと固定宛先。処理: 2回送信。期待値: 初回だけ送り15分以内を拒否する。"""
+    def test_send_uses_mail_user_as_recipient_without_persistence(self):
+        """入力: combinedログと固定宛先。処理: 集計して送信。期待値: ファイルを書かない。"""
         now = datetime.now(timezone.utc).replace(microsecond=0)
         stamp = (now - timedelta(seconds=1)).strftime("%d/%b/%Y:%H:%M:%S %z")
         with TemporaryDirectory() as directory:
@@ -113,44 +105,17 @@ class ApacheAccessReportServiceTests(SimpleTestCase):
                 f'198.51.100.10 - - [{stamp}] "GET / HTTP/1.1" 200 1 "-" "test"\n',
                 encoding="utf-8",
             )
-            service = ApacheAccessReportService((str(log_path),), base / "report.json")
-            service.generate_report(now)
+            service = ApacheAccessReportService((str(log_path),))
             mail_service = Mock()
             mail_service.user = "admin@example.com"
-            service.send_latest_report(mail_service=mail_service, sent_at=now)
-            with self.assertRaises(ReportRateLimitedError):
-                service.send_latest_report(
-                    mail_service=mail_service, sent_at=now + timedelta(minutes=1)
-                )
+            service.send_report(mail_service=mail_service, generated_at=now)
 
             mail_service.send_mail.assert_called_once()
             mail = mail_service.send_mail.call_args.kwargs
             self.assertEqual(mail["to"], "admin@example.com")
             self.assertIn("対象期間", mail["body"])
             self.assertIn("集計時刻", mail["html_body"])
-            self.assertTrue(service.state_path.exists())
-
-    def test_freshness_is_required(self):
-        """入力: 古いJSON。処理: メール送信。期待値: SMTPを呼ばず理由別に拒否する。"""
-        now = datetime.now(timezone.utc).replace(microsecond=0)
-        old_generated_at = now - timedelta(hours=3)
-        stamp = (old_generated_at - timedelta(seconds=1)).strftime(
-            "%d/%b/%Y:%H:%M:%S %z"
-        )
-        with TemporaryDirectory() as directory:
-            base = Path(directory)
-            log_path = base / "access.log"
-            log_path.write_text(
-                f'198.51.100.10 - - [{stamp}] "GET / HTTP/1.1" 200 1 "-" "test"\n',
-                encoding="utf-8",
-            )
-            service = ApacheAccessReportService((str(log_path),), base / "report.json")
-            service.generate_report(old_generated_at)
-            mail_service = Mock()
-            mail_service.user = "admin@example.com"
-            with self.assertRaises(ReportStaleError):
-                service.send_latest_report(mail_service=mail_service, sent_at=now)
-            mail_service.send_mail.assert_not_called()
+            self.assertEqual([path.name for path in base.iterdir()], ["access.log"])
 
 
 class ApacheAccessReportViewTests(TestCase):
@@ -186,29 +151,23 @@ class ApacheAccessReportViewTests(TestCase):
             HTTP_X_CSRFTOKEN=token,
         )
         self.assertRedirects(response, "/?apache_report=sent")
-        service_factory.return_value.send_latest_report.assert_called_once()
+        service_factory.return_value.send_report.assert_called_once()
 
     @patch(
         "lib.apache_access.report_receiver.ApacheAccessReportService.from_environment"
     )
     def test_operation_failures_are_visible(self, service_factory):
-        """入力: 未設定・再送制限・SMTP失敗。処理: 管理者POST。期待値: 元画面へ失敗を通知する。"""
+        """入力: ログ読み取り・SMTP失敗。処理: 管理者POST。期待値: 元画面へ失敗を通知する。"""
         self.client.force_login(self.superuser)
         cases = (
-            (
-                ReportRateLimitedError("前回の送信から15分経過していません。"),
-                "rate-limited",
-                False,
-            ),
+            (ReportReadError("private detail"), "report-unavailable", True),
             (MailSendError("private detail"), "send-failed", True),
         )
-        for error, result, is_logged in cases:
+        for error, result, _ in cases:
             with self.subTest(result=result):
-                service_factory.return_value.send_latest_report.side_effect = error
-                with (
-                    self.assertLogs("lib.apache_access.report_receiver", level="ERROR")
-                    if is_logged
-                    else nullcontext()
+                service_factory.return_value.send_report.side_effect = error
+                with self.assertLogs(
+                    "lib.apache_access.report_receiver", level="ERROR"
                 ):
                     response = self.client.post(
                         self.url, {"next": reverse("home:index")}
@@ -230,7 +189,7 @@ class ApacheAccessReportViewTests(TestCase):
 
         self.assertRedirects(response, "/?apache_report=sent")
         self.assertContains(response, "集計メールを送信しました。")
-        service_factory.return_value.send_latest_report.assert_called_once()
+        service_factory.return_value.send_report.assert_called_once()
 
     def test_send_button_is_only_in_superuser_navbar(self):
         """入力: 一般スタッフと管理者。処理: 共通ナビバー表示。期待値: 操作は管理者にだけ見える。"""

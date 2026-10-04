@@ -65,7 +65,7 @@ git や gh の操作が失敗した場合は、API で迂回せず原因を切�
 
 1. この処理は `lib/apache_access` に置き、Djangoアプリ、モデル、migration、専用画面を追加しない。`home` はコンテンツカタログの責務だけを持つ。ブラウザ操作が必要な場合も、共通ナビバーからライブラリの `report_receiver.py` を呼び、元のページへ結果を通知する薄い入口に限る。
 2. サーバー管理者が Apache の `LogFormat` / `CustomLog`、VirtualHost ごとの出力先、リバースプロキシ経由の送信元、ローテーション形式を確認する。combined 形式でない場合や対象ログが特定できない場合は登録を進めない。
-3. `lib/mail/.env.example` を `lib/mail/.env` にコピーし、`MAIL_SMTP_USER` をレポートを受信する運用メールボックスとして設定する。既定値を変更する場合だけサーバーの `.env` に `APACHE_ACCESS_LOG_GLOBS` / `APACHE_ACCESS_REPORT_PATH` を設定し、環境ファイルを Git やログへ出さない。
-4. 集計ユーザーだけに現行・ローテート済み Apache アクセスログの読み取り権限を付与し、`www-data` が読めないことを確認する。匿名化済み JSON の保存先だけは `ubuntu` と `www-data` の双方が読み書きできるようにする。
-5. `sudo -u ubuntu -H bash -lc 'cd /var/www/html/portfolio && .venv/bin/python -m lib.apache_access.report_service'` を手動で実行し、成功を確認する。ブラウザ送信前にも同じコマンドを手動で再実行する。この機能に `manage.py migrate` は不要。
-6. スーパーユーザーがブラウザで「アクセス集計をメール送信」を押し、`MAIL_SMTP_USER` のメールボックスへの到着と対象期間・生成時刻・件数を確認する。未ログイン・一般ユーザーの送信、古い集計・SMTP設定不足・送信失敗の表示も確認する。
+3. `lib/mail/.env.example` を `lib/mail/.env` にコピーし、`MAIL_SMTP_USER` をレポートを受信する運用メールボックスとして設定する。既定値を変更する場合だけサーバーの `.env` に `APACHE_ACCESS_LOG_GLOBS` を設定し、環境ファイルを Git やログへ出さない。
+4. Web実行ユーザーの `www-data` に現行・ローテート済み Apache アクセスログの読み取り権限だけを付与し、書き込み権限や集計結果の保存先を用意しない。
+5. スーパーユーザーがブラウザで「アクセス集計をメール送信」を押し、Webプロセスがログを読み取り専用で集計して `MAIL_SMTP_USER` のメールボックスへ送ることを確認する。この機能に `manage.py migrate` は不要。
+6. 未ログイン・一般ユーザーの送信、ログ読み取り権限不足、SMTP設定不足・送信失敗の表示も確認する。

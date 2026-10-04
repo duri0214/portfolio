@@ -71,24 +71,14 @@
                     集計メールを送信しました。
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
                 </div>
-            {% elif request.GET.apache_report == 'rate-limited' %}
-                <div class="alert alert-warning alert-dismissible shadow" role="alert">
-                    前回の送信から15分経過していません。
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
-                </div>
             {% elif request.GET.apache_report == 'report-missing' %}
                 <div class="alert alert-danger alert-dismissible shadow" role="alert">
-                    集計結果がありません。定期処理を確認してください。
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
-                </div>
-            {% elif request.GET.apache_report == 'report-stale' %}
-                <div class="alert alert-warning alert-dismissible shadow" role="alert">
-                    集計結果が古いため送信しませんでした。定期処理を確認してください。
+                    Apacheアクセスログが見つかりません。ログの場所と読み取り権限を確認してください。
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
                 </div>
             {% elif request.GET.apache_report == 'report-unavailable' %}
                 <div class="alert alert-danger alert-dismissible shadow" role="alert">
-                    集計結果を読み取れませんでした。管理者ログを確認してください。
+                    Apacheアクセスログを読み取れませんでした。ログの権限と管理者ログを確認してください。
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
                 </div>
             {% elif request.GET.apache_report == 'send-failed' %}

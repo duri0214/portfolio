@@ -1,17 +1,18 @@
-"""Command-line entry point for generating an Apache access report."""
+"""Command-line entry point for sending an Apache access report."""
 
 from lib.apache_access.domain.service.report_service import ApacheAccessReportService
 from lib.apache_access.domain.valueobject.report import ApacheAccessReportError
+from lib.mail.mail_service import MailSendError
 
 
 def main() -> int:
-    """Generate one sanitized report for manual execution and return a shell exit code."""
+    """Aggregate and send one report, returning a shell exit code."""
     try:
-        ApacheAccessReportService.from_environment().generate_report()
-    except ApacheAccessReportError as error:
+        ApacheAccessReportService.from_environment().send_report()
+    except (ApacheAccessReportError, MailSendError, ValueError) as error:
         print(error)
         return 1
-    print("Apache アクセス集計を保存しました。")
+    print("Apache アクセス集計メールを送信しました。")
     return 0
 
 
