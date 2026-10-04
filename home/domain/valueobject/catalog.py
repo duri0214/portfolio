@@ -299,7 +299,7 @@ _CATALOG_DEFINITIONS = (
         "external_url": None,
         "app_label": "APACHE ACCESS",
         "thumbnail": "apache_access.png",
-        "alt": "Apache アクセス傾向の公開デモ画面。週別グラフと応答区分の表を表示",
+        "alt": "アクセスログを週別グラフと応答区分の表にまとめるイメージ",
         "category": "アクセス分析",
         "category_class": "info",
         "title": "Apache アクセス傾向を可視化する",
