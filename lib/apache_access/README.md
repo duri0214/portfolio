@@ -51,11 +51,9 @@ MAIL_USE_TLS=True
 ```
 
 ```bash
-sudo chown ubuntu:www-data /var/www/html/portfolio/.env
-sudo chmod 640 /var/www/html/portfolio/.env
+sudo setfacl -m u:www-data:r /var/www/html/portfolio/.env
 sudo -u www-data test -r /var/www/html/portfolio/.env && echo OK_web_env || echo NG_web_env
-sudo chown ubuntu:www-data /var/www/html/portfolio/lib/mail/.env
-sudo chmod 640 /var/www/html/portfolio/lib/mail/.env
+sudo setfacl -m u:www-data:r /var/www/html/portfolio/lib/mail/.env
 sudo -u www-data test -r /var/www/html/portfolio/lib/mail/.env && echo OK_web_mail_env || echo NG_web_mail_env
 ```
 
