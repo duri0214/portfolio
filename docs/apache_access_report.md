@@ -4,11 +4,11 @@
 
 Apache アクセスログから不審なアクセスの兆候を匿名化された件数として集計し、portfolio のスーパーユーザーが固定の管理者宛先へメール送信できるようにします。サーバーへログインせずに概況を確認できることを目的とし、攻撃や情報漏えいを確定判定する機能ではありません。
 
-この仕様は #954 の非公開メール機能を対象とします。#987 の [公開ダッシュボード](apache_access_dashboard.md) は独立した固定サンプルを表示し、この非公開集計を参照しません。
+この仕様は #954 の非公開メール機能を対象とします。#987 の [アクセス分析アプリ](apache_access_dashboard.md) は、同じライブラリのログ読み取り・集計を利用し、本番のスーパーユーザーに限り週別・応答区分別の実測件数を表示します。それ以外は独立した固定サンプルを表示し、メール専用の詳細集計は画面へ渡しません。
 
 ## 構成
 
-- `lib/apache_access/domain/service/access_log_aggregator.py` の `ApacheAccessLogAggregator` が直近24時間分のログを集計する。
+- `lib/apache_access/domain/service/access_log_aggregator.py` の `ApacheAccessLogAggregator` が指定期間のログを集計する。メール用の期間は直近24時間。
 - `lib/apache_access/domain/service/report_service.py` がApacheログを集計し、結果をメモリ上でメール送信する。
 - `lib/apache_access/domain/valueobject/report.py` が集計値とドメイン例外を定義する。
 - `lib/apache_access/domain/service/report_mail.py` の `ApacheAccessReportMailService` がメール本文を生成する。

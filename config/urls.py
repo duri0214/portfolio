@@ -22,7 +22,6 @@ from django.http import HttpResponse
 from django.urls import include, path
 
 from config.sitemap import sitemap_xml
-from lib.apache_access.public_dashboard import apache_access_dashboard
 from lib.apache_access.report_receiver import send_apache_access_report
 from vietnam_research.views import CustomLoginView
 
@@ -44,7 +43,6 @@ def robots_txt(_request):
 urlpatterns = [
     path("robots.txt", robots_txt, name="robots_txt"),
     path("sitemap.xml", sitemap_xml, name="sitemap_xml"),
-    path("apache_access/", apache_access_dashboard, name="apache_access_dashboard"),
     path(
         "admin/apache-access-report/send/",
         send_apache_access_report,
@@ -69,6 +67,7 @@ urlpatterns = [
     path("kokkai/", include("kokkai.urls")),
     path("bank/", include("bank.urls")),
     path("video_cue/", include("video_cue.urls")),
+    path("apache_access/", include("apache_access.urls")),
     path("media/video_cue/<path:_path>", private_video_cue_media),
     path("admin/", admin.site.urls),
     path("accounts/login/", CustomLoginView.as_view(), name="login"),

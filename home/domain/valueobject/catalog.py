@@ -295,7 +295,7 @@ _CATALOG_DEFINITIONS = (
         "slug": "apache_access",
         "detail_path": "about/apache_access/",
         "detail_url_name": "about_apache_access",
-        "app_url_name": "apache_access_dashboard",
+        "app_url_name": "apache_access:index",
         "external_url": None,
         "app_label": "APACHE ACCESS",
         "thumbnail": None,
@@ -303,7 +303,7 @@ _CATALOG_DEFINITIONS = (
         "category": "アクセス分析",
         "category_class": "info",
         "title": "Apache アクセス傾向を可視化する",
-        "description": "2026年、Apache ログ分析を紹介する公開用ダッシュボードを開発。架空の集計データを使い、週ごとのリクエスト件数と応答の内訳を表示します。対象期間・集計時刻・サンプルであることを明示し、個別のアクセス情報を公開せずに分析の見方を伝えます。",
+        "description": "2026年、Apache アクセスログの傾向を可視化するアプリを開発。一般公開では架空の集計データを使い、週ごとのリクエスト件数と応答の内訳を表示します。本番の管理者は実測値も確認できます。対象期間・集計時刻・データ源を明示し、個別のアクセス情報は表示しません。",
     },
     {
         "slug": "bookman",

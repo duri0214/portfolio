@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "kokkai",
     "bank",
     "video_cue",
+    "apache_access.apps.ApacheAccessConfig",
 ]
 
 MIDDLEWARE = [

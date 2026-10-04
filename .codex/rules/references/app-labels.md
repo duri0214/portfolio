@@ -2,11 +2,12 @@
 
 app ラベルを判断するときだけ読む。
 
-2026-06-26 時点で Issue に紐づいている `app:` ラベルを基準にする。
+Issue に紐づいている `app:` ラベルを基準にする。
 
 | Label | 対応する主な領域 | 目安 |
 | --- | --- | --- |
 | `app: agent` | `ai_agent/` | AI Agent の画面、会話管理、エージェント用ドメイン。 |
+| `app: apache-access` | `apache_access/` | Apache アクセス分析アプリの画面・表示用ドメイン。 |
 | `app: bank` | `bank/` | 銀行明細、MUFG CSV、資金分析。 |
 | `app: googlemap` | `gmarker/` | Google Maps 連携、GMarker、地図ピン・レビュー分析。 |
 | `app: hospital` | `hospital/` | 病院・不在者投票管理。 |

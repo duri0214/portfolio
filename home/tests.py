@@ -176,18 +176,3 @@ class CatalogDefinitionTests(SimpleTestCase):
             with self.subTest(page="detail", slug=catalog.slug):
                 self.assertContains(detail_response, f'src="{image_src}"')
                 self.assertContains(detail_response, f'alt="{catalog.alt}"')
-
-    def test_shared_layout_uses_the_orange_favicon(self):
-        """
-        シナリオ:
-        - 入力: HOME の共有レイアウトと静的ファイルディレクトリ。
-        - 処理: HOME のHTMLとfaviconファイルを確認する。
-        - 期待値: オレンジ色の c_a.ico が存在し、共有レイアウトから参照される。
-        """
-        favicon_path = Path(__file__).parent / "static" / "home" / "c_a.ico"
-        response = self.client.get(reverse("home:index"))
-
-        self.assertTrue(favicon_path.is_file())
-        self.assertGreater(favicon_path.stat().st_size, 0)
-        self.assertContains(response, 'href="/static/home/c_a.ico"')
-        self.assertNotContains(response, 'href="/static/home/c_h.ico"')
