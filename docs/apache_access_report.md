@@ -4,6 +4,8 @@
 
 Apache アクセスログから不審なアクセスの兆候を匿名化された件数として集計し、portfolio のスーパーユーザーが固定の管理者宛先へメール送信できるようにします。サーバーへログインせずに概況を確認できることを目的とし、攻撃や情報漏えいを確定判定する機能ではありません。
 
+この仕様は #954 の非公開メール機能を対象とします。#987 の [公開ダッシュボード](apache_access_dashboard.md) は独立した固定サンプルを表示し、この非公開集計を参照しません。
+
 ## 構成
 
 - `lib/apache_access/domain/service/access_log_aggregator.py` の `ApacheAccessLogAggregator` が直近24時間分のログを集計する。

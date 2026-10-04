@@ -1,6 +1,8 @@
 # ApacheAccessReportService
 
-`lib/apache_access` は、Apache のアクセスログを匿名化した件数へ集計し、既存の `MailService` で管理者へ送信する共通ライブラリです。Djangoアプリ、Djangoモデル、migration、専用画面は追加しません。
+`lib/apache_access` は、Apache のアクセスログを匿名化した件数へ集計し、既存の `MailService` で管理者へ送信する共通ライブラリです。管理者向けメール機能には専用画面を設けず、Djangoアプリ、Djangoモデル、migrationも追加しません。
+
+別の公開入口 `/apache_access/` では、実ログに依存しない固定サンプルのダッシュボードを表示します。ログやSMTPの設定は閲覧に不要です。公開項目と粒度、安全性の判断は [公開ダッシュボード仕様](../../docs/apache_access_dashboard.md) に記載しています。以下は管理者向けメール機能の運用手順です。
 
 ## `.env` の場所
 

@@ -1,0 +1,24 @@
+{% extends "home/base.html" %}
+{% load static %}
+{% block title %}Apache ログ分析 | Henojiya{% endblock %}
+{% block content %}
+    <main class="container py-5">
+        <header class="text-center mb-5">
+            <h1 class="display-5">Apache ログ分析</h1>
+            <p class="lead text-secondary">アクセスの傾向を、公開用サンプルで紹介</p>
+            <div class="d-flex flex-wrap justify-content-center gap-2 my-4">
+                <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
+                <a href="{{ catalog.app_url }}" class="btn btn-primary">{{ catalog.app_label }}を開く</a>
+            </div>
+            <img src="{% static catalog.thumbnail_path %}" alt="{{ catalog.alt }}" class="img-fluid rounded">
+        </header>
+        <section class="mb-4">
+            <h2 class="h4">アクセスの量と応答を可視化する</h2>
+            <p>6週間のリクエスト件数を棒グラフで比較し、HTTP 応答区分ごとの内訳を表で確認できます。対象期間と集計時刻を添えて、数値の意味を読み取れるようにしました。</p>
+        </section>
+        <section class="bg-info-subtle rounded-3 p-4">
+            <h2 class="h4">すべてサンプルデータです</h2>
+            <p class="mb-0">公開デモ用に作成した架空の集計値を使っています。実際のサイトの利用状況や稼働状況を表すものではありません。個別のアクセス情報は掲載していません。</p>
+        </section>
+    </main>
+{% endblock %}
