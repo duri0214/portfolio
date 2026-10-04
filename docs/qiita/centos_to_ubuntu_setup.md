@@ -1911,6 +1911,19 @@ DATABASES = {
   ほか）に従い、対象パスを新規プロジェクトに合わせて置換して適用してください。
 - 設定後は `sudo apache2ctl configtest` → `sudo systemctl restart apache2`。
 
+### 6) Apacheアクセスログの読み取り確認
+
+アクセス集計メールを使う場合は、Apacheログのディレクトリと対象ログに `www-data` の読み取り権限だけを付与します。`setfacl` は権限を変更するコマンド、`test -r` は読み取り可否を確認するコマンドです。実行後は、実行日時、対象サーバー、実行したコマンド、実際の標準出力を作業記録としてこの記事に追記してください。期待値だけに置き換えず、実行結果をそのまま記録します。
+
+```bash:console
+$ sudo setfacl -m u:www-data:rx /var/log/apache2
+$ sudo setfacl -m u:www-data:r /var/log/apache2/access.log*
+$ sudo -u www-data test -r /var/log/apache2/access.log && echo OK_web_read || echo NG_web_read
+OK_web_read
+```
+
+今回の確認では `OK_web_read` が出力され、`www-data` が `/var/log/apache2/access.log` を読み取れることを確認しました。サーバー固有のホスト名、メールアドレス、SMTP認証情報は記事に記録しません。
+
 ### 補足（任意）：PdfMiner
 
 - SBI topics で使用。旧 pdfminer ではなく `pdfminer.six` を使用。
