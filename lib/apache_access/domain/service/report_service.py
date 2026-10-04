@@ -11,9 +11,11 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from lib.apache_access.domain.service.access_log_aggregator import (
-    aggregate_access_logs,
+    ApacheAccessLogAggregator,
 )
-from lib.apache_access.domain.service.report_mail import build_mail_bodies
+from lib.apache_access.domain.service.report_mail import (
+    ApacheAccessReportMailService,
+)
 from lib.apache_access.domain.valueobject.report import (
     ApacheAccessReport,
     ApacheAccessReportError,
@@ -81,7 +83,9 @@ class ApacheAccessReportService:
                 "Apache アクセスログが見つかりません。設定と権限を確認してください。"
             )
         try:
-            counts = aggregate_access_logs(paths, period_start, period_end)
+            counts = ApacheAccessLogAggregator().aggregate(
+                paths, period_start, period_end
+            )
         except (OSError, EOFError) as error:
             raise ReportStorageError(
                 f"Apache アクセスログを読み取れませんでした: {error}"
@@ -126,7 +130,7 @@ class ApacheAccessReportService:
             if last_sent_at and sent_at - last_sent_at < timedelta(minutes=15):
                 raise ReportRateLimitedError("前回の送信から15分経過していません。")
 
-            body, html_body = build_mail_bodies(report)
+            body, html_body = ApacheAccessReportMailService().build_bodies(report)
             sender = mail_service or MailService()
             sender.send_mail(
                 to=self.recipient,

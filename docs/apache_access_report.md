@@ -6,10 +6,10 @@ Apache アクセスログから不審なアクセスの兆候を匿名化され�
 
 ## 構成
 
-- `lib/apache_access/domain/service/access_log_aggregator.py` が直近24時間分のログを集計する。
+- `lib/apache_access/domain/service/access_log_aggregator.py` の `ApacheAccessLogAggregator` が直近24時間分のログを集計する。
 - `lib/apache_access/domain/service/report_service.py` が匿名化済み JSON を保存する。
 - `lib/apache_access/domain/valueobject/report.py` が集計値とJSON表現を定義する。
-- `lib/apache_access/domain/service/report_mail.py` がメール本文を生成する。
+- `lib/apache_access/domain/service/report_mail.py` の `ApacheAccessReportMailService` がメール本文を生成する。
 - `lib/apache_access/report_receiver.py` が共通ナビバーのPOSTを受け、匿名化済み JSON を既存の `MailService` で送信して元ページへ結果を返す。
 - `config/urls.py` は送信 URL を `lib/apache_access/report_receiver.py` へ接続するだけとする。
 - Djangoアプリ、Djangoモデル、migration、専用画面は追加しない。

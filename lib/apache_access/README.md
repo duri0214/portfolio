@@ -6,9 +6,9 @@
 
 - `report_service.py`: cron から呼ぶ集計 CLI の入口
 - `domain/valueobject/report.py`: 匿名化された集計値とドメイン例外
-- `domain/service/access_log_aggregator.py`: Apache combined ログの解析・集計
+- `domain/service/access_log_aggregator.py`: `ApacheAccessLogAggregator` によるApache combined ログの解析・集計
 - `domain/service/report_service.py`: JSON 保存、鮮度・再送制限、`MailService` 呼び出し
-- `domain/service/report_mail.py`: プレーンテキスト・HTML本文の生成
+- `domain/service/report_mail.py`: `ApacheAccessReportMailService` によるプレーンテキスト・HTML本文の生成
 - `report_receiver.py`: 共通ナビバーからのPOSTを受け、CSRF・スーパーユーザーを確認し、送信結果を操作元へ返す Django アダプター
 - `test_report_service.py`: 集計、保存、送信、権限、Web 操作のテスト
 

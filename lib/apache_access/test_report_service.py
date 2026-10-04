@@ -12,7 +12,7 @@ from django.test import Client, SimpleTestCase, TestCase
 from django.urls import reverse
 
 from lib.apache_access.domain.service.access_log_aggregator import (
-    aggregate_access_logs,
+    ApacheAccessLogAggregator,
 )
 from lib.apache_access.domain.service.report_service import ApacheAccessReportService
 from lib.apache_access.domain.valueobject.report import (
@@ -44,7 +44,7 @@ class ApacheAccessAggregationTests(SimpleTestCase):
                     f'198.51.100.10 - - [{stamp}] "GET /missing HTTP/1.1" 404 0 "-" "test"\n'
                     f'198.51.100.10 - - [{early_stamp}] "GET /error HTTP/1.1" 503 0 "-" "test"\n'
                 )
-            result = aggregate_access_logs(
+            result = ApacheAccessLogAggregator().aggregate(
                 [current, rotated],
                 now - timedelta(hours=24),
                 now + timedelta(seconds=1),
