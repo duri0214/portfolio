@@ -53,14 +53,6 @@ sudo systemctl restart apache2
 
 `apache2ctl configtest` の期待値は `Syntax OK` です。
 
-## 集計・送信を手動確認する
-
-```bash
-sudo -u ubuntu -H bash -lc 'cd /var/www/html/portfolio && .venv/bin/python -m lib.apache_access.report_service'
-```
-
-集計コマンドはログを読み取り、匿名化した件数をメモリ上でメール送信します。成功時は `Apache アクセス集計メールを送信しました。` と出力して終了コード0、失敗時は原因を出力して終了コード1を返します。
-
 ## メールを送信する
 
 1. portfolio にスーパーユーザーでログインする。
