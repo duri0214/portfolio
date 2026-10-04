@@ -1,0 +1,61 @@
+{% extends "home/base.html" %}
+{% load static %}
+{% block content %}
+    <div class="container">
+        <article class="my-5">
+            <header>
+                <h1 class="display-4 text-center">VIDEO CUE</h1>
+                <p class="text-muted text-center">長い録画を、動きのあった場面から見直す</p>
+                <div class="d-flex justify-content-center gap-2 my-4">
+                    <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
+                    <a href="{{ catalog.app_url }}" class="btn btn-primary">{{ catalog.app_label }}を開く</a>
+                </div>
+            </header>
+
+            <section class="py-3">
+                <div class="text-center">
+                    <img src="{% static catalog.thumbnail_path %}" alt="{{ catalog.alt }}"
+                         class="img-fluid rounded shadow">
+                </div>
+            </section>
+
+            <section class="py-3">
+                <h2>概要</h2>
+                <p>
+                    VIDEO CUE は、定点カメラなどの長時間の MP4 録画から、動きのあった区間を優先して確認するためのツールです。
+                    最初から全編を見返す負担を減らし、気になる場面をすばやく探せるようにしました。
+                </p>
+            </section>
+
+            <section class="py-3">
+                <h2>作った理由</h2>
+                <p>
+                    長い録画の中で確認したいのは、何かが動いた短い時間だけということがあります。
+                    その場面を探すために映像を早送りし続ける代わりに、動きのあった時刻を手がかりに見直せるようにしました。
+                </p>
+            </section>
+
+            <section class="py-3">
+                <h2>できること</h2>
+                <ul>
+                    <li>解析済みの録画と、検出されたイベントを一覧で確認する</li>
+                    <li>動きのあった区間をまとめたハイライト動画を再生する</li>
+                    <li>イベントを選んで該当場面へ頭出しし、元動画の時刻を確認する</li>
+                </ul>
+            </section>
+
+            <section class="py-3">
+                <h2>解析から閲覧まで</h2>
+                <ol>
+                    <li>Rust の <a href="https://github.com/duri0214/video-cue-engine" target="_blank" rel="noopener noreferrer">video-cue-engine</a> が MP4 をバッチ処理で解析し、イベント時刻とハイライト動画を生成します。</li>
+                    <li>解析結果を Django の VIDEO CUE に渡します。</li>
+                    <li>VIDEO CUE で結果を一覧し、ハイライトを再生して、イベントへ頭出しします。</li>
+                </ol>
+                <p>
+                    動画解析と再エンコードはブラウザからの操作中には行いません。
+                    Rust が解析を担当し、Django は生成済みの結果を見やすく表示します。
+                </p>
+            </section>
+        </article>
+    </div>
+{% endblock %}

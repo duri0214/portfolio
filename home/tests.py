@@ -91,6 +91,55 @@ class BookmanHomeTests(SimpleTestCase):
         self.assertNotContains(response, "www.msci.com/documents")
 
 
+class VideoCueHomeTests(SimpleTestCase):
+    def test_home_links_to_video_cue_detail(self):
+        """
+        シナリオ:
+        - 入力: HOME のカタログページを GET する。
+        - 処理: VIDEO CUE のカードを確認する。
+        - 期待値: 紹介ページとアプリへの導線、サムネイルの代替テキストが表示されること。
+        """
+        response = self.client.get(reverse("home:index"))
+
+        self.assertContains(response, "VIDEO CUE：動きのあった場面から録画を見直す")
+        self.assertContains(response, reverse("home:about_video_cue"))
+        self.assertContains(
+            response,
+            'href="/video_cue/" class="btn btn-outline-primary btn-sm">VIDEO CUEを開く</a>',
+        )
+        self.assertContains(response, "/static/home/images/video_cue.png")
+        self.assertContains(
+            response,
+            'alt="録画のタイムラインに動きのあった区間が示されたVIDEO CUEのイメージ"',
+        )
+
+    def test_video_cue_detail_explains_workflow_and_links(self):
+        """
+        シナリオ:
+        - 入力: VIDEO CUE の紹介ページを GET する。
+        - 処理: 説明とアプリ・Rust エンジンへのリンクを確認する。
+        - 期待値: 解析と閲覧の役割、利用機能、遷移先が表示されること。
+        """
+        response = self.client.get(reverse("home:about_video_cue"))
+
+        self.assertContains(response, 'href="/video_cue/"')
+        self.assertContains(
+            response,
+            'href="https://github.com/duri0214/video-cue-engine"',
+        )
+        for text in (
+            "作った理由",
+            "ハイライト動画を再生",
+            "元動画の時刻を確認",
+            "Rust",
+            "バッチ処理",
+            "Django",
+            "ブラウザからの操作中には行いません",
+        ):
+            with self.subTest(text=text):
+                self.assertContains(response, text)
+
+
 class CatalogDefinitionTests(SimpleTestCase):
     def test_catalog_thumbnail_files_are_registered_and_exist(self):
         """
@@ -100,9 +149,9 @@ class CatalogDefinitionTests(SimpleTestCase):
         - 期待値: 登録漏れや存在しない画像参照がなく、共有フォールバック画像も存在すること。
         """
         image_directory = Path(__file__).parent / "static" / "home" / "images"
-        registered_images = {
-            catalog.thumbnail_name for catalog in Catalog.all()
-        } | {DEFAULT_THUMBNAIL}
+        registered_images = {catalog.thumbnail_name for catalog in Catalog.all()} | {
+            DEFAULT_THUMBNAIL
+        }
         actual_images = {path.name for path in image_directory.glob("*.png")}
 
         self.assertEqual(actual_images, registered_images)
