@@ -1437,6 +1437,50 @@ $ sudo systemctl restart apache2
 > `WSGIApplicationGroup %{GLOBAL}` です。本ブロックに既に含めていますが、
 > 既存環境にこの行が無い場合のみ、同一行を1カ所だけ追記してください（重複不要）。
 
+### Authorization ヘッダーを Django へ渡す
+
+Django API が Bearer トークンなどを `Authorization` ヘッダーから読む場合、Apache/mod_wsgi の既定ではそのヘッダーが
+Django に渡らないことがあります。この場合、クライアントと Django 側のトークンが一致していても、Django はヘッダーを受け取れず
+HTTP 401 になります。
+
+まず、HTTPS を実際に受けている VirtualHost と、すでに設定済みかを確認します。Let’s Encrypt を `--apache` で導入した
+`www.henojiya.net` の例では、`*:443` は `/etc/apache2/sites-enabled/000-default-le-ssl.conf` です。
+
+```bash:console
+$ sudo grep -Rns --include='*.conf' 'WSGIPassAuthorization' /etc/apache2
+$ sudo apache2ctl -S
+```
+
+`WSGIPassAuthorization On` が見つからない場合は、`apache2ctl -S` で確認した HTTPS の設定ファイルを開き、
+対象の `<VirtualHost *:443>` 内に 1 行追加します。
+
+```bash:console
+$ sudo vi /etc/apache2/sites-available/000-default-le-ssl.conf
+```
+
+```diff:/etc/apache2/sites-available/000-default-le-ssl.conf
+ <IfModule mod_ssl.c>
+ <VirtualHost *:443>
+   ServerName www.henojiya.net
+   DocumentRoot /var/www/html
+   ...
++  WSGIPassAuthorization On
+ </VirtualHost>
+ </IfModule>
+```
+
+設定を確認して Apache を再読み込みします。
+
+```bash:console
+$ sudo apache2ctl configtest
+# 期待値: Syntax OK
+$ sudo systemctl reload apache2
+$ sudo grep -n 'WSGIPassAuthorization' /etc/apache2/sites-available/000-default-le-ssl.conf
+# 期待値例: 10:  WSGIPassAuthorization On
+```
+
+`Authorization` の実値や Bearer トークンを、設定ファイル、コマンド履歴、ログ、記事へ記載しないでください。
+
 ### ※numpy: Interpreter change detected への対応（補足）
 
 Django で `numpy` を使う場合、`mod_wsgi` 経由で `Interpreter change detected` が発生することがあります。
