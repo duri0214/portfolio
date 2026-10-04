@@ -97,13 +97,13 @@ class VideoCueHomeTests(SimpleTestCase):
         シナリオ:
         - 入力: HOME のカタログページを GET する。
         - 処理: VIDEO CUE のカードを確認する。
-        - 期待値: 紹介ページとアプリへの導線、サムネイルの代替テキストが表示されること。
+        - 期待値: 紹介ページへの導線、サムネイルの代替テキストが表示され、カード固有のアプリボタンがないこと。
         """
         response = self.client.get(reverse("home:index"))
 
         self.assertContains(response, "VIDEO CUE：動きのあった場面から録画を見直す")
         self.assertContains(response, reverse("home:about_video_cue"))
-        self.assertContains(
+        self.assertNotContains(
             response,
             'href="/video_cue/" class="btn btn-outline-primary btn-sm">VIDEO CUEを開く</a>',
         )
