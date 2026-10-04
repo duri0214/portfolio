@@ -1563,8 +1563,6 @@ $ crontab -e
 51 18 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py update_macro_indicators
 55 18 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py daily_fetch_farmland_statistics
 56 18 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py daily_fetch_store_planning_data_sources
-# Apache アクセス集計（Issue #954）。事前にログ権限と匿名化済みJSONの共有ディレクトリを確認する
-0 * * * * cd /var/www/html/portfolio && /var/www/html/portfolio/.venv/bin/python -m lib.apache_access.report_service >> /var/log/portfolio/apache-access-report.log 2>&1
 15 18 1 * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py monthly_fao_food_balance_chart
 15 19 1 * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py monthly_cleanup_linebot_engine
 20 19 * * * /var/www/html/portfolio/.venv/bin/python /var/www/html/portfolio/manage.py daily_update_msci_weights
