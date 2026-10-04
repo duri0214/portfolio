@@ -3,23 +3,94 @@
 {% block title %}Apache ログ分析 | Henojiya{% endblock %}
 {% block content %}
     <main class="container py-5">
-        <header class="text-center mb-5">
-            <h1 class="display-5">Apache ログ分析</h1>
-            <p class="lead text-secondary">アクセスの傾向を、公開用サンプルで紹介</p>
-            <div class="d-flex flex-wrap justify-content-center gap-2 my-4">
-                <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
-                <a href="{{ catalog.app_url }}" class="btn btn-primary">{{ catalog.app_label }}を開く</a>
+        <article>
+            <header class="text-center mb-5">
+                <h1 class="display-5">Apache ログ分析</h1>
+                <p class="lead text-secondary mb-2">アクセスの増減と HTTP 応答の内訳を、ひとつの画面で読む。</p>
+                <p>Apache のアクセスログを、週ごとのリクエスト数と応答区分の件数にまとめたダッシュボードです。</p>
+                <div class="d-flex flex-wrap justify-content-center gap-2 my-4">
+                    <a href="{% url 'home:index' %}" class="btn btn-outline-secondary">一覧に戻る</a>
+                    <a href="{{ catalog.app_url }}" class="btn btn-primary">{{ catalog.app_label }}を開く</a>
+                </div>
+            </header>
+
+            <section class="row align-items-center g-4 mb-5" aria-labelledby="why-heading">
+                <div class="col-lg-4">
+                    <h2 id="why-heading" class="h3">何を見るためのアプリか</h2>
+                    <p>アクセスログを一行ずつ追っても、サイト全体の変化はつかみにくいものです。この画面では、過去数週間の量の変化と、リクエストに対して返した応答の内訳を一緒に確認できます。</p>
+                    <p class="mb-0">個別のアクセスを調べる画面ではなく、傾向を見つけるための入口です。</p>
+                </div>
+                <figure class="col-lg-8 mb-0">
+                    <img src="{% static catalog.thumbnail_path %}"
+                         alt="{{ catalog.alt }}"
+                         width="1440" height="1100" loading="lazy" class="img-fluid rounded border shadow-sm">
+                    <figcaption class="small text-secondary mt-2">公開デモ画面のプレビュー。画像内の件数は架空のサンプルです。</figcaption>
+                </figure>
+            </section>
+
+            <section class="mb-5" aria-labelledby="features-heading">
+                <h2 id="features-heading" class="h3 mb-3">画面で確認できること</h2>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h3 class="h5">週ごとのリクエスト</h3>
+                                <p class="mb-0">月曜始まりの6週間を棒グラフで比較します。どの週にアクセスが増減したかを確認できます。実測表示では今週の件数は集計時刻までの途中経過です。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h3 class="h5">HTTP 応答の内訳</h3>
+                                <p class="mb-0">期間全体の応答を 2xx（成功）、3xx（リダイレクト）、4xx（クライアントエラー）、5xx（サーバーエラー）に分けて件数を表示します。実測で 1xx があれば、その区分も加わります。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h3 class="h5">データの出典と時点</h3>
+                                <p class="mb-0">サンプルか実測か、対象期間、集計時刻を件数の近くに表示します。固定のデモ数値を、現在のアクセス状況と取り違えないためです。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="bg-body-tertiary rounded-3 p-4 mb-5" aria-labelledby="example-heading">
+                <h2 id="example-heading" class="h3">公開デモの数字を読むと</h2>
+                <p>架空の6週間には合計47,600件のリクエストがあり、最後の週は9,300件です。応答の表には 2xx が42,000件、3xx が4,200件、4xx が1,200件、5xx が200件と並びます。棒グラフで週ごとの量を比べ、表で期間全体の応答を確認する使い方です。</p>
+                <p class="mb-0 small text-secondary">リクエスト数は訪問者数ではありません。また、4xx や 5xx の件数だけで原因や攻撃の有無は判断できません。</p>
+            </section>
+
+            <section class="mb-5" aria-labelledby="data-heading">
+                <h2 id="data-heading" class="h3 mb-3">表示されるデータについて</h2>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="border-start border-info border-4 ps-3 h-100">
+                            <h3 class="h5">公開デモ</h3>
+                            <p class="mb-0">どなたでも開けます。2026年8月3日〜9月13日の架空の6週間を固定表示するため、実際のサイトの利用状況や稼働状況は示しません。</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border-start border-warning border-4 ps-3 h-100">
+                            <h3 class="h5">本番環境のスーパーユーザー</h3>
+                            <p class="mb-0">ログイン中は、読み取り可能な Apache ログから今週を含む6週間を集計した実測値を確認できます。ログの保存期間によって、過去の週の件数が揃わない場合があります。</p>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-secondary mt-3 mb-0">画面に載せるのは期間ごとの件数です。IP アドレス、アクセス先の URL、クエリ文字列など、個別のアクセス情報は表示しません。</p>
+            </section>
+
+            <section class="mb-5" aria-labelledby="mail-heading">
+                <h2 id="mail-heading" class="h3">集計メールとの違い</h2>
+                <p>ダッシュボードは6週間の傾向を見るための画面です。共通ナビの「アクセス集計をメール送信」は、スーパーユーザーが直近24時間の詳細な集計を受け取るための別の操作です。公開デモを開くだけでメールが送られることはありません。</p>
+            </section>
+
+            <div class="text-center">
+                <a href="{{ catalog.app_url }}" class="btn btn-primary btn-lg">{{ catalog.app_label }}を開く</a>
             </div>
-            <img src="{% static catalog.thumbnail_path %}" alt="{{ catalog.alt }}" class="img-fluid rounded">
-        </header>
-        <section class="mb-4">
-            <h2 class="h4">アクセスの量と応答を可視化する</h2>
-            <p>6週間のリクエスト件数を棒グラフで比較し、HTTP 応答区分ごとの内訳を表で確認できます。対象期間と集計時刻を添えて、数値の意味を読み取れるようにしました。</p>
-        </section>
-        <section class="bg-info-subtle rounded-3 p-4">
-            <h2 class="h4">公開デモはサンプルデータです</h2>
-            <p>一般公開では、デモ用に作成した架空の集計値を使っています。実際のサイトの利用状況や稼働状況を表すものではありません。</p>
-            <p class="mb-0">本番環境のスーパーユーザーは実ログを集計した件数を確認できます。個別のアクセス情報は表示しません。</p>
-        </section>
+        </article>
     </main>
 {% endblock %}

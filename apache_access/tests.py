@@ -298,7 +298,8 @@ class DashboardViewTests(SimpleTestCase):
         detail = self.client.get(reverse("home:about_apache_access"))
         self.assertContains(home, reverse("home:about_apache_access"))
         self.assertContains(home, reverse("apache_access:index"))
-        self.assertContains(detail, "公開デモはサンプルデータです")
+        self.assertContains(detail, "画面で確認できること")
+        self.assertContains(detail, "公開デモの数字を読むと")
         self.assertContains(detail, 'href="/apache_access/" class="btn btn-primary"')
 
 
