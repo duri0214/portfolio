@@ -1,0 +1,15 @@
+Apache アクセス傾向レポート
+対象期間: {{ report.period_start|date:"Y-m-d H:i T" }} ～ {{ report.period_end|date:"Y-m-d H:i T" }}
+集計時刻: {{ report.generated_at|date:"Y-m-d H:i T" }}
+
+リクエスト総数: {{ report.total_requests }}
+401: {{ report.status_401 }} / 403: {{ report.status_403 }} / 404: {{ report.status_404 }} / 5xx: {{ report.status_5xx }}
+失敗応答の送信元数: {{ report.failure_sources }}
+一つの送信元に集中した失敗応答の最大件数: {{ report.top_source_failures }}
+ログイン先へのリクエスト: {{ report.login_requests }}
+一つの送信元からのログイン先リクエストの最大件数: {{ report.top_source_login_requests }}
+要注意パス候補への 2xx: {{ report.sensitive_path_successes }}
+失敗応答の傾向（期間前半 → 後半）: {{ report.previous_failures }} → {{ report.recent_failures }}
+解析できなかったログ行数: {{ report.malformed_lines }}
+
+これらの数値は調査のきっかけであり、攻撃や情報漏えいを確定するものではありません。

@@ -37,7 +37,7 @@ class TestMailService(unittest.TestCase):
 
         # 検証
         self.assertTrue(success)
-        mock_smtp.assert_called_with("smtp.test.com", 587)
+        mock_smtp.assert_called_with("smtp.test.com", 587, timeout=20)
         mock_server.starttls.assert_called_once()
         mock_server.login.assert_called_with("test@example.com", "password")
         # 送信元が MAIL_SMTP_USER になっていることを確認

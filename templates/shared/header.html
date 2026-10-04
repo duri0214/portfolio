@@ -33,6 +33,14 @@
                         {% endwith %}
                     </li>
                     {% if user.is_authenticated %}
+                        {% if user.is_superuser %}
+                            <li class="nav-item me-2">
+                                <form method="post" action="{% url 'home:send_apache_access_report' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">アクセス集計をメール送信</button>
+                                </form>
+                            </li>
+                        {% endif %}
                         <li class="nav-item small mr-3">
                             <span class="nav-link"><i class="fas fa-user"></i> {{ user.username }}さん</span>
                         </li>
