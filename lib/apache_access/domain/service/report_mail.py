@@ -12,8 +12,10 @@ TOKYO = ZoneInfo("Asia/Tokyo")
 class ApacheAccessReportMailService:
     """Build identifier-free plain-text and HTML messages from a report."""
 
-    def build_bodies(self, report: ApacheAccessReport) -> tuple[str, str]:
-        """Build identifier-free plain-text and HTML messages from a report."""
+    def build_bodies(
+        self, report: ApacheAccessReport, summary: str | None = None
+    ) -> tuple[str, str]:
+        """Build identifier-free messages with an optional GPT summary."""
         period_start = report.period_start.astimezone(TOKYO).strftime(
             "%Y-%m-%d %H:%M JST"
         )
@@ -40,11 +42,24 @@ class ApacheAccessReportMailService:
             ("解析できなかったログ行数", report.malformed_lines),
         )
         text_rows = "\n".join(f"{label}: {value}" for label, value in rows)
+        text_summary = ""
+        html_summary = ""
+        if summary:
+            text_summary = (
+                "\n\nGPTによる参考要約（OpenAI API。根拠となる匿名化集計値は上記です）\n"
+                f"{summary}"
+            )
+            escaped_summary = escape(summary).replace("\n", "<br>")
+            html_summary = (
+                "<h2>GPTによる参考要約</h2>"
+                "<p>OpenAI APIによる参考情報です。根拠となる匿名化集計値は上表です。</p>"
+                f"<p>{escaped_summary}</p>"
+            )
         body = (
             "Apache アクセス傾向レポート\n"
             f"対象期間: {period_start} ～ {period_end}\n"
             f"集計時刻: {generated_at}\n\n"
-            f"{text_rows}\n\n"
+            f"{text_rows}{text_summary}\n\n"
             "これらの数値は調査のきっかけであり、攻撃や情報漏えいを確定するものではありません。"
         )
         html_rows = "".join(
@@ -57,6 +72,7 @@ class ApacheAccessReportMailService:
             f"<p>対象期間: {escape(period_start)} ～ {escape(period_end)}<br>"
             f"集計時刻: {escape(generated_at)}</p>"
             f'<table border="1" cellpadding="6">{html_rows}</table>'
+            f"{html_summary}"
             "<p>これらの数値は調査のきっかけであり、攻撃や情報漏えいを確定するものではありません。</p>"
             "</body></html>"
         )

@@ -1,6 +1,7 @@
 """Apache access report library and its thin Django endpoint tests."""
 
 import gzip
+import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -13,11 +14,19 @@ from django.urls import reverse
 from lib.apache_access.domain.service.access_log_aggregator import (
     ApacheAccessLogAggregator,
 )
+from lib.apache_access.domain.service.report_mail import ApacheAccessReportMailService
 from lib.apache_access.domain.service.report_service import ApacheAccessReportService
+from lib.apache_access.domain.service.report_summary import (
+    MAX_OUTPUT_TOKENS,
+    ApacheAccessReportSummaryService,
+)
 from lib.apache_access.domain.valueobject.report import (
     ApacheAccessReportError,
+    ApacheAccessReport,
+    ApacheAccessReportSummaryError,
     ReportNotFoundError,
     ReportReadError,
+    SUMMARY_INPUT_FIELDS,
 )
 from lib.mail.mail_service import MailSendError
 
@@ -116,6 +125,189 @@ class ApacheAccessReportServiceTests(SimpleTestCase):
             self.assertIn("対象期間", mail["body"])
             self.assertIn("集計時刻", mail["html_body"])
             self.assertEqual([path.name for path in base.iterdir()], ["access.log"])
+
+    def test_summary_failure_keeps_the_mechanical_report(self):
+        """
+        シナリオ:
+        - 入力: GPT要約で失敗する集計サービスとcombinedログ。
+        - 処理: レポートをメール送信する。
+        - 期待値: GPT要約を含めず、機械的な集計メールを送信する。
+        """
+        now = datetime.now(timezone.utc).replace(microsecond=0)
+        stamp = (now - timedelta(seconds=1)).strftime("%d/%b/%Y:%H:%M:%S %z")
+        with TemporaryDirectory() as directory:
+            log_path = Path(directory) / "access.log"
+            log_path.write_text(
+                f'198.51.100.10 - - [{stamp}] "GET / HTTP/1.1" 200 1 "-" "test"\n',
+                encoding="utf-8",
+            )
+            service = ApacheAccessReportService((str(log_path),))
+            mail_service = Mock(user="admin@example.com")
+            summary_service = Mock()
+            summary_service.summarize.side_effect = ApacheAccessReportSummaryError(
+                "OpenAI request failed"
+            )
+
+            with self.assertLogs(
+                "lib.apache_access.domain.service.report_service", level="WARNING"
+            ) as logged:
+                service.send_report(
+                    mail_service=mail_service,
+                    summary_service=summary_service,
+                    generated_at=now,
+                )
+
+        mail = mail_service.send_mail.call_args.kwargs
+        self.assertIn("リクエスト総数", mail["body"])
+        self.assertNotIn("GPTによる参考要約", mail["body"])
+        self.assertNotIn("OpenAI request failed", "\n".join(logged.output))
+
+    def test_missing_mail_recipient_does_not_call_gpt(self):
+        """
+        シナリオ:
+        - 入力: 宛先が未設定のメールサービスとGPT要約サービス。
+        - 処理: レポートをメール送信する。
+        - 期待値: メール設定エラーにし、GPT要約を呼び出さない。
+        """
+        now = datetime.now(timezone.utc).replace(microsecond=0)
+        stamp = (now - timedelta(seconds=1)).strftime("%d/%b/%Y:%H:%M:%S %z")
+        with TemporaryDirectory() as directory:
+            log_path = Path(directory) / "access.log"
+            log_path.write_text(
+                f'198.51.100.10 - - [{stamp}] "GET / HTTP/1.1" 200 1 "-" "test"\n',
+                encoding="utf-8",
+            )
+            service = ApacheAccessReportService((str(log_path),))
+            mail_service = Mock(user="")
+            summary_service = Mock()
+
+            with self.assertRaisesRegex(ValueError, "MAIL_SMTP_USER"):
+                service.send_report(
+                    mail_service=mail_service,
+                    summary_service=summary_service,
+                    generated_at=now,
+                )
+
+        summary_service.summarize.assert_not_called()
+
+
+class ApacheAccessReportSummaryTests(SimpleTestCase):
+    def _report(self) -> ApacheAccessReport:
+        """Return one anonymous report with representative aggregate values."""
+        period_start = datetime(2026, 10, 4, tzinfo=timezone.utc)
+        return ApacheAccessReport(
+            period_start=period_start,
+            period_end=period_start + timedelta(hours=24),
+            generated_at=period_start + timedelta(hours=24),
+            total_requests=100,
+            status_401=3,
+            status_403=2,
+            status_404=5,
+            status_5xx=1,
+            failure_sources=4,
+            top_source_failures=6,
+            login_requests=8,
+            top_source_login_requests=4,
+            sensitive_path_successes=0,
+            recent_failures=8,
+            previous_failures=3,
+            malformed_lines=0,
+        )
+
+    @patch("lib.apache_access.domain.service.report_summary.OpenAI")
+    def test_summary_request_uses_only_allowlisted_aggregates(self, mock_openai):
+        """
+        シナリオ:
+        - 入力: 匿名化済みの集計レポートとGPTの正常応答。
+        - 処理: GPT要約を生成する。
+        - 期待値: 許可リストの集計値だけを1回、出力上限付きで送信する。
+        """
+        mock_openai.return_value.responses.create.return_value.output_text = (
+            "観測: 失敗応答は11件です。\n推測: 後半に増加した可能性があります。"
+        )
+
+        summary = ApacheAccessReportSummaryService("test-key").summarize(self._report())
+
+        request = mock_openai.return_value.responses.create.call_args.kwargs
+        payload = json.loads(request["input"])
+        self.assertEqual(set(payload), set(SUMMARY_INPUT_FIELDS))
+        self.assertEqual(payload["failure_response_count"], 11)
+        self.assertEqual(payload["failure_response_rate"], 0.11)
+        self.assertEqual(request["max_output_tokens"], MAX_OUTPUT_TOKENS)
+        self.assertEqual(mock_openai.return_value.responses.create.call_count, 1)
+        self.assertNotIn("198.51.100.10", request["input"])
+        self.assertNotIn("token=secret", request["input"])
+        self.assertEqual(
+            summary,
+            "観測: 失敗応答は11件です。\n推測: 後半に増加した可能性があります。",
+        )
+
+    @patch("lib.apache_access.domain.service.report_summary.OpenAI")
+    def test_summary_rejects_prohibited_or_unstructured_output(self, mock_openai):
+        """
+        シナリオ:
+        - 入力: 攻撃を断定するGPT要約。
+        - 処理: GPT要約を検証する。
+        - 期待値: 管理者メールへ渡さず要約エラーにする。
+        """
+        mock_openai.return_value.responses.create.return_value.output_text = (
+            "観測: 失敗応答は11件です。\n推測: 攻撃です。"
+        )
+
+        with self.assertRaises(ApacheAccessReportSummaryError):
+            ApacheAccessReportSummaryService("test-key").summarize(self._report())
+
+    @patch.dict(
+        "os.environ",
+        {"APACHE_ACCESS_GPT_ENABLED": "False", "OPENAI_API_KEY": ""},
+        clear=False,
+    )
+    def test_summary_is_disabled_without_the_feature_flag(self):
+        """
+        シナリオ:
+        - 入力: GPT要約が無効な環境設定。
+        - 処理: 要約サービスを環境変数から生成する。
+        - 期待値: OpenAI APIを利用するサービスを生成しない。
+        """
+        self.assertIsNone(ApacheAccessReportSummaryService.from_environment())
+
+
+class ApacheAccessReportMailTests(SimpleTestCase):
+    def test_mail_adds_the_summary_as_escaped_reference_information(self):
+        """
+        シナリオ:
+        - 入力: 対象期間と匿名化集計値を持つレポート、HTMLを含むGPT要約。
+        - 処理: テキスト・HTMLメール本文を生成する。
+        - 期待値: 根拠となる集計値のそばに参考要約を表示し、HTMLはエスケープされる。
+        """
+        period_start = datetime(2026, 10, 4, tzinfo=timezone.utc)
+        report = ApacheAccessReport(
+            period_start=period_start,
+            period_end=period_start + timedelta(hours=24),
+            generated_at=period_start + timedelta(hours=24),
+            total_requests=20,
+            status_401=0,
+            status_403=0,
+            status_404=2,
+            status_5xx=0,
+            failure_sources=1,
+            top_source_failures=2,
+            login_requests=0,
+            top_source_login_requests=0,
+            sensitive_path_successes=0,
+            recent_failures=2,
+            previous_failures=0,
+            malformed_lines=0,
+        )
+        summary = "観測: 404は2件です。\n推測: <確認>が必要な可能性があります。"
+
+        body, html_body = ApacheAccessReportMailService().build_bodies(report, summary)
+
+        self.assertIn("対象期間", body)
+        self.assertIn("GPTによる参考要約", body)
+        self.assertIn(summary, body)
+        self.assertIn("OpenAI APIによる参考情報", html_body)
+        self.assertIn("&lt;確認&gt;", html_body)
 
 
 class ApacheAccessReportViewTests(TestCase):
