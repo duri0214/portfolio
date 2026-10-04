@@ -50,8 +50,6 @@ MAIL_SMTP_PASSWORD=app-password
 MAIL_USE_TLS=True
 ```
 
-実在するメールアドレスと SMTP 認証情報は Git、Issue、PR、ログへ書きません。
-
 ```bash
 sudo chown ubuntu:www-data /var/www/html/portfolio/.env
 sudo chmod 640 /var/www/html/portfolio/.env
@@ -104,5 +102,3 @@ sudo -u ubuntu -H bash -lc 'cd /var/www/html/portfolio && .venv/bin/python -m li
 2. 集計コマンドが失敗: combined 形式、ログローテーション後のACL、Apacheのエラーログを確認する。
 3. メール送信が失敗: `lib/mail/.env` の `MAIL_SMTP_*`、TLS、`MAIL_SMTP_USER`、Apacheのエラーログを確認する。
 4. 修正後、同じ送信操作を再実行する。
-
-SMTP パスワード、生ログ、実在する宛先は Issue や PR へ貼りません。
