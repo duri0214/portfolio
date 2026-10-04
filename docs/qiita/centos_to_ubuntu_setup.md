@@ -1437,11 +1437,14 @@ $ sudo systemctl restart apache2
 > `WSGIApplicationGroup %{GLOBAL}` です。本ブロックに既に含めていますが、
 > 既存環境にこの行が無い場合のみ、同一行を1カ所だけ追記してください（重複不要）。
 
-### Authorization ヘッダーを Django へ渡す
+### Video Cue の Authorization ヘッダーを Django へ渡す
 
-Django API が Bearer トークンなどを `Authorization` ヘッダーから読む場合、Apache/mod_wsgi の既定ではそのヘッダーが
-Django に渡らないことがあります。この場合、クライアントと Django 側のトークンが一致していても、Django はヘッダーを受け取れず
-HTTP 401 になります。
+Windows のローカルで動かす `video-cue-engine` は、動画解析後に結果を Django の VIDEO CUE 受信 API へ任意送信できます。
+この API は、知らないクライアントが結果を登録できないよう Bearer トークンで認証します。`video-cue-engine` が
+`Authorization` ヘッダーにトークンを入れて送信し、Django 側は `VIDEO_CUE_UPLOAD_TOKEN` で照合します。
+
+Apache/mod_wsgi の既定では、この `Authorization` ヘッダーが Django に渡らないことがあります。その場合、ローカルの
+`video-cue-engine` と Django 側に同じトークンを設定していても、Django はヘッダーを受け取れず HTTP 401 になります。
 
 まず、HTTPS を実際に受けている VirtualHost と、すでに設定済みかを確認します。Let’s Encrypt を `--apache` で導入した
 `www.henojiya.net` の例では、`*:443` は `/etc/apache2/sites-enabled/000-default-le-ssl.conf` です。
