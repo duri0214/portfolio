@@ -6,11 +6,9 @@
 
 Apache固有の設定は、リポジトリ直下の `.env` に設定します。たとえば本番配置が `/var/www/html/portfolio` の場合は `/var/www/html/portfolio/.env`、ローカル環境ではチェックアウトした `portfolio` ディレクトリ直下の `.env` を使用します。
 
-メールの送信先は追加の環境変数を使わず、既存の `lib/mail/.env` にある `MAIL_SMTP_USER` を使います。`lib/mail/.env.example` を `lib/mail/.env` にコピーし、`MAIL_SMTP_USER` にレポートを受信する管理者・運用担当のメールボックス（例: `ops@example.com`）を設定してください。SMTPの送信元と同じメールボックスへ送る前提です。
-
 `APACHE_ACCESS_LOG_GLOBS` は任意です。未設定なら `/var/log/apache2/access.log*` を使います。`*` は現在の `access.log` と `access.log.1` などのローテーション済みファイル、`access.log.2.gz` などのgzipファイルを含みます。複数の場所を読む場合はカンマ区切りで指定します。
 
-`MAIL_SMTP_*` と `MAIL_USE_TLS` は既存の `MailService` の設定を使います。`lib/mail/.env` が存在する環境ではそちらが先に読み込まれるため、SMTP設定を重複させず、既存の設定場所を使用してください。
+メール送信は既存の `MailService` を使います。SMTP設定と送信先は `MailService` 側で設定済みであり、送信できることを事前に確認してください。このREADMEではメール設定を追加・複製しません。
 
 ## 事前準備（一度だけ、サーバー管理者が実施）
 
@@ -35,28 +33,17 @@ sudo setfacl -m u:www-data:r /var/log/apache2/access.log*
 sudo -u www-data test -r /var/log/apache2/access.log && echo OK_web_read || echo NG_web_read
 ```
 
-### 3. `/var/www/html/portfolio/.env` を設定する
+### 3. Apache固有の設定を `/var/www/html/portfolio/.env` に追加する
 
 `APACHE_ACCESS_LOG_GLOBS` は任意です。標準の `/var/log/apache2/access.log*` を使う場合は未設定のままにします。ログの場所を変更する場合や、複数の場所を読む場合だけ設定します。
 
 ```dotenv
 APACHE_ACCESS_LOG_GLOBS=/var/log/apache2/access.log*
 ```
-メール設定は既存の `lib/mail/.env.example` を `lib/mail/.env` にコピーして設定します。`MAIL_SMTP_USER` がSMTP送信元と固定宛先を兼ねます。
-
-```dotenv
-MAIL_SMTP_HOST=smtp.example.com
-MAIL_SMTP_PORT=587
-MAIL_SMTP_USER=ops@example.com
-MAIL_SMTP_PASSWORD=app-password
-MAIL_USE_TLS=True
-```
 
 ```bash
 sudo setfacl -m u:www-data:r /var/www/html/portfolio/.env
 sudo -u www-data test -r /var/www/html/portfolio/.env && echo OK_web_env || echo NG_web_env
-sudo setfacl -m u:www-data:r /var/www/html/portfolio/lib/mail/.env
-sudo -u www-data test -r /var/www/html/portfolio/lib/mail/.env && echo OK_web_mail_env || echo NG_web_mail_env
 ```
 
 ### 4. Apache ログの読み取り権限を確認する
@@ -100,5 +87,5 @@ sudo -u ubuntu -H bash -lc 'cd /var/www/html/portfolio && .venv/bin/python -m li
 
 1. 「Apacheアクセスログが見つかりません」: `APACHE_ACCESS_LOG_GLOBS` と `www-data` のログ読み取り権限を確認する。
 2. 集計コマンドが失敗: combined 形式、ログローテーション後のACL、Apacheのエラーログを確認する。
-3. メール送信が失敗: `lib/mail/.env` の `MAIL_SMTP_*`、TLS、`MAIL_SMTP_USER`、Apacheのエラーログを確認する。
+3. メール送信が失敗: 既存の `MailService` のSMTP設定、TLS、送信先、Apacheのエラーログを確認する。
 4. 修正後、同じ送信操作を再実行する。
