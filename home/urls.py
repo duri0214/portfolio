@@ -1,16 +1,11 @@
 from django.urls import path
 
 from home.domain.valueobject.catalog import Catalog
-from home.views import CatalogDetailView, IndexView, send_apache_access_report
+from home.views import CatalogDetailView, IndexView
 
 app_name = "home"
 urlpatterns = [
     path("", IndexView.as_view(), name="index"),
-    path(
-        "admin/apache-access-report/send/",
-        send_apache_access_report,
-        name="send_apache_access_report",
-    ),
 ]
 
 urlpatterns += [

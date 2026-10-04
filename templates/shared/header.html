@@ -35,7 +35,7 @@
                     {% if user.is_authenticated %}
                         {% if user.is_superuser %}
                             <li class="nav-item me-2">
-                                <form method="post" action="{% url 'home:send_apache_access_report' %}">
+                                <form method="post" action="{% url 'send_apache_access_report' %}">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-sm btn-outline-secondary">アクセス集計をメール送信</button>
                                 </form>

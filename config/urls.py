@@ -22,6 +22,7 @@ from django.http import HttpResponse
 from django.urls import include, path
 
 from config.sitemap import sitemap_xml
+from config.views import send_apache_access_report
 from vietnam_research.views import CustomLoginView
 
 
@@ -42,6 +43,11 @@ def robots_txt(_request):
 urlpatterns = [
     path("robots.txt", robots_txt, name="robots_txt"),
     path("sitemap.xml", sitemap_xml, name="sitemap_xml"),
+    path(
+        "admin/apache-access-report/send/",
+        send_apache_access_report,
+        name="send_apache_access_report",
+    ),
     path("", include("home.urls")),
     path("accounts/", include("accounts.urls")),
     path("vietnam_research/", include("vietnam_research.urls")),

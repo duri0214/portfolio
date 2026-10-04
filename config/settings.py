@@ -158,16 +158,6 @@ ACCOUNT_ACTIVATION_TIMEOUT = int(
     os.getenv("ACCOUNT_ACTIVATION_TIMEOUT", str(60 * 60 * 24 * 3))
 )
 
-# ログを読むのは定期コマンドのみ。Web 側は保存済み集計だけを参照する。
-APACHE_ACCESS_LOG_GLOBS = tuple(
-    pattern.strip()
-    for pattern in os.getenv(
-        "APACHE_ACCESS_LOG_GLOBS", "/var/log/apache2/access.log*"
-    ).split(",")
-    if pattern.strip()
-)
-APACHE_REPORT_RECIPIENT = os.getenv("APACHE_REPORT_RECIPIENT", "")
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 SITE_URL = "https://www.henojiya.net"

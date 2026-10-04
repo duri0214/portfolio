@@ -1,10 +1,10 @@
 # Apache アクセス傾向メールの運用
 
-スーパーユーザーは共通ナビバーから、直近24時間のアクセス傾向を固定の管理者宛先へ送れます。メールには件数、対象期間、生成時刻だけを載せます。集計値は調査のきっかけであり、攻撃や情報漏えいの判定ではありません。
+`lib/apache_access/report_service.py` が Apache ログを直近24時間分集計し、IP、URL、クエリ、ログ行を含まない JSON を作ります。Web 側はこの JSON だけを読み、既存の `MailService` で固定の管理者宛先へ送信します。Django モデル、migration、専用 Django アプリは使用しません。
 
 ## 事前準備（一度だけ、サーバー管理者が実施）
 
-以下は `/var/www/html/portfolio` に配置し、定期処理ユーザーを既存運用どおり `ubuntu` とする場合の手順です。別の配置先・ユーザーを使う場合は、以降のコマンド中の値をすべて同じ値へ置き換えます。
+以下はプロジェクトを `/var/www/html/portfolio` に配置し、集計を `ubuntu`、Web を `www-data` で実行する場合の手順です。
 
 ### 1. Apache のログ形式と出力先を確認する
 
@@ -13,14 +13,27 @@ $ sudo apache2ctl -S
 $ sudo grep -R "^[[:space:]]*\(LogFormat\|CustomLog\)" /etc/apache2
 ```
 
-`CustomLog` の実ファイルが `/var/log/apache2/access.log` とローテート済みの `access.log.*` であること、`LogFormat` が combined 相当であることを確認します。リバースプロキシを使っている場合は、ログ先頭の送信元値が信頼できる実クライアント値か確認します。形式が異なる場合は、コマンドを本番で登録せずに停止します。
+対象が `/var/log/apache2/access.log` とローテート済みの `access.log.*` であり、`LogFormat` が combined 相当であることを確認します。形式や対象ファイルが不明な場合は cron を登録しません。
 
-### 2. 集計対象とメールを `.env` に設定する
+### 2. 匿名化済み JSON の保存場所を用意する
 
-サーバー上の `/var/www/html/portfolio/.env` に次を設定します。SMTP の実値は Git、Issue、PR、ログへ書きません。
+生ログは `ubuntu` だけが読みます。匿名化済み JSON と送信間隔の状態ファイルは、`ubuntu` と `www-data` の両方が読み書きできる専用ディレクトリへ置きます。
+
+```bash:console
+$ sudo install -d -o ubuntu -g www-data -m 2770 /var/lib/portfolio
+$ sudo setfacl -m u:ubuntu:rwx,u:www-data:rwx /var/lib/portfolio
+$ sudo setfacl -d -m u:ubuntu:rwx,u:www-data:rwx /var/lib/portfolio
+$ sudo -u ubuntu test -w /var/lib/portfolio && echo OK_batch_write || echo NG_batch_write
+$ sudo -u www-data test -w /var/lib/portfolio && echo OK_web_write || echo NG_web_write
+```
+
+### 3. `.env` を設定する
+
+`/var/www/html/portfolio/.env` に次を設定します。実在するメールアドレスと SMTP 認証情報は Git、Issue、PR、ログへ書きません。
 
 ```dotenv:/var/www/html/portfolio/.env
 APACHE_ACCESS_LOG_GLOBS=/var/log/apache2/access.log*
+APACHE_ACCESS_REPORT_PATH=/var/lib/portfolio/apache_access_report.json
 APACHE_REPORT_RECIPIENT=管理者の固定メールアドレス
 MAIL_SMTP_HOST=smtp.example.com
 MAIL_SMTP_PORT=587
@@ -29,47 +42,42 @@ MAIL_SMTP_PASSWORD=送信用パスワードまたはアプリパスワード
 MAIL_USE_TLS=True
 ```
 
-`APACHE_ACCESS_LOG_GLOBS` は現行ファイルと直近24時間に必要なローテート済みファイルを含む絶対パスの glob にします。VirtualHost が別ファイルへ出力する場合はカンマ区切りで追加します。設定後、`.env` の所有者と権限を確認します。
-
 ```bash:console
 $ sudo chown ubuntu:ubuntu /var/www/html/portfolio/.env
 $ sudo chmod 600 /var/www/html/portfolio/.env
 ```
 
-### 3. マイグレーションと Apache の設定を反映する
+### 4. Apache ログの読み取り権限を確認する
 
 ```bash:console
-$ cd /var/www/html/portfolio
-$ sudo -u ubuntu .venv/bin/python manage.py migrate
+$ sudo namei -l /var/log/apache2/access.log
+$ sudo -u ubuntu test -r /var/log/apache2/access.log && echo OK_batch_read || echo NG_batch_read
+$ sudo -u www-data test -r /var/log/apache2/access.log && echo NG_web_can_read || echo OK_web_blocked
+```
+
+`ubuntu` が対象の `access.log*` だけを読め、`www-data` は読めない状態にします。`ubuntu` を全 Apache ログが読める広いグループへ安易に追加せず、専用グループまたは ACL を使い、ローテーション後も同じ権限が付くようにします。
+
+### 5. Web 側の変更を反映する
+
+この機能に migration はありません。
+
+```bash:console
 $ sudo apache2ctl configtest
 # 期待値: Syntax OK
 $ sudo systemctl restart apache2
 ```
 
-`migrate` が失敗した場合は cron を登録しません。`configtest` が `Syntax OK` でない場合も Apache を再起動せず原因を修正します。
+## 集計処理の確認と cron 登録
 
-### 4. 定期処理ユーザーだけにログの読み取り権限を付与する
-
-Web プロセス（通常 `www-data`）には Apache ログの読み取り権限を付けません。ログディレクトリの実際の所有者・グループを確認し、`ubuntu` が対象の現行・ローテート済みファイルだけを読める状態にします。
+最初に `ubuntu` で1回だけ手動実行します。
 
 ```bash:console
-$ sudo namei -l /var/log/apache2/access.log
-$ sudo -u ubuntu test -r /var/log/apache2/access.log && echo OK_current || echo NG_current
-$ sudo -u www-data test -r /var/log/apache2/access.log && echo NG_web_can_read || echo OK_web_blocked
-```
-
-`NG_current` の場合は、全ログを読める `adm` グループへ安易に追加せず、Apache/logrotate の専用グループまたは ACL で `access.log` と `access.log.*` だけへ読み取り権限を付与します。ローテーション後にも同じ権限が付くことを確認してから次へ進みます。
-
-## 定期実行の登録（サーバー管理者が一度だけ実施）
-
-まず手動で一回実行し、成功することを確認します。
-
-```bash:console
-$ sudo -u ubuntu -H bash -lc 'cd /var/www/html/portfolio && .venv/bin/python manage.py aggregate_apache_access'
+$ sudo -u ubuntu -H bash -lc 'cd /var/www/html/portfolio && .venv/bin/python -m lib.apache_access.report_service'
 # 期待値: Apache アクセス集計を保存しました。
+$ sudo -u www-data test -r /var/lib/portfolio/apache_access_report.json && echo OK_web_read || echo NG_web_read
 ```
 
-ログが見つからない、読めない、形式を解析できない場合は終了コードが失敗になり、既存の集計結果は更新されません。成功を確認したら `ubuntu` の crontab に1時間ごとの行を追加します。
+成功したら cron のログを用意し、`ubuntu` の crontab に1時間ごとの処理を1行だけ登録します。
 
 ```bash:console
 $ sudo install -d -o ubuntu -g ubuntu -m 750 /var/log/portfolio
@@ -80,31 +88,26 @@ $ sudo -u ubuntu crontab -e
 ```
 
 ```vim:crontab
-0 * * * * cd /var/www/html/portfolio && /var/www/html/portfolio/.venv/bin/python manage.py aggregate_apache_access >> /var/log/portfolio/apache-access-report.log 2>&1
+0 * * * * cd /var/www/html/portfolio && /var/www/html/portfolio/.venv/bin/python -m lib.apache_access.report_service >> /var/log/portfolio/apache-access-report.log 2>&1
 ```
-
-`/var/log/portfolio` が存在し、`ubuntu` が書き込めることを先に確認します。登録後は次のコマンドで行が残っていることを確認します。
 
 ```bash:console
-$ sudo -u ubuntu crontab -l | grep aggregate_apache_access
+$ sudo -u ubuntu crontab -l | grep lib.apache_access.report_service
 ```
 
-cron の実行時刻は、既存のバッチと重ならない時刻へ変更して構いません。変更する場合も、1時間に1回を上限とし、同じコマンドを二重登録しません。
+## メール送信操作
 
-## 毎回のメール送信操作（スーパーユーザーがブラウザで実施）
-
-1. cron または手動実行が成功したことを確認する。
+1. cron または手動集計が成功していることを確認する。
 2. portfolio にスーパーユーザーでログインする。
-3. 共通ナビバーの「アクセス集計をメール送信」を1回だけ押す。
-4. 「集計メールを送信しました。」と表示され、固定宛先へ期間・生成時刻・件数を含む HTML/プレーンテキストメールが届くことを確認する。
+3. 共通ナビバーの「アクセス集計をメール送信」を1回押す。
+4. 「集計メールを送信しました。」と表示され、固定宛先へ対象期間・生成時刻・件数を含む HTML/プレーンテキストメールが届くことを確認する。
 
-同じ操作を15分以内に繰り返すと HTTP 429 相当の再送抑止画面になります。未ログイン・一般ユーザー・スタッフユーザーは送信できません。`APACHE_REPORT_RECIPIENT` が未設定の場合は「宛先が設定されていません。」と表示されます。
+同じ操作を15分以内に繰り返すと再送を拒否します。未ログイン・一般ユーザー・スタッフユーザーも送信できません。
 
 ## 失敗時の確認順
 
-1. 画面が「集計結果がありません」「集計結果が古い」と表示する場合、cron の実行結果と `home_apacheaccessreport` の生成時刻を確認する。
-2. `aggregate_apache_access` が失敗する場合、`APACHE_ACCESS_LOG_GLOBS`、combined 形式、ログファイルの読み取り権限を確認する。
-3. SMTP 送信が失敗する場合、`MAIL_SMTP_*`、TLS、送信先アドレス、Apache のエラーログを確認する。SMTP パスワードやログ行を画面・Issue・PRへ貼り付けない。
-4. 設定を直した後、手動集計 → スーパーユーザーの送信操作の順に再実行する。
-
-Web 側の送信失敗は HTTP 502、設定不足・集計なし・古い集計は HTTP 503、15分以内の再送は HTTP 429 で表示します。生ログは Web アプリへ渡さず、メールと保存結果にも IP、クエリ文字列、ログ行、詳細なエラー文を含めません。
+1. 「宛先が設定されていません」: `APACHE_REPORT_RECIPIENT` を確認する。
+2. 「集計結果がありません」「集計結果が古い」: cron ログと `/var/lib/portfolio/apache_access_report.json` の更新時刻を確認する。
+3. 集計コマンドが失敗: `APACHE_ACCESS_LOG_GLOBS`、combined 形式、`ubuntu` のログ読み取り権限を確認する。
+4. メール送信が失敗: `MAIL_SMTP_*`、TLS、宛先、Apache のエラーログを確認する。SMTP パスワードや生ログは Issue・PRへ貼らない。
+5. 修正後は、手動集計を実行してからブラウザの送信操作を再実行する。

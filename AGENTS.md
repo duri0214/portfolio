@@ -63,9 +63,9 @@ git や gh の操作が失敗した場合は、API で迂回せず原因を切�
 
 この機能を本番で有効化するときは、実装確認とサーバー運用確認を分け、次の順序を守る。詳細なコマンドは [`docs/apache_access_report.md`](docs/apache_access_report.md) に集約する。
 
-1. サーバー管理者が Apache の `LogFormat` / `CustomLog`、VirtualHost ごとの出力先、リバースプロキシ経由の送信元、ローテーション形式を確認する。combined 形式でない場合や対象ログが特定できない場合は登録を進めない。
-2. サーバーの `.env` に `APACHE_ACCESS_LOG_GLOBS`、固定宛先の `APACHE_REPORT_RECIPIENT`、`MAIL_SMTP_*`、`MAIL_USE_TLS` を設定し、`.env` を Git やログへ出さない。
-3. `cd /var/www/html/portfolio` 後に `sudo -u ubuntu .venv/bin/python manage.py migrate`、`sudo apache2ctl configtest`、`sudo systemctl restart apache2` を実行する。マイグレーションまたは `Syntax OK` が確認できない場合は次へ進まない。
-4. 定期処理ユーザーだけに現行・ローテート済み Apache アクセスログの読み取り権限を付与し、`www-data` が読めないことを確認する。全 Apache ログを読める広いグループ権限を安易に付与しない。
-5. `sudo -u ubuntu -H bash -lc 'cd /var/www/html/portfolio && .venv/bin/python manage.py aggregate_apache_access'` を手動で一度実行し、成功を確認してから `ubuntu` の crontab に1時間ごとの定期実行を1行だけ登録する。
+1. この処理は `lib/apache_access` に置き、Djangoアプリ、モデル、migrationを追加しない。`home` はコンテンツカタログの責務だけを持つ。
+2. サーバー管理者が Apache の `LogFormat` / `CustomLog`、VirtualHost ごとの出力先、リバースプロキシ経由の送信元、ローテーション形式を確認する。combined 形式でない場合や対象ログが特定できない場合は登録を進めない。
+3. サーバーの `.env` に `APACHE_ACCESS_LOG_GLOBS`、`APACHE_ACCESS_REPORT_PATH`、固定宛先の `APACHE_REPORT_RECIPIENT`、`MAIL_SMTP_*`、`MAIL_USE_TLS` を設定し、`.env` を Git やログへ出さない。
+4. 定期処理ユーザーだけに現行・ローテート済み Apache アクセスログの読み取り権限を付与し、`www-data` が読めないことを確認する。匿名化済み JSON の保存先だけは `ubuntu` と `www-data` の双方が読み書きできるようにする。
+5. `sudo -u ubuntu -H bash -lc 'cd /var/www/html/portfolio && .venv/bin/python -m lib.apache_access.report_service'` を手動で一度実行し、成功を確認してから `ubuntu` の crontab に1時間ごとの定期実行を1行だけ登録する。この機能に `manage.py migrate` は不要。
 6. スーパーユーザーがブラウザで「アクセス集計をメール送信」を押し、固定宛先への到着と対象期間・生成時刻・件数を確認する。未ログイン・一般ユーザーの送信、未設定・古い集計・SMTP失敗の表示も確認する。
