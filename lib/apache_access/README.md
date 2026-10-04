@@ -46,8 +46,6 @@ APACHE_ACCESS_LOG_GLOBS=/var/log/apache2/access.log*
 
 ### 4. Web 側へ変更を反映する
 
-この機能に migration はありません。
-
 ```bash
 sudo apache2ctl configtest
 sudo systemctl restart apache2
