@@ -5,7 +5,7 @@ from lib.apache_access.domain.valueobject.report import ApacheAccessReportError
 
 
 def main() -> int:
-    """Generate one sanitized report for cron and return a shell exit code."""
+    """Generate one sanitized report for manual execution and return a shell exit code."""
     try:
         ApacheAccessReportService.from_environment().generate_report()
     except ApacheAccessReportError as error:

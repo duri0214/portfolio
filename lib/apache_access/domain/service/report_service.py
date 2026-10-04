@@ -117,7 +117,7 @@ class ApacheAccessReportService:
             report = self._read_report()
             if sent_at - report.generated_at > timedelta(hours=2):
                 raise ReportStaleError(
-                    "集計結果が古いため送信できません。定期処理を確認してください。"
+                    "集計結果が古いため送信できません。送信前に手動集計を実行してください。"
                 )
             last_sent_at = self._read_last_sent_at()
             if last_sent_at and sent_at - last_sent_at < timedelta(minutes=15):
@@ -140,7 +140,7 @@ class ApacheAccessReportService:
     def _read_report(self) -> ApacheAccessReport:
         if not self.report_path.exists():
             raise ReportNotFoundError(
-                "集計結果がありません。定期処理を確認してください。"
+                "集計結果がありません。送信前に手動集計を実行してください。"
             )
         try:
             values = json.loads(self.report_path.read_text(encoding="utf-8"))

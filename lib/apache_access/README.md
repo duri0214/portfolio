@@ -4,7 +4,7 @@
 
 ## ファイルと責務
 
-- `report_service.py`: cron から呼ぶ集計 CLI の入口
+- `report_service.py`: 手動で実行する集計 CLI の入口
 - `domain/valueobject/report.py`: 匿名化された集計値とドメイン例外
 - `domain/service/access_log_aggregator.py`: `ApacheAccessLogAggregator` によるApache combined ログの解析・集計
 - `domain/service/report_service.py`: JSON 保存、鮮度・再送制限、`MailService` 呼び出し
@@ -116,33 +116,9 @@ sudo -u www-data test -r /var/lib/portfolio/apache_access_report.json && echo OK
 
 集計コマンドの成功時は `Apache アクセス集計を保存しました。` と出力して終了コード0、失敗時は原因を出力して終了コード1を返します。JSON には日時と件数だけを保存し、IP、URL、クエリ、ログ行は保存しません。
 
-## 定期集計を登録する
-
-cron はメール送信には使いません。生ログを読める `ubuntu` が匿名化済み JSON を更新し、生ログを読めない `www-data` がブラウザ操作時にその JSON をメール送信するために使います。
-
-送信前にサーバーへログインして毎回手動集計する運用なら cron は省略できます。「サーバーへログインせずブラウザから送信する」運用では、cron などによる定期更新が必要です。
-
-```bash
-sudo install -d -o ubuntu -g ubuntu -m 750 /var/log/portfolio
-sudo touch /var/log/portfolio/apache-access-report.log
-sudo chown ubuntu:ubuntu /var/log/portfolio/apache-access-report.log
-sudo chmod 640 /var/log/portfolio/apache-access-report.log
-sudo -u ubuntu crontab -e
-```
-
-`ubuntu` の crontab に次の1行を登録します。
-
-```cron
-0 * * * * cd /var/www/html/portfolio && /var/www/html/portfolio/.venv/bin/python -m lib.apache_access.report_service >> /var/log/portfolio/apache-access-report.log 2>&1
-```
-
-```bash
-sudo -u ubuntu crontab -l | grep lib.apache_access.report_service
-```
-
 ## メールを送信する
 
-1. 手動集計または cron が成功していることを確認する。
+1. 手動集計が成功していることを確認する。
 2. portfolio にスーパーユーザーでログインする。
 3. 共通ナビバーの「アクセス集計をメール送信」を1回押す。
 4. 元のページに「集計メールを送信しました。」と通知されることを確認する。
