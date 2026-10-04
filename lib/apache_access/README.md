@@ -37,6 +37,8 @@ sudo -u www-data test -r /var/log/apache2/access.log && echo OK_web_read || echo
 
 ### 3. `/var/www/html/portfolio/.env` を設定する
 
+`APACHE_ACCESS_LOG_GLOBS` は任意です。標準の `/var/log/apache2/access.log*` を使う場合は未設定のままにします。ログの場所を変更する場合や、複数の場所を読む場合だけ設定します。
+
 ```dotenv
 APACHE_ACCESS_LOG_GLOBS=/var/log/apache2/access.log*
 ```
