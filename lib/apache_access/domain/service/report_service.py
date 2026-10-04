@@ -1,5 +1,6 @@
 """Domain service for aggregating and mailing Apache access reports."""
 
+import logging
 import os
 from datetime import datetime, timedelta, timezone
 from glob import glob
@@ -13,9 +14,13 @@ from lib.apache_access.domain.service.access_log_aggregator import (
 from lib.apache_access.domain.service.report_mail import (
     ApacheAccessReportMailService,
 )
+from lib.apache_access.domain.service.report_summary import (
+    ApacheAccessReportSummaryService,
+)
 from lib.apache_access.domain.valueobject.report import (
     ApacheAccessReport,
     ApacheAccessReportError,
+    ApacheAccessReportSummaryError,
     ReportNotFoundError,
     ReportReadError,
 )
@@ -24,6 +29,7 @@ from lib.mail.mail_service import MailService
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
 load_dotenv(PROJECT_ROOT / ".env")
+logger = logging.getLogger(__name__)
 
 
 class ApacheAccessReportService:
@@ -81,6 +87,7 @@ class ApacheAccessReportService:
     def send_report(
         self,
         mail_service: MailService | None = None,
+        summary_service: ApacheAccessReportSummaryService | None = None,
         generated_at: datetime | None = None,
     ) -> ApacheAccessReport:
         """Aggregate the current logs and mail the report without persistence."""
@@ -89,7 +96,8 @@ class ApacheAccessReportService:
         recipient = getattr(sender, "user", "")
         if not recipient:
             raise ValueError("MAIL_SMTP_USER is not configured")
-        body, html_body = ApacheAccessReportMailService().build_bodies(report)
+        summary = self._generate_summary(report, summary_service)
+        body, html_body = ApacheAccessReportMailService().build_bodies(report, summary)
         sender.send_mail(
             to=recipient,
             subject="Apache アクセス傾向レポート",
@@ -97,3 +105,22 @@ class ApacheAccessReportService:
             html_body=html_body,
         )
         return report
+
+    @staticmethod
+    def _generate_summary(
+        report: ApacheAccessReport,
+        summary_service: ApacheAccessReportSummaryService | None,
+    ) -> str | None:
+        """Generate an optional summary while preserving report delivery on failure."""
+        try:
+            active_summary_service = (
+                summary_service or ApacheAccessReportSummaryService.from_environment()
+            )
+            if active_summary_service is None:
+                return None
+            return active_summary_service.summarize(report)
+        except ApacheAccessReportSummaryError:
+            logger.warning(
+                "GPT summary was unavailable; sending the Apache report without it."
+            )
+            return None

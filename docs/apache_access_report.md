@@ -10,6 +10,7 @@ Apache アクセスログから不審なアクセスの兆候を匿名化され�
 - `lib/apache_access/domain/service/report_service.py` がApacheログを集計し、結果をメモリ上でメール送信する。
 - `lib/apache_access/domain/valueobject/report.py` が集計値とドメイン例外を定義する。
 - `lib/apache_access/domain/service/report_mail.py` の `ApacheAccessReportMailService` がメール本文を生成する。
+- `lib/apache_access/domain/service/report_summary.py` の `ApacheAccessReportSummaryService` は、明示的に許可した匿名化集計値だけを OpenAI API へ渡し、管理者向けの参考要約を生成する。
 - `lib/apache_access/report_service.py` が手動実行する集計 CLI の入口になる。
 - `lib/apache_access/report_receiver.py` が共通ナビバーのPOSTを受け、集計結果を既存の `MailService` で送信して元ページへ結果を返す。
 - `lib/apache_access/test_report_service.py` が集計、読み取り、送信、権限、Web 操作をテストする。
@@ -34,6 +35,9 @@ Apache アクセスログから不審なアクセスの兆候を匿名化され�
 
 - 送信元 IP は集中度の集計中だけ使用する。
 - IP、URL、クエリ文字列、ログ行、詳細な外部エラー文をメールや画面へ保存・表示しない。
+- GPT要約は `APACHE_ACCESS_GPT_ENABLED=True` のときだけ利用する。外部APIへ渡す値は対象期間、件数、比率、期間前後半の差分に限定し、生ログ由来の識別子や詳細なエラーを渡さない。
+- GPT要約は送信操作ごとに最大1回だけ呼び出し、出力は250トークンまでとする。APIキー未設定・API失敗・要約の形式不備では、要約を省いて機械的な集計メールを送る。
+- GPT要約は OpenAI API による参考情報として、対象期間と根拠になる匿名化集計値のそばに表示する。観測した数値と推測を分け、攻撃・情報漏えいの断定や自動遮断の判断は掲載しない。
 - Web プロセスは Apache 生ログを読み取り専用で扱い、集計結果や生ログを保存しない。
 - メール宛先はプロジェクトルート `.env` の `MAIL_SMTP_USER`（SMTP送信元と同じ運用メールボックス）で固定し、画面入力を受け付けない。
 
