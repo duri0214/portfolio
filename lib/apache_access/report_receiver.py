@@ -1,4 +1,4 @@
-"""Thin Django adapter for sending an Apache access report."""
+"""Receive the navbar request that sends the latest Apache access report."""
 
 import logging
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit

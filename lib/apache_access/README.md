@@ -9,10 +9,10 @@
 - `domain/service/access_log_aggregator.py`: Apache combined ログの解析・集計
 - `domain/service/report_service.py`: JSON 保存、鮮度・再送制限、`MailService` 呼び出し
 - `domain/service/report_mail.py`: プレーンテキスト・HTML本文の生成
-- `web.py`: POST、CSRF、スーパーユーザー確認、操作元へのリダイレクトだけを行う Django アダプター
+- `report_receiver.py`: 共通ナビバーからのPOSTを受け、CSRF・スーパーユーザーを確認し、送信結果を操作元へ返す Django アダプター
 - `test_report_service.py`: 集計、保存、送信、権限、Web 操作のテスト
 
-`config/urls.py` は URL と `web.py` を接続するだけです。`home` はこの処理を担当しません。
+`config/urls.py` は送信URLと `report_receiver.py` を接続するだけです。共通ナビバーのボタンがこの入口をPOSTで呼び出します。`home` はこの処理を担当しません。
 
 ## `.env` の場所
 
@@ -23,7 +23,13 @@
 
 `domain/service/report_service.py` は自身の場所からリポジトリルートを求め、このファイルを明示的に読み込みます。
 
-`APACHE_ACCESS_LOG_GLOBS`、`APACHE_ACCESS_REPORT_PATH`、`APACHE_REPORT_RECIPIENT` はこのリポジトリ直下の `.env` に設定します。`MAIL_SMTP_*` と `MAIL_USE_TLS` は既存の `MailService` の設定を使います。`lib/mail/.env` が存在する環境ではそちらが先に読み込まれるため、SMTP設定を重複させず、既存の設定場所を使用してください。
+`APACHE_REPORT_RECIPIENT` はブラウザ操作で送る固定の受信先なので必須です。管理者や運用担当が受信するメールアドレス（例: `ops@example.com`）を設定し、SMTPの送信元アカウントとは分けて考えます。
+
+`APACHE_ACCESS_LOG_GLOBS` は任意です。未設定なら `/var/log/apache2/access.log*` を使います。`*` は現在の `access.log` と `access.log.1` などのローテーション済みファイル、`access.log.2.gz` などのgzipファイルを含みます。複数の場所を読む場合はカンマ区切りで指定します。
+
+`APACHE_ACCESS_REPORT_PATH` も任意ですが、本番では `ubuntu`（集計）と `www-data`（ブラウザ送信）が共有できる `/var/lib/portfolio/apache_access_report.json` を明示してください。未設定時はローカル開発用のリポジトリ直下 `.private/apache_access_report.json` に保存します。
+
+`MAIL_SMTP_*` と `MAIL_USE_TLS` は既存の `MailService` の設定を使います。`lib/mail/.env` が存在する環境ではそちらが先に読み込まれるため、SMTP設定を重複させず、既存の設定場所を使用してください。
 
 ## 事前準備（一度だけ、サーバー管理者が実施）
 
@@ -56,7 +62,7 @@ sudo -u www-data test -w /var/lib/portfolio && echo OK_web_write || echo NG_web_
 ```dotenv
 APACHE_ACCESS_LOG_GLOBS=/var/log/apache2/access.log*
 APACHE_ACCESS_REPORT_PATH=/var/lib/portfolio/apache_access_report.json
-APACHE_REPORT_RECIPIENT=管理者の固定メールアドレス
+APACHE_REPORT_RECIPIENT=ops@example.com
 MAIL_SMTP_HOST=smtp.example.com
 MAIL_SMTP_PORT=587
 MAIL_SMTP_USER=送信用アカウント
