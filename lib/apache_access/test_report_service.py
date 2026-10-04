@@ -17,7 +17,6 @@ from lib.apache_access.domain.service.access_log_aggregator import (
 from lib.apache_access.domain.service.report_service import ApacheAccessReportService
 from lib.apache_access.domain.valueobject.report import (
     ApacheAccessReportError,
-    RecipientNotConfiguredError,
     ReportNotFoundError,
     ReportRateLimitedError,
     ReportStaleError,
@@ -103,7 +102,7 @@ class ApacheAccessReportServiceTests(SimpleTestCase):
                 service.generate_report(now)
             self.assertFalse(report_path.exists())
 
-    def test_send_uses_fixed_recipient_and_persists_rate_limit(self):
+    def test_send_uses_mail_user_as_recipient_and_persists_rate_limit(self):
         """入力: 最新JSONと固定宛先。処理: 2回送信。期待値: 初回だけ送り15分以内を拒否する。"""
         now = datetime.now(timezone.utc).replace(microsecond=0)
         stamp = (now - timedelta(seconds=1)).strftime("%d/%b/%Y:%H:%M:%S %z")
@@ -114,11 +113,10 @@ class ApacheAccessReportServiceTests(SimpleTestCase):
                 f'198.51.100.10 - - [{stamp}] "GET / HTTP/1.1" 200 1 "-" "test"\n',
                 encoding="utf-8",
             )
-            service = ApacheAccessReportService(
-                (str(log_path),), base / "report.json", "admin@example.com"
-            )
+            service = ApacheAccessReportService((str(log_path),), base / "report.json")
             service.generate_report(now)
             mail_service = Mock()
+            mail_service.user = "admin@example.com"
             service.send_latest_report(mail_service=mail_service, sent_at=now)
             with self.assertRaises(ReportRateLimitedError):
                 service.send_latest_report(
@@ -132,8 +130,8 @@ class ApacheAccessReportServiceTests(SimpleTestCase):
             self.assertIn("集計時刻", mail["html_body"])
             self.assertTrue(service.state_path.exists())
 
-    def test_recipient_and_freshness_are_required(self):
-        """入力: 宛先なし・古いJSON。処理: メール送信。期待値: SMTPを呼ばず理由別に拒否する。"""
+    def test_freshness_is_required(self):
+        """入力: 古いJSON。処理: メール送信。期待値: SMTPを呼ばず理由別に拒否する。"""
         now = datetime.now(timezone.utc).replace(microsecond=0)
         old_generated_at = now - timedelta(hours=3)
         stamp = (old_generated_at - timedelta(seconds=1)).strftime(
@@ -147,12 +145,9 @@ class ApacheAccessReportServiceTests(SimpleTestCase):
                 encoding="utf-8",
             )
             service = ApacheAccessReportService((str(log_path),), base / "report.json")
-            with self.assertRaises(RecipientNotConfiguredError):
-                service.send_latest_report(mail_service=Mock(), sent_at=now)
-
-            service.recipient = "admin@example.com"
             service.generate_report(old_generated_at)
             mail_service = Mock()
+            mail_service.user = "admin@example.com"
             with self.assertRaises(ReportStaleError):
                 service.send_latest_report(mail_service=mail_service, sent_at=now)
             mail_service.send_mail.assert_not_called()
@@ -200,11 +195,6 @@ class ApacheAccessReportViewTests(TestCase):
         """入力: 未設定・再送制限・SMTP失敗。処理: 管理者POST。期待値: 元画面へ失敗を通知する。"""
         self.client.force_login(self.superuser)
         cases = (
-            (
-                RecipientNotConfiguredError("宛先が設定されていません。"),
-                "recipient-missing",
-                True,
-            ),
             (
                 ReportRateLimitedError("前回の送信から15分経過していません。"),
                 "rate-limited",

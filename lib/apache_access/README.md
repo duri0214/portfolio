@@ -23,7 +23,7 @@
 
 `domain/service/report_service.py` は自身の場所からリポジトリルートを求め、このファイルを明示的に読み込みます。
 
-`APACHE_REPORT_RECIPIENT` はブラウザ操作で送る固定の受信先なので必須です。管理者や運用担当が受信するメールアドレス（例: `ops@example.com`）を設定し、SMTPの送信元アカウントとは分けて考えます。
+メールの送信先は追加の環境変数を使わず、既存の `lib/mail/.env` にある `MAIL_SMTP_USER` を使います。`lib/mail/.env.example` を `lib/mail/.env` にコピーし、`MAIL_SMTP_USER` にレポートを受信する管理者・運用担当のメールボックス（例: `ops@example.com`）を設定してください。SMTPの送信元と同じメールボックスへ送る前提です。
 
 `APACHE_ACCESS_LOG_GLOBS` は任意です。未設定なら `/var/log/apache2/access.log*` を使います。`*` は現在の `access.log` と `access.log.1` などのローテーション済みファイル、`access.log.2.gz` などのgzipファイルを含みます。複数の場所を読む場合はカンマ区切りで指定します。
 
@@ -62,11 +62,14 @@ sudo -u www-data test -w /var/lib/portfolio && echo OK_web_write || echo NG_web_
 ```dotenv
 APACHE_ACCESS_LOG_GLOBS=/var/log/apache2/access.log*
 APACHE_ACCESS_REPORT_PATH=/var/lib/portfolio/apache_access_report.json
-APACHE_REPORT_RECIPIENT=ops@example.com
+```
+メール設定は既存の `lib/mail/.env.example` を `lib/mail/.env` にコピーして設定します。`MAIL_SMTP_USER` がSMTP送信元と固定宛先を兼ねます。
+
+```dotenv
 MAIL_SMTP_HOST=smtp.example.com
 MAIL_SMTP_PORT=587
-MAIL_SMTP_USER=送信用アカウント
-MAIL_SMTP_PASSWORD=送信用パスワードまたはアプリパスワード
+MAIL_SMTP_USER=ops@example.com
+MAIL_SMTP_PASSWORD=app-password
 MAIL_USE_TLS=True
 ```
 
@@ -77,6 +80,10 @@ sudo chown ubuntu:www-data /var/www/html/portfolio/.env
 sudo chmod 640 /var/www/html/portfolio/.env
 sudo -u ubuntu test -r /var/www/html/portfolio/.env && echo OK_batch_env || echo NG_batch_env
 sudo -u www-data test -r /var/www/html/portfolio/.env && echo OK_web_env || echo NG_web_env
+sudo chown ubuntu:www-data /var/www/html/portfolio/lib/mail/.env
+sudo chmod 640 /var/www/html/portfolio/lib/mail/.env
+sudo -u ubuntu test -r /var/www/html/portfolio/lib/mail/.env && echo OK_batch_mail_env || echo NG_batch_mail_env
+sudo -u www-data test -r /var/www/html/portfolio/lib/mail/.env && echo OK_web_mail_env || echo NG_web_mail_env
 ```
 
 ### 4. Apache ログの読み取り権限を確認する
@@ -145,10 +152,9 @@ sudo -u ubuntu crontab -l | grep lib.apache_access.report_service
 
 ## 失敗時の確認順
 
-1. 「宛先が設定されていません」: `/var/www/html/portfolio/.env` の `APACHE_REPORT_RECIPIENT` を確認する。
-2. 「集計結果がありません」「集計結果が古い」: `/var/log/portfolio/apache-access-report.log` と `/var/lib/portfolio/apache_access_report.json` の更新時刻を確認する。
-3. 集計コマンドが失敗: `APACHE_ACCESS_LOG_GLOBS`、combined 形式、`ubuntu` のログ読み取り権限を確認する。
-4. メール送信が失敗: `MAIL_SMTP_*`、TLS、宛先、Apache のエラーログを確認する。
-5. 修正後、手動集計を実行してからブラウザの送信操作を再実行する。
+1. 「集計結果がありません」「集計結果が古い」: `/var/log/portfolio/apache-access-report.log` と `/var/lib/portfolio/apache_access_report.json` の更新時刻を確認する。
+2. 集計コマンドが失敗: `APACHE_ACCESS_LOG_GLOBS`、combined 形式、`ubuntu` のログ読み取り権限を確認する。
+3. メール送信が失敗: `lib/mail/.env` の `MAIL_SMTP_*`、TLS、`MAIL_SMTP_USER`、Apache のエラーログを確認する。
+4. 修正後、手動集計を実行してからブラウザの送信操作を再実行する。
 
 SMTP パスワード、生ログ、実在する宛先は Issue や PR へ貼りません。

@@ -19,7 +19,6 @@ from lib.apache_access.domain.service.report_mail import (
 from lib.apache_access.domain.valueobject.report import (
     ApacheAccessReport,
     ApacheAccessReportError,
-    RecipientNotConfiguredError,
     ReportNotFoundError,
     ReportRateLimitedError,
     ReportStaleError,
@@ -41,12 +40,9 @@ _PROCESS_LOCK = threading.Lock()
 class ApacheAccessReportService:
     """Generate, store, and mail an identifier-free Apache access report."""
 
-    def __init__(
-        self, log_globs: tuple[str, ...], report_path: Path, recipient: str = ""
-    ):
+    def __init__(self, log_globs: tuple[str, ...], report_path: Path):
         self.log_globs = log_globs
         self.report_path = report_path
-        self.recipient = recipient
         self.state_path = report_path.with_suffix(".state.json")
         self.lock_path = report_path.with_suffix(".lock")
 
@@ -65,7 +61,6 @@ class ApacheAccessReportService:
         return cls(
             log_globs=log_globs,
             report_path=report_path,
-            recipient=os.getenv("APACHE_REPORT_RECIPIENT", ""),
         )
 
     def generate_report(
@@ -116,8 +111,6 @@ class ApacheAccessReportService:
         sent_at: datetime | None = None,
     ) -> ApacheAccessReport:
         """Validate freshness and rate limit, then mail the latest sanitized report."""
-        if not self.recipient:
-            raise RecipientNotConfiguredError("宛先が設定されていません。")
         sent_at = sent_at or datetime.now(timezone.utc)
 
         with self._locked():
@@ -130,10 +123,13 @@ class ApacheAccessReportService:
             if last_sent_at and sent_at - last_sent_at < timedelta(minutes=15):
                 raise ReportRateLimitedError("前回の送信から15分経過していません。")
 
-            body, html_body = ApacheAccessReportMailService().build_bodies(report)
             sender = mail_service or MailService()
+            recipient = getattr(sender, "user", "")
+            if not recipient:
+                raise ValueError("MAIL_SMTP_USER is not configured")
+            body, html_body = ApacheAccessReportMailService().build_bodies(report)
             sender.send_mail(
-                to=self.recipient,
+                to=recipient,
                 subject="Apache アクセス傾向レポート",
                 body=body,
                 html_body=html_body,

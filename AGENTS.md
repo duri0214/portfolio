@@ -65,7 +65,7 @@ git や gh の操作が失敗した場合は、API で迂回せず原因を切�
 
 1. この処理は `lib/apache_access` に置き、Djangoアプリ、モデル、migration、専用画面を追加しない。`home` はコンテンツカタログの責務だけを持つ。ブラウザ操作が必要な場合も、共通ナビバーからライブラリの `report_receiver.py` を呼び、元のページへ結果を通知する薄い入口に限る。
 2. サーバー管理者が Apache の `LogFormat` / `CustomLog`、VirtualHost ごとの出力先、リバースプロキシ経由の送信元、ローテーション形式を確認する。combined 形式でない場合や対象ログが特定できない場合は登録を進めない。
-3. サーバーの `.env` には、固定宛先の `APACHE_REPORT_RECIPIENT` と、既定値を変更する場合の `APACHE_ACCESS_LOG_GLOBS` / `APACHE_ACCESS_REPORT_PATH`、送信に必要な `MAIL_SMTP_*` / `MAIL_USE_TLS` を設定し、`.env` を Git やログへ出さない。
+3. `lib/mail/.env.example` を `lib/mail/.env` にコピーし、`MAIL_SMTP_USER` をレポートを受信する運用メールボックスとして設定する。既定値を変更する場合だけサーバーの `.env` に `APACHE_ACCESS_LOG_GLOBS` / `APACHE_ACCESS_REPORT_PATH` を設定し、環境ファイルを Git やログへ出さない。
 4. 定期処理ユーザーだけに現行・ローテート済み Apache アクセスログの読み取り権限を付与し、`www-data` が読めないことを確認する。匿名化済み JSON の保存先だけは `ubuntu` と `www-data` の双方が読み書きできるようにする。
 5. `sudo -u ubuntu -H bash -lc 'cd /var/www/html/portfolio && .venv/bin/python -m lib.apache_access.report_service'` を手動で一度実行し、成功を確認してから `ubuntu` の crontab に1時間ごとの定期実行を1行だけ登録する。この機能に `manage.py migrate` は不要。
-6. スーパーユーザーがブラウザで「アクセス集計をメール送信」を押し、固定宛先への到着と対象期間・生成時刻・件数を確認する。未ログイン・一般ユーザーの送信、未設定・古い集計・SMTP失敗の表示も確認する。
+6. スーパーユーザーがブラウザで「アクセス集計をメール送信」を押し、`MAIL_SMTP_USER` のメールボックスへの到着と対象期間・生成時刻・件数を確認する。未ログイン・一般ユーザーの送信、古い集計・SMTP設定不足・送信失敗の表示も確認する。

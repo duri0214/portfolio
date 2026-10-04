@@ -10,7 +10,6 @@ from django.views.decorators.http import require_POST
 
 from lib.apache_access.domain.service.report_service import ApacheAccessReportService
 from lib.apache_access.domain.valueobject.report import (
-    RecipientNotConfiguredError,
     ReportNotFoundError,
     ReportRateLimitedError,
     ReportStaleError,
@@ -31,9 +30,6 @@ def send_apache_access_report(request):
     service = ApacheAccessReportService.from_environment()
     try:
         service.send_latest_report()
-    except RecipientNotConfiguredError:
-        logger.error("APACHE_REPORT_RECIPIENT is not configured")
-        return _redirect_to_source(request, "recipient-missing")
     except ReportRateLimitedError:
         return _redirect_to_source(request, "rate-limited")
     except ReportNotFoundError:

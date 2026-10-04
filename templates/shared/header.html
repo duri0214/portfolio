@@ -71,11 +71,6 @@
                     集計メールを送信しました。
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
                 </div>
-            {% elif request.GET.apache_report == 'recipient-missing' %}
-                <div class="alert alert-danger alert-dismissible shadow" role="alert">
-                    宛先が設定されていません。
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
-                </div>
             {% elif request.GET.apache_report == 'rate-limited' %}
                 <div class="alert alert-warning alert-dismissible shadow" role="alert">
                     前回の送信から15分経過していません。

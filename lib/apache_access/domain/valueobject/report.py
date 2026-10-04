@@ -37,10 +37,6 @@ class ReportRateLimitedError(ApacheAccessReportError):
     """Raised when a report was sent within the last 15 minutes."""
 
 
-class RecipientNotConfiguredError(ApacheAccessReportError):
-    """Raised when the fixed administrator recipient is absent."""
-
-
 class ReportStorageError(ApacheAccessReportError):
     """Raised when a sanitized report or state file cannot be handled."""
 
