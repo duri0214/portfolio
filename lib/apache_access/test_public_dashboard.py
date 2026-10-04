@@ -67,6 +67,8 @@ class PublicAccessDashboardTests(SimpleTestCase):
         ):
             self.assertContains(response, text)
         self.assertNotContains(response, "アクセス集計をメール送信")
+        self.assertNotContains(response, 'aria-label="breadcrumb"')
+        self.assertNotContains(response, "ポートフォリオ")
 
     def test_query_and_environment_cannot_select_private_data(self):
         """入力: 実ログ設定とデータ源を指定するクエリ。処理: GET。期待値: 実集計を呼ばず固定サンプルを返す。"""
