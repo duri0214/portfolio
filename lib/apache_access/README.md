@@ -4,7 +4,11 @@
 
 ## ファイルと責務
 
-- `report_service.py`: ログ集計、匿名化済み JSON の保存、メール本文作成、`MailService` の呼び出し、cron 用 CLI
+- `report_service.py`: cron から呼ぶ集計 CLI の入口
+- `domain/valueobject/report.py`: 匿名化された集計値とドメイン例外
+- `domain/service/access_log_aggregator.py`: Apache combined ログの解析・集計
+- `domain/service/report_service.py`: JSON 保存、鮮度・再送制限、`MailService` 呼び出し
+- `domain/service/report_mail.py`: プレーンテキスト・HTML本文の生成
 - `web.py`: POST、CSRF、スーパーユーザー確認、操作元へのリダイレクトだけを行う Django アダプター
 - `test_report_service.py`: 集計、保存、送信、権限、Web 操作のテスト
 
@@ -17,7 +21,7 @@
 - 本番配置が `/var/www/html/portfolio` の場合: `/var/www/html/portfolio/.env`
 - ローカル環境の場合: チェックアウトした `portfolio` ディレクトリ直下の `.env`
 
-`report_service.py` は自身の場所からリポジトリルートを求め、このファイルを明示的に読み込みます。
+`domain/service/report_service.py` は自身の場所からリポジトリルートを求め、このファイルを明示的に読み込みます。
 
 `APACHE_ACCESS_LOG_GLOBS`、`APACHE_ACCESS_REPORT_PATH`、`APACHE_REPORT_RECIPIENT` はこのリポジトリ直下の `.env` に設定します。`MAIL_SMTP_*` と `MAIL_USE_TLS` は既存の `MailService` の設定を使います。`lib/mail/.env` が存在する環境ではそちらが先に読み込まれるため、SMTP設定を重複させず、既存の設定場所を使用してください。
 

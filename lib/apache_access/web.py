@@ -8,8 +8,8 @@ from django.shortcuts import redirect
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
-from lib.apache_access.report_service import (
-    ApacheAccessReportService,
+from lib.apache_access.domain.service.report_service import ApacheAccessReportService
+from lib.apache_access.domain.valueobject.report import (
     RecipientNotConfiguredError,
     ReportNotFoundError,
     ReportRateLimitedError,

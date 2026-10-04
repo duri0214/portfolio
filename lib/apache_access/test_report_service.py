@@ -11,14 +11,16 @@ from django.contrib.auth import get_user_model
 from django.test import Client, SimpleTestCase, TestCase
 from django.urls import reverse
 
-from lib.apache_access.report_service import (
+from lib.apache_access.domain.service.access_log_aggregator import (
+    aggregate_access_logs,
+)
+from lib.apache_access.domain.service.report_service import ApacheAccessReportService
+from lib.apache_access.domain.valueobject.report import (
     ApacheAccessReportError,
-    ApacheAccessReportService,
     RecipientNotConfiguredError,
     ReportNotFoundError,
     ReportRateLimitedError,
     ReportStaleError,
-    aggregate_access_logs,
 )
 from lib.mail.mail_service import MailSendError
 
