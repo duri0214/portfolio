@@ -3,17 +3,17 @@
 {% block title %}Apache アクセス傾向 | Henojiya{% endblock %}
 {% block content %}
     <main class="container py-4">
-        <header class="bg-dark text-white rounded-3 p-4 p-lg-5 mb-4">
+        <header class="bg-light rounded p-4 p-lg-5 mb-4 shadow-sm">
             <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
                 {% if show_real_data %}
                 <span class="badge bg-warning text-dark">管理者限定</span>
-                <span class="badge bg-light text-dark">実測データ</span>
+                <span class="badge bg-white text-secondary border">実測データ</span>
                 {% else %}
                 <span class="badge bg-info text-dark">公開デモ</span>
-                <span class="badge bg-light text-dark">サンプルデータ</span>
+                <span class="badge bg-white text-secondary border">サンプルデータ</span>
                 {% endif %}
             </div>
-            <h1 class="display-6 fw-bold">Apache アクセス傾向</h1>
+            <h1 class="display-4">Apache アクセス傾向</h1>
             <p class="lead mb-2">アクセスの量と、応答の内訳をひと目で。</p>
             <p class="mb-0">{% if show_real_data %}Apache アクセスログから、今週を含む6週間の傾向を確認できます。{% else %}架空の集計データで、週ごとの変化を紹介します。{% endif %}</p>
         </header>
