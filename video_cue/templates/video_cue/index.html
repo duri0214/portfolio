@@ -1,30 +1,46 @@
 {% extends 'video_cue/base.html' %}
+{% block body_class %}cue-home{% endblock %}
+{% block main_class %}container py-4 cue-home-main{% endblock %}
+{% block page_header %}
+<header class="bg-light rounded p-4 p-lg-5 mb-4 shadow-sm">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <span class="badge bg-white text-secondary border">VIDEO CUE</span>
+        <span class="badge bg-white text-secondary border">録画レビュー</span>
+    </div>
+    <h1 class="display-4">動きのあった場面から、見直す。</h1>
+    <p class="lead mb-2">録画を選ぶと、検出された区間をまとめて確認できます。</p>
+    <p class="mb-0">解析済みの映像を一覧から選び、動きのあった場面を確認できます。</p>
+</header>
+{% endblock %}
+{% block footer %}{% include 'shared/footer.html' %}{% endblock %}
 {% block content %}
-<div class="mb-4"><h1 class="h2 fw-bold">動きのあった場面から、見直す。</h1>
-<p class="text-secondary">録画を選ぶと、検出された区間をまとめて確認できます。</p></div>
 {% if error %}<div class="alert alert-warning" role="alert">{{ error }}</div>{% endif %}
 <div class="row g-3">
 {% for result in results %}
     <div class="col-md-6 col-xl-4">
-        <a class="card cue-result h-100 p-4 text-decoration-none" href="{% url 'video_cue:detail' result.key %}">
-            <div class="d-flex justify-content-between mb-4"><span class="text-secondary small">RECORDING</span><span aria-hidden="true">↗</span></div>
-            <h2 class="h4">録画 {{ result.key }}</h2>
-            {% if result.error %}<p class="text-danger mb-0">{{ result.error }}</p>
-            {% else %}<p class="text-secondary mb-3">録画時間 {{ result.analysis.duration|floatformat:1 }} 秒</p>
-            <div><span class="badge text-bg-dark">{{ result.analysis.events|length }} イベント</span>
-            {% if not result.analysis.events %}<span class="ms-2 text-secondary small">動きは検出されませんでした</span>{% endif %}</div>{% endif %}
+        <a class="card cue-result h-100 text-decoration-none shadow-sm" href="{% url 'video_cue:detail' result.key %}">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between mb-4"><span class="text-secondary small">RECORDING</span><span aria-hidden="true">↗</span></div>
+                <h2 class="h4">録画 {{ result.key }}</h2>
+                {% if result.error %}<p class="text-danger mb-0">{{ result.error }}</p>
+                {% else %}<p class="text-secondary mb-3">録画時間 {{ result.analysis.duration|floatformat:1 }} 秒</p>
+                <div><span class="badge text-bg-dark">{{ result.analysis.events|length }} イベント</span>
+                {% if not result.analysis.events %}<span class="ms-2 text-secondary small">動きは検出されませんでした</span>{% endif %}</div>{% endif %}
+            </div>
         </a>
     </div>
 {% empty %}{% if not error %}
-    <div class="alert alert-info" role="status">
-        <h2 class="h5">解析結果を受け取ると録画が表示されます</h2>
-        <ol class="mb-2">
-            <li><code>video-cue-engine</code> で動画を解析します。</li>
-            <li>解析完了後、解析結果と生成済みハイライトを VIDEO CUE に送信します。</li>
-            <li>この画面を再読み込みし、表示された録画を選択します。</li>
-        </ol>
-        <p class="mb-0">元動画のアップロードは不要です。</p>
-    </div>
+    <section class="card border-info mb-4" role="status">
+        <div class="card-body">
+            <h2 class="h5">解析結果を受け取ると録画が表示されます</h2>
+            <ol class="mb-2">
+                <li><code>video-cue-engine</code> で動画を解析します。</li>
+                <li>解析完了後、解析結果と生成済みハイライトを VIDEO CUE に送信します。</li>
+                <li>この画面を再読み込みし、表示された録画を選択します。</li>
+            </ol>
+            <p class="mb-0">元動画のアップロードは不要です。</p>
+        </div>
+    </section>
 {% endif %}{% endfor %}
 </div>
 {% endblock %}

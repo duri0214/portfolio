@@ -9,15 +9,18 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{% static 'video_cue/viewer.css' %}" rel="stylesheet">
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
 {% include 'shared/header.html' %}
-<main class="container-fluid cue-main px-3 px-lg-5 pb-5">
+<main class="{% block main_class %}container-fluid cue-main px-3 px-lg-5 pb-5{% endblock %}">
+    {% block page_header %}
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
         <a class="cue-brand text-decoration-none" href="{% url 'video_cue:index' %}"><span class="cue-rec-indicator" aria-hidden="true">◉</span> VIDEO CUE <span class="text-secondary fw-normal small ms-2">録画レビュー</span></a>
         <span class="badge rounded-pill text-bg-light border">解析済みの映像を閲覧</span>
     </div>
+    {% endblock %}
     {% block content %}{% endblock %}
 </main>
+{% block footer %}{% endblock %}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 {% block scripts %}{% endblock %}
 </body>
