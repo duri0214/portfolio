@@ -1,6 +1,8 @@
 {% extends 'video_cue/base.html' %}
 {% block body_class %}cue-home{% endblock %}
-{% block main_class %}container py-4 cue-home-main{% endblock %}
+{% block main_wrapper_start %}<div id="main" style="margin-top: 70px;">{% endblock %}
+{% block main_class %}container py-4{% endblock %}
+{% block main_wrapper_end %}</div>{% endblock %}
 {% block page_header %}
 <header class="bg-light rounded p-4 p-lg-5 mb-4 shadow-sm">
     <div class="d-flex flex-wrap align-items-center gap-2 mb-3">

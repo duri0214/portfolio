@@ -10,7 +10,6 @@ body { background: #f3f5f7; color: #18222f; }
 .cue-readout output { font-family: ui-monospace, monospace; font-variant-numeric: tabular-nums; }
 .cue-rate { width: 75px; }
 .cue-home { background: #fff; color: #212529; }
-.cue-home-main { margin-top: 70px; }
 .cue-home .cue-result { color: inherit; border-color: #dee2e6; }
 .cue-home .cue-result:hover { color: inherit; border-color: #adb5bd; }
 .cue-timeline { position: relative; height: 38px; margin: 0 14px; border-top: 3px solid #526371; }
