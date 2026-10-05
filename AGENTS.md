@@ -39,6 +39,7 @@
 4. `gh repo view --json defaultBranchRef --jq .defaultBranchRef.name` で既定ブランチを確認し、`git fetch origin --prune` で最新化する。
 5. 既定ブランチを起点に、`<Issue番号>-<英小文字と数字の短い説明>` 形式のトピックブランチを作成する。例: `955-integrate-codex-hotl`。
 6. Issue の assignee、Project、Project status を確認する。未設定なら `gh issue edit <Issue番号> --add-assignee <login> --add-project <Project名>` などで設定する。着手後の Project status は `gh project item-edit <Project番号> --owner <owner> --url <Issue URL> --field Status --value "In progress"` で更新する。`gh issue view <Issue番号> --json assignees,projectItems` で反映を再確認する。
+7. 子Issueの Project Status を `To do` から `In progress` に変更するときは、GitHub の Sub-issues で親Issueを確認する。親Issueの Status も `To do` の場合は、同じProject上の親Issueも `In progress` に変更する。親Issueがない場合や、親Issueの Status が `To do` 以外の場合は親を変更しない。変更後、子Issueと親Issueの `projectItems` を `gh issue view <Issue番号> --json projectItems` で再確認する。
 
 ### コミットと push
 
