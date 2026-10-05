@@ -67,6 +67,7 @@ urlpatterns = [
     path("kokkai/", include("kokkai.urls")),
     path("bank/", include("bank.urls")),
     path("video_cue/", include("video_cue.urls")),
+    path("apache_access/", include("apache_access.urls")),
     path("media/video_cue/<path:_path>", private_video_cue_media),
     path("admin/", admin.site.urls),
     path("accounts/login/", CustomLoginView.as_view(), name="login"),

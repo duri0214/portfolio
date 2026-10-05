@@ -1,0 +1,142 @@
+{% extends "apache_access/base.html" %}
+{% load humanize tz %}
+{% block title %}Apache アクセス傾向 | Henojiya{% endblock %}
+{% block content %}
+    <main class="container py-4">
+        <header class="bg-light rounded p-4 p-lg-5 mb-4 shadow-sm">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                {% if show_real_data %}
+                <span class="badge bg-warning text-dark">管理者限定</span>
+                <span class="badge bg-white text-secondary border">実測データ</span>
+                {% else %}
+                <span class="badge bg-info text-dark">公開デモ</span>
+                <span class="badge bg-white text-secondary border">サンプルデータ</span>
+                {% endif %}
+            </div>
+            <h1 class="display-4">Apache アクセス傾向</h1>
+            <p class="lead mb-2">アクセスの量と、応答の内訳をひと目で。</p>
+            <p class="mb-0">{% if show_real_data %}Apache アクセスログから、今週を含む6週間の傾向を確認できます。{% else %}架空の集計データで、週ごとの変化を紹介します。{% endif %}</p>
+        </header>
+
+        {% if error_message %}
+        <section class="alert alert-danger" role="alert">
+            <h2 class="h5">実測データを取得できませんでした</h2>
+            <p>{{ error_message }}</p>
+            <a href="{% url 'apache_access:index' %}" class="btn btn-outline-danger">再読み込み</a>
+        </section>
+        {% else %}
+        <section aria-label="データの出典と対象期間" class="card border-info mb-4">
+            <div class="card-body">
+                {% if dashboard.is_sample %}
+                <p class="fw-semibold mb-2">この画面の数値はすべてサンプルです。</p>
+                <p class="text-secondary small">実際のサイトの利用状況・稼働状況を示すものではありません。表示する値は固定です。</p>
+                {% else %}
+                <p class="fw-semibold mb-2">実測データを表示しています（管理者限定）。</p>
+                <p class="text-secondary small">読み取り可能な現行・ローテート済みログの範囲を集計しています。最後の週は集計時刻までの件数です。保存期間によって過去のログが含まれないことがあります。</p>
+                {% endif %}
+                <dl class="row small mb-0">
+                    <dt class="col-sm-3">データ源</dt>
+                    <dd class="col-sm-9">{% if dashboard.is_sample %}公開デモ用に作成した架空の集計データ{% else %}Apache アクセスログ（現行・ローテート済み）{% endif %}</dd>
+                    <dt class="col-sm-3">対象期間（JST）</dt>
+                    <dd class="col-sm-9">{{ dashboard.period_start|date:"Y年n月j日" }} 〜 {{ dashboard.period_end|date:"Y年n月j日" }}{% if dashboard.is_sample %}（両端の日を含む）{% else %}（集計時刻まで）{% endif %}</dd>
+                    <dt class="col-sm-3">集計時刻{% if dashboard.is_sample %}（サンプル設定）{% endif %}</dt>
+                    <dd class="col-sm-9">{{ dashboard.aggregated_at|timezone:"Asia/Tokyo"|date:"Y年n月j日 H:i" }} JST</dd>
+                    <dt class="col-sm-3">集計の粒度</dt>
+                    <dd class="col-sm-9 mb-0">件数は週単位、応答の内訳は対象期間全体</dd>
+                </dl>
+            </div>
+        </section>
+
+        {% if not dashboard.is_sample and dashboard.malformed_lines %}
+        <p class="alert alert-warning" role="status">解析できなかった {{ dashboard.malformed_lines|intcomma }} 行を除外しています。ログ形式を確認してください。</p>
+        {% endif %}
+        {% if not dashboard.total_requests %}
+        <p class="alert alert-info" role="status">対象ログ内に、対象期間のリクエストはありません。</p>
+        {% endif %}
+
+        <section class="row g-3 mb-4" aria-label="対象期間全体の集計">
+            <div class="col-md-4">
+                <div class="card h-100 bg-primary-subtle border-0">
+                    <div class="card-body p-4">
+                        <h2 class="h6 text-secondary">総リクエスト数</h2>
+                        <p class="display-6 fw-bold mb-1">{{ dashboard.total_requests|intcomma }}<span class="fs-6 fw-normal ms-2">件</span></p>
+                        <p class="small text-secondary mb-0">対象期間全体 · {% if dashboard.is_sample %}サンプル{% else %}実測{% endif %}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 bg-body-tertiary border-0">
+                    <div class="card-body p-4">
+                        <h2 class="h6 text-secondary">対象の週数</h2>
+                        <p class="display-6 fw-bold mb-1">{{ dashboard.weeks|length }}<span class="fs-6 fw-normal ms-2">週間</span></p>
+                        <p class="small text-secondary mb-0">{% if dashboard.is_sample %}月曜日から日曜日までの件数{% else %}月曜始まり・最後の週は集計時刻まで{% endif %}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 bg-body-tertiary border-0">
+                    <div class="card-body p-4">
+                        <h2 class="h6 text-secondary">応答の区分</h2>
+                        <p class="display-6 fw-bold mb-1">{{ dashboard.responses|length }}<span class="fs-6 fw-normal ms-2">区分</span></p>
+                        <p class="small text-secondary mb-0">HTTP ステータスの百の位で分類</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="row g-4 mb-4">
+            <section class="col-lg-7" aria-labelledby="weekly-heading">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body p-4">
+                        <h2 id="weekly-heading" class="h5">週ごとのリクエスト</h2>
+                        <p class="small text-secondary mb-4">{% if dashboard.is_sample %}サンプル{% else %}実測{% endif %} · 棒の長さは件数に比例します。</p>
+                        {% for week in dashboard.weeks %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between gap-2 small mb-2">
+                                    <span>{{ week.period_start|date:"n/j" }} 〜 {{ week.period_end|date:"n/j" }}</span>
+                                    <span class="fw-semibold">{{ week.request_count|intcomma }} 件</span>
+                                </div>
+                                <div class="progress" aria-hidden="true">
+                                    <div class="progress-bar bg-primary" style="width: {% widthratio week.request_count dashboard.peak_week_requests 100 %}%"></div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <p class="small text-secondary mb-0">対象期間：{{ dashboard.period_start|date:"Y/n/j" }} 〜 {{ dashboard.period_end|date:"Y/n/j" }}（JST）</p>
+                    </div>
+                </div>
+            </section>
+            <section class="col-lg-5" aria-labelledby="response-heading">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body p-4">
+                        <h2 id="response-heading" class="h5">応答の内訳</h2>
+                        <table class="table align-middle">
+                            <caption class="caption-top small text-secondary">{% if dashboard.is_sample %}サンプル{% else %}実測{% endif %} · 対象期間全体の集計（件）</caption>
+                            <thead>
+                            <tr><th scope="col">HTTP 応答区分</th><th scope="col" class="text-end">件数</th></tr>
+                            </thead>
+                            <tbody>
+                            {% for response in dashboard.responses %}
+                                <tr>
+                                    <th scope="row" class="fw-normal py-3">{{ response.label }}</th>
+                                    <td class="text-end text-nowrap">{{ response.request_count|intcomma }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                            <tfoot>
+                            <tr><th scope="row">合計</th><td class="text-end fw-semibold">{{ dashboard.total_requests|intcomma }}</td></tr>
+                            </tfoot>
+                        </table>
+                        <p class="small text-secondary mb-0">応答区分はリクエストへの処理結果です。エラー件数だけで攻撃や情報漏えいの有無は判断できません。</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <aside class="bg-body-tertiary rounded-3 p-4 mb-3" aria-labelledby="reading-heading">
+            <h2 id="reading-heading" class="h6">データの読み方</h2>
+            <p class="small text-secondary mb-2">リクエスト数はアクセスの件数です。同じ人による複数のアクセスを含むため、訪問者数とは異なります。{% if dashboard.is_sample %}このサンプルに 1xx 応答は含まれていません。{% endif %}</p>
+            <p class="small text-secondary mb-0">個別のアクセス情報は掲載せず、期間ごとの件数だけを紹介しています。</p>
+        </aside>
+        {% endif %}
+    </main>
+{% endblock %}

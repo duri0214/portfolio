@@ -2,6 +2,7 @@
 
 import logging
 import os
+import zlib
 from datetime import datetime, timedelta, timezone
 from glob import glob
 from pathlib import Path
@@ -24,6 +25,7 @@ from lib.apache_access.domain.valueobject.report import (
     ReportNotFoundError,
     ReportReadError,
 )
+from lib.apache_access.domain.valueobject.traffic import ApacheAccessTraffic
 from lib.mail.mail_service import MailService
 
 
@@ -33,7 +35,11 @@ logger = logging.getLogger(__name__)
 
 
 class ApacheAccessReportService:
-    """Aggregate Apache logs in memory and mail the resulting report."""
+    """Apacheログをメモリ上で集計し、必要に応じてメールを送信する。
+
+    Attributes:
+        log_globs: 現行・ローテート済みアクセスログの検索パターン。
+    """
 
     def __init__(self, log_globs: tuple[str, ...]):
         self.log_globs = log_globs
@@ -57,18 +63,12 @@ class ApacheAccessReportService:
         generated_at = generated_at or datetime.now(timezone.utc)
         period_end = generated_at
         period_start = period_end - timedelta(hours=24)
-        paths = sorted(
-            {Path(name) for pattern in self.log_globs for name in glob(pattern)}
-        )
-        if not paths:
-            raise ReportNotFoundError(
-                "Apache アクセスログが見つかりません。設定と読み取り権限を確認してください。"
-            )
+        paths = self._log_paths()
         try:
             counts = ApacheAccessLogAggregator().aggregate(
                 paths, period_start, period_end
             )
-        except (OSError, EOFError) as error:
+        except (OSError, EOFError, zlib.error) as error:
             raise ReportReadError(
                 f"Apache アクセスログを読み取れませんでした: {error}"
             ) from error
@@ -83,6 +83,34 @@ class ApacheAccessReportService:
             generated_at=generated_at,
             **counts,
         )
+
+    def generate_traffic(
+        self, period_start: datetime, period_end: datetime
+    ) -> ApacheAccessTraffic:
+        """指定期間の日別・応答区分別件数を返す。保存・メール送信・GPT呼び出しは行わない。"""
+        paths = self._log_paths()
+        try:
+            traffic = ApacheAccessLogAggregator().aggregate_traffic(
+                paths, period_start, period_end
+            )
+        except (OSError, EOFError, zlib.error) as error:
+            raise ReportReadError(
+                "Apache アクセスログを読み取れませんでした。"
+            ) from error
+        if traffic.total_requests == 0 and traffic.malformed_lines:
+            raise ApacheAccessReportError("Apache ログ形式を解析できません。")
+        return traffic
+
+    def _log_paths(self) -> list[Path]:
+        """設定された検索パターンから、重複しないログパスを返す。"""
+        paths = sorted(
+            {Path(name) for pattern in self.log_globs for name in glob(pattern)}
+        )
+        if not paths:
+            raise ReportNotFoundError(
+                "Apache アクセスログが見つかりません。設定と読み取り権限を確認してください。"
+            )
+        return paths
 
     def send_report(
         self,
