@@ -2,16 +2,12 @@ body { background: #f3f5f7; color: #18222f; }
 .cue-main { padding-top: 88px; max-width: 1640px; }
 .cue-brand { color: #18222f; font-weight: 800; letter-spacing: .06em; }
 .cue-rec-indicator { color: #dc3545; }
-.cue-result { border-color: #e0e4e9; transition: border-color .15s, transform .15s; }
-.cue-result:hover { border-color: #596f80; transform: translateY(-2px); }
 .cue-deck { background: #15212c; color: #f1f5f8; }
 .cue-deck video { aspect-ratio: 16 / 9; max-height: 58vh; background: #080d12; object-fit: contain; }
 .cue-lamp { color: #96dfbd; }
 .cue-readout output { font-family: ui-monospace, monospace; font-variant-numeric: tabular-nums; }
 .cue-rate { width: 75px; }
 .cue-home { background: #fff; color: #212529; }
-.cue-home .cue-result { color: inherit; border-color: #dee2e6; }
-.cue-home .cue-result:hover { color: inherit; border-color: #adb5bd; }
 .cue-timeline { position: relative; height: 38px; margin: 0 14px; border-top: 3px solid #526371; }
 .cue-marker { position: absolute; top: 4px; transform: translateX(-50%); min-width: 28px; padding: 2px 5px; color: #15212c; background: #b4e5d1; border: 0; border-radius: 5px; font-size: .8rem; }
 .cue-marker[aria-current="true"] { background: #fff; outline: 2px solid #96dfbd; }

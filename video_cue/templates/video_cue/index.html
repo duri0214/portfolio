@@ -1,26 +1,33 @@
 {% extends 'video_cue/base.html' %}
 {% block body_class %}cue-home{% endblock %}
 {% block main_wrapper_start %}<div id="main" style="margin-top: 70px;">{% endblock %}
-{% block main_class %}container py-4{% endblock %}
+{% block main_class %}container mt-4{% endblock %}
 {% block main_wrapper_end %}</div>{% endblock %}
 {% block page_header %}
-<header class="bg-light rounded p-4 p-lg-5 mb-4 shadow-sm">
-    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-        <span class="badge bg-white text-secondary border">VIDEO CUE</span>
-        <span class="badge bg-white text-secondary border">録画レビュー</span>
+<nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+    <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item active" aria-current="page">VIDEO CUE</li>
+    </ol>
+</nav>
+<div class="row g-4">
+    <div class="col-12">
+        <header class="bg-light p-5 rounded shadow-sm">
+            <h1 class="display-4">動きのあった場面から、見直す。</h1>
+            <p class="lead">録画を選ぶと、検出された区間をまとめて確認できます。</p>
+            <hr class="my-4">
+            <p class="mb-0">解析済みの映像を一覧から選び、動きのあった場面を確認できます。</p>
+        </header>
     </div>
-    <h1 class="display-4">動きのあった場面から、見直す。</h1>
-    <p class="lead mb-2">録画を選ぶと、検出された区間をまとめて確認できます。</p>
-    <p class="mb-0">解析済みの映像を一覧から選び、動きのあった場面を確認できます。</p>
-</header>
 {% endblock %}
 {% block footer %}{% include 'shared/footer.html' %}{% endblock %}
 {% block content %}
-{% if error %}<div class="alert alert-warning" role="alert">{{ error }}</div>{% endif %}
-<div class="row g-3">
+{% if error %}<div class="col-12"><div class="alert alert-warning" role="alert">{{ error }}</div></div>{% endif %}
+<div class="col-12">
+    <h2 class="h3 mb-0">録画一覧</h2>
+</div>
 {% for result in results %}
     <div class="col-md-6 col-xl-4">
-        <a class="card cue-result h-100 text-decoration-none shadow-sm" href="{% url 'video_cue:detail' result.key %}">
+        <a class="card h-100 text-decoration-none shadow-sm border-0" href="{% url 'video_cue:detail' result.key %}">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between mb-4"><span class="text-secondary small">RECORDING</span><span aria-hidden="true">↗</span></div>
                 <h2 class="h4">録画 {{ result.key }}</h2>
@@ -32,17 +39,19 @@
         </a>
     </div>
 {% empty %}{% if not error %}
-    <section class="card border-info mb-4" role="status">
-        <div class="card-body">
-            <h2 class="h5">解析結果を受け取ると録画が表示されます</h2>
+    <div class="col-12">
+        <section class="card bg-light border-0 py-5 text-center" role="status">
+            <div class="card-body">
+                <h2 class="h4 text-muted mb-3">解析結果を受け取ると録画が表示されます</h2>
             <ol class="mb-2">
                 <li><code>video-cue-engine</code> で動画を解析します。</li>
                 <li>解析完了後、解析結果と生成済みハイライトを VIDEO CUE に送信します。</li>
                 <li>この画面を再読み込みし、表示された録画を選択します。</li>
             </ol>
             <p class="mb-0">元動画のアップロードは不要です。</p>
-        </div>
-    </section>
+            </div>
+        </section>
+    </div>
 {% endif %}{% endfor %}
 </div>
 {% endblock %}
