@@ -34,15 +34,6 @@
                         {% endwith %}
                     </li>
                     {% if user.is_authenticated %}
-                        {% if user.is_superuser %}
-                            <li class="nav-item me-2">
-                                <form method="post" action="{% url 'send_apache_access_report' %}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                    <button type="submit" class="btn btn-sm btn-outline-secondary">アクセス集計をメール送信</button>
-                                </form>
-                            </li>
-                        {% endif %}
                         <li class="nav-item small mr-3">
                             <span class="nav-link"><i class="fas fa-user"></i> {{ user.username }}さん</span>
                         </li>
@@ -65,29 +56,4 @@
             </div>
         </div>
     </nav>
-    {% if request.GET.apache_report %}
-        <div class="container-fluid position-fixed px-3" style="top: 64px; z-index: 1080;">
-            {% if request.GET.apache_report == 'sent' %}
-                <div class="alert alert-success alert-dismissible shadow" role="alert">
-                    集計メールを送信しました。
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
-                </div>
-            {% elif request.GET.apache_report == 'report-missing' %}
-                <div class="alert alert-danger alert-dismissible shadow" role="alert">
-                    Apacheアクセスログが見つかりません。ログの場所と読み取り権限を確認してください。
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
-                </div>
-            {% elif request.GET.apache_report == 'report-unavailable' %}
-                <div class="alert alert-danger alert-dismissible shadow" role="alert">
-                    Apacheアクセスログを読み取れませんでした。ログの権限と管理者ログを確認してください。
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
-                </div>
-            {% elif request.GET.apache_report == 'send-failed' %}
-                <div class="alert alert-danger alert-dismissible shadow" role="alert">
-                    メールを送信できませんでした。管理者ログを確認してください。
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
-                </div>
-            {% endif %}
-        </div>
-    {% endif %}
 </header>

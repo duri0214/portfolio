@@ -370,8 +370,8 @@ class ApacheAccessReportViewTests(TestCase):
     @patch(
         "lib.apache_access.report_receiver.ApacheAccessReportService.from_environment"
     )
-    def test_result_is_a_notice_on_the_originating_page(self, service_factory):
-        """入力: 管理者の送信操作。処理: 元画面へ戻る。期待値: 専用画面を作らず結果を通知する。"""
+    def test_send_request_returns_to_the_originating_page(self, service_factory):
+        """入力: 管理者の送信操作。処理: 元画面へ戻る。期待値: レポートを送信する。"""
         self.client.force_login(self.superuser)
         response = self.client.post(
             self.url,
@@ -380,16 +380,11 @@ class ApacheAccessReportViewTests(TestCase):
         )
 
         self.assertRedirects(response, "/?apache_report=sent")
-        self.assertContains(response, "集計メールを送信しました。")
         service_factory.return_value.send_report.assert_called_once()
 
-    def test_send_button_is_only_in_superuser_navbar(self):
-        """入力: 一般スタッフと管理者。処理: 共通ナビバー表示。期待値: 操作は管理者にだけ見える。"""
-        self.client.force_login(self.staff)
-        self.assertNotContains(
-            self.client.get(reverse("home:index")), "アクセス集計をメール送信"
-        )
+    def test_send_button_is_not_displayed_in_superuser_navbar(self):
+        """入力: スーパーユーザー。処理: 共通ナビバーを表示。期待値: メール送信操作を表示しない。"""
         self.client.force_login(self.superuser)
-        self.assertContains(
+        self.assertNotContains(
             self.client.get(reverse("home:index")), "アクセス集計をメール送信"
         )
