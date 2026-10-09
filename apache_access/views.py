@@ -9,10 +9,10 @@ from django.views.decorators.vary import vary_on_cookie
 from django.views.generic import TemplateView
 
 from apache_access.domain.service.dashboard import ApacheAccessDashboardService
-from lib.apache_access.domain.valueobject.report import (
-    ApacheAccessReportError,
-    ReportNotFoundError,
-    ReportReadError,
+from lib.apache_access.domain.valueobject.traffic import (
+    ApacheAccessTrafficError,
+    TrafficNotFoundError,
+    TrafficReadError,
 )
 
 
@@ -48,11 +48,11 @@ class IndexView(TemplateView):
                 if show_real_data
                 else ApacheAccessDashboardService.build_sample()
             )
-        except ApacheAccessReportError as error:
+        except ApacheAccessTrafficError as error:
             logger.exception("Apache dashboard aggregation failed")
-            if isinstance(error, ReportNotFoundError):
+            if isinstance(error, TrafficNotFoundError):
                 message = "アクセスログが見つかりません。サーバーのログ設定を確認してください。"
-            elif isinstance(error, ReportReadError):
+            elif isinstance(error, TrafficReadError):
                 message = "アクセスログを読み取れません。サーバーの読み取り権限を確認してください。"
             else:
                 message = "アクセスログを解析できません。ログ形式とサーバーログを確認してください。"

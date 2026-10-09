@@ -24,13 +24,12 @@ from django.urls import reverse
 from apache_access.domain.service.dashboard import ApacheAccessDashboardService
 from apache_access.domain.valueobject.dashboard import AccessResponse, AccessWeek
 from apache_access.views import IndexView
-from lib.apache_access.domain.service.report_service import ApacheAccessReportService
-from lib.apache_access.domain.valueobject.report import (
-    ApacheAccessReportError,
-    ReportNotFoundError,
-    ReportReadError,
+from lib.apache_access.domain.service.traffic_service import ApacheAccessTrafficService
+from lib.apache_access.domain.valueobject.traffic import (
+    ApacheAccessTrafficError,
+    TrafficNotFoundError,
+    TrafficReadError,
 )
-from lib.apache_access.report_receiver import send_apache_access_report
 
 
 def real_dashboard_fixture():
@@ -180,8 +179,8 @@ class DashboardViewTests(SimpleTestCase):
         with (
             patch.dict(os.environ, {"APACHE_ACCESS_LOG_GLOBS": "/private/access.log*"}),
             patch.object(
-                ApacheAccessReportService, "from_environment"
-            ) as report_service,
+                ApacheAccessTrafficService, "from_environment"
+            ) as traffic_service,
         ):
             response = self.client.get(
                 reverse("apache_access:index"),
@@ -196,19 +195,19 @@ class DashboardViewTests(SimpleTestCase):
         self.assertEqual(
             response.context["dashboard"], ApacheAccessDashboardService.build_sample()
         )
-        report_service.assert_not_called()
+        traffic_service.assert_not_called()
 
     @override_settings(DEBUG=False)
     def test_log_failures_return_503_without_details_or_sample_fallback(self):
         """入力: 本番管理者とログ欠損/読み取り/解析エラー。処理: GET。期待値: 詳細を含めず503を表示し、偽の0件やサンプルにしない。"""
         for error, message in (
             (
-                ReportNotFoundError("/private/access.log"),
+                TrafficNotFoundError("/private/access.log"),
                 "アクセスログが見つかりません",
             ),
-            (ReportReadError("private credentials"), "アクセスログを読み取れません"),
+            (TrafficReadError("private credentials"), "アクセスログを読み取れません"),
             (
-                ApacheAccessReportError("private raw line"),
+                ApacheAccessTrafficError("private raw line"),
                 "アクセスログを解析できません",
             ),
         ):
@@ -229,18 +228,12 @@ class DashboardViewTests(SimpleTestCase):
             self.assertIn("no-store", response["Cache-Control"])
 
     @override_settings(DEBUG=False)
-    def test_empty_readable_logs_show_zero_and_do_not_send_mail(self):
-        """入力: 本番管理者と空の読み取り可能ログ。処理: GET。期待値: 実測0件を表示し、メールとGPTを呼ばない。"""
+    def test_empty_readable_logs_show_zero(self):
+        """入力: 本番管理者と空の読み取り可能ログ。処理: GET。期待値: 実測0件を表示する。"""
         with TemporaryDirectory() as directory:
             path = Path(directory) / "access.log"
             path.write_text("", encoding="utf-8")
-            with (
-                patch.dict(os.environ, {"APACHE_ACCESS_LOG_GLOBS": str(path)}),
-                patch.object(ApacheAccessReportService, "send_report") as send_report,
-                patch(
-                    "lib.apache_access.domain.service.report_service.ApacheAccessReportSummaryService"
-                ) as gpt,
-            ):
+            with patch.dict(os.environ, {"APACHE_ACCESS_LOG_GLOBS": str(path)}):
                 request = RequestFactory().get(reverse("apache_access:index"))
                 request.user = get_user_model()(is_superuser=True)
                 response = IndexView.as_view()(request).render()
@@ -250,8 +243,6 @@ class DashboardViewTests(SimpleTestCase):
         self.assertEqual(response.context_data["dashboard"].total_requests, 0)
         self.assertNotContains(response, "width: %")
         self.assertContains(response, "width: 0%")
-        send_report.assert_not_called()
-        gpt.assert_not_called()
 
     def test_public_endpoint_is_read_only(self):
         """入力: HEADとPOST。処理: アプリURLへ送信。期待値: HEADは成功し、POSTは405で拒否する。"""
@@ -270,27 +261,6 @@ class DashboardViewTests(SimpleTestCase):
         ):
             with self.subTest(path=path):
                 self.assertEqual(self.client.get(path, secure=True).status_code, 404)
-
-    def test_non_superusers_cannot_invoke_private_report(self):
-        """入力: ゲスト・一般・スタッフのPOST。処理: 送信URL直指定。期待値: 403で集計・送信を呼ばない。"""
-        user_model = get_user_model()
-        with patch.object(
-            ApacheAccessReportService, "from_environment"
-        ) as private_service:
-            for user in (
-                AnonymousUser(),
-                user_model(username="viewer"),
-                user_model(username="staff", is_staff=True),
-            ):
-                with self.subTest(user=str(user)):
-                    request = RequestFactory().post(
-                        reverse("send_apache_access_report")
-                    )
-                    request.user = user
-                    self.assertEqual(
-                        send_apache_access_report(request).status_code, 403
-                    )
-        private_service.assert_not_called()
 
     def test_catalog_and_navigation_link_to_app(self):
         """入力: HOMEと紹介ページ。処理: 導線を確認。期待値: 名前空間付きのアプリURLと公開デモの説明が表示される。"""

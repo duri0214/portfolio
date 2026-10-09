@@ -40,11 +40,10 @@ HOME のカタログ → `/about/apache_access/` → アプリ、または共通
 
 ## 情報の扱い
 
-- 公開サンプルの表示では実ログを読まない。ログ・SMTP・GPTの準備は閲覧に不要。
+- 公開サンプルの表示では実ログを読まない。閲覧にSMTPやGPTの準備は不要。
 - 実測の表示には日付、応答区分、件数だけを渡す。IP、URL、クエリ文字列、User-Agent、生ログは表示データへ含めない。
-- 管理者向けメールの送信元集中度、要注意パス、ログイン先の件数は画面へ渡さない。
 - 全モードとエラー応答に `Cache-Control: private, no-store` と `Vary: Cookie` を付け、管理者の実測値が共有キャッシュやログアウト後の画面取得に流用されるのを防ぐ。
-- 表示はGET / HEADで行い、メール送信・GPT呼び出し・集計結果の保存を行わない。メール送信は従来のスーパーユーザー限定POST / CSRF保護付き入口を使う。
+- 表示はGET / HEADで行い、集計結果を保存しない。
 
 ## 実装の責務
 
@@ -55,7 +54,7 @@ HOME のカタログ → `/about/apache_access/` → アプリ、または共通
 | `apache_access/domain/valueobject/dashboard.py` | 画面に渡す期間・区分・件数 |
 | `apache_access/templates/apache_access/` | アプリ専用のbaseとindexテンプレート。HOMEへ戻るパンくずは設けない |
 | `apache_access/static/apache_access/c_a.ico` | アプリ専用favicon |
-| `lib/apache_access/domain/service/` | ログ読み取りと集計、既存のメール・GPT処理を提供する共通ライブラリ |
+| `lib/apache_access/domain/service/` | ログ読み取りとダッシュボード用の期間集計を提供する共通ライブラリ |
 | `lib/apache_access/domain/valueobject/traffic.py` | 識別子を含まない日別・応答区分別集計 |
 | `home` | カタログと紹介ページ |
 
@@ -65,5 +64,4 @@ HOME のカタログ → `/about/apache_access/` → アプリ、または共通
 
 - `apache_access/tests.py`: 環境と権限の全組み合わせ、サンプルの整合性、実測の期間変換、0件・503表示、アプリの導線、favicon、ログアウトとキャッシュの境界。
 - `lib/apache_access/test_traffic.py`: 現行・gzipログ、期間境界、タイムゾーン、HTTP応答区分、重複パターン、識別子の除外、ログなし・空・解析不能・読み取り失敗。
-- `lib/apache_access/test_report_service.py`: 既存のメール集計・送信・GPT・権限・CSRFの回帰確認。
 - `home.tests`: HOMEと紹介導線の回帰確認。

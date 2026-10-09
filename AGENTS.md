@@ -61,14 +61,3 @@
 7. 作成・更新後に `gh issue view <Issue番号> --json assignees,labels,projectItems` と `gh pr view <PR番号> --json url,assignees,labels,projectItems` を実行し、IssueとPRのassignee、ラベル、Project名、Project statusを照合する。PR側に不足があれば `gh pr edit <PR番号> --add-assignee <login> --add-label <ラベル名> --add-project <Project名>` などで補う。Project statusは `gh project item-edit <Project番号> --owner <owner> --url <PR URL> --field Status --value <Issueのstatus>` で揃える。両方を再取得して反映を確認し、失敗した項目は原因と現在の値を報告する。変更依頼では、明示的な `PR不要` 指定がない限り作成または更新まで進める。
 
 git や gh の操作が失敗した場合は、API で迂回せず原因を切り分けて報告する。Project操作の権限が不足する場合は、`gh auth refresh -s read:project -s project` が必要であることを伝える。
-
-## Apacheアクセス集計メールの運用（Issue #954）
-
-この機能を本番で有効化するときは、実装確認とサーバー運用確認を分け、次の順序を守る。詳細なコマンドは [`lib/apache_access/README.md`](lib/apache_access/README.md) に集約し、`docs/apache_access_report.md` は仕様だけを記載する。
-
-1. この処理は `lib/apache_access` に置き、Djangoアプリ、モデル、migration、専用画面を追加しない。`home` はコンテンツカタログの責務だけを持つ。ブラウザ操作が必要な場合も、共通ナビバーからライブラリの `report_receiver.py` を呼び、元のページへ結果を通知する薄い入口に限る。
-2. サーバー管理者が Apache の `LogFormat` / `CustomLog`、VirtualHost ごとの出力先、リバースプロキシ経由の送信元、ローテーション形式を確認する。combined 形式でない場合や対象ログが特定できない場合は登録を進めない。
-3. プロジェクトルートの `.env.example` を `.env` にコピーし、`MAIL_SMTP_USER` をレポートを受信する運用メールボックスとして設定する。既定値を変更する場合だけサーバーの `.env` に `APACHE_ACCESS_LOG_GLOBS` を設定し、環境ファイルを Git やログへ出さない。
-4. Web実行ユーザーの `www-data` に現行・ローテート済み Apache アクセスログの読み取り権限だけを付与し、書き込み権限や集計結果の保存先を用意しない。
-5. スーパーユーザーがブラウザで「アクセス集計をメール送信」を押し、Webプロセスがログを読み取り専用で集計して `MAIL_SMTP_USER` のメールボックスへ送ることを確認する。この機能に `manage.py migrate` は不要。
-6. 未ログイン・一般ユーザーの送信、ログ読み取り権限不足、SMTP設定不足・送信失敗の表示も確認する。
