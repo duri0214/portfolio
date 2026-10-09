@@ -73,6 +73,13 @@ DJANGO_DEBUG_MODE=False
 
 `DJANGO_DEBUG_MODE=True` のままでは、Django のデバッグモードが有効になります。Apacheアクセスダッシュボードを含む本番機能を意図した設定で動かすため、必ず `False` を設定してください。
 
+既存の `DJANGO_DEBUG_MODE` を本番用の値へ更新するには、サーバー上で次を実行します。
+
+```bash
+cd /var/www/html/portfolio
+sed -i -E 's/^DJANGO_DEBUG_MODE=.*/DJANGO_DEBUG_MODE=False/' .env
+```
+
 ### 権限構成
 
 - `ubuntu`: Git操作、`collectstatic` 実行（ソースコード管理・静的ファイル生成）
