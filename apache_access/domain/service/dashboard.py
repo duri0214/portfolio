@@ -8,7 +8,7 @@ from apache_access.domain.valueobject.dashboard import (
     AccessResponse,
     AccessWeek,
 )
-from lib.apache_access.domain.service.report_service import ApacheAccessReportService
+from lib.apache_access.domain.service.traffic_service import ApacheAccessTrafficService
 
 
 JST = ZoneInfo("Asia/Tokyo")
@@ -56,7 +56,7 @@ class ApacheAccessDashboardService:
         this_monday = today - timedelta(days=today.weekday())
         first_monday = this_monday - timedelta(weeks=5)
         period_start = datetime.combine(first_monday, time.min, tzinfo=JST)
-        traffic = ApacheAccessReportService.from_environment().generate_traffic(
+        traffic = ApacheAccessTrafficService.from_environment().generate(
             period_start, aggregated_at
         )
         weeks = []

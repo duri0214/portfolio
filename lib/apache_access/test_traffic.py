@@ -1,4 +1,4 @@
-"""画面とメールで共有するログ読み取り・期間集計を検証する。"""
+"""ダッシュボード用のログ読み取り・期間集計を検証する。"""
 
 import gzip
 import zlib
@@ -10,11 +10,11 @@ from zoneinfo import ZoneInfo
 
 from django.test import SimpleTestCase
 
-from lib.apache_access.domain.service.report_service import ApacheAccessReportService
-from lib.apache_access.domain.valueobject.report import (
-    ApacheAccessReportError,
-    ReportNotFoundError,
-    ReportReadError,
+from lib.apache_access.domain.service.traffic_service import ApacheAccessTrafficService
+from lib.apache_access.domain.valueobject.traffic import (
+    ApacheAccessTrafficError,
+    TrafficNotFoundError,
+    TrafficReadError,
 )
 
 
@@ -46,11 +46,11 @@ class ApacheAccessTrafficTests(SimpleTestCase):
             current.write_text("".join(lines[:4]), encoding="utf-8")
             with gzip.open(base / "access.log.1.gz", "wt", encoding="utf-8") as log:
                 log.write("".join(lines[4:]) + "malformed line\n")
-            service = ApacheAccessReportService(
+            service = ApacheAccessTrafficService(
                 (str(base / "access.log*"), str(current))
             )
 
-            traffic = service.generate_traffic(start, end)
+            traffic = service.generate(start, end)
 
         self.assertEqual(traffic.total_requests, 5)
         self.assertEqual(traffic.responses_by_class, {1: 1, 2: 1, 3: 1, 4: 1, 5: 1})
@@ -68,15 +68,15 @@ class ApacheAccessTrafficTests(SimpleTestCase):
         end = datetime(2026, 10, 1, tzinfo=start.tzinfo)
         with TemporaryDirectory() as directory:
             path = Path(directory) / "access.log"
-            service = ApacheAccessReportService((str(path),))
-            with self.assertRaises(ReportNotFoundError):
-                service.generate_traffic(start, end)
+            service = ApacheAccessTrafficService((str(path),))
+            with self.assertRaises(TrafficNotFoundError):
+                service.generate(start, end)
             path.write_text("unsupported format\n", encoding="utf-8")
-            with self.assertRaises(ApacheAccessReportError):
-                service.generate_traffic(start, end)
+            with self.assertRaises(ApacheAccessTrafficError):
+                service.generate(start, end)
             path.write_text("", encoding="utf-8")
 
-            traffic = service.generate_traffic(start, end)
+            traffic = service.generate(start, end)
 
         self.assertEqual(traffic.total_requests, 0)
         self.assertEqual(traffic.malformed_lines, 0)
@@ -88,16 +88,18 @@ class ApacheAccessTrafficTests(SimpleTestCase):
         with TemporaryDirectory() as directory:
             path = Path(directory) / "access.log"
             path.write_text("", encoding="utf-8")
-            service = ApacheAccessReportService((str(Path(directory) / "access.log*"),))
+            service = ApacheAccessTrafficService(
+                (str(Path(directory) / "access.log*"),)
+            )
             with patch("builtins.open", side_effect=PermissionError("private path")):
-                with self.assertRaises(ReportReadError):
-                    service.generate_traffic(start, end)
+                with self.assertRaises(TrafficReadError):
+                    service.generate(start, end)
             (Path(directory) / "access.log.1.gz").write_bytes(b"not gzip")
-            with self.assertRaises(ReportReadError):
-                service.generate_traffic(start, end)
+            with self.assertRaises(TrafficReadError):
+                service.generate(start, end)
             with patch(
                 "lib.apache_access.domain.service.access_log_aggregator.gzip.open",
                 side_effect=zlib.error("corrupt deflate stream"),
             ):
-                with self.assertRaises(ReportReadError):
-                    service.generate_traffic(start, end)
+                with self.assertRaises(TrafficReadError):
+                    service.generate(start, end)

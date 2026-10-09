@@ -4,6 +4,18 @@ from dataclasses import dataclass
 from datetime import date
 
 
+class ApacheAccessTrafficError(Exception):
+    """Apacheアクセスログの集計に失敗したときの基底例外。"""
+
+
+class TrafficNotFoundError(ApacheAccessTrafficError):
+    """対象のアクセスログが見つからない。"""
+
+
+class TrafficReadError(ApacheAccessTrafficError):
+    """対象のアクセスログを読み取れない。"""
+
+
 @dataclass(frozen=True)
 class ApacheAccessTraffic:
     """任意の期間内のアクセスを日付と応答区分で集計した値。
