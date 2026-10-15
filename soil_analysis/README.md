@@ -125,6 +125,13 @@
 
 - `ChemicalImportService`: 川田研究所形式の Excel ファイルから化学分析データを取り込みます。
 - `HardnessImportService`: 土壌硬度計の CSV データを取り込みます。
+- `load_soil_map`: 農研機構「縮尺20万分の1土壌図」の全国Shape ZIPを検証して取り込みます。ZIPはGitへ追加せず、管理者画面の「全国土壌図 ZIP取り込み」または次の手動コマンドで登録します。
+
+```powershell
+python manage.py load_soil_map C:\data\全国_20.zip
+```
+
+取込時に `.shp`、`.shx`、`.dbf`、`.prj`、Polygon型、JGD_2000、必須属性を確認し、土壌属性がすべて未設定の地物は除外数として記録します。それ以外を全件保存できた場合だけ日本地図の土壌モードを新しい版へ切り替えます。
 
 ### e-Stat 農業統計取得
 
@@ -166,3 +173,13 @@ python manage.py daily_fetch_farmland_statistics --dry-run
 
 - 農林水産省 作物統計: https://www.maff.go.jp/j/tokei/kouhyou/sakumotu/
 - e-Stat 作物統計調査: https://www.e-stat.go.jp/stat-search/files?toukei=00500215&tstat=000001013427
+
+
+## 全国土壌図ZIPの取込契約
+
+出典は農研機構の[縮尺20万分の1土壌図（Shapeファイル県別・全国一括）](https://soil-inventory.rad.naro.go.jp/download20.html)です。配布物は全国版1件と県別版47件ですが、アプリが取り込むのは全国版だけです。県別版は全国版と地理的な範囲が重なるため、保存前に除外します。
+
+- ZIPにはShapeの`.shp`、`.shx`、`.dbf`、`.prj`を一組だけ含めます。`.cpg`があればDBFの文字コード宣言として使い、なければ国内Shapeの既定としてCP932で読み込みます。
+- ShapeはPolygon型、座標参照系はJGD_2000、属性列は`Pref_JCD`、`SG_CD`、`SSbG_CD`、`SSerGrCD`、`SoilName`を必須とします。保存前に`Pref_JCD`が01から47まで全て存在することも検証するため、県別ZIPは保存しません。
+- 各地物は都道府県コード、土壌群・亜群・統群コード、土壌名、Polygon座標を保存します。土壌属性4列がすべて空欄の地物だけは公的データの欠測として除外数に記録し、一部だけ空欄、不正な都道府県コード、Polygon座標はZIP全体をエラーにします。
+- ZIP全体のSHA-256を保存し、同一バイト列の再取込は拒否します。異なる全国版は版として保存して新しい版だけを有効化するため、画面には常に1版だけが表示されます。

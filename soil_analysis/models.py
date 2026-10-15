@@ -978,3 +978,80 @@ class SupplementalRiskIndicator(models.Model):
 
     def __str__(self):
         return self.display_name
+
+
+class SoilMapDataset(models.Model):
+    """日本土壌インベントリーから取り込んだ土壌図の一つの版を保持します。
+
+    Attributes:
+        source_file_name: 取込元ZIPファイル名。
+        source_sha256: 取込元ZIPのSHA-256。
+        source_crs: Shapeファイルに記載された座標参照系。
+        feature_count: 取り込んだPolygon件数。
+        excluded_feature_count: 土壌属性が未設定のため表示対象から除外した地物数。
+        is_active: 日本地図に表示する有効版かどうか。
+        imported_at: アプリケーションが取込を完了した日時。
+        created_at: レコード作成日時。
+    """
+
+    source_file_name = models.CharField("取込元ZIPファイル名", max_length=255)
+    source_sha256 = models.CharField("取込元SHA-256", max_length=64, unique=True)
+    source_crs = models.TextField("座標参照系")
+    feature_count = models.PositiveIntegerField("地物数")
+    excluded_feature_count = models.PositiveIntegerField("除外地物数", default=0)
+    is_active = models.BooleanField("有効版", default=False)
+    imported_at = models.DateTimeField("取込完了日時")
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+
+    class Meta:
+        ordering = ["-imported_at", "-id"]
+        verbose_name = "土壌図データ版"
+        verbose_name_plural = "土壌図データ版"
+
+    def __str__(self):
+        return f"{self.source_file_name} ({self.imported_at:%Y-%m-%d %H:%M})"
+
+
+class SoilMapPolygon(models.Model):
+    """一つの土壌図版に含まれるPolygonと、地図表示に必要な属性を保持します。
+
+    Geometry は Shape のリング座標をJSONで保存します。通常の画面は都道府県単位の
+    集計のみを読むため、ZIP をHTTPリクエストごとに再読込しません。
+
+    Attributes:
+        dataset: 所属する土壌図データ版。
+        prefecture_code: ShapeのPref_JCD（都道府県コード）。
+        soil_group_code: ShapeのSG_CD（土壌群コード）。
+        soil_subgroup_code: ShapeのSSbG_CD。
+        soil_series_code: ShapeのSSerGrCD。
+        soil_name: ShapeのSoilName（土壌名）。
+        coordinates: Polygonのリング座標。
+        min_lng: 経度の最小値。
+        min_lat: 緯度の最小値。
+        max_lng: 経度の最大値。
+        max_lat: 緯度の最大値。
+    """
+
+    dataset = models.ForeignKey(
+        SoilMapDataset, on_delete=models.CASCADE, verbose_name="土壌図データ版"
+    )
+    prefecture_code = models.CharField("都道府県コード", max_length=2)
+    soil_group_code = models.CharField("土壌群コード", max_length=32)
+    soil_subgroup_code = models.CharField("土壌亜群コード", max_length=32)
+    soil_series_code = models.CharField("土壌統群コード", max_length=32)
+    soil_name = models.CharField("土壌名", max_length=255)
+    coordinates = models.JSONField("Polygon座標")
+    min_lng = models.FloatField("最小経度")
+    min_lat = models.FloatField("最小緯度")
+    max_lng = models.FloatField("最大経度")
+    max_lat = models.FloatField("最大緯度")
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["dataset", "prefecture_code"]),
+            models.Index(
+                fields=["dataset", "min_lng", "max_lng", "min_lat", "max_lat"]
+            ),
+        ]
+        verbose_name = "土壌図Polygon"
+        verbose_name_plural = "土壌図Polygon"

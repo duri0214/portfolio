@@ -7,6 +7,7 @@ from . import views
 app_name = "soil"
 urlpatterns = [
     path("", views.Home.as_view(), name="home"),
+    path("soil-map/upload", views.SoilMapUploadView.as_view(), name="soil_map_upload"),
     path("company/create", views.CompanyCreateView.as_view(), name="company_create"),
     path(
         "company/<int:pk>/detail",
