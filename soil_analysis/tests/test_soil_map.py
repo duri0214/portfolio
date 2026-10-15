@@ -34,10 +34,23 @@ class SoilMapImportServiceTest(TestCase):
             dataset = SoilMapImportService.import_archive(archive_path)
 
         self.assertTrue(dataset.is_active)
-        self.assertEqual(dataset.feature_count, 3)
+        self.assertEqual(dataset.feature_count, 49)
         self.assertEqual(dataset.excluded_feature_count, 1)
-        self.assertEqual(SoilMapPolygon.objects.filter(dataset=dataset).count(), 3)
+        self.assertEqual(SoilMapPolygon.objects.filter(dataset=dataset).count(), 49)
         self.assertEqual(SoilMapPolygon.objects.first().prefecture_code, "02")
+
+    def test_prefecture_archive_is_rejected_before_it_creates_a_dataset(self):
+        """A partial archive is rejected before a data version or polygons are stored."""
+        with tempfile.TemporaryDirectory() as directory:
+            archive_path = self._create_archive(
+                Path(directory), include_national_coverage=False
+            )
+
+            with self.assertRaisesRegex(SoilMapImportError, "全国版"):
+                SoilMapImportService.import_archive(archive_path)
+
+        self.assertEqual(SoilMapDataset.objects.count(), 0)
+        self.assertEqual(SoilMapPolygon.objects.count(), 0)
 
     def test_invalid_archive_keeps_the_current_dataset_active(self):
         """
@@ -71,6 +84,7 @@ class SoilMapImportServiceTest(TestCase):
         dbf_encoding: str = "utf-8",
         include_cpg: bool = True,
         include_empty_record: bool = False,
+        include_national_coverage: bool = True,
     ) -> Path:
         shape_path = directory / "national.shp"
         writer = shapefile.Writer(str(shape_path), encoding=dbf_encoding)
@@ -97,6 +111,21 @@ class SoilMapImportServiceTest(TestCase):
                 ]
             )
             writer.record("39", "", "", "", "")
+        if include_national_coverage:
+            for prefecture_code in range(1, 48):
+                if prefecture_code == 2:
+                    continue
+                writer.poly(
+                    [
+                        [
+                            [140.0, 35.0],
+                            [140.1, 35.0],
+                            [140.1, 35.1],
+                            [140.0, 35.0],
+                        ]
+                    ]
+                )
+                writer.record(f"{prefecture_code:02d}", "C", "C1", "C11", "soil")
         writer.close()
         shape_path.with_suffix(".prj").write_text(crs, encoding="utf-8")
         if include_cpg:
@@ -130,7 +159,7 @@ class SoilMapServiceTest(TestCase):
 
         self.assertEqual(aomori["soilName"], "黒ボク土")
         self.assertEqual(aomori["polygonCount"], 3)
-        self.assertEqual(payload["dataset"]["featureCount"], 3)
+        self.assertEqual(payload["dataset"]["featureCount"], 49)
 
     _create_archive = staticmethod(SoilMapImportServiceTest._create_archive)
 

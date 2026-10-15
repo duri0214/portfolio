@@ -24,6 +24,7 @@ class SoilMapImportService:
     """全国20万分の1土壌図のShape ZIPを、一つのデータ版として取り込む。"""
 
     REQUIRED_FIELD_NAMES = ("Pref_JCD", "SG_CD", "SSbG_CD", "SSerGrCD", "SoilName")
+    NATIONAL_PREFECTURE_CODES = frozenset(f"{code:02d}" for code in range(1, 48))
     MAX_UNCOMPRESSED_BYTES = 1_500 * 1024 * 1024
     BATCH_SIZE = 500
 
@@ -65,6 +66,8 @@ class SoilMapImportService:
 
             if not polygons:
                 raise SoilMapImportError("ShapeファイルにPolygonがありません。")
+
+            cls._validate_national_coverage(polygons)
 
             source_crs = shape_path.with_suffix(".prj").read_text(encoding="utf-8")
             with transaction.atomic():
@@ -256,6 +259,17 @@ class SoilMapImportService:
                     f"{row_number}件目の地物に不正な属性または座標があります。"
                 ) from error
         return polygons, excluded_feature_count
+
+    @classmethod
+    def _validate_national_coverage(cls, polygons: list[dict]) -> None:
+        """47都道府県を含む全国版だけを受け入れ、県別版との重複登録を防ぐ。"""
+        included_codes = {polygon["prefecture_code"] for polygon in polygons}
+        missing_codes = sorted(cls.NATIONAL_PREFECTURE_CODES - included_codes)
+        if missing_codes:
+            raise SoilMapImportError(
+                "全国版のShape ZIPを指定してください。"
+                f"不足している都道府県コード: {', '.join(missing_codes)}"
+            )
 
     @staticmethod
     def _value(
