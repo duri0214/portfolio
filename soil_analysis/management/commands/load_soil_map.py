@@ -23,7 +23,7 @@ class Command(BaseCommand):
         if not zip_path.is_file():
             raise CommandError(f"ZIPファイルが見つかりません: {zip_path}")
         try:
-            dataset = SoilMapImportService.import_zip_file(zip_path)
+            dataset = SoilMapImportService.import_soil_map_from_zip(zip_path)
         except SoilMapImportError as error:
             raise CommandError(str(error)) from error
         self.stdout.write(

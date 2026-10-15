@@ -16,7 +16,9 @@ from soil_analysis.models import SoilMapDataset, SoilMapPolygon
 
 
 class SoilMapImportServiceTest(TestCase):
-    def test_import_zip_file_stores_all_polygons_and_activates_the_new_dataset(self):
+    def test_import_soil_map_from_zip_stores_all_polygons_and_activates_the_new_dataset(
+        self,
+    ):
         """
         シナリオ:
         - 入力: JGD_2000・必須属性を含む全国土壌図形式のZIP。
@@ -31,7 +33,7 @@ class SoilMapImportServiceTest(TestCase):
                 include_empty_record=True,
             )
 
-            dataset = SoilMapImportService.import_zip_file(zip_path)
+            dataset = SoilMapImportService.import_soil_map_from_zip(zip_path)
 
         self.assertTrue(dataset.is_active)
         self.assertEqual(dataset.feature_count, 49)
@@ -52,7 +54,7 @@ class SoilMapImportServiceTest(TestCase):
             )
 
             with self.assertRaisesRegex(SoilMapImportError, "全国版"):
-                SoilMapImportService.import_zip_file(zip_path)
+                SoilMapImportService.import_soil_map_from_zip(zip_path)
 
         self.assertEqual(SoilMapDataset.objects.count(), 0)
         self.assertEqual(SoilMapPolygon.objects.count(), 0)
@@ -76,7 +78,7 @@ class SoilMapImportServiceTest(TestCase):
             zip_path = self._create_zip_file(Path(directory), crs="WGS_1984")
 
             with self.assertRaises(SoilMapImportError):
-                SoilMapImportService.import_zip_file(zip_path)
+                SoilMapImportService.import_soil_map_from_zip(zip_path)
 
         current.refresh_from_db()
         self.assertTrue(current.is_active)
@@ -95,7 +97,7 @@ class SoilMapImportServiceTest(TestCase):
                 zip_file.writestr("../outside.txt", "unsafe")
 
             with self.assertRaisesRegex(SoilMapImportError, "展開できないパス"):
-                SoilMapImportService.import_zip_file(zip_path)
+                SoilMapImportService.import_soil_map_from_zip(zip_path)
 
         self.assertEqual(SoilMapDataset.objects.count(), 0)
         self.assertEqual(SoilMapPolygon.objects.count(), 0)
@@ -173,7 +175,7 @@ class SoilMapServiceTest(TestCase):
         - 期待値: 青森県の代表土壌として黒ボク土と合計3件を返すこと。
         """
         with tempfile.TemporaryDirectory() as directory:
-            SoilMapImportService.import_zip_file(
+            SoilMapImportService.import_soil_map_from_zip(
                 SoilMapImportServiceTest._create_zip_file(Path(directory))
             )
 

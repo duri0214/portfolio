@@ -30,7 +30,7 @@ class SoilMapImportService:
     BATCH_SIZE = 500
 
     @classmethod
-    def import_zip_file(
+    def import_soil_map_from_zip(
         cls, source: BinaryIO | Path, source_name: str | None = None
     ) -> SoilMapDataset:
         """ZIPを検証し、すべて保存できた場合だけ有効版を切り替える。
