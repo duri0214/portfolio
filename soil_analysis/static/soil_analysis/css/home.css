@@ -67,6 +67,14 @@
     font-size: 0.82rem;
 }
 
+.soil-map-switch .form-check-input {
+    width: 2.5em;
+}
+
+.soil-map-source {
+    padding: 0 2px;
+}
+
 .legend-dot {
     display: inline-block;
     width: 10px;

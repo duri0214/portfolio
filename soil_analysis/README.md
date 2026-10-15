@@ -125,6 +125,13 @@
 
 - `ChemicalImportService`: 川田研究所形式の Excel ファイルから化学分析データを取り込みます。
 - `HardnessImportService`: 土壌硬度計の CSV データを取り込みます。
+- `load_soil_map`: 農研機構「縮尺20万分の1土壌図」の全国Shape ZIPを検証して取り込みます。ZIPはGitへ追加せず、管理者画面の「全国土壌図 ZIP取り込み」または次の手動コマンドで登録します。
+
+```powershell
+python manage.py load_soil_map C:\data\全国_20.zip
+```
+
+取込時に `.shp`、`.shx`、`.dbf`、`.prj`、Polygon型、JGD_2000、必須属性を確認し、全件保存に成功した場合だけ日本地図の土壌モードを新しい版へ切り替えます。
 
 ### e-Stat 農業統計取得
 

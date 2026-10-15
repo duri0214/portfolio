@@ -8,6 +8,7 @@ import zipfile
 from pathlib import Path
 
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
 from django.db import transaction
@@ -69,6 +70,11 @@ from soil_analysis.domain.service.kml import KmlService
 from soil_analysis.domain.service.prefecture_commercial_area import (
     PrefectureCommercialAreaService,
 )
+from soil_analysis.domain.service.soil_map import SoilMapService
+from soil_analysis.domain.service.soil_map_import import (
+    SoilMapImportError,
+    SoilMapImportService,
+)
 from soil_analysis.domain.service.photo_processing import PhotoProcessingService
 from soil_analysis.domain.valueobject.photo_processing.photo_spot import PhotoSpot
 from soil_analysis.domain.valueobject.report.chemical_assessment import (
@@ -85,6 +91,7 @@ from soil_analysis.forms import (
     ChemicalUploadForm,
     CsvGenerateForm,
     LandLedgerCreateForm,
+    SoilMapUploadForm,
 )
 from soil_analysis.models import (
     Company,
@@ -113,7 +120,37 @@ class Home(TemplateView):
         context["prefecture_area_dashboard"] = prefecture_area_dashboard
         context["commercial_areas"] = prefecture_area_dashboard.areas
         context["commercial_area_map_data"] = prefecture_area_dashboard.map_payload
+        context["soil_map"] = SoilMapService.build_payload()
         return context
+
+
+class SoilMapUploadView(LoginRequiredMixin, UserPassesTestMixin, FormView):
+    """管理者が全国土壌図を一括取込する画面を提供する。"""
+
+    template_name = "soil_analysis/soil_map/form.html"
+    form_class = SoilMapUploadForm
+    success_url = reverse_lazy("soil:home")
+
+    def test_func(self):
+        """土壌図の更新をスーパーユーザーに限定する。"""
+        return self.request.user.is_superuser
+
+    def form_valid(self, form):
+        """検証済みのZIPだけを有効な土壌図として切り替える。"""
+        uploaded_file = form.cleaned_data["file"]
+        try:
+            dataset = SoilMapImportService.import_archive(
+                uploaded_file, uploaded_file.name
+            )
+        except SoilMapImportError as error:
+            form.add_error("file", str(error))
+            return self.form_invalid(form)
+
+        messages.success(
+            self.request,
+            f"{dataset.feature_count:,}件の土壌図を取り込み、日本地図の土壌モードを更新しました。",
+        )
+        return super().form_valid(form)
 
 
 class PrefectureDetailView(ListView):

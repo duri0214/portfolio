@@ -141,6 +141,25 @@ class UploadForm(forms.Form):
     )
 
 
+class SoilMapUploadForm(forms.Form):
+    """全国20万分の1土壌図のShape ZIPを受け付けるフォーム。"""
+
+    file = forms.FileField(
+        label="全国20万分の1土壌図 ZIP",
+        widget=ClearableFileInput(
+            attrs={"class": "form-control", "tabindex": "1", "accept": ".zip"}
+        ),
+        help_text=".shp、.shx、.dbf、.prj を含む全国版ZIPを指定してください。",
+    )
+
+    def clean_file(self):
+        """ZIP拡張子を確認して、取込サービスへ渡す。"""
+        uploaded_file = self.cleaned_data["file"]
+        if not uploaded_file.name.lower().endswith(".zip"):
+            raise forms.ValidationError("ZIPファイルを指定してください。")
+        return uploaded_file
+
+
 class ChemicalUploadForm(forms.Form):
     file = forms.FileField(
         label="川田研究所 XLSX",

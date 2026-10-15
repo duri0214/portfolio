@@ -45,6 +45,17 @@
                             <a class="btn btn-outline-primary" href="{% url 'soil:farmland_risk' %}">
                                 <i class="fas fa-chart-line me-1"></i>離農・管理不能農地レポート
                             </a>
+                            {% if request.user.is_superuser %}
+                                <a class="btn btn-outline-primary" href="{% url 'soil:soil_map_upload' %}">
+                                    <i class="fas fa-upload me-1"></i>全国土壌図 ZIP取り込み
+                                </a>
+                            {% else %}
+                                <span class="d-inline-block" tabindex="0" data-bs-toggle="tooltip" title="全国土壌図の更新には管理者権限が必要です。">
+                                    <button class="btn btn-outline-secondary" type="button" disabled>
+                                        <i class="fas fa-upload me-1"></i>全国土壌図 ZIP取り込み
+                                    </button>
+                                </span>
+                            {% endif %}
                         </div>
                     </div>
 
@@ -84,6 +95,10 @@
                             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
                                 <h2 class="h5 mb-0"><i class="fas fa-map me-2 text-muted"></i>日本地図商圏マップ</h2>
                                 <div class="d-flex flex-wrap align-items-center gap-3">
+                                    <div class="form-check form-switch soil-map-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="soil-map-mode">
+                                        <label class="form-check-label fw-semibold" for="soil-map-mode">土壌の質を表示</label>
+                                    </div>
                                     <a class="small text-decoration-none" href="https://www.jma.go.jp/bosai/map.html#5/29.555/141.395/&contents=forecast" target="_blank" rel="noopener noreferrer">
                                         <i class="fas fa-external-link-alt me-1"></i>気象庁 全国予報マップ
                                     </a>
@@ -96,6 +111,7 @@
                                 </div>
                             </div>
                             {{ commercial_area_map_data|json_script:"commercial-area-map-data" }}
+                            {{ soil_map|json_script:"soil-map-data" }}
                             <div class="japan-market-map">
                                 <div id="commercial-area-map"
                                      class="commercial-area-map-canvas"
@@ -105,6 +121,7 @@
                                     <strong>地図から都道府県を選択</strong>
                                     <span>商圏の集計値を確認できます。</span>
                                 </div>
+                                <p class="soil-map-source small text-muted mb-0" id="soil-map-source" hidden></p>
                             </div>
                         </div>
                     </div>
@@ -183,5 +200,5 @@
         window.jpmapInternalMap = window.Map;
         window.Map = window.nativeMapBeforeJpmap;
     </script>
-    <script src="{% static 'soil_analysis/js/home.js' %}?v=774-prefecture-detail"></script>
+    <script src="{% static 'soil_analysis/js/home.js' %}?v=90-soil-map"></script>
 {% endblock %}
