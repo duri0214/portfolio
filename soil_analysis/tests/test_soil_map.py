@@ -24,7 +24,9 @@ class SoilMapImportServiceTest(TestCase):
         - 期待値: Polygonを保存し、新しいデータ版だけが有効になること。
         """
         with tempfile.TemporaryDirectory() as directory:
-            archive_path = self._create_archive(Path(directory))
+            archive_path = self._create_archive(
+                Path(directory), dbf_encoding="cp932", include_cpg=False
+            )
 
             dataset = SoilMapImportService.import_archive(archive_path)
 
@@ -59,9 +61,14 @@ class SoilMapImportServiceTest(TestCase):
         self.assertEqual(SoilMapDataset.objects.filter(is_active=True).count(), 1)
 
     @staticmethod
-    def _create_archive(directory: Path, crs: str = "GCS_JGD_2000") -> Path:
+    def _create_archive(
+        directory: Path,
+        crs: str = "GCS_JGD_2000",
+        dbf_encoding: str = "utf-8",
+        include_cpg: bool = True,
+    ) -> Path:
         shape_path = directory / "national.shp"
-        writer = shapefile.Writer(str(shape_path))
+        writer = shapefile.Writer(str(shape_path), encoding=dbf_encoding)
         writer.field("Pref_JCD", "C")
         writer.field("SG_CD", "C")
         writer.field("SSbG_CD", "C")
@@ -75,10 +82,16 @@ class SoilMapImportServiceTest(TestCase):
         writer.record("02", "B", "B1", "B11", "褐色森林土")
         writer.close()
         shape_path.with_suffix(".prj").write_text(crs, encoding="utf-8")
+        if include_cpg:
+            shape_path.with_suffix(".cpg").write_text(
+                dbf_encoding.upper(), encoding="ascii"
+            )
         archive_path = directory / "national.zip"
         with zipfile.ZipFile(archive_path, "w") as archive:
-            for suffix in (".shp", ".shx", ".dbf", ".prj"):
-                archive.write(shape_path.with_suffix(suffix), f"national{suffix}")
+            for suffix in (".shp", ".shx", ".dbf", ".prj", ".cpg"):
+                member_path = shape_path.with_suffix(suffix)
+                if member_path.is_file():
+                    archive.write(member_path, f"national{suffix}")
         return archive_path
 
 

@@ -51,7 +51,9 @@ class SoilMapImportService:
             extract_path = temporary_path / "extract"
             cls._extract_archive(archive_path, extract_path)
             shape_path = cls._find_shape_path(extract_path)
-            reader = shapefile.Reader(str(shape_path))
+            reader = shapefile.Reader(
+                str(shape_path), encoding=cls._get_dbf_encoding(shape_path)
+            )
             try:
                 field_names = [field[0] for field in reader.fields[1:]]
                 cls._validate_shape(reader, field_names, shape_path)
@@ -147,6 +149,20 @@ class SoilMapImportService:
                 f"Shapeファイルの必須構成ファイルがありません: {', '.join(missing)}"
             )
         return shape_path
+
+    @staticmethod
+    def _get_dbf_encoding(shape_path: Path) -> str:
+        """DBFの文字コードをCPGから判定し、未指定時はCP932を使う。
+
+        日本土壌インベントリーのDBFには日本語の土壌名が入るため、pyshpの既定UTF-8
+        のままではデコードできない配布物があります。CPGがない国内ShapeはCP932として
+        読み込みます。
+        """
+        cpg_path = shape_path.with_suffix(".cpg")
+        if not cpg_path.is_file():
+            return "cp932"
+        encoding_name = cpg_path.read_text(encoding="ascii", errors="ignore").strip()
+        return encoding_name or "cp932"
 
     @classmethod
     def _validate_shape(
