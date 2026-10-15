@@ -6,7 +6,7 @@ from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.test import TestCase, override_settings
 
-from lib.zipfileservice import ZipFileService
+from lib.zipfileservice import UnsafeZipPathError, ZipFileService
 
 
 class ZipFileServiceTestCase(TestCase):
@@ -122,3 +122,23 @@ class ZipFileServiceTestCase(TestCase):
             self.assertEqual(
                 (target_dir / "test_file.txt").read_bytes(), b"ZIP content"
             )
+
+    def test_extract_zip_file_rejects_zip_slip_paths(self):
+        """
+        シナリオ:
+        - 入力: 展開先の親ディレクトリを指すパスを含むZIP。
+        - 処理: ZipFileService.extract_zip_fileを呼ぶ。
+        - 期待値: UnsafeZipPathErrorになり、展開先の外にファイルを作らないこと。
+        """
+        with tempfile.TemporaryDirectory() as directory:
+            temporary_path = Path(directory)
+            zip_path = temporary_path / "unsafe.zip"
+            target_dir = temporary_path / "extracted"
+            outside_file = temporary_path / "outside.txt"
+            with zipfile.ZipFile(zip_path, "w") as zip_file:
+                zip_file.writestr("../outside.txt", b"unsafe")
+
+            with self.assertRaises(UnsafeZipPathError):
+                ZipFileService.extract_zip_file(zip_path, target_dir)
+
+            self.assertFalse(outside_file.exists())

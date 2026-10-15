@@ -8,6 +8,10 @@ from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpResponse
 
 
+class UnsafeZipPathError(ValueError):
+    """ZIP内のパスが展開先ディレクトリの外を指す場合のエラー。"""
+
+
 class ZipFileService:
     """
     ZIP ファイルの安全な取り扱いを提供するサービスクラス。
@@ -75,12 +79,15 @@ class ZipFileService:
 
         Raises:
             zipfile.BadZipFile: 入力が不正なZIPの場合。
+            UnsafeZipPathError: 危険なパスを含む場合。
             OSError: 展開先の作成またはファイル書き込みに失敗した場合。
         """
         target_dir_path = Path(target_dir)
         target_dir_path.mkdir(parents=True, exist_ok=True)
         with zipfile.ZipFile(zip_path) as zip_file:
-            ZipFileService._safe_extract(zip_file, target_dir_path)
+            ZipFileService._safe_extract(
+                zip_file, target_dir_path, reject_unsafe_paths=True
+            )
 
     @staticmethod
     def extract_zip_files(source_dir: Path, target_dir: Path):
@@ -206,7 +213,9 @@ class ZipFileService:
         )
 
     @staticmethod
-    def _safe_extract(z: zipfile.ZipFile, upload_folder: Path) -> None:
+    def _safe_extract(
+        z: zipfile.ZipFile, upload_folder: Path, *, reject_unsafe_paths: bool = False
+    ) -> None:
         """
         エントリ名のサニタイズ/安全検証を行いながら、Zip を安全に手動抽出する。
 
@@ -214,7 +223,7 @@ class ZipFileService:
         1) `z.infolist()` を走査
         2) `info.filename` を取得し `_sanitize_member_name` で正規化・危険文字除去
         3) ディレクトリかファイルかで分岐
-        4) `_is_safe_path` で Zip Slip を検出したらスキップ
+        4) `_is_safe_path` で Zip Slip を検出したらスキップ、または呼び出し元の指定によりエラー
         5) 問題なければディレクトリ作成後、ファイルを書き出し
 
         備考:
@@ -227,6 +236,10 @@ class ZipFileService:
             if name.endswith("/"):
                 dest_dir = upload_folder / name
                 if not ZipFileService._is_safe_path(upload_folder, dest_dir):
+                    if reject_unsafe_paths:
+                        raise UnsafeZipPathError(
+                            f"ZIP内に展開できないパスが含まれています: {info.filename}"
+                        )
                     continue
                 dest_dir.mkdir(parents=True, exist_ok=True)
                 continue
@@ -235,6 +248,10 @@ class ZipFileService:
             dest_path = upload_folder / name
             # 親ディレクトリの安全性も含め、ベース配下チェック
             if not ZipFileService._is_safe_path(upload_folder, dest_path.parent):
+                if reject_unsafe_paths:
+                    raise UnsafeZipPathError(
+                        f"ZIP内に展開できないパスが含まれています: {info.filename}"
+                    )
                 continue
             dest_path.parent.mkdir(parents=True, exist_ok=True)
             with z.open(info) as src, open(dest_path, "wb") as out:

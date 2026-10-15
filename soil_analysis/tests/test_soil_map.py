@@ -82,6 +82,24 @@ class SoilMapImportServiceTest(TestCase):
         self.assertTrue(current.is_active)
         self.assertEqual(SoilMapDataset.objects.filter(is_active=True).count(), 1)
 
+    def test_zip_slip_path_is_rejected_before_it_creates_a_dataset(self):
+        """
+        シナリオ:
+        - 入力: Shapeファイルと、展開先の親ディレクトリを指すパスを含むZIP。
+        - 処理: SoilMapImportServiceでZIPを取り込む。
+        - 期待値: データ版とPolygonを保存せず、取込エラーになること。
+        """
+        with tempfile.TemporaryDirectory() as directory:
+            zip_path = self._create_zip_file(Path(directory))
+            with zipfile.ZipFile(zip_path, "a") as zip_file:
+                zip_file.writestr("../outside.txt", "unsafe")
+
+            with self.assertRaisesRegex(SoilMapImportError, "展開できないパス"):
+                SoilMapImportService.import_zip_file(zip_path)
+
+        self.assertEqual(SoilMapDataset.objects.count(), 0)
+        self.assertEqual(SoilMapPolygon.objects.count(), 0)
+
     @staticmethod
     def _create_zip_file(
         directory: Path,

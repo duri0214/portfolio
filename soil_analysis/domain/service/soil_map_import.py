@@ -5,14 +5,14 @@ from __future__ import annotations
 import hashlib
 import tempfile
 import zipfile
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from typing import BinaryIO
 
 import shapefile
 from django.db import transaction
 from django.utils import timezone
 
-from lib.zipfileservice import ZipFileService
+from lib.zipfileservice import UnsafeZipPathError, ZipFileService
 from soil_analysis.domain.repository.soil_map import SoilMapRepository
 from soil_analysis.models import SoilMapDataset
 
@@ -130,15 +130,13 @@ class SoilMapImportService:
                 total_size = sum(member.file_size for member in members)
                 if total_size > cls.MAX_UNCOMPRESSED_BYTES:
                     raise SoilMapImportError("展開後のZIPサイズが上限を超えています。")
-                for member in members:
-                    member_path = PurePosixPath(member.filename)
-                    if member_path.is_absolute() or ".." in member_path.parts:
-                        raise SoilMapImportError(
-                            "ZIP内に展開できないパスが含まれています。"
-                        )
             ZipFileService.extract_zip_file(zip_path, extract_path)
         except zipfile.BadZipFile as error:
             raise SoilMapImportError("壊れたZIPファイルです。") from error
+        except UnsafeZipPathError as error:
+            raise SoilMapImportError(
+                "ZIP内に展開できないパスが含まれています。"
+            ) from error
 
     @classmethod
     def _find_shape_path(cls, extract_path: Path) -> Path:
