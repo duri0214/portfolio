@@ -12,6 +12,7 @@ import shapefile
 from django.db import transaction
 from django.utils import timezone
 
+from lib.zipfileservice import ZipFileService
 from soil_analysis.domain.repository.soil_map import SoilMapRepository
 from soil_analysis.models import SoilMapDataset
 
@@ -29,7 +30,7 @@ class SoilMapImportService:
     BATCH_SIZE = 500
 
     @classmethod
-    def import_archive(
+    def import_zip_file(
         cls, source: BinaryIO | Path, source_name: str | None = None
     ) -> SoilMapDataset:
         """ZIPを検証し、すべて保存できた場合だけ有効版を切り替える。
@@ -46,11 +47,11 @@ class SoilMapImportService:
         """
         with tempfile.TemporaryDirectory(prefix="soil-map-") as temporary_directory:
             temporary_path = Path(temporary_directory)
-            archive_path, archive_name, digest = cls._copy_source(
+            zip_path, zip_name, digest = cls._copy_zip_source(
                 source, temporary_path, source_name
             )
             extract_path = temporary_path / "extract"
-            cls._extract_archive(archive_path, extract_path)
+            cls._extract_zip_file(zip_path, extract_path)
             shape_path = cls._find_shape_path(extract_path)
             reader = shapefile.Reader(
                 str(shape_path), encoding=cls._get_dbf_encoding(shape_path)
@@ -73,7 +74,7 @@ class SoilMapImportService:
             with transaction.atomic():
                 SoilMapRepository.deactivate_active_datasets()
                 dataset = SoilMapRepository.create_dataset(
-                    source_file_name=archive_name,
+                    source_file_name=zip_name,
                     source_sha256=digest,
                     source_crs=source_crs,
                     feature_count=len(polygons),
@@ -88,17 +89,17 @@ class SoilMapImportService:
             return dataset
 
     @classmethod
-    def _copy_source(
+    def _copy_zip_source(
         cls, source: BinaryIO | Path, temporary_path: Path, source_name: str | None
     ) -> tuple[Path, str, str]:
-        archive_name = source_name or Path(source).name
-        if not archive_name.lower().endswith(".zip"):
+        zip_name = source_name or Path(source).name
+        if not zip_name.lower().endswith(".zip"):
             raise SoilMapImportError("ZIPファイルを指定してください。")
 
-        archive_path = temporary_path / "source.zip"
+        zip_path = temporary_path / "source.zip"
         digest = hashlib.sha256()
         try:
-            with archive_path.open("wb") as destination:
+            with zip_path.open("wb") as destination:
                 if isinstance(source, Path):
                     source_file = source.open("rb")
                     close_source = True
@@ -115,15 +116,15 @@ class SoilMapImportService:
         except OSError as error:
             raise SoilMapImportError("ZIPファイルを読み込めませんでした。") from error
 
-        if SoilMapRepository.archive_exists(digest.hexdigest()):
+        if SoilMapRepository.zip_file_exists(digest.hexdigest()):
             raise SoilMapImportError("同じZIPはすでに取り込まれています。")
-        return archive_path, archive_name, digest.hexdigest()
+        return zip_path, zip_name, digest.hexdigest()
 
     @classmethod
-    def _extract_archive(cls, archive_path: Path, extract_path: Path) -> None:
+    def _extract_zip_file(cls, zip_path: Path, extract_path: Path) -> None:
         try:
-            with zipfile.ZipFile(archive_path) as archive:
-                members = archive.infolist()
+            with zipfile.ZipFile(zip_path) as zip_file:
+                members = zip_file.infolist()
                 if not members:
                     raise SoilMapImportError("ZIPが空です。")
                 total_size = sum(member.file_size for member in members)
@@ -135,7 +136,7 @@ class SoilMapImportService:
                         raise SoilMapImportError(
                             "ZIP内に展開できないパスが含まれています。"
                         )
-                archive.extractall(extract_path)
+            ZipFileService.extract_zip_file(zip_path, extract_path)
         except zipfile.BadZipFile as error:
             raise SoilMapImportError("壊れたZIPファイルです。") from error
 

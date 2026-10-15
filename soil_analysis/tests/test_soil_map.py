@@ -16,7 +16,7 @@ from soil_analysis.models import SoilMapDataset, SoilMapPolygon
 
 
 class SoilMapImportServiceTest(TestCase):
-    def test_import_archive_stores_all_polygons_and_activates_the_new_dataset(self):
+    def test_import_zip_file_stores_all_polygons_and_activates_the_new_dataset(self):
         """
         シナリオ:
         - 入力: JGD_2000・必須属性を含む全国土壌図形式のZIP。
@@ -24,14 +24,14 @@ class SoilMapImportServiceTest(TestCase):
         - 期待値: Polygonを保存し、新しいデータ版だけが有効になること。
         """
         with tempfile.TemporaryDirectory() as directory:
-            archive_path = self._create_archive(
+            zip_path = self._create_zip_file(
                 Path(directory),
                 dbf_encoding="cp932",
                 include_cpg=False,
                 include_empty_record=True,
             )
 
-            dataset = SoilMapImportService.import_archive(archive_path)
+            dataset = SoilMapImportService.import_zip_file(zip_path)
 
         self.assertTrue(dataset.is_active)
         self.assertEqual(dataset.feature_count, 49)
@@ -39,20 +39,25 @@ class SoilMapImportServiceTest(TestCase):
         self.assertEqual(SoilMapPolygon.objects.filter(dataset=dataset).count(), 49)
         self.assertEqual(SoilMapPolygon.objects.first().prefecture_code, "02")
 
-    def test_prefecture_archive_is_rejected_before_it_creates_a_dataset(self):
-        """A partial archive is rejected before a data version or polygons are stored."""
+    def test_prefecture_zip_is_rejected_before_it_creates_a_dataset(self):
+        """
+        シナリオ:
+        - 入力: 全国47都道府県を含まないShape ZIP。
+        - 処理: SoilMapImportServiceでZIPを取り込む。
+        - 期待値: データ版とPolygonを保存せず、取込エラーになること。
+        """
         with tempfile.TemporaryDirectory() as directory:
-            archive_path = self._create_archive(
+            zip_path = self._create_zip_file(
                 Path(directory), include_national_coverage=False
             )
 
             with self.assertRaisesRegex(SoilMapImportError, "全国版"):
-                SoilMapImportService.import_archive(archive_path)
+                SoilMapImportService.import_zip_file(zip_path)
 
         self.assertEqual(SoilMapDataset.objects.count(), 0)
         self.assertEqual(SoilMapPolygon.objects.count(), 0)
 
-    def test_invalid_archive_keeps_the_current_dataset_active(self):
+    def test_invalid_zip_file_keeps_the_current_dataset_active(self):
         """
         シナリオ:
         - 入力: 既に有効なデータ版と、座標系が異なるZIP。
@@ -68,17 +73,17 @@ class SoilMapImportServiceTest(TestCase):
             imported_at="2026-01-01T00:00:00+09:00",
         )
         with tempfile.TemporaryDirectory() as directory:
-            archive_path = self._create_archive(Path(directory), crs="WGS_1984")
+            zip_path = self._create_zip_file(Path(directory), crs="WGS_1984")
 
             with self.assertRaises(SoilMapImportError):
-                SoilMapImportService.import_archive(archive_path)
+                SoilMapImportService.import_zip_file(zip_path)
 
         current.refresh_from_db()
         self.assertTrue(current.is_active)
         self.assertEqual(SoilMapDataset.objects.filter(is_active=True).count(), 1)
 
     @staticmethod
-    def _create_archive(
+    def _create_zip_file(
         directory: Path,
         crs: str = "GCS_JGD_2000",
         dbf_encoding: str = "utf-8",
@@ -132,13 +137,13 @@ class SoilMapImportServiceTest(TestCase):
             shape_path.with_suffix(".cpg").write_text(
                 dbf_encoding.upper(), encoding="ascii"
             )
-        archive_path = directory / "national.zip"
-        with zipfile.ZipFile(archive_path, "w") as archive:
+        zip_path = directory / "national.zip"
+        with zipfile.ZipFile(zip_path, "w") as zip_file:
             for suffix in (".shp", ".shx", ".dbf", ".prj", ".cpg"):
                 member_path = shape_path.with_suffix(suffix)
                 if member_path.is_file():
-                    archive.write(member_path, f"national{suffix}")
-        return archive_path
+                    zip_file.write(member_path, f"national{suffix}")
+        return zip_path
 
 
 class SoilMapServiceTest(TestCase):
@@ -150,8 +155,8 @@ class SoilMapServiceTest(TestCase):
         - 期待値: 青森県の代表土壌として黒ボク土と合計3件を返すこと。
         """
         with tempfile.TemporaryDirectory() as directory:
-            SoilMapImportService.import_archive(
-                SoilMapImportServiceTest._create_archive(Path(directory))
+            SoilMapImportService.import_zip_file(
+                SoilMapImportServiceTest._create_zip_file(Path(directory))
             )
 
         payload = SoilMapService.build_payload()
@@ -162,7 +167,7 @@ class SoilMapServiceTest(TestCase):
         self.assertEqual(aomori["dominantPolygonCount"], 2)
         self.assertEqual(payload["dataset"]["featureCount"], 49)
 
-    _create_archive = staticmethod(SoilMapImportServiceTest._create_archive)
+    _create_zip_file = staticmethod(SoilMapImportServiceTest._create_zip_file)
 
 
 class SoilMapUploadViewTest(TestCase):

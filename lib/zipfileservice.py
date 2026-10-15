@@ -14,6 +14,7 @@ class ZipFileService:
 
     提供機能:
     - アップロードされた ZIP の保存と安全な解凍（Zip Slip 対策）
+    - 指定した ZIP の安全な解凍
     - 任意フォルダを ZIP 化してダウンロードレスポンスを生成
 
     注意事項:
@@ -65,6 +66,23 @@ class ZipFileService:
         return upload_folder
 
     @staticmethod
+    def extract_zip_file(zip_path: Path, target_dir: Path) -> None:
+        """指定したZIPを、指定先へ安全に解凍する。
+
+        Args:
+            zip_path: 解凍するZIPファイルのパス。
+            target_dir: 展開先ディレクトリ。存在しない場合は作成する。
+
+        Raises:
+            zipfile.BadZipFile: 入力が不正なZIPの場合。
+            OSError: 展開先の作成またはファイル書き込みに失敗した場合。
+        """
+        target_dir_path = Path(target_dir)
+        target_dir_path.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(zip_path) as zip_file:
+            ZipFileService._safe_extract(zip_file, target_dir_path)
+
+    @staticmethod
     def extract_zip_files(source_dir: Path, target_dir: Path):
         """
         指定ディレクトリ内のすべての ZIP を検出し、指定先へ安全に解凍する。
@@ -95,8 +113,7 @@ class ZipFileService:
 
         zip_files = source_dir_path.glob("*.zip")
         for zip_file in zip_files:
-            with zipfile.ZipFile(str(zip_file), "r") as zip_f:
-                ZipFileService._safe_extract(zip_f, target_dir_path)
+            ZipFileService.extract_zip_file(zip_file, target_dir_path)
 
     @staticmethod
     def create_zip_download(
@@ -222,4 +239,3 @@ class ZipFileService:
             dest_path.parent.mkdir(parents=True, exist_ok=True)
             with z.open(info) as src, open(dest_path, "wb") as out:
                 out.write(src.read())
-

@@ -9,7 +9,7 @@ class SoilMapRepository:
     """土壌図の取込と表示に必要なDB操作を集約する。"""
 
     @staticmethod
-    def archive_exists(source_sha256: str) -> bool:
+    def zip_file_exists(source_sha256: str) -> bool:
         """同じZIPがすでに取り込まれているかを返す。"""
         return SoilMapDataset.objects.filter(source_sha256=source_sha256).exists()
 

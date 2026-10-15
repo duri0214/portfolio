@@ -19,11 +19,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         """ZIPを取り込み、結果を標準出力へ表示する。"""
-        archive_path = Path(options["zip_path"])
-        if not archive_path.is_file():
-            raise CommandError(f"ZIPファイルが見つかりません: {archive_path}")
+        zip_path = Path(options["zip_path"])
+        if not zip_path.is_file():
+            raise CommandError(f"ZIPファイルが見つかりません: {zip_path}")
         try:
-            dataset = SoilMapImportService.import_archive(archive_path)
+            dataset = SoilMapImportService.import_zip_file(zip_path)
         except SoilMapImportError as error:
             raise CommandError(str(error)) from error
         self.stdout.write(

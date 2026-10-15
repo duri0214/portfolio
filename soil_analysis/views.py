@@ -139,7 +139,7 @@ class SoilMapUploadView(LoginRequiredMixin, UserPassesTestMixin, FormView):
         """検証済みのZIPだけを有効な土壌図として切り替える。"""
         uploaded_file = form.cleaned_data["file"]
         try:
-            dataset = SoilMapImportService.import_archive(
+            dataset = SoilMapImportService.import_zip_file(
                 uploaded_file, uploaded_file.name
             )
         except SoilMapImportError as error:

@@ -20,6 +20,7 @@ class ZipFileServiceTestCase(TestCase):
     補足:
     - 現状、CP932 前提の古い ZIP はユニットテストでは網羅していません（実装は標準 zipfile の挙動に委ねます）。
     """
+
     @staticmethod
     def create_temp_zip_file(dir_path: Path, filename: str, filedata: bytes) -> Path:
         zip_file_path = dir_path / filename
@@ -96,5 +97,28 @@ class ZipFileServiceTestCase(TestCase):
 
         expected_upload_folder = Path(tempfile.gettempdir()) / "test_app_name_jp"
         expected_file_path = expected_upload_folder / jp_name
-        self.assertTrue(expected_file_path.exists(), f"{expected_file_path} should exist after extraction")
-        self.assertEqual(expected_file_path.read_bytes(), content) 
+        self.assertTrue(
+            expected_file_path.exists(),
+            f"{expected_file_path} should exist after extraction",
+        )
+        self.assertEqual(expected_file_path.read_bytes(), content)
+
+    def test_extract_zip_file_extracts_to_the_given_directory(self):
+        """
+        シナリオ:
+        - 入力: テキストファイルを1件含むZIPと、まだ存在しない展開先ディレクトリ。
+        - 処理: ZipFileService.extract_zip_fileでZIPを展開する。
+        - 期待値: 展開先が作成され、ZIP内のファイルを同じ内容で取得できること。
+        """
+        with tempfile.TemporaryDirectory() as directory:
+            temporary_path = Path(directory)
+            zip_path = self.create_temp_zip_file(
+                temporary_path, "source.zip", b"ZIP content"
+            )
+            target_dir = temporary_path / "extracted"
+
+            ZipFileService.extract_zip_file(zip_path, target_dir)
+
+            self.assertEqual(
+                (target_dir / "test_file.txt").read_bytes(), b"ZIP content"
+            )
