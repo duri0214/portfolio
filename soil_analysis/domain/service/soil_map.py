@@ -29,6 +29,7 @@ class SoilMapService:
                 "code": code,
                 "name": name,
                 "polygonCount": 0,
+                "dominantPolygonCount": 0,
                 "soilName": None,
                 "soilGroupCode": None,
                 "color": cls.EMPTY_PALETTE["color"],
@@ -56,6 +57,7 @@ class SoilMapService:
                     "polygonCount": sum(
                         item["polygon_count"] for item in summaries_for_prefecture
                     ),
+                    "dominantPolygonCount": main["polygon_count"],
                     "soilName": main["soil_name"],
                     "soilGroupCode": main["soil_group_code"],
                     "color": palette["color"],

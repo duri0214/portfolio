@@ -47,13 +47,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const showSoilDetail = (area) => {
         detailElement.replaceChildren();
         const title = document.createElement("strong");
-        title.textContent = `${area.name}: ${area.soilName || "未収録"}`;
+        title.textContent = area.soilName
+            ? `${area.name}: 区画数が最も多い土壌 ${area.soilName}`
+            : `${area.name}: 未収録`;
         const summary = document.createElement("span");
         summary.textContent = area.soilName
-            ? `収録Polygon ${area.polygonCount.toLocaleString()}件 / 土壌群コード ${area.soilGroupCode}`
+            ? `県内の土壌図区画 ${area.polygonCount.toLocaleString()}件（${area.soilName}: ${area.dominantPolygonCount.toLocaleString()}区画） / 土壌群コード ${area.soilGroupCode}`
             : "有効な土壌図にこの都道府県の地物がありません。";
         const note = document.createElement("span");
-        note.textContent = "表示名は収録Polygon数が最も多い土壌です。面積比・圃場単位の診断ではありません。";
+        note.textContent = "表示名は県内の土壌図区画数が最も多い土壌です。区画の面積は一定ではないため、面積比・圃場単位の土壌診断を示すものではありません。";
         detailElement.append(title, summary, note);
     };
 

@@ -159,6 +159,7 @@ class SoilMapServiceTest(TestCase):
 
         self.assertEqual(aomori["soilName"], "黒ボク土")
         self.assertEqual(aomori["polygonCount"], 3)
+        self.assertEqual(aomori["dominantPolygonCount"], 2)
         self.assertEqual(payload["dataset"]["featureCount"], 49)
 
     _create_archive = staticmethod(SoilMapImportServiceTest._create_archive)
