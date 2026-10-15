@@ -988,6 +988,7 @@ class SoilMapDataset(models.Model):
         source_sha256: 取込元ZIPのSHA-256。
         source_crs: Shapeファイルに記載された座標参照系。
         feature_count: 取り込んだPolygon件数。
+        excluded_feature_count: 土壌属性が未設定のため表示対象から除外した地物数。
         is_active: 日本地図に表示する有効版かどうか。
         imported_at: アプリケーションが取込を完了した日時。
         created_at: レコード作成日時。
@@ -997,6 +998,7 @@ class SoilMapDataset(models.Model):
     source_sha256 = models.CharField("取込元SHA-256", max_length=64, unique=True)
     source_crs = models.TextField("座標参照系")
     feature_count = models.PositiveIntegerField("地物数")
+    excluded_feature_count = models.PositiveIntegerField("除外地物数", default=0)
     is_active = models.BooleanField("有効版", default=False)
     imported_at = models.DateTimeField("取込完了日時")
     created_at = models.DateTimeField("作成日時", auto_now_add=True)

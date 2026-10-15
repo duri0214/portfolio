@@ -146,10 +146,10 @@ class SoilMapUploadView(LoginRequiredMixin, UserPassesTestMixin, FormView):
             form.add_error("file", str(error))
             return self.form_invalid(form)
 
-        messages.success(
-            self.request,
-            f"{dataset.feature_count:,}件の土壌図を取り込み、日本地図の土壌モードを更新しました。",
-        )
+        message = f"{dataset.feature_count:,}件の土壌図を取り込み、日本地図の土壌モードを更新しました。"
+        if dataset.excluded_feature_count:
+            message += f" 土壌属性が未設定の{dataset.excluded_feature_count:,}件は表示対象から除外しました。"
+        messages.success(self.request, message)
         return super().form_valid(form)
 
 

@@ -67,6 +67,7 @@ class SoilMapService:
             "dataset": {
                 "sourceFileName": dataset.source_file_name,
                 "featureCount": dataset.feature_count,
+                "excludedFeatureCount": dataset.excluded_feature_count,
                 "importedAt": dataset.imported_at.isoformat(),
                 "sourceUrl": "https://soil-inventory.rad.naro.go.jp/download20.html",
             },

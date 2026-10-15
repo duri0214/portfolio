@@ -25,13 +25,17 @@ class SoilMapImportServiceTest(TestCase):
         """
         with tempfile.TemporaryDirectory() as directory:
             archive_path = self._create_archive(
-                Path(directory), dbf_encoding="cp932", include_cpg=False
+                Path(directory),
+                dbf_encoding="cp932",
+                include_cpg=False,
+                include_empty_record=True,
             )
 
             dataset = SoilMapImportService.import_archive(archive_path)
 
         self.assertTrue(dataset.is_active)
         self.assertEqual(dataset.feature_count, 3)
+        self.assertEqual(dataset.excluded_feature_count, 1)
         self.assertEqual(SoilMapPolygon.objects.filter(dataset=dataset).count(), 3)
         self.assertEqual(SoilMapPolygon.objects.first().prefecture_code, "02")
 
@@ -66,6 +70,7 @@ class SoilMapImportServiceTest(TestCase):
         crs: str = "GCS_JGD_2000",
         dbf_encoding: str = "utf-8",
         include_cpg: bool = True,
+        include_empty_record: bool = False,
     ) -> Path:
         shape_path = directory / "national.shp"
         writer = shapefile.Writer(str(shape_path), encoding=dbf_encoding)
@@ -80,6 +85,18 @@ class SoilMapImportServiceTest(TestCase):
         writer.record("02", "A", "A1", "A11", "黒ボク土")
         writer.poly([[[140.9, 40.7], [141.0, 40.7], [141.0, 40.8], [140.9, 40.7]]])
         writer.record("02", "B", "B1", "B11", "褐色森林土")
+        if include_empty_record:
+            writer.poly(
+                [
+                    [
+                        [133.5, 33.7],
+                        [133.6, 33.7],
+                        [133.6, 33.8],
+                        [133.5, 33.7],
+                    ]
+                ]
+            )
+            writer.record("39", "", "", "", "")
         writer.close()
         shape_path.with_suffix(".prj").write_text(crs, encoding="utf-8")
         if include_cpg:

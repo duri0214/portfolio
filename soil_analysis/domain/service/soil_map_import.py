@@ -57,7 +57,9 @@ class SoilMapImportService:
             try:
                 field_names = [field[0] for field in reader.fields[1:]]
                 cls._validate_shape(reader, field_names, shape_path)
-                polygons = cls._build_polygons(reader, field_names)
+                polygons, excluded_feature_count = cls._build_polygons(
+                    reader, field_names
+                )
             finally:
                 reader.close()
 
@@ -72,6 +74,7 @@ class SoilMapImportService:
                     source_sha256=digest,
                     source_crs=source_crs,
                     feature_count=len(polygons),
+                    excluded_feature_count=excluded_feature_count,
                     is_active=True,
                     imported_at=timezone.now(),
                 )
@@ -193,11 +196,12 @@ class SoilMapImportService:
     @classmethod
     def _build_polygons(
         cls, reader: shapefile.Reader, field_names: list[str]
-    ) -> list[dict]:
+    ) -> tuple[list[dict], int]:
         field_name_by_upper = {
             field_name.upper(): field_name for field_name in field_names
         }
         polygons = []
+        excluded_feature_count = 0
         for row_number, shape_record in enumerate(reader.iterShapeRecords(), start=1):
             values = dict(zip(field_names, shape_record.record))
             try:
@@ -210,6 +214,16 @@ class SoilMapImportService:
                 ]
                 if len(points) < 4:
                     raise ValueError("Polygon座標")
+                attribute_field_names = ("SG_CD", "SSbG_CD", "SSerGrCD", "SoilName")
+                attribute_values = [
+                    str(values[field_name_by_upper[field_name.upper()]]).strip()
+                    for field_name in attribute_field_names
+                ]
+                if not any(attribute_values):
+                    excluded_feature_count += 1
+                    continue
+                if not all(attribute_values):
+                    raise ValueError("土壌属性")
                 part_starts = list(shape_record.shape.parts) + [len(points)]
                 coordinates = [
                     points[part_starts[index] : part_starts[index + 1]]
@@ -241,7 +255,7 @@ class SoilMapImportService:
                 raise SoilMapImportError(
                     f"{row_number}件目の地物に不正な属性または座標があります。"
                 ) from error
-        return polygons
+        return polygons, excluded_feature_count
 
     @staticmethod
     def _value(

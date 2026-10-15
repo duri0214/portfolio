@@ -75,7 +75,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 link.target = "_blank";
                 link.rel = "noopener noreferrer";
                 link.textContent = "農研機構 日本土壌インベントリー（縮尺20万分の1土壌図、CC BY 4.0）";
-                sourceElement.append("出典: ", link, ` / ファイル: ${soilMap.dataset.sourceFileName} / 取込: ${new Date(soilMap.dataset.importedAt).toLocaleString("ja-JP")} / 地物数: ${soilMap.dataset.featureCount.toLocaleString()}件`);
+                const excludedSummary = soilMap.dataset.excludedFeatureCount
+                    ? ` / 属性未設定の除外: ${soilMap.dataset.excludedFeatureCount.toLocaleString()}件`
+                    : "";
+                sourceElement.append("出典: ", link, ` / ファイル: ${soilMap.dataset.sourceFileName} / 取込: ${new Date(soilMap.dataset.importedAt).toLocaleString("ja-JP")} / 地物数: ${soilMap.dataset.featureCount.toLocaleString()}件${excludedSummary}`);
             } else {
                 sourceElement.textContent = "土壌図はまだ取り込まれていません。管理者が全国Shape ZIPを登録すると表示されます。";
             }
