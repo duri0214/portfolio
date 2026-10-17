@@ -237,4 +237,5 @@ class SoilMapUploadViewTest(TestCase):
         self.assertContains(response, reverse("soil:municipality_boundary_upload"))
         self.assertContains(response, reverse("soil:municipality_soil_recalculate"))
         self.assertContains(response, "全国_20.zip")
-        self.assertContains(response, "N03-20260101_GML.zip")
+        self.assertContains(response, "N03-YYYY0101_GML.zip")
+        self.assertNotContains(response, "直接ダウンロード")

@@ -22,7 +22,6 @@
                                 <p class="small text-muted">農研機構「縮尺20万分の1土壌図」の全国Shape ZIPを登録します。</p>
                                 <div class="alert alert-primary small py-2">
                                     <div><strong>指定するファイル:</strong> <code>全国_20.zip</code></div>
-                                    <div><a href="https://soil-inventory.rad.naro.go.jp/download/Shape20/%E5%85%A8%E5%9B%BD_20.zip" target="_blank" rel="noopener noreferrer">直接ダウンロード</a></div>
                                     <div><a href="https://soil-inventory.rad.naro.go.jp/download20.html" target="_blank" rel="noopener noreferrer">配布ページを開く</a></div>
                                 </div>
                                 <form method="post" action="{% url 'soil:soil_map_upload' %}" enctype="multipart/form-data">
@@ -45,7 +44,6 @@
                                 <p class="small text-muted">国土交通省「行政区域データ（N03）」の全国Shape ZIPを登録します。</p>
                                 <div class="alert alert-primary small py-2">
                                     <div><strong>指定するファイル:</strong> <code>N03-YYYY0101_GML.zip</code></div>
-                                    <div><a href="https://nlftp.mlit.go.jp/ksj/gml/data/N03/N03-2026/N03-20260101_GML.zip" target="_blank" rel="noopener noreferrer">直接ダウンロード（最新の全国版）</a></div>
                                     <div><a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2026.html" target="_blank" rel="noopener noreferrer">配布ページを開く</a></div>
                                 </div>
                                 <form method="post" action="{% url 'soil:municipality_boundary_upload' %}" enctype="multipart/form-data">
