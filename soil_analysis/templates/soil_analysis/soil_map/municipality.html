@@ -6,7 +6,7 @@
         <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
             <ol class="breadcrumb mb-0 small">
                 <li class="breadcrumb-item"><a href="{% url 'soil:home' %}" class="text-decoration-none">土壌分析CRM</a></li>
-                <li class="breadcrumb-item"><a href="{% url 'soil:prefecture_detail' prefecture_id %}#soil-analysis" class="text-decoration-none">{{ municipality.prefecture_code }}の土壌分析</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:prefecture_detail' prefecture_id %}#soil-analysis" class="text-decoration-none">土壌分析</a></li>
                 <li class="breadcrumb-item active" aria-current="page">{{ municipality.name }}</li>
             </ol>
         </nav>
