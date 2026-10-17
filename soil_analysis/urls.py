@@ -7,6 +7,11 @@ from . import views
 app_name = "soil"
 urlpatterns = [
     path("", views.Home.as_view(), name="home"),
+    path(
+        "soil-map/point-search",
+        views.SoilPointSearchView.as_view(),
+        name="soil_map_point_search",
+    ),
     path("soil-map/upload", views.SoilMapUploadView.as_view(), name="soil_map_upload"),
     path(
         "soil-map/municipality-boundary/upload",

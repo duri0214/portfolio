@@ -74,6 +74,7 @@ from soil_analysis.domain.service.soil_map_import import (
     SoilMapImportError,
     SoilMapImportService,
 )
+from soil_analysis.domain.service.soil_point_search import SoilPointSearchService
 from soil_analysis.domain.service.municipality_boundary_import import (
     MunicipalityBoundaryImportError,
     MunicipalityBoundaryImportService,
@@ -102,6 +103,7 @@ from soil_analysis.forms import (
     CsvGenerateForm,
     LandLedgerCreateForm,
     MunicipalityBoundaryUploadForm,
+    SoilPointSearchForm,
     SoilMapUploadForm,
 )
 from soil_analysis.models import (
@@ -131,6 +133,23 @@ class Home(TemplateView):
         context["prefecture_area_dashboard"] = prefecture_area_dashboard
         context["commercial_areas"] = prefecture_area_dashboard.areas
         context["commercial_area_map_data"] = prefecture_area_dashboard.map_payload
+        return context
+
+
+class SoilPointSearchView(TemplateView):
+    """緯度・経度から保存済み土壌図を検索する画面を表示する。"""
+
+    template_name = "soil_analysis/soil_map/point_search.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        form = SoilPointSearchForm(self.request.GET or None)
+        context["form"] = form
+        context["searched"] = bool(self.request.GET)
+        if form.is_valid():
+            context["result"] = SoilPointSearchService.search(
+                form.cleaned_data["latitude"], form.cleaned_data["longitude"]
+            )
         return context
 
 

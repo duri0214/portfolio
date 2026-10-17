@@ -6,6 +6,7 @@ import shapefile
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from soil_analysis.domain.service.soil_classification import SoilClassificationService
 from soil_analysis.domain.service.soil_map_import import (
@@ -221,3 +222,149 @@ class SoilMapUploadViewTest(TestCase):
         self.assertContains(response, "全国_20.zip")
         self.assertContains(response, "N03-YYYY0101_GML.zip")
         self.assertNotContains(response, "直接ダウンロード")
+
+
+class SoilPointSearchViewTest(TestCase):
+    def setUp(self):
+        self.dataset = SoilMapDataset.objects.create(
+            source_file_name="全国_20.zip",
+            source_sha256="1" * 64,
+            source_crs="GCS_JGD_2000",
+            feature_count=3,
+            is_active=True,
+            imported_at=timezone.now(),
+        )
+        SoilMapPolygon.objects.create(
+            dataset=self.dataset,
+            prefecture_code="11",
+            soil_group_code="D6",
+            soil_subgroup_code="D6h",
+            soil_series_code="D6h2",
+            soil_name="淡色アロフェン質黒ボク土",
+            coordinates=[_square(139.4, 35.8, 139.5, 35.9)],
+            min_lng=139.4,
+            min_lat=35.8,
+            max_lng=139.5,
+            max_lat=35.9,
+        )
+
+    def test_search_displays_saved_soil_classification_and_shared_url(self):
+        """
+        シナリオ:
+        - 入力: 淡色アロフェン質黒ボク土のPolygon内にある35.861231, 139.432468。
+        - 処理: 地点検索画面を緯度・経度付きでGETする。
+        - 期待値: 土壌名、分類記号、公式解説、地点指定地図、同じ座標を含む共有URLを表示すること。
+        """
+        response = self.client.get(
+            reverse("soil:soil_map_point_search"),
+            {"latitude": "35.861231", "longitude": "139.432468"},
+        )
+
+        self.assertContains(response, "この地域の土壌から読み取れること")
+        self.assertContains(response, "淡色アロフェン質黒ボク土")
+        self.assertContains(response, "D6h2")
+        self.assertContains(
+            response, "https://soil-inventory.rad.naro.go.jp/explain/D6.html"
+        )
+        self.assertContains(
+            response,
+            "lat=35.861231&amp;lng=139.432468&amp;zoom=12",
+        )
+        self.assertContains(response, "地域全体を詳しく見る")
+
+    def test_search_reports_missing_polygon_within_dataset_extent(self):
+        """
+        シナリオ:
+        - 入力: 外周Polygonの穴にあたる地点と、同じ外接矩形を持つ土壌図。
+        - 処理: 地点検索画面をGETする。
+        - 期待値: 成功結果にせず、該当Polygonがない理由と一次情報への導線を表示すること。
+        """
+        SoilMapPolygon.objects.filter(dataset=self.dataset).delete()
+        outer_ring = _square(139.4, 35.8, 139.5, 35.9)
+        inner_ring = list(reversed(_square(139.43, 35.85, 139.44, 35.86)))
+        SoilMapPolygon.objects.create(
+            dataset=self.dataset,
+            prefecture_code="11",
+            soil_group_code="D6",
+            soil_subgroup_code="D6h",
+            soil_series_code="D6h2",
+            soil_name="淡色アロフェン質黒ボク土",
+            coordinates=[outer_ring, inner_ring],
+            min_lng=139.4,
+            min_lat=35.8,
+            max_lng=139.5,
+            max_lat=35.9,
+        )
+
+        response = self.client.get(
+            reverse("soil:soil_map_point_search"),
+            {"latitude": "35.855", "longitude": "139.435"},
+        )
+
+        self.assertContains(response, "指定地点に一致する土壌図Polygonがありません")
+        self.assertNotContains(response, "この地域の土壌から読み取れること")
+
+    def test_search_reports_non_soil_classification(self):
+        """
+        シナリオ:
+        - 入力: 市街地／水域などを表すZ3のPolygon内にある地点。
+        - 処理: 地点検索画面をGETする。
+        - 期待値: 土壌分類の成功結果にせず、市街地／水域などである理由を表示すること。
+        """
+        SoilMapPolygon.objects.create(
+            dataset=self.dataset,
+            prefecture_code="11",
+            soil_group_code="Z3",
+            soil_subgroup_code="Z3",
+            soil_series_code="Z3",
+            soil_name="市街地／水域など",
+            coordinates=[_square(139.6, 35.8, 139.7, 35.9)],
+            min_lng=139.6,
+            min_lat=35.8,
+            max_lng=139.7,
+            max_lat=35.9,
+        )
+
+        response = self.client.get(
+            reverse("soil:soil_map_point_search"),
+            {"latitude": "35.85", "longitude": "139.65"},
+        )
+
+        self.assertContains(response, "この地点は「市街地／水域など」です")
+        self.assertNotContains(response, "この地域の土壌から読み取れること")
+
+    def test_search_reports_invalid_coordinates_and_unavailable_data(self):
+        """
+        シナリオ:
+        - 入力: 範囲外の緯度、または有効な土壌図を削除した状態の正しい座標。
+        - 処理: 地点検索画面をGETする。
+        - 期待値: 入力エラーとデータ未登録を、それぞれ利用者が区別できること。
+        """
+        invalid_response = self.client.get(
+            reverse("soil:soil_map_point_search"),
+            {"latitude": "91", "longitude": "139.432468"},
+        )
+        self.assertContains(invalid_response, "90 以下")
+
+        outside_response = self.client.get(
+            reverse("soil:soil_map_point_search"),
+            {"latitude": "34.0", "longitude": "139.432468"},
+        )
+        self.assertContains(outside_response, "保存済み土壌図の対象範囲外です")
+
+        SoilMapDataset.objects.all().delete()
+        unavailable_response = self.client.get(
+            reverse("soil:soil_map_point_search"),
+            {"latitude": "35.861231", "longitude": "139.432468"},
+        )
+        self.assertContains(unavailable_response, "土壌図データが未登録です")
+
+
+def _square(min_lng, min_lat, max_lng, max_lat):
+    return [
+        [min_lng, min_lat],
+        [min_lng, max_lat],
+        [max_lng, max_lat],
+        [max_lng, min_lat],
+        [min_lng, min_lat],
+    ]
