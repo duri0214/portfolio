@@ -135,12 +135,13 @@
                                     <span>商圏の集計値を確認できます。</span>
                                 </div>
                                 <p class="soil-map-source small text-muted mb-0" id="soil-map-source" hidden></p>
-                                <div class="market-legend">
+                                <div class="market-legend" id="weather-map-legend">
                                     <span><i class="legend-dot weather-sunny"></i>晴れ系</span>
                                     <span><i class="legend-dot weather-cloudy"></i>くもり系</span>
                                     <span><i class="legend-dot weather-rainy"></i>雨・雪系</span>
                                     <span><i class="legend-dot weather-unknown"></i>天気未取得</span>
                                 </div>
+                                <div class="market-legend" id="soil-map-legend" hidden></div>
                             </div>
                         </div>
                     </div>
@@ -219,5 +220,5 @@
         window.jpmapInternalMap = window.Map;
         window.Map = window.nativeMapBeforeJpmap;
     </script>
-    <script src="{% static 'soil_analysis/js/home.js' %}?v=90-soil-map"></script>
+    <script src="{% static 'soil_analysis/js/home.js' %}?v=91-soil-map"></script>
 {% endblock %}

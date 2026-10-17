@@ -186,6 +186,26 @@ class SoilMapServiceTest(TestCase):
         self.assertEqual(aomori["polygonCount"], 3)
         self.assertEqual(aomori["dominantPolygonCount"], 2)
         self.assertEqual(payload["dataset"]["featureCount"], 49)
+        self.assertEqual(
+            payload["legend"],
+            [
+                {
+                    "soilGroupCode": "A",
+                    "color": "#dbeafe",
+                    "hoverColor": "#bfdbfe",
+                },
+                {
+                    "soilGroupCode": "B",
+                    "color": "#dcfce7",
+                    "hoverColor": "#bbf7d0",
+                },
+                {
+                    "soilGroupCode": "C",
+                    "color": "#fef3c7",
+                    "hoverColor": "#fde68a",
+                },
+            ],
+        )
 
     _create_zip_file = staticmethod(SoilMapImportServiceTest._create_zip_file)
 

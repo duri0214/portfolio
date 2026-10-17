@@ -5,8 +5,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const soilDataElement = document.getElementById("soil-map-data");
     const modeToggle = document.getElementById("soil-map-mode");
     const sourceElement = document.getElementById("soil-map-source");
+    const weatherLegendElement = document.getElementById("weather-map-legend");
+    const soilLegendElement = document.getElementById("soil-map-legend");
 
-    if (!mapElement || !detailElement || !commercialDataElement || !soilDataElement || !modeToggle || !window.jpmap) return;
+    if (!mapElement || !detailElement || !commercialDataElement || !soilDataElement || !modeToggle || !sourceElement || !weatherLegendElement || !soilLegendElement || !window.jpmap) return;
 
     const commercialAreas = JSON.parse(commercialDataElement.textContent);
     const soilMap = JSON.parse(soilDataElement.textContent);
@@ -59,9 +61,30 @@ document.addEventListener("DOMContentLoaded", () => {
         detailElement.append(title, summary);
     };
 
+    const renderLegend = (isSoilMode) => {
+        weatherLegendElement.hidden = isSoilMode;
+        soilLegendElement.hidden = !isSoilMode;
+        if (!isSoilMode) return;
+
+        soilLegendElement.replaceChildren();
+        const title = document.createElement("span");
+        title.textContent = "主な土壌群:";
+        soilLegendElement.append(title);
+        for (const item of soilMap.legend || []) {
+            const legendItem = document.createElement("span");
+            const dot = document.createElement("i");
+            dot.className = "legend-dot";
+            dot.style.backgroundColor = item.color;
+            dot.style.borderColor = item.hoverColor;
+            legendItem.append(dot, `土壌群 ${item.soilGroupCode}`);
+            soilLegendElement.append(legendItem);
+        }
+    };
+
     const renderMap = () => {
         const isSoilMode = modeToggle.checked;
         showMapModeGuide(isSoilMode);
+        renderLegend(isSoilMode);
         const mapAreas = isSoilMode
             ? soilMap.areas.map((area) => ({ code: area.code, color: area.color, hoverColor: area.hoverColor }))
             : commercialAreas.map((area) => {
