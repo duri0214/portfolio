@@ -53,36 +53,34 @@ class MunicipalitySoilAggregationService:
         boundary_transformer = Transformer.from_crs(
             cls.BOUNDARY_CRS, cls.AREA_CRS, always_xy=True
         )
-        results = []
-        for prefecture_code, _ in JAPAN_MAP_PREFECTURES:
-            results.extend(
-                cls._calculate_prefecture(
+        with transaction.atomic():
+            MunicipalitySoilRepository.delete_aggregations(
+                soil_dataset, boundary_dataset
+            )
+            municipality_count = 0
+            for prefecture_code, _ in JAPAN_MAP_PREFECTURES:
+                results = cls._calculate_prefecture(
                     soil_dataset,
                     boundary_dataset,
                     f"{prefecture_code:02d}",
                     soil_transformer,
                     boundary_transformer,
                 )
-            )
-
-        with transaction.atomic():
-            MunicipalitySoilRepository.delete_aggregations(
-                soil_dataset, boundary_dataset
-            )
-            for result in results:
-                aggregation = MunicipalitySoilRepository.create_aggregation(
-                    soil_dataset=soil_dataset,
-                    boundary_dataset=boundary_dataset,
-                    municipality=result["municipality"],
-                    municipality_area_sq_m=result["municipality_area_sq_m"],
-                    classified_area_sq_m=result["classified_area_sq_m"],
-                    unclassified_area_sq_m=result["unclassified_area_sq_m"],
-                    calculated_at=timezone.now(),
-                )
-                MunicipalitySoilRepository.bulk_create_soil_areas(
-                    aggregation, result["soil_areas"]
-                )
-        return len(results)
+                municipality_count += len(results)
+                for result in results:
+                    aggregation = MunicipalitySoilRepository.create_aggregation(
+                        soil_dataset=soil_dataset,
+                        boundary_dataset=boundary_dataset,
+                        municipality=result["municipality"],
+                        municipality_area_sq_m=result["municipality_area_sq_m"],
+                        classified_area_sq_m=result["classified_area_sq_m"],
+                        unclassified_area_sq_m=result["unclassified_area_sq_m"],
+                        calculated_at=timezone.now(),
+                    )
+                    MunicipalitySoilRepository.bulk_create_soil_areas(
+                        aggregation, result["soil_areas"]
+                    )
+        return municipality_count
 
     @classmethod
     def _calculate_prefecture(
