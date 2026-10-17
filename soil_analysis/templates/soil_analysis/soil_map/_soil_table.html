@@ -13,7 +13,7 @@
             {% if level == "group" %}
                 <td><a href="{{ row.soil_group_url }}" target="_blank" rel="noopener noreferrer">{{ row.soil_group_name }}</a></td><td><code>{{ row.soil_group_code }}</code></td><td class="text-end">{{ row.national_rank }} 位 / {{ row.group_count }} 種</td>
             {% elif level == "name" %}
-                <td>{{ row.soil_name }}</td>
+                <td>{{ row.soil_name_display|default:row.soil_name }}</td>
             {% elif level == "subgroup" %}
                 <td><code>{{ row.soil_subgroup_code|default:"-" }}</code></td>
             {% else %}
@@ -25,7 +25,7 @@
     <div class="card-body border-top small">
         <p class="text-muted mb-2">構成比の降順です。上位10件をグラフで表示します。</p>
         <div class="row g-2">{% for row in rows|slice:":10" %}
-            <div class="col-md-6"><div class="d-flex justify-content-between gap-2"><span class="text-truncate">{% if level == "group" %}{{ row.soil_group_name }}{% elif level == "name" %}{{ row.soil_name }}{% elif level == "subgroup" %}{{ row.soil_subgroup_code }}{% else %}{{ row.soil_series_code }}{% endif %}</span><span>{{ row.ratio|floatformat:1 }}%</span></div><div class="progress" role="img" aria-label="{{ row.ratio|floatformat:1 }}パーセント"><div class="progress-bar" style="width: {{ row.ratio }}%"></div></div></div>
+            <div class="col-md-6"><div class="d-flex justify-content-between gap-2"><span class="text-truncate">{% if level == "group" %}{{ row.soil_group_name }}{% elif level == "name" %}{{ row.soil_name_display|default:row.soil_name }}{% elif level == "subgroup" %}{{ row.soil_subgroup_code }}{% else %}{{ row.soil_series_code }}{% endif %}</span><span>{{ row.ratio|floatformat:1 }}%</span></div><div class="progress" role="img" aria-label="{{ row.ratio|floatformat:1 }}パーセント"><div class="progress-bar" style="width: {{ row.ratio }}%"></div></div></div>
         {% endfor %}</div>
     </div>
 </section>

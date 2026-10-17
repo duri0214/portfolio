@@ -119,27 +119,21 @@ class MunicipalitySoilMapService:
         """分類列ごとに面積と、分類済み面積に対する構成比を返す。"""
         area_by_key = defaultdict(float)
         for row in rows:
-            area_by_key[
-                tuple(
-                    (
-                        normalize_soil_name(getattr(row, field))
-                        if field == "soil_name"
-                        else getattr(row, field)
-                    )
-                    for field in fields
-                )
-            ] += row.area_sq_m
+            area_by_key[tuple(getattr(row, field) for field in fields)] += row.area_sq_m
         total = sum(area_by_key.values())
-        return [
-            {
+        summary_rows = []
+        for key, area in sorted(
+            area_by_key.items(), key=lambda item: (-item[1], item[0])
+        ):
+            row = {
                 **dict(zip(fields, key)),
                 "area_sq_m": area,
                 "ratio": area / total * 100 if total else 0,
             }
-            for key, area in sorted(
-                area_by_key.items(), key=lambda item: (-item[1], item[0])
-            )
-        ]
+            if "soil_name" in row:
+                row["soil_name_display"] = normalize_soil_name(row["soil_name"])
+            summary_rows.append(row)
+        return summary_rows
 
     @staticmethod
     def _add_national_group_comparison(

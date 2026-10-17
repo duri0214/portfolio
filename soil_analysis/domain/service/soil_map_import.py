@@ -14,7 +14,6 @@ from django.utils import timezone
 
 from lib.zipfileservice import UnsafeZipPathError, ZipFileService
 from soil_analysis.domain.repository.soil_map import SoilMapRepository
-from soil_analysis.domain.service.soil_classification import normalize_soil_name
 from soil_analysis.models import SoilMapDataset
 
 
@@ -218,11 +217,10 @@ class SoilMapImportService:
                 if len(points) < 4:
                     raise ValueError("Polygon座標")
                 attribute_field_names = ("SG_CD", "SSbG_CD", "SSerGrCD", "SoilName")
-                soil_name = normalize_soil_name(values[field_name_by_upper["SOILNAME"]])
                 attribute_values = [
                     str(values[field_name_by_upper[field_name.upper()]]).strip()
-                    for field_name in attribute_field_names[:-1]
-                ] + [soil_name]
+                    for field_name in attribute_field_names
+                ]
                 if not any(attribute_values):
                     excluded_feature_count += 1
                     continue
@@ -245,7 +243,9 @@ class SoilMapImportService:
                         "soil_series_code": cls._value(
                             values, field_name_by_upper, "SSerGrCD"
                         ),
-                        "soil_name": soil_name,
+                        "soil_name": cls._value(
+                            values, field_name_by_upper, "SOILNAME"
+                        ),
                         "coordinates": coordinates,
                         "min_lng": min(point[0] for point in points),
                         "min_lat": min(point[1] for point in points),
