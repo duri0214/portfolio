@@ -1,0 +1,39 @@
+{% extends "soil_analysis/base.html" %}
+
+{% block content %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}" class="text-decoration-none">土壌分析CRM</a></li>
+                <li class="breadcrumb-item active" aria-current="page">市区町村境界データ取り込み</li>
+            </ol>
+        </nav>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h1 class="h3 mb-3"><i class="fas fa-draw-polygon me-2 text-primary"></i>市区町村境界を取り込む</h1>
+                <div class="alert alert-primary">
+                    <p class="mb-2">国土交通省 国土数値情報「<a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2024.html" target="_blank" rel="noopener noreferrer">行政区域データ（N03）</a>」の全国版Shape ZIPを登録します。</p>
+                    <ul class="mb-0 small">
+                        <li>JGD_2011、行政区域コード（N03_007）、市区町村名を検証し、全国47都道府県を含む版だけを受け付けます。</li>
+                        <li>データ基準日、取込元ファイル名、SHA-256、取込日時を保存します。</li>
+                        <li>取り込み後、ホーム画面の「市区町村の土壌面積を更新」で土壌図との交差面積を再計算します。</li>
+                    </ul>
+                </div>
+                <div class="card shadow-sm"><div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ form.file.label_tag }}
+                            {{ form.file }}
+                            {% if form.file.help_text %}<div class="form-text">{{ form.file.help_text }}</div>{% endif %}
+                            {% for error in form.file.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                        </div>
+                        <button class="btn btn-primary" type="submit"><i class="fas fa-upload me-1"></i>検証して取り込む</button>
+                        <a class="btn btn-outline-secondary" href="{% url 'soil:home' %}">キャンセル</a>
+                    </form>
+                </div></div>
+                <p class="small text-muted mt-3 mb-0">出典: 国土交通省 国土数値情報 行政区域データ。利用条件は<a href="https://nlftp.mlit.go.jp/ksj/other/yakkan.html" target="_blank" rel="noopener noreferrer">国土数値情報利用約款</a>を確認してください。</p>
+            </div>
+        </div>
+    </div>
+{% endblock %}

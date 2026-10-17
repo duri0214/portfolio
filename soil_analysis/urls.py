@@ -8,6 +8,26 @@ app_name = "soil"
 urlpatterns = [
     path("", views.Home.as_view(), name="home"),
     path("soil-map/upload", views.SoilMapUploadView.as_view(), name="soil_map_upload"),
+    path(
+        "soil-map/municipality-boundary/upload",
+        views.MunicipalityBoundaryUploadView.as_view(),
+        name="municipality_boundary_upload",
+    ),
+    path(
+        "soil-map/municipality-areas/recalculate",
+        views.MunicipalitySoilAggregationView.as_view(),
+        name="municipality_soil_recalculate",
+    ),
+    path(
+        "soil-map/prefecture/<int:prefecture_id>",
+        views.SoilMapPrefectureView.as_view(),
+        name="soil_map_prefecture",
+    ),
+    path(
+        "soil-map/municipality/<str:municipality_code>",
+        views.MunicipalitySoilDetailView.as_view(),
+        name="soil_map_municipality",
+    ),
     path("company/create", views.CompanyCreateView.as_view(), name="company_create"),
     path(
         "company/<int:pk>/detail",

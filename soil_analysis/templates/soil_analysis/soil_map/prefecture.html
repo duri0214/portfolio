@@ -1,0 +1,41 @@
+{% extends "soil_analysis/base.html" %}
+
+{% block content %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}" class="text-decoration-none">土壌分析CRM</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ prefecture_name }}の土壌</li>
+            </ol>
+        </nav>
+        <h1 class="h3 mb-2">{{ prefecture_name }}の市区町村別土壌</h1>
+        <p class="text-muted">市区町村を選ぶと、全国20万分の1土壌図と行政区域境界の交差面積から算出した土壌構成比を確認できます。</p>
+        {% if not boundary_dataset %}
+            <div class="alert alert-warning">市区町村境界データが未登録です。管理者が国土数値情報の行政区域データを取り込むと一覧を表示できます。</div>
+        {% elif not soil_dataset %}
+            <div class="alert alert-warning">全国土壌図が未登録です。管理者が土壌図を取り込むと面積を集計できます。</div>
+        {% else %}
+            <div class="alert alert-info">市区町村を選択してください。面積が未表示の市区町村は、土壌面積の更新がまだ実行されていません。</div>
+            <div class="card shadow-sm"><div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light"><tr><th>市区町村</th><th>行政区域コード</th><th class="text-end">分類できた面積</th><th class="text-end">未分類を含む面積</th></tr></thead>
+                    <tbody>{% for item in municipalities %}
+                        <tr>
+                            <td><a class="fw-semibold text-decoration-none" href="{% url 'soil:soil_map_municipality' item.boundary.municipality_code %}">{{ item.boundary.name }}</a></td>
+                            <td><code>{{ item.boundary.municipality_code }}</code></td>
+                            {% if item.aggregation %}
+                                <td class="text-end">{{ item.aggregation.classified_area_sq_m|floatformat:0 }} ㎡</td>
+                                <td class="text-end">{{ item.aggregation.unclassified_area_sq_m|floatformat:0 }} ㎡</td>
+                            {% else %}
+                                <td colspan="2" class="text-end text-muted">未集計</td>
+                            {% endif %}
+                        </tr>
+                    {% empty %}<tr><td colspan="4" class="text-center text-muted py-4">市区町村境界がありません。</td></tr>{% endfor %}</tbody>
+                </table>
+            </div></div>
+        {% endif %}
+        {% if boundary_dataset %}
+            <p class="small text-muted mt-3">境界データ: <a href="{{ boundary_source_url }}" target="_blank" rel="noopener noreferrer">国土数値情報 行政区域データ</a> / 基準日: {{ boundary_dataset.source_date|date:"Y年n月j日" }} / 取込: {{ boundary_dataset.imported_at|date:"Y年n月j日 H:i" }}</p>
+        {% endif %}
+    </div>
+{% endblock %}

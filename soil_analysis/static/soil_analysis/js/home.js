@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
         unknown: { color: "#f1f5f9", hoverColor: "#e2e8f0" },
     };
     const detailUrlTemplate = mapElement.dataset.detailUrlTemplate || "";
+    const soilDetailUrlTemplate = mapElement.dataset.soilDetailUrlTemplate || "";
 
     const weatherPalette = (weatherCode) => {
         if (!weatherCode) return weatherColors.unknown;
@@ -44,23 +45,23 @@ document.addEventListener("DOMContentLoaded", () => {
         detailElement.append(title, jmaArea, summary, risk, detailLink);
     };
 
-    const showSoilDetail = (area) => {
+    const showMapModeGuide = (isSoilMode) => {
         detailElement.replaceChildren();
         const title = document.createElement("strong");
-        title.textContent = area.soilName
-            ? `${area.name}: 区画数が最も多い土壌 ${area.soilName}`
-            : `${area.name}: 未収録`;
         const summary = document.createElement("span");
-        summary.textContent = area.soilName
-            ? `県内の土壌図区画 ${area.polygonCount.toLocaleString()}件（${area.soilName}: ${area.dominantPolygonCount.toLocaleString()}区画） / 土壌群コード ${area.soilGroupCode}`
-            : "有効な土壌図にこの都道府県の地物がありません。";
-        const note = document.createElement("span");
-        note.textContent = "表示名は県内の土壌図区画数が最も多い土壌です。区画の面積は一定ではないため、面積比・圃場単位の土壌診断を示すものではありません。";
-        detailElement.append(title, summary, note);
+        if (isSoilMode) {
+            title.textContent = "地図から都道府県を選択";
+            summary.textContent = "市区町村ごとの土壌面積・構成比を確認できます。";
+        } else {
+            title.textContent = "地図から都道府県を選択";
+            summary.textContent = "商圏の集計値を確認できます。";
+        }
+        detailElement.append(title, summary);
     };
 
     const renderMap = () => {
         const isSoilMode = modeToggle.checked;
+        showMapModeGuide(isSoilMode);
         const mapAreas = isSoilMode
             ? soilMap.areas.map((area) => ({ code: area.code, color: area.color, hoverColor: area.hoverColor }))
             : commercialAreas.map((area) => {
@@ -98,7 +99,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 borderLineWidth: 0.4,
                 onSelect: (data) => {
                     const area = isSoilMode ? soilAreaByCode[Number(data.code)] : commercialAreaByCode[Number(data.code)];
-                    if (area) isSoilMode ? showSoilDetail(area) : showCommercialDetail(area);
+                    if (!area) return;
+                    if (isSoilMode && soilDetailUrlTemplate) {
+                        window.location.assign(soilDetailUrlTemplate.replace("999", area.code));
+                        return;
+                    }
+                    showCommercialDetail(area);
                 },
             });
         } finally {

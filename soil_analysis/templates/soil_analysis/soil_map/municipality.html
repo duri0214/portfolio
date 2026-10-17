@@ -1,0 +1,29 @@
+{% extends "soil_analysis/base.html" %}
+
+{% block content %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}" class="text-decoration-none">土壌分析CRM</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:soil_map_prefecture' prefecture_id %}" class="text-decoration-none">{{ municipality.prefecture_code }}の市区町村</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ municipality.name }}</li>
+            </ol>
+        </nav>
+        <h1 class="h3 mb-2">{{ municipality.name }}の土壌構成</h1>
+        {% if not aggregation %}
+            <div class="alert alert-warning">この市区町村はまだ集計されていません。管理者が土壌面積の更新を実行すると表示されます。</div>
+        {% else %}
+            <div class="row g-3 mb-4">
+                <div class="col-md-4"><div class="card h-100"><div class="card-body"><div class="small text-muted">市区町村内の対象面積</div><strong class="h4">{{ aggregation.municipality_area_sq_m|floatformat:0 }} ㎡</strong></div></div></div>
+                <div class="col-md-4"><div class="card h-100 border-success"><div class="card-body"><div class="small text-muted">土壌図で分類できた面積</div><strong class="h4">{{ aggregation.classified_area_sq_m|floatformat:0 }} ㎡</strong></div></div></div>
+                <div class="col-md-4"><div class="card h-100 border-secondary"><div class="card-body"><div class="small text-muted">分類できなかった面積</div><strong class="h4">{{ aggregation.unclassified_area_sq_m|floatformat:0 }} ㎡</strong></div></div></div>
+            </div>
+            <div class="alert alert-secondary small">構成比は、分類できた面積を分母にした値です。未分類には土壌属性未設定、市街地・水域など土壌図で分類されない範囲を含みます。圃場単位の土壌診断ではありません。</div>
+            {% include "soil_analysis/soil_map/_soil_table.html" with title="土壌群（コード）" rows=soil_group_rows %}
+            {% include "soil_analysis/soil_map/_soil_table.html" with title="土壌亜群（コード）" rows=soil_subgroup_rows %}
+            {% include "soil_analysis/soil_map/_soil_table.html" with title="土壌統群（コード）" rows=soil_series_rows %}
+            {% include "soil_analysis/soil_map/_soil_table.html" with title="土壌名" rows=soil_name_rows show_name=True %}
+        {% endif %}
+        <p class="small text-muted mt-4">土壌図: <a href="https://soil-inventory.rad.naro.go.jp/download20.html" target="_blank" rel="noopener noreferrer">農研機構 日本土壌インベントリー（縮尺20万分の1土壌図、CC BY 4.0）</a> / ファイル: {{ soil_dataset.source_file_name }} / 取込: {{ soil_dataset.imported_at|date:"Y年n月j日 H:i" }}<br>境界: <a href="{{ boundary_source_url }}" target="_blank" rel="noopener noreferrer">国土数値情報 行政区域データ</a> / 基準日: {{ boundary_dataset.source_date|date:"Y年n月j日" }} / 取込: {{ boundary_dataset.imported_at|date:"Y年n月j日 H:i" }}<br>集計: {{ aggregation.calculated_at|date:"Y年n月j日 H:i" }} に算出 / 算出方法: 土壌図（JGD2000）と行政区域（JGD2011）を等積投影（EPSG:6933）へ変換し、Polygonの交差面積を合計しています。</p>
+    </div>
+{% endblock %}
