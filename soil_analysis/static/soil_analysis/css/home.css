@@ -72,6 +72,39 @@
     float: none;
     margin: 0;
     width: 2.5em;
+    height: 1.3em;
+    appearance: none;
+    border: 0;
+    border-radius: 999px;
+    background: #aeb8c2;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+    -webkit-appearance: none;
+}
+
+.soil-map-switch::before {
+    display: block;
+    width: 0.94em;
+    height: 0.94em;
+    margin: 0.18em;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgb(16 42 67 / 35%);
+    content: "";
+    transition: transform 0.15s ease-in-out;
+}
+
+.soil-map-switch:checked {
+    background: #2f80ed;
+}
+
+.soil-map-switch:checked::before {
+    transform: translateX(1.2em);
+}
+
+.soil-map-switch:focus-visible {
+    outline: 3px solid rgb(47 128 237 / 35%);
+    outline-offset: 2px;
 }
 
 .map-mode-control {
