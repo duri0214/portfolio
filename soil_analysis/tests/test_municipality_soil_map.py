@@ -174,8 +174,8 @@ class MunicipalitySoilAggregationServiceTest(TestCase):
         """
         シナリオ:
         - 入力: 再計算済みの青森市土壌面積と、ホームの地図表示。
-        - 処理: ホーム、都道府県詳細、市区町村詳細、旧土壌都道府県URLをGETする。
-        - 期待値: ホームは天気・商圏だけを表示し、共通詳細の土壌分析タブから市区町村と分類別構成比を確認でき、旧URLは土壌分析タブへ移ること。
+        - 処理: ホーム、都道府県詳細、市区町村詳細と旧土壌都道府県URLをGETする。
+        - 期待値: ホームは天気・商圏だけを表示し、共通詳細の土壌分析タブから市区町村と分類別構成比を確認でき、削除済みの旧URLは404になること。
         """
         MunicipalitySoilAggregationService.recalculate_active_datasets()
 
@@ -183,9 +183,7 @@ class MunicipalitySoilAggregationServiceTest(TestCase):
         prefecture_response = self.client.get(
             reverse("soil:prefecture_detail", kwargs={"prefecture_id": 2})
         )
-        legacy_response = self.client.get(
-            reverse("soil:soil_map_prefecture", kwargs={"prefecture_id": 2})
-        )
+        legacy_response = self.client.get("/soil_analysis/soil-map/prefecture/2")
         municipality_response = self.client.get(
             reverse(
                 "soil:soil_map_municipality",
@@ -205,11 +203,7 @@ class MunicipalitySoilAggregationServiceTest(TestCase):
                 "soil:soil_map_municipality", kwargs={"municipality_code": "02201"}
             ),
         )
-        self.assertEqual(legacy_response.status_code, 301)
-        self.assertEqual(
-            legacy_response["Location"],
-            f"{reverse('soil:prefecture_detail', kwargs={'prefecture_id': 2})}#soil-analysis",
-        )
+        self.assertEqual(legacy_response.status_code, 404)
         self.assertContains(municipality_response, "主な土壌タイプ")
         self.assertContains(municipality_response, "構成比 ▼")
         self.assertContains(municipality_response, "黒ボク土")

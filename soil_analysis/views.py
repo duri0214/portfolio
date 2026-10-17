@@ -30,7 +30,6 @@ from django.views.generic import (
     TemplateView,
     FormView,
 )
-from django.views.generic.base import RedirectView
 from openpyxl import Workbook, load_workbook
 
 from lib.geo.valueobject.coord import XarvioCoord
@@ -228,16 +227,6 @@ class MunicipalitySoilAggregationView(LoginRequiredMixin, UserPassesTestMixin, V
                 f"{municipality_count:,}市区町村の土壌面積・構成比を更新しました。",
             )
         return redirect("soil:home")
-
-
-class SoilMapPrefectureView(RedirectView):
-    """旧土壌都道府県URLを共通詳細の土壌分析タブへ移す。"""
-
-    permanent = True
-
-    def get_redirect_url(self, *args, **kwargs):
-        detail_url = reverse("soil:prefecture_detail", kwargs=kwargs)
-        return f"{detail_url}#soil-analysis"
 
 
 class MunicipalitySoilDetailView(TemplateView):
