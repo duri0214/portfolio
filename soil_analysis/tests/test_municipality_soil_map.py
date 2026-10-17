@@ -4,6 +4,7 @@ from datetime import date
 from pathlib import Path
 
 import shapefile
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -14,10 +15,12 @@ from soil_analysis.domain.service.municipality_boundary_import import (
 from soil_analysis.domain.service.municipality_soil_aggregation import (
     MunicipalitySoilAggregationService,
 )
+from soil_analysis.domain.service.shape_import_job import ShapeImportJobService
 from soil_analysis.models import (
     MunicipalityBoundary,
     MunicipalityBoundaryDataset,
     MunicipalitySoilAggregation,
+    ShapeImportJob,
     SoilMapDataset,
     SoilMapPolygon,
 )
@@ -115,6 +118,33 @@ class MunicipalityBoundaryImportServiceTest(TestCase):
                         f"municipality_prefecture{suffix}",
                     )
         return zip_path
+
+
+class MunicipalityBoundaryImportJobServiceTest(TestCase):
+    def test_boundary_job_merges_features_and_activates_the_dataset(self):
+        """
+        シナリオ:
+        - 入力: 全国47都道府県を含む市区町村境界Shape ZIP。
+        - 処理: 境界取込ジョブの各ステップを完了まで実行する。
+        - 期待値: 市区町村境界を段階的に保存し、完了時に新しい全国版を有効化する。
+        """
+        with tempfile.TemporaryDirectory() as directory:
+            directory_path = Path(directory)
+            zip_path = MunicipalityBoundaryImportServiceTest._create_boundary_zip(
+                directory_path
+            )
+            with self.settings(MEDIA_ROOT=directory_path / "media"):
+                job = ShapeImportJobService.create_job(
+                    ShapeImportJob.DatasetType.MUNICIPALITY_BOUNDARY,
+                    SimpleUploadedFile(zip_path.name, zip_path.read_bytes()),
+                )
+                for _ in range(3):
+                    job = ShapeImportJobService.process_next_step(job.pk)
+
+                self.assertEqual(job.status, ShapeImportJob.Status.COMPLETED)
+                self.assertEqual(job.processed_record_count, 47)
+                self.assertTrue(job.boundary_dataset.is_active)
+                self.assertEqual(job.boundary_dataset.municipality_count, 47)
 
 
 class MunicipalitySoilAggregationServiceTest(TestCase):

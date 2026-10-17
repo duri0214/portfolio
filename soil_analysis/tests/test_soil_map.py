@@ -4,6 +4,7 @@ from pathlib import Path
 
 import shapefile
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 
@@ -12,7 +13,7 @@ from soil_analysis.domain.service.soil_map_import import (
     SoilMapImportError,
     SoilMapImportService,
 )
-from soil_analysis.models import SoilMapDataset, SoilMapPolygon
+from soil_analysis.models import ShapeImportJob, SoilMapDataset, SoilMapPolygon
 
 
 class SoilMapImportServiceTest(TestCase):
@@ -194,6 +195,42 @@ class SoilClassificationServiceTest(TestCase):
             "https://soil-inventory.rad.naro.go.jp/explain/D6.html",
         )
         self.assertIn("火山灰", SoilClassificationService.get_soil_group_summary("D6"))
+
+
+class ShapeImportJobViewTest(TestCase):
+    def test_soil_map_upload_creates_a_job_and_steps_until_the_dataset_is_active(self):
+        """
+        シナリオ:
+        - 入力: 管理者と全国47都道府県を含む土壌図Shape ZIP。
+        - 処理: ZIPをアップロードしてから、step APIを完了まで呼び出す。
+        - 期待値: アップロード要求はジョブ作成で戻り、段階取込の完了後に新しいデータ版が有効になる。
+        """
+        administrator = get_user_model().objects.create_superuser(
+            username="administrator", password="password", email="admin@example.com"
+        )
+        self.client.force_login(administrator)
+        with tempfile.TemporaryDirectory() as directory:
+            directory_path = Path(directory)
+            zip_path = SoilMapImportServiceTest._create_zip_file(directory_path)
+            with self.settings(MEDIA_ROOT=directory_path / "media"):
+                response = self.client.post(
+                    reverse("soil:soil_map_upload"),
+                    {"file": SimpleUploadedFile(zip_path.name, zip_path.read_bytes())},
+                )
+                self.assertEqual(response.status_code, 302)
+                job = ShapeImportJob.objects.get()
+
+                for _ in range(3):
+                    response = self.client.post(
+                        reverse("soil:shape_import_job_step", args=[job.pk])
+                    )
+                    self.assertEqual(response.status_code, 200)
+
+                job.refresh_from_db()
+                self.assertEqual(job.status, ShapeImportJob.Status.COMPLETED)
+                self.assertEqual(job.processed_record_count, 49)
+                self.assertTrue(job.soil_dataset.is_active)
+                self.assertEqual(job.soil_dataset.feature_count, 49)
 
 
 class SoilMapUploadViewTest(TestCase):

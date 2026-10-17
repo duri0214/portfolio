@@ -79,4 +79,92 @@
             </div>
         </div>
     </div>
+    {% if import_job %}
+        <section class="container mb-4" id="shape-import-progress"
+                 data-step-url="{% url 'soil:shape_import_job_step' import_job.pk %}">
+            <div class="card border-primary shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center gap-3 mb-2">
+                        <h2 class="h5 mb-0">{{ import_job.get_dataset_type_display }}の取込状況</h2>
+                        <span class="badge text-bg-primary" id="shape-import-status">{{ import_job.get_status_display }}</span>
+                    </div>
+                    <p class="mb-2" id="shape-import-phase">{{ import_job.get_phase_display }}</p>
+                    <div class="progress mb-2" role="progressbar" aria-label="取込進捗">
+                        <div class="progress-bar" id="shape-import-bar" style="width: {% if import_job.total_record_count %}{% widthratio import_job.processed_record_count import_job.total_record_count 100 %}{% else %}0{% endif %}%"></div>
+                    </div>
+                    <p class="small text-muted mb-3" id="shape-import-count">{{ import_job.processed_record_count }} / {{ import_job.total_record_count }} レコード</p>
+                    <div class="alert alert-warning {% if import_job.status != 'failed' %}d-none{% endif %}" id="shape-import-error" role="alert">{{ import_job.error_message }}</div>
+                    <button class="btn btn-outline-primary d-none" type="button" id="shape-import-retry">再開する</button>
+                </div>
+            </div>
+        </section>
+    {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+    {% if import_job %}
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const panel = document.getElementById("shape-import-progress");
+                const phase = document.getElementById("shape-import-phase");
+                const status = document.getElementById("shape-import-status");
+                const bar = document.getElementById("shape-import-bar");
+                const count = document.getElementById("shape-import-count");
+                const error = document.getElementById("shape-import-error");
+                const retry = document.getElementById("shape-import-retry");
+                const csrfToken = document.querySelector("input[name=csrfmiddlewaretoken]").value;
+
+                function render(data) {
+                    phase.textContent = data.phase_label;
+                    status.textContent = data.status;
+                    count.textContent = data.processed_record_count + " / " + data.total_record_count + " レコード";
+                    const percentage = data.total_record_count
+                        ? Math.min(100, data.processed_record_count / data.total_record_count * 100)
+                        : 0;
+                    bar.style.width = percentage + "%";
+                    if (data.error_message) {
+                        error.textContent = data.error_message;
+                        error.classList.remove("d-none");
+                    } else {
+                        error.classList.add("d-none");
+                    }
+                }
+
+                async function continueImport() {
+                    retry.classList.add("d-none");
+                    while (true) {
+                        let response;
+                        let data;
+                        try {
+                            response = await fetch(panel.dataset.stepUrl, {
+                                method: "POST",
+                                headers: {"X-CSRFToken": csrfToken, "Accept": "application/json"},
+                                credentials: "same-origin"
+                            });
+                            data = await response.json();
+                        } catch (requestError) {
+                            error.textContent = "通信に失敗しました。再開してください。";
+                            error.classList.remove("d-none");
+                            retry.classList.remove("d-none");
+                            return;
+                        }
+                        render(data);
+                        if (!response.ok || data.status === "failed") {
+                            retry.classList.remove("d-none");
+                            return;
+                        }
+                        if (data.status === "completed") {
+                            status.className = "badge text-bg-success";
+                            phase.textContent = "取込が完了しました。";
+                            return;
+                        }
+                        await new Promise(function (resolve) { window.setTimeout(resolve, 1000); });
+                    }
+                }
+
+                retry.addEventListener("click", continueImport);
+                continueImport();
+            });
+        </script>
+    {% endif %}
 {% endblock %}

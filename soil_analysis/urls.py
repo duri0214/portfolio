@@ -7,11 +7,20 @@ from . import views
 app_name = "soil"
 urlpatterns = [
     path("", views.Home.as_view(), name="home"),
-    path("soil-map/upload", views.SoilMapUploadView.as_view(), name="soil_map_upload"),
+    path(
+        "soil-map/upload",
+        views.SoilMapImportJobUploadView.as_view(),
+        name="soil_map_upload",
+    ),
     path(
         "soil-map/municipality-boundary/upload",
-        views.MunicipalityBoundaryUploadView.as_view(),
+        views.MunicipalityBoundaryImportJobUploadView.as_view(),
         name="municipality_boundary_upload",
+    ),
+    path(
+        "soil-map/imports/<uuid:pk>/step",
+        views.ShapeImportJobStepView.as_view(),
+        name="shape_import_job_step",
     ),
     path(
         "soil-map/municipality-areas/recalculate",

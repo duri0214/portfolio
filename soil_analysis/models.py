@@ -1,3 +1,4 @@
+import uuid
 from urllib.parse import quote
 
 from django.contrib.auth import get_user_model
@@ -1114,6 +1115,67 @@ class MunicipalityBoundary(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.municipality_code})"
+
+
+class ShapeImportJob(models.Model):
+    """全国版Shape ZIPを短いHTTPリクエストで取り込むための進捗を保持する。"""
+
+    class DatasetType(models.TextChoices):
+        SOIL_MAP = "soil_map", "土壌図"
+        MUNICIPALITY_BOUNDARY = "municipality_boundary", "市区町村境界"
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "準備待ち"
+        RUNNING = "running", "取込中"
+        COMPLETED = "completed", "完了"
+        FAILED = "failed", "失敗"
+
+    class Phase(models.TextChoices):
+        PREPARE = "prepare", "ZIPを検証中"
+        IMPORT = "import", "Shapeを取込中"
+        FINALIZE = "finalize", "有効版を切替中"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    dataset_type = models.CharField(max_length=32, choices=DatasetType.choices)
+    source_file = models.FileField(upload_to="soil_analysis/shape_imports")
+    source_file_name = models.CharField(max_length=255)
+    source_sha256 = models.CharField(max_length=64, unique=True)
+    source_crs = models.TextField(blank=True)
+    status = models.CharField(
+        max_length=16, choices=Status.choices, default=Status.PENDING
+    )
+    phase = models.CharField(
+        max_length=16, choices=Phase.choices, default=Phase.PREPARE
+    )
+    total_record_count = models.PositiveIntegerField(default=0)
+    processed_record_count = models.PositiveIntegerField(default=0)
+    excluded_record_count = models.PositiveIntegerField(default=0)
+    error_message = models.TextField(blank=True)
+    soil_dataset = models.ForeignKey(
+        SoilMapDataset,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="import_jobs",
+    )
+    boundary_dataset = models.ForeignKey(
+        MunicipalityBoundaryDataset,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="import_jobs",
+    )
+    is_processing = models.BooleanField(default=False)
+    processing_started_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-updated_at", "-created_at"]
+
+    def __str__(self):
+        return f"{self.get_dataset_type_display()}取込 {self.source_file_name}"
 
 
 class MunicipalitySoilAggregation(models.Model):
