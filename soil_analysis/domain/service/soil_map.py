@@ -6,12 +6,8 @@ from soil_analysis.domain.repository.soil_map import SoilMapRepository
 from soil_analysis.domain.service.prefecture_commercial_area import (
     JAPAN_MAP_PREFECTURES,
 )
-from soil_analysis.domain.service.soil_classification import (
-    SOIL_INVENTORY_URL,
-    get_soil_group_name,
-    get_soil_group_url,
-    normalize_soil_name,
-)
+from soil_analysis.domain.service.soil_classification import SoilClassificationService
+from soil_analysis.domain.valueobject.soil_classification import SOIL_INVENTORY_URL
 
 
 class SoilMapService:
@@ -71,7 +67,9 @@ class SoilMapService:
                         item["polygon_count"] for item in summaries_for_prefecture
                     ),
                     "dominantPolygonCount": main["polygon_count"],
-                    "soilName": normalize_soil_name(main["soil_name"]),
+                    "soilName": SoilClassificationService.normalize_soil_name(
+                        main["soil_name"]
+                    ),
                     "soilGroupCode": main["soil_group_code"],
                     "color": palette["color"],
                     "hoverColor": palette["hoverColor"],
@@ -89,8 +87,12 @@ class SoilMapService:
             "legend": [
                 {
                     "soilGroupCode": soil_group_code,
-                    "soilGroupName": get_soil_group_name(soil_group_code),
-                    "soilGroupUrl": get_soil_group_url(soil_group_code),
+                    "soilGroupName": SoilClassificationService.get_soil_group_name(
+                        soil_group_code
+                    ),
+                    "soilGroupUrl": SoilClassificationService.get_soil_group_url(
+                        soil_group_code
+                    ),
                     **palette,
                 }
                 for soil_group_code, palette in palette_by_soil_group.items()

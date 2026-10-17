@@ -8,12 +8,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from soil_analysis.domain.service.soil_map import SoilMapService
-from soil_analysis.domain.service.soil_classification import (
-    get_soil_group_name,
-    get_soil_group_summary,
-    get_soil_group_url,
-    normalize_soil_name,
-)
+from soil_analysis.domain.service.soil_classification import SoilClassificationService
 from soil_analysis.domain.service.soil_map_import import (
     SoilMapImportError,
     SoilMapImportService,
@@ -181,7 +176,8 @@ class SoilMapServiceTest(TestCase):
         - 期待値: 空の括弧を除いた名称になること。
         """
         self.assertEqual(
-            normalize_soil_name("細粒質（）灰色低地土"), "細粒質灰色低地土"
+            SoilClassificationService.normalize_soil_name("細粒質（）灰色低地土"),
+            "細粒質灰色低地土",
         )
 
     def test_soil_group_code_is_converted_to_a_readable_name(self):
@@ -191,12 +187,14 @@ class SoilMapServiceTest(TestCase):
         - 操作: 画面表示用の土壌群名を取得する。
         - 期待値: コードだけでなくアロフェン質黒ボク土と表示できること。
         """
-        self.assertEqual(get_soil_group_name("D6"), "アロフェン質黒ボク土")
         self.assertEqual(
-            get_soil_group_url("D6"),
+            SoilClassificationService.get_soil_group_name("D6"), "アロフェン質黒ボク土"
+        )
+        self.assertEqual(
+            SoilClassificationService.get_soil_group_url("D6"),
             "https://soil-inventory.rad.naro.go.jp/explain/D6.html",
         )
-        self.assertIn("火山灰", get_soil_group_summary("D6"))
+        self.assertIn("火山灰", SoilClassificationService.get_soil_group_summary("D6"))
 
     def test_build_payload_returns_dominant_soil_for_each_prefecture(self):
         """

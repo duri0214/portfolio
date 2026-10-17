@@ -5,13 +5,8 @@ from collections import defaultdict
 from soil_analysis.domain.repository.municipality_soil import (
     MunicipalitySoilRepository,
 )
-from soil_analysis.domain.service.soil_classification import (
-    SOIL_INVENTORY_URL,
-    get_soil_group_name,
-    get_soil_group_summary,
-    get_soil_group_url,
-    normalize_soil_name,
-)
+from soil_analysis.domain.service.soil_classification import SoilClassificationService
+from soil_analysis.domain.valueobject.soil_classification import SOIL_INVENTORY_URL
 
 
 class MunicipalitySoilMapService:
@@ -131,7 +126,9 @@ class MunicipalitySoilMapService:
                 "ratio": area / total * 100 if total else 0,
             }
             if "soil_name" in row:
-                row["soil_name_display"] = normalize_soil_name(row["soil_name"])
+                row["soil_name_display"] = (
+                    SoilClassificationService.normalize_soil_name(row["soil_name"])
+                )
             summary_rows.append(row)
         return summary_rows
 
@@ -158,7 +155,9 @@ class MunicipalitySoilMapService:
         }
         for row in soil_group_rows:
             code = row["soil_group_code"]
-            row["soil_group_name"] = get_soil_group_name(code)
-            row["soil_group_summary"] = get_soil_group_summary(code)
-            row["soil_group_url"] = get_soil_group_url(code)
+            row["soil_group_name"] = SoilClassificationService.get_soil_group_name(code)
+            row["soil_group_summary"] = (
+                SoilClassificationService.get_soil_group_summary(code)
+            )
+            row["soil_group_url"] = SoilClassificationService.get_soil_group_url(code)
             row.update(national_by_code.get(code, {}))
