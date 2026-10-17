@@ -1,5 +1,7 @@
 """全国土壌図の土壌群コードを、画面で読める名称へ変換する。"""
 
+import re
+
 SOIL_INVENTORY_URL = "https://soil-inventory.rad.naro.go.jp/main/figure"
 
 # 縮尺20万分の1土壌図で用いる土壌群コード。名称と分類の一次情報は
@@ -51,6 +53,12 @@ SOIL_GROUP_SUMMARIES = {
     "F2": "地下水位が高い低地に分布し、排水不良になりやすい土壌です。",
     "Z3": "市街地や水域などを表す区分で、栽培上の土壌特性を読む対象ではありません。",
 }
+
+
+def normalize_soil_name(name: str) -> str:
+    """空の括弧が混ざった配布データの土壌名を画面表示用に整える。"""
+    normalized = str(name or "").strip()
+    return re.sub(r"[（(]\s*[）)]", "", normalized)
 
 
 def get_soil_group_name(code: str) -> str:

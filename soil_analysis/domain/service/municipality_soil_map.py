@@ -10,6 +10,7 @@ from soil_analysis.domain.service.soil_classification import (
     get_soil_group_name,
     get_soil_group_summary,
     get_soil_group_url,
+    normalize_soil_name,
 )
 
 
@@ -118,7 +119,16 @@ class MunicipalitySoilMapService:
         """分類列ごとに面積と、分類済み面積に対する構成比を返す。"""
         area_by_key = defaultdict(float)
         for row in rows:
-            area_by_key[tuple(getattr(row, field) for field in fields)] += row.area_sq_m
+            area_by_key[
+                tuple(
+                    (
+                        normalize_soil_name(getattr(row, field))
+                        if field == "soil_name"
+                        else getattr(row, field)
+                    )
+                    for field in fields
+                )
+            ] += row.area_sq_m
         total = sum(area_by_key.values())
         return [
             {

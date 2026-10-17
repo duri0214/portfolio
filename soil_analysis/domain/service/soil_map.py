@@ -10,6 +10,7 @@ from soil_analysis.domain.service.soil_classification import (
     SOIL_INVENTORY_URL,
     get_soil_group_name,
     get_soil_group_url,
+    normalize_soil_name,
 )
 
 
@@ -70,7 +71,7 @@ class SoilMapService:
                         item["polygon_count"] for item in summaries_for_prefecture
                     ),
                     "dominantPolygonCount": main["polygon_count"],
-                    "soilName": main["soil_name"],
+                    "soilName": normalize_soil_name(main["soil_name"]),
                     "soilGroupCode": main["soil_group_code"],
                     "color": palette["color"],
                     "hoverColor": palette["hoverColor"],

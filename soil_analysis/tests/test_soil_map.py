@@ -12,6 +12,7 @@ from soil_analysis.domain.service.soil_classification import (
     get_soil_group_name,
     get_soil_group_summary,
     get_soil_group_url,
+    normalize_soil_name,
 )
 from soil_analysis.domain.service.soil_map_import import (
     SoilMapImportError,
@@ -172,6 +173,17 @@ class SoilMapImportServiceTest(TestCase):
 
 
 class SoilMapServiceTest(TestCase):
+    def test_soil_name_removes_empty_parentheses(self):
+        """
+        シナリオ:
+        - 入力: 空の括弧を含む土壌名。
+        - 操作: 画面表示用の土壌名を正規化する。
+        - 期待値: 空の括弧を除いた名称になること。
+        """
+        self.assertEqual(
+            normalize_soil_name("細粒質（）灰色低地土"), "細粒質灰色低地土"
+        )
+
     def test_soil_group_code_is_converted_to_a_readable_name(self):
         """
         シナリオ:
