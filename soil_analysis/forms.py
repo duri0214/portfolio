@@ -160,6 +160,25 @@ class SoilMapUploadForm(forms.Form):
         return uploaded_file
 
 
+class MunicipalityBoundaryUploadForm(forms.Form):
+    """国土数値情報の行政区域Shape ZIPを受け付けるフォーム。"""
+
+    file = forms.FileField(
+        label="市区町村境界（行政区域データ）ZIP",
+        widget=ClearableFileInput(
+            attrs={"class": "form-control", "tabindex": "1", "accept": ".zip"}
+        ),
+        help_text="国土数値情報の全国版（N03）のShape ZIPを指定してください。",
+    )
+
+    def clean_file(self):
+        """ZIP拡張子を確認して、取込サービスへ渡す。"""
+        uploaded_file = self.cleaned_data["file"]
+        if not uploaded_file.name.lower().endswith(".zip"):
+            raise forms.ValidationError("ZIPファイルを指定してください。")
+        return uploaded_file
+
+
 class ChemicalUploadForm(forms.Form):
     file = forms.FileField(
         label="川田研究所 XLSX",

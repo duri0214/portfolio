@@ -6,6 +6,8 @@ from soil_analysis.domain.repository.soil_map import SoilMapRepository
 from soil_analysis.domain.service.prefecture_commercial_area import (
     JAPAN_MAP_PREFECTURES,
 )
+from soil_analysis.domain.service.soil_classification import SoilClassificationService
+from soil_analysis.domain.valueobject.soil_classification import SOIL_INVENTORY_URL
 
 
 class SoilMapService:
@@ -17,6 +19,9 @@ class SoilMapService:
         {"color": "#fef3c7", "hoverColor": "#fde68a"},
         {"color": "#fae8ff", "hoverColor": "#f5d0fe"},
         {"color": "#ffedd5", "hoverColor": "#fed7aa"},
+        {"color": "#cffafe", "hoverColor": "#a5f3fc"},
+        {"color": "#ffe4e6", "hoverColor": "#fecdd3"},
+        {"color": "#e0e7ff", "hoverColor": "#c7d2fe"},
     )
     EMPTY_PALETTE = {"color": "#f1f5f9", "hoverColor": "#e2e8f0"}
 
@@ -44,21 +49,27 @@ class SoilMapService:
         summaries = SoilMapRepository.get_prefecture_soil_summaries(dataset)
         for summary in summaries:
             grouped[summary["prefecture_code"]].append(summary)
+        palette_by_soil_group = {
+            soil_group_code: cls._palette(index)
+            for index, soil_group_code in enumerate(
+                sorted({summary["soil_group_code"] for summary in summaries})
+            )
+        }
         for prefecture_code, summaries_for_prefecture in grouped.items():
             area = areas.get(prefecture_code)
             if not area:
                 continue
             main = summaries_for_prefecture[0]
-            palette = cls.PALETTES[
-                sum(map(ord, main["soil_group_code"])) % len(cls.PALETTES)
-            ]
+            palette = palette_by_soil_group[main["soil_group_code"]]
             area.update(
                 {
                     "polygonCount": sum(
                         item["polygon_count"] for item in summaries_for_prefecture
                     ),
                     "dominantPolygonCount": main["polygon_count"],
-                    "soilName": main["soil_name"],
+                    "soilName": SoilClassificationService.normalize_soil_name(
+                        main["soil_name"]
+                    ),
                     "soilGroupCode": main["soil_group_code"],
                     "color": palette["color"],
                     "hoverColor": palette["hoverColor"],
@@ -73,4 +84,28 @@ class SoilMapService:
                 "importedAt": dataset.imported_at.isoformat(),
                 "sourceUrl": "https://soil-inventory.rad.naro.go.jp/download20.html",
             },
+            "legend": [
+                {
+                    "soilGroupCode": soil_group_code,
+                    "soilGroupName": SoilClassificationService.get_soil_group_name(
+                        soil_group_code
+                    ),
+                    "soilGroupUrl": SoilClassificationService.get_soil_group_url(
+                        soil_group_code
+                    ),
+                    **palette,
+                }
+                for soil_group_code, palette in palette_by_soil_group.items()
+            ],
+        }
+
+    @classmethod
+    def _palette(cls, index: int) -> dict[str, str]:
+        """土壌群ごとに一意で、凡例にも使える配色を返す。"""
+        if index < len(cls.PALETTES):
+            return cls.PALETTES[index]
+        hue = round((index * 137.508) % 360)
+        return {
+            "color": f"hsl({hue} 70% 91%)",
+            "hoverColor": f"hsl({hue} 70% 82%)",
         }

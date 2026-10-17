@@ -1,4 +1,5 @@
 import os
+import shutil
 import unicodedata
 import zipfile
 from pathlib import Path
@@ -255,4 +256,4 @@ class ZipFileService:
                 continue
             dest_path.parent.mkdir(parents=True, exist_ok=True)
             with z.open(info) as src, open(dest_path, "wb") as out:
-                out.write(src.read())
+                shutil.copyfileobj(src, out, length=1024 * 1024)

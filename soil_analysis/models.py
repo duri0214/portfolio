@@ -1055,3 +1055,131 @@ class SoilMapPolygon(models.Model):
         ]
         verbose_name = "土壌図Polygon"
         verbose_name_plural = "土壌図Polygon"
+
+
+class MunicipalityBoundaryDataset(models.Model):
+    """国土数値情報の行政区域データの取込版を保持します。"""
+
+    source_file_name = models.CharField("取込元ZIPファイル名", max_length=255)
+    source_sha256 = models.CharField("取込元SHA-256", max_length=64, unique=True)
+    source_crs = models.TextField("座標参照系")
+    source_date = models.DateField("データ基準日")
+    feature_count = models.PositiveIntegerField("地物数")
+    municipality_count = models.PositiveIntegerField("市区町村数")
+    is_active = models.BooleanField("有効版", default=False)
+    imported_at = models.DateTimeField("取込完了日時")
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+
+    class Meta:
+        ordering = ["-imported_at", "-id"]
+        verbose_name = "市区町村境界データ版"
+        verbose_name_plural = "市区町村境界データ版"
+
+    def __str__(self):
+        return f"{self.source_file_name} ({self.source_date:%Y-%m-%d})"
+
+
+class MunicipalityBoundary(models.Model):
+    """一つの市区町村を構成する行政区域境界を保持します。"""
+
+    dataset = models.ForeignKey(
+        MunicipalityBoundaryDataset,
+        on_delete=models.CASCADE,
+        related_name="municipalities",
+        verbose_name="市区町村境界データ版",
+    )
+    prefecture_code = models.CharField("都道府県コード", max_length=2)
+    municipality_code = models.CharField("市区町村コード", max_length=5)
+    name = models.CharField("市区町村名", max_length=255)
+    coordinates = models.JSONField("MultiPolygon座標")
+    min_lng = models.FloatField("最小経度")
+    min_lat = models.FloatField("最小緯度")
+    max_lng = models.FloatField("最大経度")
+    max_lat = models.FloatField("最大緯度")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["dataset", "municipality_code"],
+                name="soil_municipality_boundary_dataset_code_unique",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["dataset", "prefecture_code"]),
+            models.Index(fields=["dataset", "prefecture_code", "municipality_code"]),
+        ]
+        ordering = ["municipality_code"]
+        verbose_name = "市区町村境界"
+        verbose_name_plural = "市区町村境界"
+
+    def __str__(self):
+        return f"{self.name} ({self.municipality_code})"
+
+
+class MunicipalitySoilAggregation(models.Model):
+    """市区町村境界と土壌図を交差させた面積集計の実行結果です。"""
+
+    soil_dataset = models.ForeignKey(
+        SoilMapDataset, on_delete=models.CASCADE, verbose_name="土壌図データ版"
+    )
+    boundary_dataset = models.ForeignKey(
+        MunicipalityBoundaryDataset,
+        on_delete=models.CASCADE,
+        verbose_name="市区町村境界データ版",
+    )
+    municipality = models.ForeignKey(
+        MunicipalityBoundary,
+        on_delete=models.CASCADE,
+        related_name="soil_aggregations",
+        verbose_name="市区町村",
+    )
+    municipality_area_sq_m = models.FloatField("市区町村面積（平方メートル）")
+    classified_area_sq_m = models.FloatField("土壌図で分類できた面積（平方メートル）")
+    unclassified_area_sq_m = models.FloatField(
+        "土壌図で分類できなかった面積（平方メートル）"
+    )
+    calculated_at = models.DateTimeField("算出日時")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["soil_dataset", "boundary_dataset", "municipality"],
+                name="soil_municipality_aggregation_dataset_municipality_unique",
+            )
+        ]
+        indexes = [models.Index(fields=["soil_dataset", "boundary_dataset"])]
+        verbose_name = "市区町村土壌面積集計"
+        verbose_name_plural = "市区町村土壌面積集計"
+
+
+class MunicipalitySoilArea(models.Model):
+    """市区町村土壌面積集計の、土壌分類ごとの内訳です。"""
+
+    aggregation = models.ForeignKey(
+        MunicipalitySoilAggregation,
+        on_delete=models.CASCADE,
+        related_name="soil_areas",
+        verbose_name="市区町村土壌面積集計",
+    )
+    soil_group_code = models.CharField("土壌群コード", max_length=32)
+    soil_subgroup_code = models.CharField("土壌亜群コード", max_length=32)
+    soil_series_code = models.CharField("土壌統群コード", max_length=32)
+    soil_name = models.CharField("土壌名", max_length=255)
+    area_sq_m = models.FloatField("交差面積（平方メートル）")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "aggregation",
+                    "soil_group_code",
+                    "soil_subgroup_code",
+                    "soil_series_code",
+                    "soil_name",
+                ],
+                name="soil_municipality_area_aggregation_soil_unique",
+            )
+        ]
+        ordering = ["-area_sq_m", "soil_name"]
+        verbose_name = "市区町村土壌分類面積"
+        verbose_name_plural = "市区町村土壌分類面積"

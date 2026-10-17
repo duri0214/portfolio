@@ -68,12 +68,24 @@ from soil_analysis.domain.service.agricultural_statistics import (
 )
 from soil_analysis.domain.service.kml import KmlService
 from soil_analysis.domain.service.prefecture_commercial_area import (
+    JAPAN_MAP_PREFECTURES,
     PrefectureCommercialAreaService,
 )
 from soil_analysis.domain.service.soil_map import SoilMapService
 from soil_analysis.domain.service.soil_map_import import (
     SoilMapImportError,
     SoilMapImportService,
+)
+from soil_analysis.domain.service.municipality_boundary_import import (
+    MunicipalityBoundaryImportError,
+    MunicipalityBoundaryImportService,
+)
+from soil_analysis.domain.service.municipality_soil_aggregation import (
+    MunicipalitySoilAggregationError,
+    MunicipalitySoilAggregationService,
+)
+from soil_analysis.domain.service.municipality_soil_map import (
+    MunicipalitySoilMapService,
 )
 from soil_analysis.domain.service.photo_processing import PhotoProcessingService
 from soil_analysis.domain.valueobject.photo_processing.photo_spot import PhotoSpot
@@ -91,6 +103,7 @@ from soil_analysis.forms import (
     ChemicalUploadForm,
     CsvGenerateForm,
     LandLedgerCreateForm,
+    MunicipalityBoundaryUploadForm,
     SoilMapUploadForm,
 )
 from soil_analysis.models import (
@@ -127,13 +140,20 @@ class Home(TemplateView):
 class SoilMapUploadView(LoginRequiredMixin, UserPassesTestMixin, FormView):
     """管理者が全国土壌図を一括取込する画面を提供する。"""
 
-    template_name = "soil_analysis/soil_map/form.html"
+    template_name = "soil_analysis/soil_map/management.html"
     form_class = SoilMapUploadForm
     success_url = reverse_lazy("soil:home")
 
     def test_func(self):
         """土壌図の更新をスーパーユーザーに限定する。"""
         return self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        """土壌図と市区町村境界を同じ管理画面で扱う。"""
+        context = super().get_context_data(**kwargs)
+        context["soil_map_form"] = context.pop("form")
+        context["boundary_form"] = MunicipalityBoundaryUploadForm()
+        return context
 
     def form_valid(self, form):
         """検証済みのZIPだけを有効な土壌図として切り替える。"""
@@ -151,6 +171,104 @@ class SoilMapUploadView(LoginRequiredMixin, UserPassesTestMixin, FormView):
             message += f" 土壌属性が未設定の{dataset.excluded_feature_count:,}件は表示対象から除外しました。"
         messages.success(self.request, message)
         return super().form_valid(form)
+
+
+class MunicipalityBoundaryUploadView(LoginRequiredMixin, UserPassesTestMixin, FormView):
+    """管理者が国土数値情報の市区町村境界を一括取込する画面を提供する。"""
+
+    template_name = "soil_analysis/soil_map/management.html"
+    form_class = MunicipalityBoundaryUploadForm
+    success_url = reverse_lazy("soil:home")
+
+    def test_func(self):
+        """市区町村境界の更新をスーパーユーザーに限定する。"""
+        return self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        """境界ZIPの入力エラーも地図データ管理画面に表示する。"""
+        context = super().get_context_data(**kwargs)
+        context["soil_map_form"] = SoilMapUploadForm()
+        context["boundary_form"] = context.pop("form")
+        return context
+
+    def form_valid(self, form):
+        """検証済みの全国行政区域ZIPだけを有効版に切り替える。"""
+        uploaded_file = form.cleaned_data["file"]
+        try:
+            dataset = MunicipalityBoundaryImportService.import_boundary_from_zip(
+                uploaded_file, uploaded_file.name
+            )
+        except MunicipalityBoundaryImportError as error:
+            form.add_error("file", str(error))
+            return self.form_invalid(form)
+
+        messages.success(
+            self.request,
+            f"{dataset.municipality_count:,}市区町村・{dataset.feature_count:,}地物の境界を取り込みました。土壌面積を更新してください。",
+        )
+        return super().form_valid(form)
+
+
+class MunicipalitySoilAggregationView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """有効な土壌図と市区町村境界から面積集計を再作成する。"""
+
+    def test_func(self):
+        """長時間の面積集計実行をスーパーユーザーに限定する。"""
+        return self.request.user.is_superuser
+
+    def post(self, request, *args, **kwargs):
+        """面積集計を実行し、ホームへ結果を表示する。"""
+        try:
+            municipality_count = (
+                MunicipalitySoilAggregationService.recalculate_active_datasets()
+            )
+        except MunicipalitySoilAggregationError as error:
+            messages.error(request, str(error))
+        else:
+            messages.success(
+                request,
+                f"{municipality_count:,}市区町村の土壌面積・構成比を更新しました。",
+            )
+        return redirect("soil:home")
+
+
+class SoilMapPrefectureView(TemplateView):
+    """土壌図の市区町村一覧を表示する。"""
+
+    template_name = "soil_analysis/soil_map/prefecture.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        prefecture_code = self.kwargs["prefecture_id"]
+        if not 1 <= prefecture_code <= 47:
+            raise Http404("Prefecture does not exist.")
+        context.update(
+            MunicipalitySoilMapService.build_prefecture_context(
+                f"{prefecture_code:02d}"
+            )
+        )
+        context["prefecture_code"] = prefecture_code
+        context["prefecture_name"] = dict(JAPAN_MAP_PREFECTURES)[prefecture_code]
+        return context
+
+
+class MunicipalitySoilDetailView(TemplateView):
+    """市区町村ごとの土壌分類別面積と構成比を表示する。"""
+
+    template_name = "soil_analysis/soil_map/municipality.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        municipality_code = self.kwargs["municipality_code"]
+        if not municipality_code.isdigit() or len(municipality_code) != 5:
+            raise Http404("Municipality does not exist.")
+        municipality_context = MunicipalitySoilMapService.build_municipality_context(
+            municipality_code
+        )
+        if not municipality_context:
+            raise Http404("Municipality does not exist.")
+        context.update(municipality_context)
+        return context
 
 
 class PrefectureDetailView(ListView):

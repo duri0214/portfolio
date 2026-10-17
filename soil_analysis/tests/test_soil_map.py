@@ -8,6 +8,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from soil_analysis.domain.service.soil_map import SoilMapService
+from soil_analysis.domain.service.soil_classification import SoilClassificationService
 from soil_analysis.domain.service.soil_map_import import (
     SoilMapImportError,
     SoilMapImportService,
@@ -167,6 +168,34 @@ class SoilMapImportServiceTest(TestCase):
 
 
 class SoilMapServiceTest(TestCase):
+    def test_soil_name_removes_empty_parentheses(self):
+        """
+        シナリオ:
+        - 入力: 空の括弧を含む土壌名。
+        - 操作: 画面表示用の土壌名を正規化する。
+        - 期待値: 空の括弧を除いた名称になること。
+        """
+        self.assertEqual(
+            SoilClassificationService.normalize_soil_name("細粒質（）灰色低地土"),
+            "細粒質灰色低地土",
+        )
+
+    def test_soil_group_code_is_converted_to_a_readable_name(self):
+        """
+        シナリオ:
+        - 入力: 土壌群コード D6。
+        - 操作: 画面表示用の土壌群名を取得する。
+        - 期待値: コードだけでなくアロフェン質黒ボク土と表示できること。
+        """
+        self.assertEqual(
+            SoilClassificationService.get_soil_group_name("D6"), "アロフェン質黒ボク土"
+        )
+        self.assertEqual(
+            SoilClassificationService.get_soil_group_url("D6"),
+            "https://soil-inventory.rad.naro.go.jp/explain/D6.html",
+        )
+        self.assertIn("火山灰", SoilClassificationService.get_soil_group_summary("D6"))
+
     def test_build_payload_returns_dominant_soil_for_each_prefecture(self):
         """
         シナリオ:
@@ -186,6 +215,11 @@ class SoilMapServiceTest(TestCase):
         self.assertEqual(aomori["polygonCount"], 3)
         self.assertEqual(aomori["dominantPolygonCount"], 2)
         self.assertEqual(payload["dataset"]["featureCount"], 49)
+        self.assertEqual(payload["legend"][0]["soilGroupName"], "A")
+        self.assertEqual(
+            payload["legend"][0]["soilGroupUrl"],
+            "https://soil-inventory.rad.naro.go.jp/main/figure",
+        )
 
     _create_zip_file = staticmethod(SoilMapImportServiceTest._create_zip_file)
 
@@ -209,4 +243,9 @@ class SoilMapUploadViewTest(TestCase):
         )
         self.client.force_login(administrator)
         response = self.client.get(reverse("soil:soil_map_upload"))
-        self.assertContains(response, "全国土壌図を取り込む")
+        self.assertContains(response, "地図データを管理")
+        self.assertContains(response, reverse("soil:municipality_boundary_upload"))
+        self.assertContains(response, reverse("soil:municipality_soil_recalculate"))
+        self.assertContains(response, "全国_20.zip")
+        self.assertContains(response, "N03-YYYY0101_GML.zip")
+        self.assertNotContains(response, "直接ダウンロード")
