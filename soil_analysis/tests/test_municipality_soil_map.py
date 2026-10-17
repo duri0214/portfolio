@@ -194,7 +194,8 @@ class MunicipalitySoilAggregationServiceTest(TestCase):
         self.assertContains(home_response, "土壌")
         self.assertContains(home_response, "data-soil-detail-url-template")
         self.assertContains(prefecture_response, "青森市")
-        self.assertContains(municipality_response, "土壌群（コード）")
+        self.assertContains(municipality_response, "主な土壌タイプ")
+        self.assertContains(municipality_response, "構成比 ▼")
         self.assertContains(municipality_response, "黒ボク土")
         self.assertContains(municipality_response, "構成比")
 

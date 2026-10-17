@@ -1,4 +1,5 @@
 {% extends "soil_analysis/base.html" %}
+{% load humanize %}
 
 {% block content %}
     <div class="container mt-4">
@@ -24,8 +25,8 @@
                             <td><a class="fw-semibold text-decoration-none" href="{% url 'soil:soil_map_municipality' item.boundary.municipality_code %}">{{ item.boundary.name }}</a></td>
                             <td><code>{{ item.boundary.municipality_code }}</code></td>
                             {% if item.aggregation %}
-                                <td class="text-end">{{ item.aggregation.classified_area_sq_m|floatformat:0 }} ㎡</td>
-                                <td class="text-end">{{ item.aggregation.unclassified_area_sq_m|floatformat:0 }} ㎡</td>
+                                <td class="text-end">{{ item.aggregation.classified_area_sq_m|floatformat:0|intcomma }} ㎡</td>
+                                <td class="text-end">{{ item.aggregation.unclassified_area_sq_m|floatformat:0|intcomma }} ㎡</td>
                             {% else %}
                                 <td colspan="2" class="text-end text-muted">未集計</td>
                             {% endif %}

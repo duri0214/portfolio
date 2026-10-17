@@ -8,6 +8,11 @@ from django.test import TestCase
 from django.urls import reverse
 
 from soil_analysis.domain.service.soil_map import SoilMapService
+from soil_analysis.domain.service.soil_classification import (
+    get_soil_group_name,
+    get_soil_group_summary,
+    get_soil_group_url,
+)
 from soil_analysis.domain.service.soil_map_import import (
     SoilMapImportError,
     SoilMapImportService,
@@ -167,6 +172,20 @@ class SoilMapImportServiceTest(TestCase):
 
 
 class SoilMapServiceTest(TestCase):
+    def test_soil_group_code_is_converted_to_a_readable_name(self):
+        """
+        シナリオ:
+        - 入力: 土壌群コード D6。
+        - 操作: 画面表示用の土壌群名を取得する。
+        - 期待値: コードだけでなくアロフェン質黒ボク土と表示できること。
+        """
+        self.assertEqual(get_soil_group_name("D6"), "アロフェン質黒ボク土")
+        self.assertEqual(
+            get_soil_group_url("D6"),
+            "https://soil-inventory.rad.naro.go.jp/explain/D6.html",
+        )
+        self.assertIn("火山灰", get_soil_group_summary("D6"))
+
     def test_build_payload_returns_dominant_soil_for_each_prefecture(self):
         """
         シナリオ:
@@ -186,25 +205,10 @@ class SoilMapServiceTest(TestCase):
         self.assertEqual(aomori["polygonCount"], 3)
         self.assertEqual(aomori["dominantPolygonCount"], 2)
         self.assertEqual(payload["dataset"]["featureCount"], 49)
+        self.assertEqual(payload["legend"][0]["soilGroupName"], "A")
         self.assertEqual(
-            payload["legend"],
-            [
-                {
-                    "soilGroupCode": "A",
-                    "color": "#dbeafe",
-                    "hoverColor": "#bfdbfe",
-                },
-                {
-                    "soilGroupCode": "B",
-                    "color": "#dcfce7",
-                    "hoverColor": "#bbf7d0",
-                },
-                {
-                    "soilGroupCode": "C",
-                    "color": "#fef3c7",
-                    "hoverColor": "#fde68a",
-                },
-            ],
+            payload["legend"][0]["soilGroupUrl"],
+            "https://soil-inventory.rad.naro.go.jp/main/figure",
         )
 
     _create_zip_file = staticmethod(SoilMapImportServiceTest._create_zip_file)
@@ -232,3 +236,5 @@ class SoilMapUploadViewTest(TestCase):
         self.assertContains(response, "地図データを管理")
         self.assertContains(response, reverse("soil:municipality_boundary_upload"))
         self.assertContains(response, reverse("soil:municipality_soil_recalculate"))
+        self.assertContains(response, "全国_20.zip")
+        self.assertContains(response, "N03-20260101_GML.zip")

@@ -6,6 +6,11 @@ from soil_analysis.domain.repository.soil_map import SoilMapRepository
 from soil_analysis.domain.service.prefecture_commercial_area import (
     JAPAN_MAP_PREFECTURES,
 )
+from soil_analysis.domain.service.soil_classification import (
+    SOIL_INVENTORY_URL,
+    get_soil_group_name,
+    get_soil_group_url,
+)
 
 
 class SoilMapService:
@@ -81,7 +86,12 @@ class SoilMapService:
                 "sourceUrl": "https://soil-inventory.rad.naro.go.jp/download20.html",
             },
             "legend": [
-                {"soilGroupCode": soil_group_code, **palette}
+                {
+                    "soilGroupCode": soil_group_code,
+                    "soilGroupName": get_soil_group_name(soil_group_code),
+                    "soilGroupUrl": get_soil_group_url(soil_group_code),
+                    **palette,
+                }
                 for soil_group_code, palette in palette_by_soil_group.items()
             ],
         }

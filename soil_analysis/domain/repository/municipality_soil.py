@@ -156,3 +156,19 @@ class MunicipalitySoilRepository:
             .annotate(area_sq_m=Sum("area_sq_m"))
             .order_by("-area_sq_m", *fields)
         )
+
+    @staticmethod
+    def get_national_soil_group_areas(
+        soil_dataset: SoilMapDataset,
+        boundary_dataset: MunicipalityBoundaryDataset,
+    ):
+        """同じデータ版で集計した全国の土壌群別面積を返す。"""
+        return (
+            MunicipalitySoilArea.objects.filter(
+                aggregation__soil_dataset=soil_dataset,
+                aggregation__boundary_dataset=boundary_dataset,
+            )
+            .values("soil_group_code")
+            .annotate(area_sq_m=Sum("area_sq_m"))
+            .order_by("-area_sq_m", "soil_group_code")
+        )

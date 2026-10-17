@@ -5,6 +5,12 @@ from collections import defaultdict
 from soil_analysis.domain.repository.municipality_soil import (
     MunicipalitySoilRepository,
 )
+from soil_analysis.domain.service.soil_classification import (
+    SOIL_INVENTORY_URL,
+    get_soil_group_name,
+    get_soil_group_summary,
+    get_soil_group_url,
+)
 
 
 class MunicipalitySoilMapService:
@@ -44,7 +50,7 @@ class MunicipalitySoilMapService:
                 }
                 for municipality in municipalities
             ],
-            "boundary_source_url": cls.SOURCE_URL,
+            "boundary_source_url": cls._boundary_source_url(boundary_dataset),
         }
 
     @classmethod
@@ -69,16 +75,22 @@ class MunicipalitySoilMapService:
                 "municipality": municipality,
                 "prefecture_id": int(municipality.prefecture_code),
                 "aggregation": None,
-                "boundary_source_url": cls.SOURCE_URL,
+                "boundary_source_url": cls._boundary_source_url(boundary_dataset),
             }
         rows = list(MunicipalitySoilRepository.get_soil_area_rows(aggregation))
+        soil_group_rows = cls._summary_rows(rows, ("soil_group_code",))
+        cls._add_national_group_comparison(
+            soil_group_rows,
+            soil_dataset,
+            boundary_dataset,
+        )
         return {
             "soil_dataset": soil_dataset,
             "boundary_dataset": boundary_dataset,
             "municipality": municipality,
             "prefecture_id": int(municipality.prefecture_code),
             "aggregation": aggregation,
-            "soil_group_rows": cls._summary_rows(rows, ("soil_group_code",)),
+            "soil_group_rows": soil_group_rows,
             "soil_subgroup_rows": cls._summary_rows(
                 rows, ("soil_group_code", "soil_subgroup_code")
             ),
@@ -86,17 +98,20 @@ class MunicipalitySoilMapService:
                 rows,
                 ("soil_group_code", "soil_subgroup_code", "soil_series_code"),
             ),
-            "soil_name_rows": cls._summary_rows(
-                rows,
-                (
-                    "soil_group_code",
-                    "soil_subgroup_code",
-                    "soil_series_code",
-                    "soil_name",
-                ),
-            ),
-            "boundary_source_url": cls.SOURCE_URL,
+            "soil_name_rows": cls._summary_rows(rows, ("soil_name",)),
+            "boundary_source_url": cls._boundary_source_url(boundary_dataset),
+            "soil_inventory_url": SOIL_INVENTORY_URL,
         }
+
+    @classmethod
+    def _boundary_source_url(cls, boundary_dataset) -> str:
+        """登録した行政区域データと同じ基準年の配布ページを返す。"""
+        if boundary_dataset.source_date:
+            return (
+                "https://nlftp.mlit.go.jp/ksj/gml/datalist/"
+                f"KsjTmplt-N03-{boundary_dataset.source_date.year}.html"
+            )
+        return cls.SOURCE_URL
 
     @staticmethod
     def _summary_rows(rows, fields: tuple[str, ...]) -> list[dict]:
@@ -115,3 +130,31 @@ class MunicipalitySoilMapService:
                 area_by_key.items(), key=lambda item: (-item[1], item[0])
             )
         ]
+
+    @staticmethod
+    def _add_national_group_comparison(
+        soil_group_rows: list[dict], soil_dataset, boundary_dataset
+    ) -> None:
+        """市区町村の土壌群に、同じ集計版における全国順位と面積比を加える。"""
+        national_rows = list(
+            MunicipalitySoilRepository.get_national_soil_group_areas(
+                soil_dataset, boundary_dataset
+            )
+        )
+        national_total = sum(row["area_sq_m"] for row in national_rows)
+        national_by_code = {
+            row["soil_group_code"]: {
+                "national_rank": rank,
+                "national_ratio": (
+                    row["area_sq_m"] / national_total * 100 if national_total else 0
+                ),
+                "group_count": len(national_rows),
+            }
+            for rank, row in enumerate(national_rows, start=1)
+        }
+        for row in soil_group_rows:
+            code = row["soil_group_code"]
+            row["soil_group_name"] = get_soil_group_name(code)
+            row["soil_group_summary"] = get_soil_group_summary(code)
+            row["soil_group_url"] = get_soil_group_url(code)
+            row.update(national_by_code.get(code, {}))

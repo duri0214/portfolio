@@ -76,7 +76,12 @@ document.addEventListener("DOMContentLoaded", () => {
             dot.className = "legend-dot";
             dot.style.backgroundColor = item.color;
             dot.style.borderColor = item.hoverColor;
-            legendItem.append(dot, `土壌群 ${item.soilGroupCode}`);
+            const label = document.createElement("a");
+            label.href = item.soilGroupUrl;
+            label.target = "_blank";
+            label.rel = "noopener noreferrer";
+            label.textContent = `${item.soilGroupName}（${item.soilGroupCode}）`;
+            legendItem.append(dot, label);
             soilLegendElement.append(legendItem);
         }
     };
