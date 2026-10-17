@@ -2,6 +2,8 @@
 
 from collections import defaultdict
 
+from shapely.geometry import shape
+
 from soil_analysis.domain.repository.municipality_soil import (
     MunicipalitySoilRepository,
 )
@@ -97,6 +99,7 @@ class MunicipalitySoilMapService:
             "soil_name_rows": cls._summary_rows(rows, ("soil_name",)),
             "boundary_source_url": cls._boundary_source_url(boundary_dataset),
             "soil_inventory_url": SOIL_INVENTORY_URL,
+            "soil_inventory_map_url": cls._soil_inventory_map_url(municipality),
         }
 
     @classmethod
@@ -108,6 +111,15 @@ class MunicipalitySoilMapService:
                 f"KsjTmplt-N03-{boundary_dataset.source_date.year}.html"
             )
         return cls.SOURCE_URL
+
+    @staticmethod
+    def _soil_inventory_map_url(municipality) -> str:
+        """市区町村境界内の代表地点を指定する農研機構地図URLを返す。"""
+        geometry = shape(
+            {"type": "MultiPolygon", "coordinates": municipality.coordinates}
+        )
+        point = geometry.representative_point()
+        return f"{SOIL_INVENTORY_URL}?lat={point.y:.6f}&lng={point.x:.6f}&zoom=12"
 
     @staticmethod
     def _summary_rows(rows, fields: tuple[str, ...]) -> list[dict]:

@@ -26,7 +26,7 @@
                     {% with main=soil_group_rows.0 %}
                         <p class="mb-2"><strong>{{ main.soil_group_name }}</strong>（<code>{{ main.soil_group_code }}</code>）が、分類できた面積の <strong>{{ main.ratio|floatformat:1 }}%</strong> を占めます。</p>
                         <p class="small mb-2">{{ main.soil_group_summary }}</p>
-                        <p class="small text-muted mb-0">全国の今回の集計では {{ main.group_count }} 種の土壌群中 {{ main.national_rank }} 位、分類できた面積の {{ main.national_ratio|floatformat:1 }}% です。<a href="{{ main.soil_group_url }}" target="_blank" rel="noopener noreferrer">農研機構の土壌分類・分布解説を開く</a></p>
+                        <p class="small text-muted mb-0">全国の今回の集計では {{ main.group_count }} 種の土壌群中 {{ main.national_rank }} 位、分類できた面積の {{ main.national_ratio|floatformat:1 }}% です。<a href="{{ main.soil_group_url }}" target="_blank" rel="noopener noreferrer">農研機構の土壌分類・分布解説を開く</a> / <a href="{{ soil_inventory_map_url }}" target="_blank" rel="noopener noreferrer">農研機構の地点指定地図を開く</a></p>
                     {% endwith %}
                 </div>
             </section>
