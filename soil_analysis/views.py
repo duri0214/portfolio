@@ -140,13 +140,20 @@ class Home(TemplateView):
 class SoilMapUploadView(LoginRequiredMixin, UserPassesTestMixin, FormView):
     """管理者が全国土壌図を一括取込する画面を提供する。"""
 
-    template_name = "soil_analysis/soil_map/form.html"
+    template_name = "soil_analysis/soil_map/management.html"
     form_class = SoilMapUploadForm
     success_url = reverse_lazy("soil:home")
 
     def test_func(self):
         """土壌図の更新をスーパーユーザーに限定する。"""
         return self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        """土壌図と市区町村境界を同じ管理画面で扱う。"""
+        context = super().get_context_data(**kwargs)
+        context["soil_map_form"] = context.pop("form")
+        context["boundary_form"] = MunicipalityBoundaryUploadForm()
+        return context
 
     def form_valid(self, form):
         """検証済みのZIPだけを有効な土壌図として切り替える。"""
@@ -169,13 +176,20 @@ class SoilMapUploadView(LoginRequiredMixin, UserPassesTestMixin, FormView):
 class MunicipalityBoundaryUploadView(LoginRequiredMixin, UserPassesTestMixin, FormView):
     """管理者が国土数値情報の市区町村境界を一括取込する画面を提供する。"""
 
-    template_name = "soil_analysis/municipality_boundary/form.html"
+    template_name = "soil_analysis/soil_map/management.html"
     form_class = MunicipalityBoundaryUploadForm
     success_url = reverse_lazy("soil:home")
 
     def test_func(self):
         """市区町村境界の更新をスーパーユーザーに限定する。"""
         return self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        """境界ZIPの入力エラーも地図データ管理画面に表示する。"""
+        context = super().get_context_data(**kwargs)
+        context["soil_map_form"] = SoilMapUploadForm()
+        context["boundary_form"] = context.pop("form")
+        return context
 
     def form_valid(self, form):
         """検証済みの全国行政区域ZIPだけを有効版に切り替える。"""

@@ -229,4 +229,6 @@ class SoilMapUploadViewTest(TestCase):
         )
         self.client.force_login(administrator)
         response = self.client.get(reverse("soil:soil_map_upload"))
-        self.assertContains(response, "全国土壌図を取り込む")
+        self.assertContains(response, "地図データを管理")
+        self.assertContains(response, reverse("soil:municipality_boundary_upload"))
+        self.assertContains(response, reverse("soil:municipality_soil_recalculate"))

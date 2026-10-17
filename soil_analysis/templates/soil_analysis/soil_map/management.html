@@ -1,0 +1,74 @@
+{% extends "soil_analysis/base.html" %}
+
+{% block content %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}" class="text-decoration-none">土壌分析CRM</a></li>
+                <li class="breadcrumb-item active" aria-current="page">地図データを管理</li>
+            </ol>
+        </nav>
+
+        <div class="row justify-content-center">
+            <div class="col-xl-10">
+                <h1 class="h3 mb-2"><i class="fas fa-layer-group me-2 text-primary"></i>地図データを管理</h1>
+                <p class="text-muted mb-4">市区町村別の土壌構成を表示するには、全国土壌図と市区町村境界を登録してから面積を更新します。</p>
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body">
+                                <h2 class="h5">全国土壌図</h2>
+                                <p class="small text-muted">農研機構「縮尺20万分の1土壌図」の全国Shape ZIPを登録します。</p>
+                                <form method="post" action="{% url 'soil:soil_map_upload' %}" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <div class="mb-3">
+                                        {{ soil_map_form.file.label_tag }}
+                                        {{ soil_map_form.file }}
+                                        {% if soil_map_form.file.help_text %}<div class="form-text">{{ soil_map_form.file.help_text }}</div>{% endif %}
+                                        {% for error in soil_map_form.file.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                                    </div>
+                                    <button class="btn btn-primary" type="submit"><i class="fas fa-upload me-1"></i>土壌図を登録</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body">
+                                <h2 class="h5">市区町村境界</h2>
+                                <p class="small text-muted">国土交通省「行政区域データ（N03）」の全国Shape ZIPを登録します。</p>
+                                <form method="post" action="{% url 'soil:municipality_boundary_upload' %}" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <div class="mb-3">
+                                        {{ boundary_form.file.label_tag }}
+                                        {{ boundary_form.file }}
+                                        {% if boundary_form.file.help_text %}<div class="form-text">{{ boundary_form.file.help_text }}</div>{% endif %}
+                                        {% for error in boundary_form.file.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                                    </div>
+                                    <button class="btn btn-primary" type="submit"><i class="fas fa-upload me-1"></i>市区町村境界を登録</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="card border-primary shadow-sm">
+                            <div class="card-body d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                                <div>
+                                    <h2 class="h5 mb-1">市区町村別の土壌面積を更新</h2>
+                                    <p class="small text-muted mb-0">両方のデータを登録・更新した後に実行します。土壌図と行政区域の交差面積を再計算します。</p>
+                                </div>
+                                <form method="post" action="{% url 'soil:municipality_soil_recalculate' %}">
+                                    {% csrf_token %}
+                                    <button class="btn btn-primary text-nowrap" type="submit"><i class="fas fa-calculator me-1"></i>面積を更新</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="small text-muted mt-4 mb-0">土壌図の出典: <a href="https://soil-inventory.rad.naro.go.jp/download20.html" target="_blank" rel="noopener noreferrer">農研機構 日本土壌インベントリー</a> / 境界の出典: <a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2024.html" target="_blank" rel="noopener noreferrer">国土数値情報 行政区域データ（N03）</a></p>
+            </div>
+        </div>
+    </div>
+{% endblock %}

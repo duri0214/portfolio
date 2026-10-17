@@ -125,7 +125,7 @@
 
 - `ChemicalImportService`: 川田研究所形式の Excel ファイルから化学分析データを取り込みます。
 - `HardnessImportService`: 土壌硬度計の CSV データを取り込みます。
-- `load_soil_map`: 農研機構「縮尺20万分の1土壌図」の全国Shape ZIPを検証して取り込みます。ZIPはGitへ追加せず、管理者画面の「全国土壌図 ZIP取り込み」または次の手動コマンドで登録します。
+- `load_soil_map`: 農研機構「縮尺20万分の1土壌図」の全国Shape ZIPを検証して取り込みます。ZIPはGitへ追加せず、管理者画面の「地図データを管理」または次の手動コマンドで登録します。
 
 ```powershell
 python manage.py load_soil_map C:\data\全国_20.zip
@@ -188,7 +188,7 @@ python manage.py daily_fetch_farmland_statistics --dry-run
 
 ホームの地図を「土壌」に切り替えると、都道府県から市区町村の土壌詳細へ進めます。詳細画面の面積と構成比はPolygon件数ではなく、土壌図と市区町村境界を交差させて算出した面積です。
 
-市区町村境界は国土交通省の[国土数値情報 行政区域データ（N03）](https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2024.html)の全国版Shape ZIPを、管理者画面の「市区町村境界 ZIP取り込み」から登録します。アプリはJGD_2011、`N03_001`、`N03_004`、`N03_007`、全国47都道府県を検証し、データ基準日・SHA-256・取込日時を保存します。利用時は[国土数値情報利用約款](https://nlftp.mlit.go.jp/ksj/other/yakkan.html)に従います。
+市区町村境界は国土交通省の[国土数値情報 行政区域データ（N03）](https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2024.html)の全国版Shape ZIPを、管理者画面の「地図データを管理」から登録します。アプリはJGD_2011、`N03_001`、`N03_004`、`N03_007`、全国47都道府県を検証し、データ基準日・SHA-256・取込日時を保存します。利用時は[国土数値情報利用約款](https://nlftp.mlit.go.jp/ksj/other/yakkan.html)に従います。
 
 土壌図（JGD2000）と行政区域（JGD2011）は等積投影EPSG:6933へ変換して交差面積を計算します。境界または土壌図の版を更新した後は、ホームの「市区町村の土壌面積を更新」を実行してください。
 
