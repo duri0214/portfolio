@@ -20,8 +20,8 @@
                 <div class="bg-light p-4 p-lg-5 rounded shadow-sm">
                     <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
                         <div>
-                            <h1 class="display-6 mb-2">都道府県別商圏マップ・土壌構成</h1>
-                            <p class="lead mb-0">47都道府県の天気・商圏と、全国土壌図に基づく土壌構成を確認します。</p>
+                            <h1 class="display-6 mb-2">都道府県別の地域分析</h1>
+                            <p class="lead mb-0">47都道府県の天気・商圏を確認し、詳細ページで地域分析と土壌分析を切り替えます。</p>
                         </div>
                         <div class="d-flex flex-wrap gap-2 align-content-start">
                             <a class="btn btn-primary" href="{% url 'soil:company_create' %}">
@@ -93,38 +93,27 @@
                     <div class="row g-4">
                         <div class="col-12">
                             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                                <h2 class="h5 mb-0"><i class="fas fa-map me-2 text-muted"></i>日本地図商圏マップ・土壌構成</h2>
+                                <h2 class="h5 mb-0"><i class="fas fa-map me-2 text-muted"></i>日本地図の天気・商圏</h2>
                                 <a class="small text-decoration-none" href="https://www.jma.go.jp/bosai/map.html#5/29.555/141.395/&contents=forecast" target="_blank" rel="noopener noreferrer">
                                     <i class="fas fa-external-link-alt me-1"></i>気象庁 全国予報マップ
                                 </a>
                             </div>
                             {{ commercial_area_map_data|json_script:"commercial-area-map-data" }}
-                            {{ soil_map|json_script:"soil-map-data" }}
                             <div class="japan-market-map">
                                 <div id="commercial-area-map"
                                      class="commercial-area-map-canvas"
                                      aria-label="47都道府県の商圏マップ"
-                                     data-detail-url-template="{% url 'soil:prefecture_detail' 999 %}"
-                                     data-soil-detail-url-template="{% url 'soil:soil_map_prefecture' 999 %}"></div>
-                                <label class="map-mode-control" for="soil-map-mode">
-                                    <span class="small text-muted">天気・商圏</span>
-                                    <span class="form-check form-switch soil-map-switch">
-                                        <input class="form-check-input" type="checkbox" role="switch" id="soil-map-mode" aria-label="天気・商圏と土壌の表示を切り替える">
-                                    </span>
-                                    <span class="small fw-semibold">土壌</span>
-                                </label>
+                                     data-detail-url-template="{% url 'soil:prefecture_detail' 999 %}"></div>
                                 <div class="market-map-detail" id="commercial-area-map-detail" aria-live="polite">
                                     <strong>地図から都道府県を選択</strong>
-                                    <span>商圏の集計値を確認できます。</span>
+                                    <span>地域分析と土壌分析を確認できます。</span>
                                 </div>
-                                <p class="soil-map-source small text-muted mb-0" id="soil-map-source" hidden></p>
                                 <div class="market-legend" id="weather-map-legend">
                                     <span><i class="legend-dot weather-sunny"></i>晴れ系</span>
                                     <span><i class="legend-dot weather-cloudy"></i>くもり系</span>
                                     <span><i class="legend-dot weather-rainy"></i>雨・雪系</span>
                                     <span><i class="legend-dot weather-unknown"></i>天気未取得</span>
                                 </div>
-                                <div class="market-legend" id="soil-map-legend" hidden></div>
                             </div>
                         </div>
                     </div>
@@ -203,5 +192,5 @@
         window.jpmapInternalMap = window.Map;
         window.Map = window.nativeMapBeforeJpmap;
     </script>
-    <script src="{% static 'soil_analysis/js/home.js' %}?v=91-soil-map"></script>
+    <script src="{% static 'soil_analysis/js/home.js' %}?v=1013-regional-analysis"></script>
 {% endblock %}

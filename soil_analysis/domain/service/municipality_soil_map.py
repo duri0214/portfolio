@@ -102,7 +102,7 @@ class MunicipalitySoilMapService:
     @classmethod
     def _boundary_source_url(cls, boundary_dataset) -> str:
         """登録した行政区域データと同じ基準年の配布ページを返す。"""
-        if boundary_dataset.source_date:
+        if boundary_dataset and boundary_dataset.source_date:
             return (
                 "https://nlftp.mlit.go.jp/ksj/gml/datalist/"
                 f"KsjTmplt-N03-{boundary_dataset.source_date.year}.html"

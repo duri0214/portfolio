@@ -30,6 +30,7 @@ from django.views.generic import (
     TemplateView,
     FormView,
 )
+from django.views.generic.base import RedirectView
 from openpyxl import Workbook, load_workbook
 
 from lib.geo.valueobject.coord import XarvioCoord
@@ -68,10 +69,8 @@ from soil_analysis.domain.service.agricultural_statistics import (
 )
 from soil_analysis.domain.service.kml import KmlService
 from soil_analysis.domain.service.prefecture_commercial_area import (
-    JAPAN_MAP_PREFECTURES,
     PrefectureCommercialAreaService,
 )
-from soil_analysis.domain.service.soil_map import SoilMapService
 from soil_analysis.domain.service.soil_map_import import (
     SoilMapImportError,
     SoilMapImportService,
@@ -133,7 +132,6 @@ class Home(TemplateView):
         context["prefecture_area_dashboard"] = prefecture_area_dashboard
         context["commercial_areas"] = prefecture_area_dashboard.areas
         context["commercial_area_map_data"] = prefecture_area_dashboard.map_payload
-        context["soil_map"] = SoilMapService.build_payload()
         return context
 
 
@@ -232,24 +230,14 @@ class MunicipalitySoilAggregationView(LoginRequiredMixin, UserPassesTestMixin, V
         return redirect("soil:home")
 
 
-class SoilMapPrefectureView(TemplateView):
-    """土壌図の市区町村一覧を表示する。"""
+class SoilMapPrefectureView(RedirectView):
+    """旧土壌都道府県URLを共通詳細の土壌分析タブへ移す。"""
 
-    template_name = "soil_analysis/soil_map/prefecture.html"
+    permanent = True
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        prefecture_code = self.kwargs["prefecture_id"]
-        if not 1 <= prefecture_code <= 47:
-            raise Http404("Prefecture does not exist.")
-        context.update(
-            MunicipalitySoilMapService.build_prefecture_context(
-                f"{prefecture_code:02d}"
-            )
-        )
-        context["prefecture_code"] = prefecture_code
-        context["prefecture_name"] = dict(JAPAN_MAP_PREFECTURES)[prefecture_code]
-        return context
+    def get_redirect_url(self, *args, **kwargs):
+        detail_url = reverse("soil:prefecture_detail", kwargs=kwargs)
+        return f"{detail_url}#soil-analysis"
 
 
 class MunicipalitySoilDetailView(TemplateView):
@@ -321,6 +309,9 @@ class PrefectureDetailView(ListView):
             if candidate.origin_name == area.prefecture_name
             or candidate.target_name == area.prefecture_name
         ]
+        context.update(
+            MunicipalitySoilMapService.build_prefecture_context(f"{prefecture_id:02d}")
+        )
         return context
 
 

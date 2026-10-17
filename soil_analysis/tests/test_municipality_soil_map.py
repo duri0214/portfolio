@@ -168,19 +168,22 @@ class MunicipalitySoilAggregationServiceTest(TestCase):
         self.assertEqual(soil_area.soil_subgroup_code, "A1")
         self.assertEqual(soil_area.soil_series_code, "A11")
 
-    def test_soil_prefecture_and_municipality_pages_display_aggregation_and_mode_control(
+    def test_prefecture_detail_tab_and_municipality_page_display_soil_aggregation(
         self,
     ):
         """
         シナリオ:
         - 入力: 再計算済みの青森市土壌面積と、ホームの地図表示。
-        - 処理: ホーム、都道府県ページ、市区町村詳細ページをGETする。
-        - 期待値: 天気・商圏と土壌の切替、都道府県から市区町村への導線、分類別構成比を表示すること。
+        - 処理: ホーム、都道府県詳細、市区町村詳細、旧土壌都道府県URLをGETする。
+        - 期待値: ホームは天気・商圏だけを表示し、共通詳細の土壌分析タブから市区町村と分類別構成比を確認でき、旧URLは土壌分析タブへ移ること。
         """
         MunicipalitySoilAggregationService.recalculate_active_datasets()
 
         home_response = self.client.get(reverse("soil:home"))
         prefecture_response = self.client.get(
+            reverse("soil:prefecture_detail", kwargs={"prefecture_id": 2})
+        )
+        legacy_response = self.client.get(
             reverse("soil:soil_map_prefecture", kwargs={"prefecture_id": 2})
         )
         municipality_response = self.client.get(
@@ -190,14 +193,31 @@ class MunicipalitySoilAggregationServiceTest(TestCase):
             )
         )
 
-        self.assertContains(home_response, "天気・商圏")
-        self.assertContains(home_response, "土壌")
-        self.assertContains(home_response, "data-soil-detail-url-template")
+        self.assertContains(home_response, "日本地図の天気・商圏")
+        self.assertNotContains(home_response, "soil-map-mode")
+        self.assertNotContains(home_response, "data-soil-detail-url-template")
+        self.assertContains(prefecture_response, "地域分析")
+        self.assertContains(prefecture_response, "土壌分析")
         self.assertContains(prefecture_response, "青森市")
+        self.assertContains(
+            prefecture_response,
+            reverse(
+                "soil:soil_map_municipality", kwargs={"municipality_code": "02201"}
+            ),
+        )
+        self.assertEqual(legacy_response.status_code, 301)
+        self.assertEqual(
+            legacy_response["Location"],
+            f"{reverse('soil:prefecture_detail', kwargs={'prefecture_id': 2})}#soil-analysis",
+        )
         self.assertContains(municipality_response, "主な土壌タイプ")
         self.assertContains(municipality_response, "構成比 ▼")
         self.assertContains(municipality_response, "黒ボク土")
         self.assertContains(municipality_response, "構成比")
+        self.assertContains(
+            municipality_response,
+            f"{reverse('soil:prefecture_detail', kwargs={'prefecture_id': 2})}#soil-analysis",
+        )
 
     def _create_national_test_data(self):
         for prefecture_code in range(1, 48):
