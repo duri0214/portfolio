@@ -68,25 +68,27 @@
 }
 
 .soil-map-switch {
-    flex: 0 0 auto;
-    float: none;
-    margin: 0;
-    width: 2.5em;
-    height: 1.3em;
-    appearance: none;
-    border: 0;
-    border-radius: 999px;
-    background: #aeb8c2;
-    cursor: pointer;
-    transition: background-color 0.15s ease-in-out;
-    -webkit-appearance: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
 }
 
-.soil-map-switch::before {
+.soil-map-slider {
+    flex: 0 0 auto;
+    display: block;
+    width: 2.5em;
+    height: 1.3em;
+    padding: 0.18em;
+    border-radius: 999px;
+    background: #aeb8c2;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.soil-map-slider::before {
     display: block;
     width: 0.94em;
     height: 0.94em;
-    margin: 0.18em;
     border-radius: 50%;
     background: #fff;
     box-shadow: 0 1px 2px rgb(16 42 67 / 35%);
@@ -94,15 +96,19 @@
     transition: transform 0.15s ease-in-out;
 }
 
-.soil-map-switch:checked {
+.soil-map-switch:checked + .soil-map-slider {
     background: #2f80ed;
 }
 
-.soil-map-switch:checked::before {
+.soil-map-switch:checked + .soil-map-slider::before {
     transform: translateX(1.2em);
 }
 
 .soil-map-switch:focus-visible {
+    outline: none;
+}
+
+.soil-map-switch:focus-visible + .soil-map-slider {
     outline: 3px solid rgb(47 128 237 / 35%);
     outline-offset: 2px;
 }
