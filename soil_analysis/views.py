@@ -19,7 +19,7 @@ from django.http import (
     JsonResponse,
     Http404,
 )
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views import View
@@ -85,6 +85,10 @@ from soil_analysis.domain.service.municipality_soil_aggregation import (
 from soil_analysis.domain.service.municipality_soil_map import (
     MunicipalitySoilMapService,
 )
+from soil_analysis.domain.service.shape_import_job import (
+    ShapeImportJobError,
+    ShapeImportJobService,
+)
 from soil_analysis.domain.service.photo_processing import PhotoProcessingService
 from soil_analysis.domain.valueobject.photo_processing.photo_spot import PhotoSpot
 from soil_analysis.domain.valueobject.report.chemical_assessment import (
@@ -117,6 +121,7 @@ from soil_analysis.models import (
     JmaPrefecture,
     JmaWeather,
     JmaWarning,
+    ShapeImportJob,
 )
 
 SAMPLING_TIMES_PER_BLOCK = 5
@@ -204,6 +209,104 @@ class MunicipalityBoundaryUploadView(LoginRequiredMixin, UserPassesTestMixin, Fo
             f"{dataset.municipality_count:,}市区町村・{dataset.feature_count:,}地物の境界を取り込みました。土壌面積を更新してください。",
         )
         return super().form_valid(form)
+
+
+class ShapeImportJobContextMixin:
+    """取込画面のURLで指定されたジョブをテンプレートへ渡す。"""
+
+    def _import_job(self):
+        job_id = self.request.GET.get("import_job")
+        if not job_id:
+            return None
+        return ShapeImportJob.objects.filter(pk=job_id).first()
+
+
+class SoilMapImportJobUploadView(
+    ShapeImportJobContextMixin, LoginRequiredMixin, UserPassesTestMixin, FormView
+):
+    """土壌図ZIPの保存と取込ジョブの開始を担当する。"""
+
+    template_name = "soil_analysis/soil_map/management.html"
+    form_class = SoilMapUploadForm
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["soil_map_form"] = context.pop("form")
+        context["boundary_form"] = MunicipalityBoundaryUploadForm()
+        context["import_job"] = self._import_job()
+        return context
+
+    def form_valid(self, form):
+        try:
+            job = ShapeImportJobService.create_job(
+                ShapeImportJob.DatasetType.SOIL_MAP, form.cleaned_data["file"]
+            )
+        except ShapeImportJobError as error:
+            form.add_error("file", str(error))
+            return self.form_invalid(form)
+        messages.success(self.request, "土壌図ZIPの取込ジョブを開始しました。")
+        return redirect(f"{reverse('soil:soil_map_upload')}?import_job={job.pk}")
+
+
+class MunicipalityBoundaryImportJobUploadView(
+    ShapeImportJobContextMixin, LoginRequiredMixin, UserPassesTestMixin, FormView
+):
+    """市区町村境界ZIPの保存と取込ジョブの開始を担当する。"""
+
+    template_name = "soil_analysis/soil_map/management.html"
+    form_class = MunicipalityBoundaryUploadForm
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["soil_map_form"] = SoilMapUploadForm()
+        context["boundary_form"] = context.pop("form")
+        context["import_job"] = self._import_job()
+        return context
+
+    def form_valid(self, form):
+        try:
+            job = ShapeImportJobService.create_job(
+                ShapeImportJob.DatasetType.MUNICIPALITY_BOUNDARY,
+                form.cleaned_data["file"],
+            )
+        except ShapeImportJobError as error:
+            form.add_error("file", str(error))
+            return self.form_invalid(form)
+        messages.success(self.request, "市区町村境界ZIPの取込ジョブを開始しました。")
+        return redirect(f"{reverse('soil:soil_map_upload')}?import_job={job.pk}")
+
+
+class ShapeImportJobStepView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Shape ZIP取込ジョブの次の処理単位をJSONで返す。"""
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def post(self, request, pk, *args, **kwargs):
+        job = get_object_or_404(ShapeImportJob, pk=pk)
+        if job.status != ShapeImportJob.Status.COMPLETED:
+            job = ShapeImportJobService.process_next_step(job.pk)
+        return JsonResponse(self._payload(job))
+
+    @staticmethod
+    def _payload(job: ShapeImportJob) -> dict[str, str | int | bool | None]:
+        return {
+            "status": job.status,
+            "phase": job.phase,
+            "phase_label": job.get_phase_display(),
+            "dataset_type": job.dataset_type,
+            "processed_record_count": job.processed_record_count,
+            "total_record_count": job.total_record_count,
+            "excluded_record_count": job.excluded_record_count,
+            "error_message": job.error_message or None,
+            "is_processing": job.is_processing,
+        }
 
 
 class MunicipalitySoilAggregationView(LoginRequiredMixin, UserPassesTestMixin, View):
