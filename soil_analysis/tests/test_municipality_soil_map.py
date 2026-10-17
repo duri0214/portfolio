@@ -47,8 +47,32 @@ class MunicipalityBoundaryImportServiceTest(TestCase):
             dataset.municipalities.get(municipality_code="02001").name, "青森市"
         )
 
+    def test_import_boundary_from_zip_uses_municipality_shape_when_prefecture_shape_is_also_included(
+        self,
+    ):
+        """
+        シナリオ:
+        - 入力: 市区町村境界Shapeと都道府県境界Shapeを同梱した国土数値情報N03の全国ZIP。
+        - 処理: MunicipalityBoundaryImportServiceでZIPを取り込む。
+        - 期待値: N03_007を持つ市区町村境界Shapeだけを選び、全国の市区町村境界を保存すること。
+        """
+        with tempfile.TemporaryDirectory() as directory:
+            dataset = MunicipalityBoundaryImportService.import_boundary_from_zip(
+                self._create_boundary_zip(
+                    Path(directory), include_prefecture_shape=True
+                )
+            )
+
+        self.assertEqual(dataset.municipality_count, 47)
+        self.assertEqual(dataset.feature_count, 47)
+        self.assertEqual(
+            dataset.municipalities.get(municipality_code="02001").name, "青森市"
+        )
+
     @staticmethod
-    def _create_boundary_zip(directory: Path) -> Path:
+    def _create_boundary_zip(
+        directory: Path, include_prefecture_shape: bool = False
+    ) -> Path:
         shape_path = directory / "municipality.shp"
         writer = shapefile.Writer(str(shape_path), encoding="utf-8")
         writer.field("N03_001", "C", size=40)
@@ -68,6 +92,28 @@ class MunicipalityBoundaryImportServiceTest(TestCase):
         with zipfile.ZipFile(zip_path, "w") as zip_file:
             for suffix in (".shp", ".shx", ".dbf", ".prj", ".cpg"):
                 zip_file.write(shape_path.with_suffix(suffix), f"municipality{suffix}")
+            if include_prefecture_shape:
+                prefecture_shape_path = directory / "municipality_prefecture.shp"
+                prefecture_writer = shapefile.Writer(
+                    str(prefecture_shape_path), encoding="utf-8"
+                )
+                prefecture_writer.field("N03_001", "C", size=40)
+                prefecture_writer.field("N03_004", "C", size=80)
+                prefecture_writer.field("N03_007", "C", size=5)
+                prefecture_writer.poly([_square(140, 30, 141, 31)])
+                prefecture_writer.record("都道府県", "都道府県", "01000")
+                prefecture_writer.close()
+                prefecture_shape_path.with_suffix(".prj").write_text(
+                    "GCS_JGD_2011", encoding="utf-8"
+                )
+                prefecture_shape_path.with_suffix(".cpg").write_text(
+                    "UTF-8", encoding="ascii"
+                )
+                for suffix in (".shp", ".shx", ".dbf", ".prj", ".cpg"):
+                    zip_file.write(
+                        prefecture_shape_path.with_suffix(suffix),
+                        f"municipality_prefecture{suffix}",
+                    )
         return zip_path
 
 

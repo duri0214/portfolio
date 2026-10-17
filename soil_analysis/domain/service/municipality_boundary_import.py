@@ -31,8 +31,8 @@ class MunicipalityBoundaryImportService:
 
     REQUIRED_FIELD_NAMES = ("N03_001", "N03_004", "N03_007")
     NATIONAL_PREFECTURE_CODES = frozenset(f"{code:02d}" for code in range(1, 48))
-    MAX_UNCOMPRESSED_BYTES = 2_500 * 1024 * 1024
-    BATCH_SIZE = 200
+    MAX_UNCOMPRESSED_BYTES = 3_000 * 1024 * 1024
+    BATCH_SIZE = 1
 
     @classmethod
     def import_boundary_from_zip(
@@ -136,14 +136,24 @@ class MunicipalityBoundaryImportService:
                 "ZIP内に展開できないパスが含まれています。"
             ) from error
 
-    @staticmethod
-    def _find_shape_path(extract_path: Path) -> Path:
+    @classmethod
+    def _find_shape_path(cls, extract_path: Path) -> Path:
         shape_files = list(extract_path.rglob("*.shp"))
-        if len(shape_files) != 1:
+        municipality_shape_files = [
+            shape_path
+            for shape_path in shape_files
+            if cls._has_municipality_code_field(shape_path)
+        ]
+        non_prefecture_shape_files = [
+            shape_path
+            for shape_path in municipality_shape_files
+            if not shape_path.stem.lower().endswith("_prefecture")
+        ]
+        if len(non_prefecture_shape_files) != 1:
             raise MunicipalityBoundaryImportError(
-                "ZIPにはShapeファイルを1件だけ含めてください。"
+                "ZIPには市区町村コード（N03_007）を持つShapeファイルを1件だけ含めてください。"
             )
-        shape_path = shape_files[0]
+        shape_path = non_prefecture_shape_files[0]
         missing = [
             suffix
             for suffix in (".dbf", ".shx", ".prj")
@@ -154,6 +164,20 @@ class MunicipalityBoundaryImportService:
                 f"Shapeファイルの必須構成ファイルがありません: {', '.join(missing)}"
             )
         return shape_path
+
+    @classmethod
+    def _has_municipality_code_field(cls, shape_path: Path) -> bool:
+        """市区町村境界を識別するN03_007属性の有無を返す。"""
+        if not shape_path.with_suffix(".dbf").is_file():
+            return False
+        reader = shapefile.Reader(
+            str(shape_path), encoding=cls._get_dbf_encoding(shape_path)
+        )
+        try:
+            field_names = {field[0].upper() for field in reader.fields[1:]}
+            return "N03_007" in field_names
+        finally:
+            reader.close()
 
     @staticmethod
     def _get_dbf_encoding(shape_path: Path) -> str:
