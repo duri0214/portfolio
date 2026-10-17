@@ -67,7 +67,10 @@
     font-size: 0.82rem;
 }
 
-.soil-map-switch .form-check-input {
+.soil-map-switch {
+    flex: 0 0 auto;
+    float: none;
+    margin: 0;
     width: 2.5em;
 }
 
@@ -76,10 +79,13 @@
     align-self: flex-end;
     align-items: center;
     gap: 8px;
+    width: fit-content;
     padding: 8px 12px;
     border: 1px solid #d9e2ec;
     border-radius: 6px;
     background: #fff;
+    cursor: pointer;
+    white-space: nowrap;
 }
 
 .soil-map-source {

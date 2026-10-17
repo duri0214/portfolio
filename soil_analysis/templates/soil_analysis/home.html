@@ -123,13 +123,11 @@
                                      aria-label="47都道府県の商圏マップ"
                                      data-detail-url-template="{% url 'soil:prefecture_detail' 999 %}"
                                      data-soil-detail-url-template="{% url 'soil:soil_map_prefecture' 999 %}"></div>
-                                <div class="map-mode-control">
+                                <label class="map-mode-control" for="soil-map-mode">
                                     <span class="small text-muted">天気・商圏</span>
-                                    <div class="form-check form-switch soil-map-switch mb-0">
-                                        <input class="form-check-input" type="checkbox" role="switch" id="soil-map-mode" aria-label="天気・商圏と土壌の表示を切り替える">
-                                    </div>
+                                    <input class="form-check-input soil-map-switch" type="checkbox" role="switch" id="soil-map-mode" aria-label="天気・商圏と土壌の表示を切り替える">
                                     <span class="small fw-semibold">土壌</span>
-                                </div>
+                                </label>
                                 <div class="market-map-detail" id="commercial-area-map-detail" aria-live="polite">
                                     <strong>地図から都道府県を選択</strong>
                                     <span>商圏の集計値を確認できます。</span>
