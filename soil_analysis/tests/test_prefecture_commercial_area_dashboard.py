@@ -735,8 +735,8 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertIn(
             "salesOfferCount", response.context["commercial_area_map_data"][0]
         )
-        self.assertContains(response, "都道府県別商圏マップ")
-        self.assertContains(response, "日本地図商圏マップ")
+        self.assertContains(response, "都道府県別の地域分析")
+        self.assertContains(response, "日本地図の天気・商圏")
         self.assertContains(response, "地図から都道府県を選択")
         self.assertContains(response, "気象庁 全国予報マップ")
         self.assertContains(response, "晴れ系")
@@ -771,6 +771,9 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertNotContains(response, "出荷信号")
         self.assertNotContains(response, "私は天気")
         self.assertContains(response, "注意商圏")
+        self.assertNotContains(response, "soil-map-mode")
+        self.assertNotContains(response, "soil-map-data")
+        self.assertNotContains(response, "data-soil-detail-url-template")
         self.assertNotContains(response, "天気リスク県への売り込み候補")
         self.assertNotContains(response, "売り込み候補")
         self.assertNotContains(response, "配車候補キュー")
@@ -867,7 +870,9 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertEqual(response.context["area"].prefecture_name, "千葉県")
         self.assertEqual(response.context["area"].sales_offer_count, 2)
         self.assertEqual(len(response.context["sales_opportunity_candidates"]), 2)
-        self.assertContains(response, "千葉県 詳細")
+        self.assertContains(response, "千葉県の地域分析詳細")
+        self.assertContains(response, "地域分析")
+        self.assertContains(response, "土壌分析")
         self.assertContains(response, "千葉県エリア")
         self.assertContains(response, "雨")
         self.assertContains(response, "market-weather-value")
@@ -890,7 +895,7 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         response = self.client.get(reverse("soil:prefecture_detail", args=[47]))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "沖縄県 詳細")
+        self.assertContains(response, "沖縄県の地域分析詳細")
         self.assertContains(response, "沖縄県 に関係する売り込み候補はありません。")
         self.assertContains(response, "沖縄県 に登録済みの圃場はありません。")
 

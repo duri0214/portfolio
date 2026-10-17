@@ -7,7 +7,6 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from soil_analysis.domain.service.soil_map import SoilMapService
 from soil_analysis.domain.service.soil_classification import SoilClassificationService
 from soil_analysis.domain.service.soil_map_import import (
     SoilMapImportError,
@@ -167,12 +166,12 @@ class SoilMapImportServiceTest(TestCase):
         return zip_path
 
 
-class SoilMapServiceTest(TestCase):
+class SoilClassificationServiceTest(TestCase):
     def test_soil_name_removes_empty_parentheses(self):
         """
         シナリオ:
         - 入力: 空の括弧を含む土壌名。
-        - 操作: 画面表示用の土壌名を正規化する。
+        - 処理: 画面表示用の土壌名を正規化する。
         - 期待値: 空の括弧を除いた名称になること。
         """
         self.assertEqual(
@@ -184,8 +183,8 @@ class SoilMapServiceTest(TestCase):
         """
         シナリオ:
         - 入力: 土壌群コード D6。
-        - 操作: 画面表示用の土壌群名を取得する。
-        - 期待値: コードだけでなくアロフェン質黒ボク土と表示できること。
+        - 処理: 画面表示用の土壌群名と解説URLを取得する。
+        - 期待値: アロフェン質黒ボク土と対応する解説URLを返すこと。
         """
         self.assertEqual(
             SoilClassificationService.get_soil_group_name("D6"), "アロフェン質黒ボク土"
@@ -195,33 +194,6 @@ class SoilMapServiceTest(TestCase):
             "https://soil-inventory.rad.naro.go.jp/explain/D6.html",
         )
         self.assertIn("火山灰", SoilClassificationService.get_soil_group_summary("D6"))
-
-    def test_build_payload_returns_dominant_soil_for_each_prefecture(self):
-        """
-        シナリオ:
-        - 入力: 青森県に黒ボク土2件、褐色森林土1件を持つ有効データ版。
-        - 処理: SoilMapServiceで地図用payloadを作る。
-        - 期待値: 青森県の代表土壌として黒ボク土と合計3件を返すこと。
-        """
-        with tempfile.TemporaryDirectory() as directory:
-            SoilMapImportService.import_soil_map_from_zip(
-                SoilMapImportServiceTest._create_zip_file(Path(directory))
-            )
-
-        payload = SoilMapService.build_payload()
-        aomori = next(area for area in payload["areas"] if area["code"] == 2)
-
-        self.assertEqual(aomori["soilName"], "黒ボク土")
-        self.assertEqual(aomori["polygonCount"], 3)
-        self.assertEqual(aomori["dominantPolygonCount"], 2)
-        self.assertEqual(payload["dataset"]["featureCount"], 49)
-        self.assertEqual(payload["legend"][0]["soilGroupName"], "A")
-        self.assertEqual(
-            payload["legend"][0]["soilGroupUrl"],
-            "https://soil-inventory.rad.naro.go.jp/main/figure",
-        )
-
-    _create_zip_file = staticmethod(SoilMapImportServiceTest._create_zip_file)
 
 
 class SoilMapUploadViewTest(TestCase):

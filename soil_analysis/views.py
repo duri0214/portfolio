@@ -68,10 +68,8 @@ from soil_analysis.domain.service.agricultural_statistics import (
 )
 from soil_analysis.domain.service.kml import KmlService
 from soil_analysis.domain.service.prefecture_commercial_area import (
-    JAPAN_MAP_PREFECTURES,
     PrefectureCommercialAreaService,
 )
-from soil_analysis.domain.service.soil_map import SoilMapService
 from soil_analysis.domain.service.soil_map_import import (
     SoilMapImportError,
     SoilMapImportService,
@@ -133,7 +131,6 @@ class Home(TemplateView):
         context["prefecture_area_dashboard"] = prefecture_area_dashboard
         context["commercial_areas"] = prefecture_area_dashboard.areas
         context["commercial_area_map_data"] = prefecture_area_dashboard.map_payload
-        context["soil_map"] = SoilMapService.build_payload()
         return context
 
 
@@ -232,26 +229,6 @@ class MunicipalitySoilAggregationView(LoginRequiredMixin, UserPassesTestMixin, V
         return redirect("soil:home")
 
 
-class SoilMapPrefectureView(TemplateView):
-    """土壌図の市区町村一覧を表示する。"""
-
-    template_name = "soil_analysis/soil_map/prefecture.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        prefecture_code = self.kwargs["prefecture_id"]
-        if not 1 <= prefecture_code <= 47:
-            raise Http404("Prefecture does not exist.")
-        context.update(
-            MunicipalitySoilMapService.build_prefecture_context(
-                f"{prefecture_code:02d}"
-            )
-        )
-        context["prefecture_code"] = prefecture_code
-        context["prefecture_name"] = dict(JAPAN_MAP_PREFECTURES)[prefecture_code]
-        return context
-
-
 class MunicipalitySoilDetailView(TemplateView):
     """市区町村ごとの土壌分類別面積と構成比を表示する。"""
 
@@ -321,6 +298,9 @@ class PrefectureDetailView(ListView):
             if candidate.origin_name == area.prefecture_name
             or candidate.target_name == area.prefecture_name
         ]
+        context.update(
+            MunicipalitySoilMapService.build_prefecture_context(f"{prefecture_id:02d}")
+        )
         return context
 
 

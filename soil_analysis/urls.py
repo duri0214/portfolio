@@ -19,11 +19,6 @@ urlpatterns = [
         name="municipality_soil_recalculate",
     ),
     path(
-        "soil-map/prefecture/<int:prefecture_id>",
-        views.SoilMapPrefectureView.as_view(),
-        name="soil_map_prefecture",
-    ),
-    path(
         "soil-map/municipality/<str:municipality_code>",
         views.MunicipalitySoilDetailView.as_view(),
         name="soil_map_municipality",
