@@ -160,37 +160,6 @@ class SoilMapUploadForm(forms.Form):
         return uploaded_file
 
 
-class SoilPointSearchForm(forms.Form):
-    """全国土壌図を検索するための緯度・経度を検証する。"""
-
-    latitude = forms.DecimalField(
-        label="緯度",
-        min_value=-90,
-        max_value=90,
-        decimal_places=6,
-        widget=forms.NumberInput(
-            attrs={
-                "class": "form-control",
-                "step": "0.000001",
-                "placeholder": "例: 35.861231",
-            }
-        ),
-    )
-    longitude = forms.DecimalField(
-        label="経度",
-        min_value=-180,
-        max_value=180,
-        decimal_places=6,
-        widget=forms.NumberInput(
-            attrs={
-                "class": "form-control",
-                "step": "0.000001",
-                "placeholder": "例: 139.432468",
-            }
-        ),
-    )
-
-
 class MunicipalityBoundaryUploadForm(forms.Form):
     """国土数値情報の行政区域Shape ZIPを受け付けるフォーム。"""
 

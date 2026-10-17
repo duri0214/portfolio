@@ -175,7 +175,7 @@ class MunicipalitySoilAggregationServiceTest(TestCase):
         シナリオ:
         - 入力: 再計算済みの青森市土壌面積と、ホームの地図表示。
         - 処理: ホーム、都道府県詳細、市区町村詳細と旧土壌都道府県URLをGETする。
-        - 期待値: ホームは天気・商圏だけを表示し、共通詳細の土壌分析タブから市区町村と分類別構成比を確認でき、削除済みの旧URLは404になること。
+        - 期待値: ホームは天気・商圏だけを表示し、共通詳細の土壌分析タブから市区町村と分類別構成比、代表地点を指定した農研機構地図を確認でき、削除済みの旧URLは404になること。
         """
         MunicipalitySoilAggregationService.recalculate_active_datasets()
 
@@ -208,6 +208,11 @@ class MunicipalitySoilAggregationServiceTest(TestCase):
         self.assertContains(municipality_response, "構成比 ▼")
         self.assertContains(municipality_response, "黒ボク土")
         self.assertContains(municipality_response, "構成比")
+        self.assertContains(
+            municipality_response,
+            "lat=30.250000&amp;lng=140.250000&amp;zoom=12",
+        )
+        self.assertContains(municipality_response, "農研機構の地点指定地図を開く")
         self.assertContains(
             municipality_response,
             f"{reverse('soil:prefecture_detail', kwargs={'prefecture_id': 2})}#soil-analysis",

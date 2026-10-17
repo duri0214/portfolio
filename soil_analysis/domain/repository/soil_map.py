@@ -1,6 +1,6 @@
 """土壌図データ版とPolygonの永続化を扱うリポジトリ。"""
 
-from django.db.models import Count, Max, Min
+from django.db.models import Count
 
 from soil_analysis.models import SoilMapDataset, SoilMapPolygon
 
@@ -44,27 +44,4 @@ class SoilMapRepository:
             .values("prefecture_code", "soil_name", "soil_group_code")
             .annotate(polygon_count=Count("id"))
             .order_by("prefecture_code", "-polygon_count", "soil_name")
-        )
-
-    @staticmethod
-    def get_point_candidates(
-        dataset: SoilMapDataset, latitude: float, longitude: float
-    ):
-        """地点を含み得る外接矩形のPolygonだけを返す。"""
-        return SoilMapPolygon.objects.filter(
-            dataset=dataset,
-            min_lng__lte=longitude,
-            max_lng__gte=longitude,
-            min_lat__lte=latitude,
-            max_lat__gte=latitude,
-        )
-
-    @staticmethod
-    def get_dataset_extent(dataset: SoilMapDataset) -> dict[str, float | None]:
-        """有効データ版に保存されたPolygon全体の外接矩形を返す。"""
-        return SoilMapPolygon.objects.filter(dataset=dataset).aggregate(
-            min_lng=Min("min_lng"),
-            min_lat=Min("min_lat"),
-            max_lng=Max("max_lng"),
-            max_lat=Max("max_lat"),
         )
