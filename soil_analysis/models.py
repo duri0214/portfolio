@@ -1104,7 +1104,10 @@ class MunicipalityBoundary(models.Model):
                 name="soil_municipality_boundary_dataset_code_unique",
             )
         ]
-        indexes = [models.Index(fields=["dataset", "prefecture_code"])]
+        indexes = [
+            models.Index(fields=["dataset", "prefecture_code"]),
+            models.Index(fields=["dataset", "prefecture_code", "municipality_code"]),
+        ]
         ordering = ["municipality_code"]
         verbose_name = "市区町村境界"
         verbose_name_plural = "市区町村境界"
