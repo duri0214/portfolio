@@ -43,6 +43,10 @@
                         <a href="{% url 'llm:rokunohe_collection_viewer' %}" class="btn btn-outline-info btn-sm">
                             コレクションビューア
                         </a>
+                        <form method="post" action="{% url 'llm:rokunohe_collection_summary_refresh' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-success btn-sm">コレクションサマリーを更新</button>
+                        </form>
                         <button id="clearChatLogsBtn" class="btn btn-danger btn-sm">チャット履歴を削除</button>
                         <form id="vectorDbResetForm" method="post" action="{% url 'llm:rokunohe_vector_db_reset' %}">
                             {% csrf_token %}
@@ -93,7 +97,7 @@
                 {% endif %}
                 <p class="small text-muted mt-2 mb-3">
                     会議録PDF取得・ベクトル化、コレクション確認、頻出語集計は、期間未指定時に直近1年分の会議録を処理基準にしています。
-                    初回サマリーは一括処理の後に登録済みコレクションを検索して作成し、1件試験処理では更新しません。
+                    コレクションサマリーは一括処理の後に作成し、1件試験処理の後は「コレクションサマリーを更新」で任意に作り直せます。
                 </p>
                 {% if not is_superuser %}
                     <p class="small text-muted mt-2 mb-3">管理ページに行くにはログインが必要です</p>

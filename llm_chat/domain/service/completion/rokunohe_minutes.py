@@ -364,6 +364,7 @@ class RokunoheMinutesRagService(BaseChatService):
     """
 
     model_name = ModelDefaults.ROKUNOHE_MINUTES_RAG.model
+    collection_summary_marker = "<!-- rokunohe-collection-summary -->"
     initial_summary_prompt = (
         "取り込み済みの六戸町会議録を横断して、分析の入口になる初回サマリーを作成してください。"
         "主要テーマ、直近の傾向、深掘りに向く質問例を日本語で簡潔に箇条書きしてください。"
@@ -438,7 +439,8 @@ class RokunoheMinutesRagService(BaseChatService):
         return self._create_assistant_message(
             user=user,
             content=(
-                "### 初回サマリー\n\n"
+                f"{self.collection_summary_marker}\n"
+                "### コレクションサマリー\n\n"
                 f"> 検索対象: {collection_scope}\n"
                 "> このサマリーは関連する会議録チャンクの検索結果をもとに作成しています。\n\n"
                 f"{summary.content}"
