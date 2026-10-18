@@ -1,14 +1,28 @@
 import json
+import logging
 import os
 
+from django.conf import settings
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy, reverse
 from django.views.generic import TemplateView
 
 from gmarker.domain.repository.google import NearbyPlaceRepository
+from gmarker.domain.service.craft_beer_places import (
+    CraftBeerPlacesExporter,
+    PlacesApiClient,
+    PlacesApiError,
+    RequiredPlaceMissingError,
+    FIELD_MASK_WITH_REVIEWS,
+    load_config,
+)
 from gmarker.domain.service.google import GoogleMapsService
 from gmarker.forms import CoordinateForm
 from lib.geo.valueobject.coord import GoogleMapsCoord
+
+
+logger = logging.getLogger(__name__)
+CRAFT_BEER_CONFIG_PATH = settings.BASE_DIR / "gmarker/configs/shibuya_craft_beer.json"
 
 
 class IndexView(TemplateView):
@@ -114,3 +128,54 @@ class CoordinateRegisterView(TemplateView):
 
         # フォームエラー時、再表示
         return render(request, self.template_name, {"form": form})
+
+
+class CraftBeerCandidateView(IndexView):
+    """設定済みのクラフトビール候補だけを地図と一覧へ表示する。"""
+
+    def post(self, request, *args, **kwargs):
+        """Places API から検品済み候補を取得し、永続化せず画面へ表示する。"""
+        api_key = os.getenv("GOOGLE_MAPS_BE_API_KEY")
+        if not api_key:
+            return self._render_error(
+                "クラフトビール候補を取得できません。サーバーのGoogle Maps APIキー設定を確認してください。",
+                status=503,
+            )
+
+        try:
+            config = load_config(CRAFT_BEER_CONFIG_PATH)
+            client = PlacesApiClient(api_key, field_mask=FIELD_MASK_WITH_REVIEWS)
+            result = CraftBeerPlacesExporter(client).collect(
+                config, include_reviews=True
+            )
+        except (PlacesApiError, RequiredPlaceMissingError):
+            logger.exception("クラフトビール候補の取得に失敗しました。")
+            return self._render_error(
+                "クラフトビール候補を取得できませんでした。時間を置いて再度実行してください。",
+                status=502,
+            )
+        except ValueError:
+            logger.exception("クラフトビール候補の設定が不正です。")
+            return self._render_error(
+                "クラフトビール候補の検索設定に問題があります。管理者へ連絡してください。",
+                status=500,
+            )
+
+        context = self.get_context_data()
+        context["places"] = result["candidates"]
+        context["craft_beer_result"] = result
+        context["map_data"] = json.dumps(
+            {
+                "center": {"lat": config.center_lat, "lng": config.center_lng},
+                "places": result["candidates"],
+                "mapId": os.getenv("GOOGLE_MAPS_MAP_ID", "8f6a4cf0806f4732"),
+            },
+            ensure_ascii=False,
+        )
+        return self.render_to_response(context)
+
+    def _render_error(self, message: str, *, status: int):
+        """候補取得エラーをトップ画面上で利用者へ通知する。"""
+        context = self.get_context_data()
+        context["craft_beer_error"] = message
+        return self.render_to_response(context, status=status)
