@@ -1,16 +1,19 @@
+import os
 from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 from django.urls import reverse
 
-from gmarker.domain.service.craft_beer_places import PlacesApiError
+from gmarker.domain.service.place_candidate_filter import (
+    CriteriaNotFoundError,
+    PlacesApiError,
+)
 from gmarker.models import NearbyPlace, Place
 
 
 class TestView(TestCase):
     @classmethod
     def setUpTestData(cls):
-        # まずPlaceオブジェクトを作成
         place1 = Place.objects.create(
             place_id="ChIJXSModoALGGARILWiCfeu2M0",
             name="渋谷駅",
@@ -18,7 +21,7 @@ class TestView(TestCase):
         )
         place2 = Place.objects.create(
             place_id="ChIJXSModoALGGARILWiCfeu2M1",
-            name="忠犬ハチ公像",
+            name="ハチ公公園",
             location="35.6590439,139.7005917",
         )
         place3 = Place.objects.create(
@@ -27,102 +30,177 @@ class TestView(TestCase):
             location="35.676236,139.6993411",
         )
 
-        # NearbyPlaceオブジェクトを作成し、Placeを関連付け
-        NearbyPlace.objects.create(
-            category=9,
-            place=place1,
-        )
-        NearbyPlace.objects.create(
-            category=3,
-            place=place2,
-        )
-        NearbyPlace.objects.create(
-            category=3,
-            place=place3,
-        )
+        NearbyPlace.objects.create(category=9, place=place1)
+        NearbyPlace.objects.create(category=3, place=place2)
+        NearbyPlace.objects.create(category=3, place=place3)
 
     def test_get_top_page_200(self):
         response = self.client.get(reverse("mrk:index"))
+
         self.assertEqual(200, response.status_code)
 
-    def test_top_page_shows_craft_beer_candidate_button(self):
+    def test_top_page_shows_registered_candidate_profile_button(self):
         """
         シナリオ:
-        - 入力: 初期表示用の中心座標を持つ状態。
+        - 入力: criteria ディレクトリに登録済みの候補検索プロファイル。
         - 処理: gmarker のトップ画面を表示する。
-        - 期待値: 専用のクラフトビール候補抽出を送信するボタンが表示されること。
+        - 期待値: プロファイルの label と共通 View の URL が表示されること。
         """
         response = self.client.get(reverse("mrk:index"))
 
         self.assertContains(response, "クラフトビール候補")
-        self.assertContains(response, reverse("mrk:craft_beer_candidates"))
+        self.assertContains(
+            response,
+            reverse(
+                "mrk:candidate_search",
+                kwargs={"criteria_slug": "shibuya-craft-beer"},
+            ),
+        )
 
-    @patch("gmarker.views.load_config")
-    @patch("gmarker.views.CraftBeerPlacesExporter")
-    @patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "test-key"})
-    def test_craft_beer_candidate_search_displays_filtered_candidates(
-        self, exporter_class, load_config
-    ):
+    @patch("gmarker.views.PlaceSearchCriteriaCatalog.resolve")
+    @patch("gmarker.views.PlaceCandidateFilter.collect")
+    @patch.dict(os.environ, {"GOOGLE_MAPS_BE_API_KEY": "test-key"})
+    def test_common_candidate_view_displays_places_and_reviews(self, collect, resolve):
         """
         シナリオ:
-        - 入力: 境界・営業状態で抽出済みのクラフトビール候補を返すサービス。
-        - 処理: クラフトビール候補ボタンの POST を実行する。
-        - 期待値: 一般的な restaurant 検索結果ではなく、抽出済み候補だけが一覧と地図に表示されること。
+        - 入力: slug に対応する criteria と共通 service の候補結果。
+        - 処理: 候補検索 URL を POST する。
+        - 期待値: 地図と店舗別レビューが表示され、検品用情報は HTML に含まれないこと。
         """
-        config = MagicMock(center_lat=35.6617, center_lng=139.6977)
-        load_config.return_value = config
-        exporter_class.return_value.collect.return_value = {
-            "counts": {"candidates": 1, "manual_review": 2, "excluded": 3},
+        criteria = MagicMock(
+            slug="test-profile",
+            label="テスト候補",
+            center_lat=35.6617,
+            center_lng=139.6977,
+        )
+        resolve.return_value = criteria
+        collect.return_value = {
+            "criteria_slug": "test-profile",
+            "label": "テスト候補",
+            "counts": {"candidates": 1, "manual_review": 0, "excluded": 0},
             "candidates": [
                 {
-                    "place_id": "craft-beer-id",
-                    "name": "TAP&CROWLER Shibuya",
-                    "formatted_address": "東京都渋谷区宇田川町6-20",
+                    "place_id": "candidate-id",
+                    "name": "候補店舗",
+                    "formatted_address": "東京都渋谷区",
                     "location": {"lat": 35.6617, "lng": 139.6977},
-                    "matched_queries": ["keyword:クラフトビール 渋谷"],
                     "rating": 4.5,
                     "google_maps_uri": "https://maps.google.com/example",
                     "reviews": [
                         {
-                            "author": "reviewer",
-                            "review_text": "クラフトビールがおいしい",
+                            "author": "投稿者",
+                            "review_text": "レビュー本文",
                             "publish_time": "2026-10-18T00:00:00Z",
                         }
                     ],
+                    "matched_queries": ["keyword:画面に出してはいけない検索語"],
+                    "candidate_category": "keyword_and_type",
+                    "primary_type": "bar",
+                    "types": ["bar"],
                 }
             ],
         }
 
-        response = self.client.post(reverse("mrk:craft_beer_candidates"))
-
-        self.assertEqual(200, response.status_code)
-        self.assertContains(response, "TAP&amp;CROWLER Shibuya")
-        self.assertNotContains(response, "STARBUCKS RESERVE")
-        self.assertContains(response, "クラフトビールがおいしい")
-        exporter_class.return_value.collect.assert_called_once_with(
-            config, include_reviews=True
+        response = self.client.post(
+            reverse(
+                "mrk:candidate_search",
+                kwargs={"criteria_slug": "test-profile"},
+            )
         )
 
-    @patch("gmarker.views.load_config")
-    @patch("gmarker.views.CraftBeerPlacesExporter")
-    @patch.dict("os.environ", {"GOOGLE_MAPS_BE_API_KEY": "test-key"})
-    def test_craft_beer_candidate_search_shows_error_when_api_fails(
-        self, exporter_class, load_config
-    ):
+        self.assertEqual(200, response.status_code)
+        self.assertContains(response, "候補店舗")
+        self.assertContains(response, "レビュー本文")
+        self.assertNotContains(response, "matched_queries")
+        self.assertNotContains(response, "画面に出してはいけない検索語")
+        resolve.assert_called_once_with("test-profile")
+        collect.assert_called_once_with(criteria, include_reviews=True)
+
+    @patch("gmarker.views.PlaceCandidateFilter.collect")
+    @patch.dict(os.environ, {"GOOGLE_MAPS_BE_API_KEY": "test-key"})
+    def test_common_candidate_view_returns_error_when_api_fails(self, collect):
         """
         シナリオ:
-        - 入力: Places API エラーを送出する候補抽出サービス。
-        - 処理: クラフトビール候補ボタンの POST を実行する。
-        - 期待値: 通常の検索結果として扱わず、502と次の操作を示すエラーメッセージを表示すること。
+        - 入力: 共通候補 service が PlacesApiError を送出する。
+        - 処理: 候補検索 URL を POST する。
+        - 期待値: 成功結果として扱わず、502 と利用者向けエラーを返すこと。
         """
-        load_config.return_value = MagicMock()
-        exporter_class.return_value.collect.side_effect = PlacesApiError("api error")
+        collect.side_effect = PlacesApiError("api error")
 
-        response = self.client.post(reverse("mrk:craft_beer_candidates"))
+        response = self.client.post(
+            reverse(
+                "mrk:candidate_search",
+                kwargs={"criteria_slug": "shibuya-craft-beer"},
+            )
+        )
 
         self.assertEqual(502, response.status_code)
         self.assertContains(
             response,
-            "クラフトビール候補を取得できませんでした。時間を置いて再度実行してください。",
+            "候補店舗を取得できませんでした。時間を置いて再度実行してください。",
             status_code=502,
+        )
+
+    @patch.dict(os.environ, {}, clear=True)
+    def test_common_candidate_view_returns_error_when_api_key_is_missing(self):
+        """
+        シナリオ:
+        - 入力: バックエンドの Google Maps API キーが未設定。
+        - 処理: 候補検索 URL を POST する。
+        - 期待値: Places API を成功扱いにせず、503 を返すこと。
+        """
+        response = self.client.post(
+            reverse(
+                "mrk:candidate_search",
+                kwargs={"criteria_slug": "shibuya-craft-beer"},
+            )
+        )
+
+        self.assertEqual(503, response.status_code)
+        self.assertContains(response, "Google Maps API キー設定", status_code=503)
+
+    @patch("gmarker.views.PlaceSearchCriteriaCatalog.resolve")
+    def test_common_candidate_view_returns_error_for_an_invalid_profile(self, resolve):
+        """
+        シナリオ:
+        - 入力: criteria の読み込みが ValueError になるプロファイル。
+        - 処理: 候補検索 URL を POST する。
+        - 期待値: 成功結果として扱わず、500 を返すこと。
+        """
+        resolve.side_effect = ValueError("invalid criteria")
+
+        response = self.client.post(
+            reverse(
+                "mrk:candidate_search",
+                kwargs={"criteria_slug": "shibuya-craft-beer"},
+            )
+        )
+
+        self.assertEqual(500, response.status_code)
+        self.assertContains(
+            response, "候補検索プロファイルに問題があります", status_code=500
+        )
+
+    @patch("gmarker.views.PlaceSearchCriteriaCatalog.resolve")
+    def test_common_candidate_view_returns_not_found_for_an_unknown_profile(
+        self, resolve
+    ):
+        """
+        シナリオ:
+        - 入力: カタログに存在しない criteria slug。
+        - 処理: 候補検索 URL を POST する。
+        - 期待値: 成功結果として扱わず、404 を返すこと。
+        """
+        resolve.side_effect = CriteriaNotFoundError("missing-profile")
+
+        response = self.client.post(
+            reverse(
+                "mrk:candidate_search",
+                kwargs={"criteria_slug": "missing-profile"},
+            )
+        )
+
+        self.assertEqual(404, response.status_code)
+        self.assertContains(
+            response, "候補検索プロファイルが見つかりません", status_code=404
         )

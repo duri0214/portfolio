@@ -1,4 +1,6 @@
 {
+  "slug": "shibuya-craft-beer",
+  "label": "クラフトビール候補",
   "area_name": "shibuya_craft_beer",
   "center": {
     "lat": 35.6617,
@@ -6,10 +8,10 @@
   },
   "radius_meters": 800,
   "bounds": {
-    "south": 35.6580,
-    "north": 35.6680,
-    "west": 139.6930,
-    "east": 139.7040
+    "south": 35.658,
+    "north": 35.668,
+    "west": 139.693,
+    "east": 139.704
   },
   "text_queries": [
     "クラフトビール 渋谷",
@@ -23,8 +25,8 @@
   ],
   "language_code": "ja",
   "region_code": "JP",
+  "include_type_only": false,
   "required_place": {
-    "place_id": null,
     "name_terms": [
       "TAP&CROWLER Shibuya",
       "TAP&CROWLER"
