@@ -41,7 +41,7 @@
                             頻出語集計
                         </a>
                         <a href="{% url 'llm:rokunohe_collection_viewer' %}" class="btn btn-outline-info btn-sm">
-                            コレクションビューア
+                            取り込み済み会議録を確認
                         </a>
                         <button id="clearChatLogsBtn" class="btn btn-danger btn-sm">チャット履歴を削除</button>
                         <form id="vectorDbResetForm" method="post" action="{% url 'llm:rokunohe_vector_db_reset' %}">
@@ -57,7 +57,7 @@
                             頻出語集計
                         </button>
                         <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
-                            コレクションビューア
+                            取り込み済み会議録を確認
                         </button>
                         <button id="clearChatLogsBtn" class="btn btn-danger btn-sm">チャット履歴を削除</button>
                         <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
@@ -92,7 +92,7 @@
                     </form>
                 {% endif %}
                 <p class="small text-muted mt-2 mb-3">
-                    会議録PDF取得・ベクトル化、コレクション確認、頻出語集計は、期間未指定時に直近1年分の会議録を処理基準にしています。
+                    会議録PDF取得・ベクトル化、取り込み済み会議録の確認、頻出語集計は、期間未指定時に直近1年分の会議録を処理基準にしています。
                     コレクションサマリーは一括処理または1件試験処理の後に自動作成し、既存のコレクションサマリーを最新の内容に更新します。
                 </p>
                 {% if not is_superuser %}

@@ -542,7 +542,7 @@ class RokunohePdfDownloadViewTest(TestCase):
         self.assertContains(response, "一覧から1件を選んで試験処理する")
         self.assertContains(response, "コレクションリセット")
         self.assertContains(response, "頻出語集計")
-        self.assertContains(response, "コレクションビューア")
+        self.assertContains(response, "取り込み済み会議録を確認")
         self.assertContains(response, "直近1年分の会議録を処理基準")
         self.assertContains(response, 'class="btn btn-outline-success btn-sm"')
         content = response.content.decode()
@@ -550,7 +550,8 @@ class RokunohePdfDownloadViewTest(TestCase):
             content.index("頻出語集計"), content.index("コレクションリセット")
         )
         self.assertLess(
-            content.index("コレクションビューア"), content.index("コレクションリセット")
+            content.index("取り込み済み会議録を確認"),
+            content.index("コレクションリセット"),
         )
         self.assertLess(
             content.index("チャット履歴を削除"), content.index("コレクションリセット")
@@ -581,14 +582,15 @@ class RokunohePdfDownloadViewTest(TestCase):
         self.assertContains(response, "disabled")
         self.assertContains(response, "コレクションリセット")
         self.assertContains(response, "頻出語集計")
-        self.assertContains(response, "コレクションビューア")
+        self.assertContains(response, "取り込み済み会議録を確認")
         self.assertContains(response, "直近1年分の会議録を処理基準")
         content = response.content.decode()
         self.assertLess(
             content.index("頻出語集計"), content.index("コレクションリセット")
         )
         self.assertLess(
-            content.index("コレクションビューア"), content.index("コレクションリセット")
+            content.index("取り込み済み会議録を確認"),
+            content.index("コレクションリセット"),
         )
         self.assertLess(
             content.index("チャット履歴を削除"), content.index("コレクションリセット")
