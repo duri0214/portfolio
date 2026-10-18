@@ -11,4 +11,3 @@ venv/
 # JetBrains IDE settings
 .idea/
 scripts/.my.cnf
-output/
