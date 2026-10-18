@@ -121,8 +121,6 @@ class CoordinateRegisterView(TemplateView):
 class CandidateSearchView(IndexView):
     """criteria の slug を受け取り、候補店舗を地図とレビューで表示する。"""
 
-    default_criteria_slug = None
-
     def get(self, request, criteria_slug=None, *args, **kwargs):
         return self._search(criteria_slug)
 
@@ -130,9 +128,8 @@ class CandidateSearchView(IndexView):
         return self._search(criteria_slug)
 
     def _search(self, criteria_slug):
-        slug = criteria_slug or self.default_criteria_slug
         try:
-            criteria = PlaceSearchCriteriaCatalog().resolve(slug or "")
+            criteria = PlaceSearchCriteriaCatalog().resolve(criteria_slug or "")
         except CriteriaNotFoundError:
             return self._render_error(
                 "指定された候補検索プロファイルが見つかりません。", status=404

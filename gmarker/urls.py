@@ -11,10 +11,5 @@ urlpatterns = [
         CandidateSearchView.as_view(),
         name="candidate_search",
     ),
-    path(
-        "craft-beer-candidates/",
-        CandidateSearchView.as_view(default_criteria_slug="shibuya-craft-beer"),
-        name="craft_beer_candidates",
-    ),
     path("search/<int:search_code>", IndexView.as_view(), name="nearby_search"),
 ]

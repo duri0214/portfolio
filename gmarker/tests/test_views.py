@@ -118,27 +118,6 @@ class TestView(TestCase):
 
     @patch("gmarker.views.PlaceCandidateFilter.collect")
     @patch.dict(os.environ, {"GOOGLE_MAPS_BE_API_KEY": "test-key"})
-    def test_legacy_candidate_url_uses_the_registered_profile(self, collect):
-        """
-        シナリオ:
-        - 入力: 既存のクラフトビール候補 URL。
-        - 処理: 共通候補検索 View を実行する。
-        - 期待値: 既存 URL が新しい criteria の検索へ接続されること。
-        """
-        collect.return_value = {
-            "criteria_slug": "shibuya-craft-beer",
-            "label": "クラフトビール候補",
-            "counts": {"candidates": 0, "manual_review": 0, "excluded": 0},
-            "candidates": [],
-        }
-
-        response = self.client.post(reverse("mrk:craft_beer_candidates"))
-
-        self.assertEqual(200, response.status_code)
-        self.assertEqual("shibuya-craft-beer", collect.call_args.args[0].slug)
-
-    @patch("gmarker.views.PlaceCandidateFilter.collect")
-    @patch.dict(os.environ, {"GOOGLE_MAPS_BE_API_KEY": "test-key"})
     def test_common_candidate_view_returns_error_when_api_fails(self, collect):
         """
         シナリオ:
