@@ -13,6 +13,7 @@ from gmarker.domain.service.craft_beer_places import (
     PlacesApiClient,
     PlacesApiError,
     RequiredPlaceMissingError,
+    FIELD_MASK_WITH_REVIEWS,
     load_config,
 )
 from gmarker.domain.service.google import GoogleMapsService
@@ -143,7 +144,10 @@ class CraftBeerCandidateView(IndexView):
 
         try:
             config = load_config(CRAFT_BEER_CONFIG_PATH)
-            result = CraftBeerPlacesExporter(PlacesApiClient(api_key)).collect(config)
+            client = PlacesApiClient(api_key, field_mask=FIELD_MASK_WITH_REVIEWS)
+            result = CraftBeerPlacesExporter(client).collect(
+                config, include_reviews=True
+            )
         except (PlacesApiError, RequiredPlaceMissingError):
             logger.exception("クラフトビール候補の取得に失敗しました。")
             return self._render_error(

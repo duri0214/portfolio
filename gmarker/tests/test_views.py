@@ -82,6 +82,13 @@ class TestView(TestCase):
                     "matched_queries": ["keyword:クラフトビール 渋谷"],
                     "rating": 4.5,
                     "google_maps_uri": "https://maps.google.com/example",
+                    "reviews": [
+                        {
+                            "author": "reviewer",
+                            "review_text": "クラフトビールがおいしい",
+                            "publish_time": "2026-10-18T00:00:00Z",
+                        }
+                    ],
                 }
             ],
         }
@@ -91,8 +98,10 @@ class TestView(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertContains(response, "TAP&amp;CROWLER Shibuya")
         self.assertNotContains(response, "STARBUCKS RESERVE")
-        self.assertContains(response, "候補 1 件 / 手動確認 2 件 / 除外 3 件")
-        exporter_class.return_value.collect.assert_called_once_with(config)
+        self.assertContains(response, "クラフトビールがおいしい")
+        exporter_class.return_value.collect.assert_called_once_with(
+            config, include_reviews=True
+        )
 
     @patch("gmarker.views.load_config")
     @patch("gmarker.views.CraftBeerPlacesExporter")

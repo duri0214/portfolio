@@ -108,7 +108,8 @@ python manage.py export_craft_beer_places --config gmarker/configs/shibuya_craft
 
 gmarker トップの「クラフトビール候補」ボタンも同じ設定で抽出した候補だけを地図と一覧へ
 表示します。通常の「レストラン」検索とは別機能であり、現在設定されている自位置ではなく、
-設定ファイルの渋谷エリアを検索します。
+設定ファイルの渋谷エリアを検索します。画面表示では既存のレストラン・ホテル表示と同じく
+レビューも取得しますが、JSON/CSV の一括抽出にはレビュー本文を含めません。
 
 出力された候補は掲載確定データではありません。`craft_beer_specialty`、`tap_count`、
 `publication_permission` は未確認値として必ず出力されます。フライヤー入稿前に公式情報、

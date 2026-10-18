@@ -19,6 +19,7 @@ FIELD_MASK = (
     "places.businessStatus,places.primaryType,places.types,places.rating,"
     "places.userRatingCount,places.googleMapsUri"
 )
+FIELD_MASK_WITH_REVIEWS = f"{FIELD_MASK},places.reviews"
 PLACES_API_URL = "https://places.googleapis.com/v1/places"
 SUPPORTED_NEARBY_TYPES = frozenset({"bar", "pub", "restaurant"})
 CLOSED_BUSINESS_STATUSES = frozenset({"CLOSED_TEMPORARILY", "CLOSED_PERMANENTLY"})
@@ -134,9 +135,15 @@ def load_config(config_path: str | Path) -> CraftBeerExportConfig:
 class PlacesApiClient:
     """Places API (New) の Text Search と Nearby Search を呼ぶクライアント。"""
 
-    def __init__(self, api_key: str, timeout_seconds: int = 20):
+    def __init__(
+        self,
+        api_key: str,
+        timeout_seconds: int = 20,
+        field_mask: str = FIELD_MASK,
+    ):
         self.api_key = api_key
         self.timeout_seconds = timeout_seconds
+        self.field_mask = field_mask
 
     def search_text(
         self, *, query: str, config: CraftBeerExportConfig
@@ -184,7 +191,7 @@ class PlacesApiClient:
                 headers={
                     "Content-Type": "application/json",
                     "X-Goog-Api-Key": self.api_key,
-                    "X-Goog-FieldMask": FIELD_MASK,
+                    "X-Goog-FieldMask": self.field_mask,
                 },
                 json=body,
                 timeout=self.timeout_seconds,
@@ -212,7 +219,9 @@ class CraftBeerPlacesExporter:
     def __init__(self, client: PlacesApiClient):
         self.client = client
 
-    def collect(self, config: CraftBeerExportConfig) -> dict[str, Any]:
+    def collect(
+        self, config: CraftBeerExportConfig, *, include_reviews: bool = False
+    ) -> dict[str, Any]:
         """全検索を実行し、重複を除いた検品用の抽出結果を返す。"""
         retrieved_at = timezone.now().isoformat()
         merged: dict[str, dict[str, Any]] = {}
@@ -232,7 +241,11 @@ class CraftBeerPlacesExporter:
 
         result = {"candidates": [], "manual_review": [], "excluded": []}
         for place in merged.values():
-            record = self._record(place=place, retrieved_at=retrieved_at)
+            record = self._record(
+                place=place,
+                retrieved_at=retrieved_at,
+                include_reviews=include_reviews,
+            )
             group, reason = self._classify(record=record, config=config)
             record["result_category"] = group
             if reason:
@@ -266,7 +279,9 @@ class CraftBeerPlacesExporter:
                 existing["matched_queries"].append(matched_query)
 
     @staticmethod
-    def _record(*, place: dict[str, Any], retrieved_at: str) -> dict[str, Any]:
+    def _record(
+        *, place: dict[str, Any], retrieved_at: str, include_reviews: bool
+    ) -> dict[str, Any]:
         location = place.get("location")
         name = place.get("displayName")
         matched_queries = place["matched_queries"]
@@ -277,7 +292,7 @@ class CraftBeerPlacesExporter:
             if has_keyword and has_type
             else "keyword" if has_keyword else "type"
         )
-        return {
+        record = {
             "place_id": place["id"],
             "name": name.get("text", "") if isinstance(name, dict) else "",
             "formatted_address": place.get("formattedAddress"),
@@ -304,6 +319,25 @@ class CraftBeerPlacesExporter:
             "reviewer_note": "",
             "retrieved_at": retrieved_at,
         }
+        if include_reviews:
+            record["reviews"] = CraftBeerPlacesExporter._reviews(place.get("reviews"))
+        return record
+
+    @staticmethod
+    def _reviews(value: Any) -> list[dict[str, str | None]]:
+        """Places API のレビューを既存画面が表示する項目へ整形する。"""
+        if not isinstance(value, list):
+            return []
+        return [
+            {
+                "review_text": review.get("text", {}).get("text"),
+                "author": review.get("authorAttribution", {}).get("displayName"),
+                "publish_time": review.get("publishTime"),
+                "google_maps_uri": review.get("googleMapsUri"),
+            }
+            for review in value
+            if isinstance(review, dict)
+        ]
 
     @staticmethod
     def _classify(

@@ -11,6 +11,7 @@ from django.test import SimpleTestCase
 
 from gmarker.domain.service.craft_beer_places import (
     FIELD_MASK,
+    FIELD_MASK_WITH_REVIEWS,
     CraftBeerExportConfig,
     CraftBeerPlacesExporter,
     PlacesApiClient,
@@ -161,6 +162,42 @@ class CraftBeerPlacesExporterTests(SimpleTestCase):
             {record["exclusion_reason"] for record in result["excluded"]},
         )
 
+    @patch("gmarker.domain.service.craft_beer_places.requests.post")
+    def test_includes_reviews_only_for_the_screen_search(self, post):
+        """
+        シナリオ:
+        - 入力: レビューを含む Places API レスポンスとレビュー用のFieldMaskを持つクライアント。
+        - 処理: include_reviews を指定してクラフトビール候補を抽出する。
+        - 期待値: 画面表示用の候補だけにレビューが整形され、リクエストでは reviews FieldMask が使われること。
+        """
+        place = self.place()
+        place["reviews"] = [
+            {
+                "text": {"text": "ビールが豊富です"},
+                "authorAttribution": {"displayName": "投稿者"},
+                "publishTime": "2026-10-18T00:00:00Z",
+                "googleMapsUri": "https://maps.google.com/review",
+            }
+        ]
+        text_response = MagicMock()
+        text_response.json.return_value = {"places": [place]}
+        nearby_response = MagicMock()
+        nearby_response.json.return_value = {"places": [place]}
+        post.side_effect = [text_response, nearby_response]
+
+        result = CraftBeerPlacesExporter(
+            PlacesApiClient("test-key", field_mask=FIELD_MASK_WITH_REVIEWS)
+        ).collect(self.config, include_reviews=True)
+
+        self.assertEqual(
+            "ビールが豊富です", result["candidates"][0]["reviews"][0]["review_text"]
+        )
+        self.assertEqual("投稿者", result["candidates"][0]["reviews"][0]["author"])
+        self.assertEqual(
+            FIELD_MASK_WITH_REVIEWS,
+            post.call_args_list[0].kwargs["headers"]["X-Goog-FieldMask"],
+        )
+
     def test_raises_when_required_place_is_not_an_operational_candidate(self):
         """
         シナリオ:
@@ -216,6 +253,7 @@ class CraftBeerPlacesExporterTests(SimpleTestCase):
                 csv_rows = list(csv.DictReader(output_file))
         self.assertIn("publication_permission", json_content)
         self.assertNotIn("test-key", json_content)
+        self.assertNotIn('"reviews"', json_content)
         self.assertEqual("tap-id", csv_rows[0]["place_id"])
         self.assertEqual("35.6617", csv_rows[0]["location_lat"])
 
