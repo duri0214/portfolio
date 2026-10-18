@@ -606,21 +606,43 @@ class RokunohePdfDownloadView(UserPassesTestMixin, View):
             messages.warning(request, "会議録PDFの一覧を取得できませんでした。")
             return redirect("llm:rokunohe_minutes")
 
-        indexed_pdfs = [
-            {
-                "filename": pdf.filename,
-                "token": signing.dumps(
-                    {"filename": pdf.filename, "url": pdf.url},
-                    salt=RokunohePdfSingleImportView.signing_salt,
+        year_groups = []
+        year_groups_by_label = {}
+        for pdf in pdfs:
+            year_group = year_groups_by_label.get(pdf.year_label)
+            if year_group is None:
+                year_group = {"label": pdf.year_label, "categories": []}
+                year_groups_by_label[pdf.year_label] = year_group
+                year_groups.append(year_group)
+
+            category_group = next(
+                (
+                    category
+                    for category in year_group["categories"]
+                    if category["name"] == pdf.category
                 ),
-            }
-            for pdf in pdfs
-        ]
+                None,
+            )
+            if category_group is None:
+                category_group = {"name": pdf.category, "pdfs": []}
+                year_group["categories"].append(category_group)
+
+            category_group["pdfs"].append(
+                {
+                    "filename": pdf.filename,
+                    "title": pdf.title,
+                    "held_on_label": pdf.held_on_label,
+                    "token": signing.dumps(
+                        {"filename": pdf.filename, "url": pdf.url},
+                        salt=RokunohePdfSingleImportView.signing_salt,
+                    ),
+                }
+            )
         return render(
             request,
             "llm_chat/rokunohe_pdf_single_select.html",
             {
-                "indexed_pdfs": indexed_pdfs,
+                "year_groups": year_groups,
                 "source_date_from": source_date_from,
                 "source_date_to": source_date_to,
                 "source_date_from_value": request.POST.get("source_date_from", ""),

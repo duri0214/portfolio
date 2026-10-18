@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import unicodedata
 from collections import Counter, defaultdict
 from datetime import timedelta
 from pathlib import Path
@@ -61,7 +62,7 @@ class RokunoheMinutesPdfIndexService:
             soup = BeautifulSoup(response.text, "html.parser")
             for pdf in self._find_pdf_links(soup.find_all("a"), target_url):
                 pdfs_by_url.setdefault(pdf.url, pdf)
-        return list(pdfs_by_url.values())
+        return sorted(pdfs_by_url.values(), key=self._get_pdf_sort_key)
 
     @staticmethod
     def _find_pdf_links(links, target_url: str) -> list[RokunoheMinutesPdfIndex]:
@@ -78,15 +79,41 @@ class RokunoheMinutesPdfIndexService:
             filename = RokunoheMinutesPdfIndexService._get_filename(text, href)
             if not filename.lower().endswith(".pdf"):
                 filename += ".pdf"
+            title = RokunoheMinutesPdfIndexService._get_title(text)
+            era_year, calendar_year = RokunoheMinutesPdfIndexService._get_year(link)
+            month, day = RokunoheMinutesPdfIndexService._get_held_on(title)
             pdf_links.append(
                 RokunoheMinutesPdfIndex(
                     filename=filename,
                     url=urljoin(
                         RokunoheMinutesPdfIndexService._get_base_url(target_url), href
                     ),
+                    title=title,
+                    era_year=era_year,
+                    calendar_year=calendar_year,
+                    category=RokunoheMinutesPdfIndexService._get_category(title),
+                    month=month,
+                    day=day,
                 )
             )
         return pdf_links
+
+    @staticmethod
+    def _get_pdf_sort_key(
+        pdf: RokunoheMinutesPdfIndex,
+    ) -> tuple[int, bool, str, str, int, int]:
+        calendar_year = pdf.calendar_year or 0
+        month = pdf.month or 0
+        day = pdf.day or 0
+        normalized_title = unicodedata.normalize("NFKC", pdf.title)
+        return (
+            -calendar_year,
+            pdf.category != "本会議",
+            pdf.category,
+            normalized_title,
+            -month,
+            -day,
+        )
 
     @staticmethod
     def _get_base_url(target_url: str) -> str:
@@ -100,6 +127,42 @@ class RokunoheMinutesPdfIndexService:
         filename = re.sub(r'[\\/:*?"<>|]', "_", filename)
         filename = re.sub(r"\s+", "_", filename)
         return filename or Path(href).name
+
+    @staticmethod
+    def _get_title(text: str) -> str:
+        normalized_text = unicodedata.normalize("NFKC", text)
+        title = re.sub(r"\[pdf.*?]", "", normalized_text, flags=re.IGNORECASE)
+        normalized_title = re.sub(r"\s+", " ", title).strip()
+        return normalized_title.replace("(", "（").replace(")", "）") or "会議録名不明"
+
+    @staticmethod
+    def _get_year(link) -> tuple[str, int | None]:
+        for heading in link.find_all_previous(["h1", "h2", "h3", "h4", "h5", "h6"]):
+            heading_text = unicodedata.normalize(
+                "NFKC", heading.get_text(" ", strip=True)
+            )
+            reiwa_match = re.search(r"令和\s*(\d+)\s*年", heading_text)
+            if reiwa_match:
+                era_number = int(reiwa_match.group(1))
+                return f"令和{era_number}年", 2018 + era_number
+
+            heisei_match = re.search(r"平成\s*(\d+)\s*年", heading_text)
+            if heisei_match:
+                era_number = int(heisei_match.group(1))
+                return f"平成{era_number}年", 1988 + era_number
+        return "", None
+
+    @staticmethod
+    def _get_held_on(title: str) -> tuple[int | None, int | None]:
+        held_on_match = re.search(r"(\d+)月\s*(\d+)日", title)
+        if not held_on_match:
+            return None, None
+        return int(held_on_match.group(1)), int(held_on_match.group(2))
+
+    @staticmethod
+    def _get_category(title: str) -> str:
+        category = re.split(r"[（(]", title, maxsplit=1)[0].strip()
+        return re.sub(r"本会議\s*\d+号$", "本会議", category) or "その他"
 
 
 class RokunoheMinutesPdfImportService:

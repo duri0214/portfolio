@@ -987,6 +987,65 @@ class RokunoheMinutesPdfIndexServiceTest(TestCase):
         first_response.raise_for_status.assert_called_once()
         second_response.raise_for_status.assert_called_once()
 
+    def test_derives_year_category_and_held_on_from_official_page_labels(self):
+        """
+        シナリオ:
+        - 入力: 和暦見出しと開催日付きリンク表示、内容を表さないPDFファイル名を含むHTML。
+        - 処理: PDF一覧取得Serviceを実行する。
+        - 期待値: ファイル名ではなく公式ページの見出しとリンク表示から年度、種別、開催日を導出すること。
+        """
+        first_response = Mock()
+        first_response.text = (
+            "<h3>令和８年</h3>"
+            '<a href="h3002teirei_kaigiroku01.pdf">本会議３号（6月9日）[PDF：320KB]</a>'
+        )
+        first_response.apparent_encoding = "utf-8"
+        second_response = Mock()
+        second_response.text = ""
+        second_response.apparent_encoding = "utf-8"
+
+        with patch(
+            "llm_chat.domain.service.completion.rokunohe_minutes.requests.get",
+            side_effect=[first_response, second_response],
+        ):
+            pdf = RokunoheMinutesPdfIndexService().list_pdfs()[0]
+
+        self.assertEqual("本会議3号（6月9日）", pdf.title)
+        self.assertEqual("令和8年", pdf.era_year)
+        self.assertEqual(2026, pdf.calendar_year)
+        self.assertEqual("本会議", pdf.category)
+        self.assertEqual("2026年6月9日", pdf.held_on_label)
+
+    def test_sorts_main_meeting_records_by_name_within_year(self):
+        """
+        シナリオ:
+        - 入力: 同一年の本会議1号から3号が公式ページとは異なる順序で並ぶHTML。
+        - 処理: PDF一覧取得Serviceを実行する。
+        - 期待値: 本会議を先頭の種別にまとめ、号数を含む会議録名の順で返すこと。
+        """
+        first_response = Mock()
+        first_response.text = (
+            "<h3>令和8年</h3>"
+            '<a href="three.pdf">本会議3号（6月9日）[PDF]</a>'
+            '<a href="one.pdf">本会議1号（6月5日）[PDF]</a>'
+            '<a href="two.pdf">本会議2号（6月8日）[PDF]</a>'
+        )
+        first_response.apparent_encoding = "utf-8"
+        second_response = Mock()
+        second_response.text = ""
+        second_response.apparent_encoding = "utf-8"
+
+        with patch(
+            "llm_chat.domain.service.completion.rokunohe_minutes.requests.get",
+            side_effect=[first_response, second_response],
+        ):
+            pdfs = RokunoheMinutesPdfIndexService().list_pdfs()
+
+        self.assertEqual(
+            ["本会議1号（6月5日）", "本会議2号（6月8日）", "本会議3号（6月9日）"],
+            [pdf.title for pdf in pdfs],
+        )
+
 
 class RokunoheMinutesPdfImportServiceTest(TestCase):
     @patch("llm_chat.domain.service.completion.rokunohe_minutes.PdfReader")
