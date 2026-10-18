@@ -6,7 +6,7 @@
             <ol class="breadcrumb mb-0 small">
                 <li class="breadcrumb-item"><a href="{% url 'llm:index' %}">LLM Chat</a></li>
                 <li class="breadcrumb-item"><a href="{% url 'llm:rokunohe_minutes' %}">六戸町会議録 RAG</a></li>
-                <li class="breadcrumb-item active" aria-current="page">頻出語集計</li>
+                <li class="breadcrumb-item active" aria-current="page">頻出語を集計</li>
             </ol>
         </nav>
 
@@ -21,7 +21,7 @@
 
         <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
             <div>
-                <h1 class="h3 mb-1">六戸町会議録 頻出語集計</h1>
+                <h1 class="h3 mb-1">六戸町会議録 頻出語を集計</h1>
                 <p class="text-muted mb-0">
                     対象期間: {{ period_label }} / チャンク: {{ stats.total_chunk_count }}件 /
                     PDF: {{ stats.total_source_count }}件 / 文字数: {{ stats.total_character_count }}字
