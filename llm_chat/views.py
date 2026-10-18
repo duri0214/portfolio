@@ -151,6 +151,18 @@ def _build_source_date_command_options(
     return options
 
 
+def _build_pdf_index_date_range(
+    *,
+    source_date_from: int | None,
+    source_date_to: int | None,
+) -> tuple[int, int | None]:
+    """一覧表示用に、未指定時も直近1年の開催日範囲を明示します。"""
+    if source_date_from is not None:
+        return source_date_from, source_date_to
+    default_from = timezone.localdate() - timedelta(days=365)
+    return int(default_from.strftime("%Y%m%d")), source_date_to
+
+
 def _build_source_date_period_label(
     *,
     source_date_from: int | None,
@@ -597,7 +609,14 @@ class RokunohePdfDownloadView(UserPassesTestMixin, View):
         """試験処理用にPDF本文を取得せず、公式サイトのリンク一覧だけを表示します。"""
         try:
             source_date_from, source_date_to = _parse_source_date_range(request)
-            pdfs = RokunoheMinutesPdfIndexService().list_pdfs()
+            held_on_from, held_on_to = _build_pdf_index_date_range(
+                source_date_from=source_date_from,
+                source_date_to=source_date_to,
+            )
+            pdfs = RokunoheMinutesPdfIndexService().list_pdfs(
+                held_on_from=held_on_from,
+                held_on_to=held_on_to,
+            )
         except ValueError as e:
             messages.warning(request, str(e))
             return redirect("llm:rokunohe_minutes")

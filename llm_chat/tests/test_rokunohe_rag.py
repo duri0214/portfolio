@@ -1046,6 +1046,35 @@ class RokunoheMinutesPdfIndexServiceTest(TestCase):
             [pdf.title for pdf in pdfs],
         )
 
+    def test_filters_pdf_list_by_held_on_range(self):
+        """
+        シナリオ:
+        - 入力: 開催日が2025年と2026年に分かれる会議録リンクを含むHTML。
+        - 処理: 2026年以降の開催日範囲を指定してPDF一覧取得Serviceを実行する。
+        - 期待値: 開催日が範囲内の2026年会議録だけを返すこと。
+        """
+        first_response = Mock()
+        first_response.text = (
+            "<h3>令和7年</h3>"
+            '<a href="old.pdf">本会議1号（12月5日）[PDF]</a>'
+            "<h3>令和8年</h3>"
+            '<a href="current.pdf">本会議1号（2月27日）[PDF]</a>'
+        )
+        first_response.apparent_encoding = "utf-8"
+        second_response = Mock()
+        second_response.text = ""
+        second_response.apparent_encoding = "utf-8"
+
+        with patch(
+            "llm_chat.domain.service.completion.rokunohe_minutes.requests.get",
+            side_effect=[first_response, second_response],
+        ):
+            pdfs = RokunoheMinutesPdfIndexService().list_pdfs(
+                held_on_from=20260101,
+            )
+
+        self.assertEqual(["本会議1号（2月27日）"], [pdf.title for pdf in pdfs])
+
 
 class RokunoheMinutesPdfImportServiceTest(TestCase):
     @patch("llm_chat.domain.service.completion.rokunohe_minutes.PdfReader")

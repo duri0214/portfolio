@@ -39,7 +39,12 @@ logger = logging.getLogger(__name__)
 
 
 class RokunoheMinutesPdfIndexService:
-    """六戸町公式サイトのHTMLから会議録PDFリンクだけを一覧化するService。"""
+    """
+    六戸町公式サイトのHTMLから会議録PDFリンクだけを一覧化するService。
+
+    Attributes:
+        target_urls: 会議録の現行ページとバックナンバーページのURL。
+    """
 
     target_urls = (
         "https://www.town.rokunohe.aomori.jp/docs/2023051900005/",
@@ -47,12 +52,18 @@ class RokunoheMinutesPdfIndexService:
         "chousei_cyougikai_kaigiroku_kako.html",
     )
 
-    def list_pdfs(self) -> list[RokunoheMinutesPdfIndex]:
+    def list_pdfs(
+        self,
+        *,
+        held_on_from: int | None = None,
+        held_on_to: int | None = None,
+    ) -> list[RokunoheMinutesPdfIndex]:
         """
         現行ページとバックナンバーページのHTMLだけを取得してPDFリンクを返します。
 
         PDF本体、Chroma DB、OpenAI APIにはアクセスしません。リンクが重複している場合は
-        URL単位で1件にまとめます。
+        URL単位で1件にまとめます。開催日が見出しとリンク表示から取得できるPDFは、
+        held_on_from/toで指定された範囲に絞り込みます。
         """
         pdfs_by_url: dict[str, RokunoheMinutesPdfIndex] = {}
         for target_url in self.target_urls:
@@ -62,7 +73,16 @@ class RokunoheMinutesPdfIndexService:
             soup = BeautifulSoup(response.text, "html.parser")
             for pdf in self._find_pdf_links(soup.find_all("a"), target_url):
                 pdfs_by_url.setdefault(pdf.url, pdf)
-        return sorted(pdfs_by_url.values(), key=self._get_pdf_sort_key)
+        pdfs = [
+            pdf
+            for pdf in pdfs_by_url.values()
+            if self._is_within_held_on_range(
+                pdf,
+                held_on_from=held_on_from,
+                held_on_to=held_on_to,
+            )
+        ]
+        return sorted(pdfs, key=self._get_pdf_sort_key)
 
     @staticmethod
     def _find_pdf_links(links, target_url: str) -> list[RokunoheMinutesPdfIndex]:
@@ -114,6 +134,23 @@ class RokunoheMinutesPdfIndexService:
             -month,
             -day,
         )
+
+    @staticmethod
+    def _is_within_held_on_range(
+        pdf: RokunoheMinutesPdfIndex,
+        *,
+        held_on_from: int | None,
+        held_on_to: int | None,
+    ) -> bool:
+        if held_on_from is None and held_on_to is None:
+            return True
+        if not (pdf.calendar_year and pdf.month and pdf.day):
+            return False
+
+        held_on = pdf.calendar_year * 10000 + pdf.month * 100 + pdf.day
+        if held_on_from is not None and held_on < held_on_from:
+            return False
+        return held_on_to is None or held_on <= held_on_to
 
     @staticmethod
     def _get_base_url(target_url: str) -> str:
