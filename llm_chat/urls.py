@@ -17,6 +17,7 @@ from .views import (
     OpenAIRagPdfCollectionViewerView,
     OpenAIRagSamplePdfDownloadView,
     RokunohePdfDownloadView,
+    RokunohePdfSingleImportView,
     RokunoheVectorDbResetView,
     RokunoheCollectionStatsView,
     RokunoheCollectionViewerView,
@@ -81,6 +82,11 @@ urlpatterns = [
         "rokunohe-pdf-download/",
         RokunohePdfDownloadView.as_view(),
         name="rokunohe_pdf_download",
+    ),
+    path(
+        "rokunohe-pdf-single-import/",
+        RokunohePdfSingleImportView.as_view(),
+        name="rokunohe_pdf_single_import",
     ),
     path(
         "rokunohe-vector-db-reset/",

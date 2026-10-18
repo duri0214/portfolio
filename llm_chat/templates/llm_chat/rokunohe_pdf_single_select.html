@@ -1,0 +1,43 @@
+{% extends 'llm_chat/base.html' %}
+
+{% block content %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'llm:index' %}">LLM Chat</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'llm:rokunohe_minutes' %}">六戸町会議録 RAG</a></li>
+                <li class="breadcrumb-item active" aria-current="page">1件だけ試験処理</li>
+            </ol>
+        </nav>
+
+        <h1 class="h3">会議録PDFを1件選択</h1>
+        <p class="text-muted">
+            指定期間: {{ source_date_period_label }}。この画面では公式サイトのHTMLから一覧だけを取得しています。
+            PDFのダウンロードとベクトル化は、下で1件を選んで実行したときだけ行います。
+        </p>
+        <p class="small text-muted">
+            PDFの更新日は選択後の取得時に確定するため、指定期間外の場合は処理せず結果を表示します。
+        </p>
+
+        {% if indexed_pdfs %}
+            <form method="post" action="{% url 'llm:rokunohe_pdf_single_import' %}">
+                {% csrf_token %}
+                <input type="hidden" name="source_date_from" value="{{ source_date_from_value }}">
+                <input type="hidden" name="source_date_to" value="{{ source_date_to_value }}">
+                <div class="list-group mb-3">
+                    {% for pdf in indexed_pdfs %}
+                        <label class="list-group-item d-flex align-items-center gap-2">
+                            <input class="form-check-input mt-0" type="radio" name="selected_pdf" value="{{ pdf.token }}" required>
+                            <span>{{ pdf.filename }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+                <button type="submit" class="btn btn-success">選択した1件を取得・ベクトル化</button>
+                <a href="{% url 'llm:rokunohe_minutes' %}" class="btn btn-outline-secondary">戻る</a>
+            </form>
+        {% else %}
+            <div class="alert alert-warning">会議録PDFが見つかりませんでした。</div>
+            <a href="{% url 'llm:rokunohe_minutes' %}" class="btn btn-outline-secondary">戻る</a>
+        {% endif %}
+    </div>
+{% endblock %}

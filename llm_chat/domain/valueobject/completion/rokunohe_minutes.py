@@ -26,6 +26,14 @@ class RokunoheMinutesImportStatus(Enum):
 
 
 @dataclass(frozen=True)
+class RokunoheMinutesPdfIndex:
+    """六戸町公式サイトの会議録PDF一覧に含まれる1件分のリンク情報。"""
+
+    filename: str
+    url: str
+
+
+@dataclass(frozen=True)
 class RokunoheMinutesPdf:
     """
     六戸町会議録PDFファイルを表すValue Object。

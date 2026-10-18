@@ -13,6 +13,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import User
+from django.core import signing
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -47,7 +48,11 @@ from llm_chat.domain.service.completion.chat import ChatDisplayService
 from llm_chat.domain.service.completion.rag import OpenAIRagPdfImportService
 from llm_chat.domain.service.completion.rokunohe_minutes import (
     RokunoheMinutesCollectionStatsService,
+    RokunoheMinutesPdfIndexService,
     RokunoheMinutesRagService,
+)
+from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
+    RokunoheMinutesImportStatus,
 )
 from llm_chat.domain.use_case.completion.chat import (
     OpenAIGptStreamingUseCase,
@@ -533,6 +538,7 @@ class RokunohePdfDownloadView(UserPassesTestMixin, View):
     command_name = "rokunohe_pdf_download"
     success_message = "六戸町会議録PDFの直近1年分の取得・ベクトル化処理を実行しました。"
     reset_consent_value = "1"
+    single_pdf_trial_mode_value = "1"
 
     def test_func(self):
         return self.request.user.is_superuser
@@ -545,6 +551,12 @@ class RokunohePdfDownloadView(UserPassesTestMixin, View):
         古い会話履歴を残さず、取り込み後のcollectionをもとにしたサマリーを
         チャット履歴の先頭として作り直します。
         """
+        if (
+            request.POST.get("single_pdf_trial_mode")
+            == self.single_pdf_trial_mode_value
+        ):
+            return self._show_single_pdf_selection(request)
+
         if request.POST.get("reset_consent") != self.reset_consent_value:
             messages.warning(
                 request,
@@ -581,6 +593,45 @@ class RokunohePdfDownloadView(UserPassesTestMixin, View):
             messages.warning(request, str(e))
         return redirect("llm:rokunohe_minutes")
 
+    def _show_single_pdf_selection(self, request):
+        """試験処理用にPDF本文を取得せず、公式サイトのリンク一覧だけを表示します。"""
+        try:
+            source_date_from, source_date_to = _parse_source_date_range(request)
+            pdfs = RokunoheMinutesPdfIndexService().list_pdfs()
+        except ValueError as e:
+            messages.warning(request, str(e))
+            return redirect("llm:rokunohe_minutes")
+        except Exception:
+            logger.exception("六戸町会議録PDFの一覧取得に失敗しました")
+            messages.warning(request, "会議録PDFの一覧を取得できませんでした。")
+            return redirect("llm:rokunohe_minutes")
+
+        indexed_pdfs = [
+            {
+                "filename": pdf.filename,
+                "token": signing.dumps(
+                    {"filename": pdf.filename, "url": pdf.url},
+                    salt=RokunohePdfSingleImportView.signing_salt,
+                ),
+            }
+            for pdf in pdfs
+        ]
+        return render(
+            request,
+            "llm_chat/rokunohe_pdf_single_select.html",
+            {
+                "indexed_pdfs": indexed_pdfs,
+                "source_date_from": source_date_from,
+                "source_date_to": source_date_to,
+                "source_date_from_value": request.POST.get("source_date_from", ""),
+                "source_date_to_value": request.POST.get("source_date_to", ""),
+                "source_date_period_label": _build_source_date_period_label(
+                    source_date_from=source_date_from,
+                    source_date_to=source_date_to,
+                ),
+            },
+        )
+
     @staticmethod
     def _save_initial_summary(user: User) -> None:
         service = RokunoheMinutesRagService()
@@ -600,6 +651,58 @@ class RokunohePdfDownloadView(UserPassesTestMixin, View):
             f" 対象期間: {_format_source_date(source_date_from)}"
             f"〜{_format_source_date(source_date_to) if source_date_to else '指定なし'}"
         )
+
+
+class RokunohePdfSingleImportView(UserPassesTestMixin, View):
+    """一覧から選ばれた六戸町会議録PDFを1件だけ取得・登録するView。"""
+
+    raise_exception = True
+    command_name = "rokunohe_pdf_download"
+    signing_salt = "llm_chat.rokunohe_pdf_single_import"
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def post(self, request, *args, **kwargs):
+        try:
+            selected_pdf = signing.loads(
+                request.POST.get("selected_pdf", ""),
+                salt=self.signing_salt,
+                max_age=60 * 60,
+            )
+            filename = selected_pdf["filename"]
+            url = selected_pdf["url"]
+            source_date_from, source_date_to = _parse_source_date_range(request)
+            command_options = _build_source_date_command_options(
+                source_date_from=source_date_from,
+                source_date_to=source_date_to,
+            )
+        except (KeyError, TypeError, signing.BadSignature, ValueError):
+            messages.warning(request, "選択した会議録PDFを確認できませんでした。")
+            return redirect("llm:rokunohe_minutes")
+
+        try:
+            status = call_command(
+                self.command_name,
+                selected_pdf_url=url,
+                selected_pdf_filename=filename,
+                **command_options,
+            )
+        except CommandError as e:
+            messages.warning(request, str(e))
+            return redirect("llm:rokunohe_minutes")
+
+        status_messages = {
+            RokunoheMinutesImportStatus.IMPORTED.value: "選択した会議録PDFをベクトル化しました。",
+            RokunoheMinutesImportStatus.SKIPPED_EXISTING.value: "選択した会議録PDFは登録済みです。",
+            RokunoheMinutesImportStatus.SKIPPED_OUT_OF_SOURCE_DATE_RANGE.value: "選択した会議録PDFは指定期間外のため処理しませんでした。",
+            RokunoheMinutesImportStatus.SKIPPED_EMPTY_TEXT.value: "選択した会議録PDFから本文を抽出できませんでした。",
+        }
+        messages.success(
+            request,
+            status_messages.get(status, "選択した会議録PDFの処理が完了しました。"),
+        )
+        return redirect("llm:rokunohe_minutes")
 
 
 class RokunoheVectorDbResetView(UserPassesTestMixin, View):

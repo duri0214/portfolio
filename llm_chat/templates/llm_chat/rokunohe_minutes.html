@@ -42,7 +42,11 @@
                             <input type="hidden" name="reset_consent" value="1">
                             <input type="hidden" name="source_date_from" id="pdfSourceDateFrom">
                             <input type="hidden" name="source_date_to" id="pdfSourceDateTo">
-                            <button type="submit" class="btn btn-outline-success btn-sm">会議録PDF取得・ベクトル化</button>
+                            <div class="form-check form-check-inline ms-2">
+                                <input class="form-check-input" type="checkbox" name="single_pdf_trial_mode" value="1" id="singlePdfTrialMode">
+                                <label class="form-check-label small" for="singlePdfTrialMode">1件だけ試験処理する</label>
+                            </div>
+                            <button id="pdfDownloadSubmit" type="submit" class="btn btn-outline-success btn-sm">会議録PDF取得・ベクトル化</button>
                         </form>
                         <a id="collectionStatsLink" href="{% url 'llm:rokunohe_collection_stats' %}" class="btn btn-outline-primary btn-sm">
                             頻出語集計
@@ -157,6 +161,8 @@
             const debugSourceDateTo = document.getElementById("debugSourceDateTo");
             const pdfSourceDateFrom = document.getElementById("pdfSourceDateFrom");
             const pdfSourceDateTo = document.getElementById("pdfSourceDateTo");
+            const singlePdfTrialMode = document.getElementById("singlePdfTrialMode");
+            const pdfDownloadSubmit = document.getElementById("pdfDownloadSubmit");
 
             function getSourceDatePeriodLabel() {
                 const from = debugSourceDateFrom ? debugSourceDateFrom.value : "";
@@ -179,6 +185,13 @@
                 if (pdfSourceDateTo) {
                     pdfSourceDateTo.value = to;
                 }
+            }
+
+            function syncPdfDownloadButtonLabel() {
+                if (!pdfDownloadSubmit) return;
+                pdfDownloadSubmit.textContent = singlePdfTrialMode && singlePdfTrialMode.checked
+                    ? "会議録PDF一覧を取得"
+                    : "会議録PDF取得・ベクトル化";
             }
 
             function syncCollectionStatsLink() {
@@ -273,11 +286,19 @@
             if (pdfDownloadForm) {
                 pdfDownloadForm.addEventListener("submit", function (event) {
                     syncSourceDateRange();
+                    if (singlePdfTrialMode && singlePdfTrialMode.checked) {
+                        return;
+                    }
                     const confirmed = confirm(`${getSourceDatePeriodLabel()}の会議録PDF取得・ベクトル化を実行する前に、六戸町会議録QAの会話履歴をリセットします。実行しますか？`);
                     if (!confirmed) {
                         event.preventDefault();
                     }
                 });
+            }
+
+            if (singlePdfTrialMode) {
+                singlePdfTrialMode.addEventListener("change", syncPdfDownloadButtonLabel);
+                syncPdfDownloadButtonLabel();
             }
 
             if (vectorDbResetForm) {

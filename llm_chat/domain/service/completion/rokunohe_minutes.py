@@ -4,7 +4,10 @@ import re
 from collections import Counter, defaultdict
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import urljoin
 
+import requests
+from bs4 import BeautifulSoup
 from django.contrib.auth.models import User
 from django.utils import timezone
 from janome.tokenizer import Tokenizer
@@ -24,6 +27,7 @@ from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
     RokunoheMinutesImportStatus,
     RokunoheMinutesMetadata,
     RokunoheMinutesPdf,
+    RokunoheMinutesPdfIndex,
     RokunoheMinutesSourceVolume,
     RokunoheMinutesStatsSourceChunk,
     RokunoheMinutesWordFrequency,
@@ -31,6 +35,71 @@ from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 logger = logging.getLogger(__name__)
+
+
+class RokunoheMinutesPdfIndexService:
+    """六戸町公式サイトのHTMLから会議録PDFリンクだけを一覧化するService。"""
+
+    target_urls = (
+        "https://www.town.rokunohe.aomori.jp/docs/2023051900005/",
+        "https://www.town.rokunohe.aomori.jp/docs/2023051900005/"
+        "chousei_cyougikai_kaigiroku_kako.html",
+    )
+
+    def list_pdfs(self) -> list[RokunoheMinutesPdfIndex]:
+        """
+        現行ページとバックナンバーページのHTMLだけを取得してPDFリンクを返します。
+
+        PDF本体、Chroma DB、OpenAI APIにはアクセスしません。リンクが重複している場合は
+        URL単位で1件にまとめます。
+        """
+        pdfs_by_url: dict[str, RokunoheMinutesPdfIndex] = {}
+        for target_url in self.target_urls:
+            response = requests.get(target_url, timeout=30)
+            response.raise_for_status()
+            response.encoding = response.apparent_encoding
+            soup = BeautifulSoup(response.text, "html.parser")
+            for pdf in self._find_pdf_links(soup.find_all("a"), target_url):
+                pdfs_by_url.setdefault(pdf.url, pdf)
+        return list(pdfs_by_url.values())
+
+    @staticmethod
+    def _find_pdf_links(links, target_url: str) -> list[RokunoheMinutesPdfIndex]:
+        pdf_links = []
+        for link in links:
+            href = link.get("href")
+            if not href:
+                continue
+
+            text = link.get_text()
+            if ".pdf" not in href.lower() and "[pdf" not in text.lower():
+                continue
+
+            filename = RokunoheMinutesPdfIndexService._get_filename(text, href)
+            if not filename.lower().endswith(".pdf"):
+                filename += ".pdf"
+            pdf_links.append(
+                RokunoheMinutesPdfIndex(
+                    filename=filename,
+                    url=urljoin(
+                        RokunoheMinutesPdfIndexService._get_base_url(target_url), href
+                    ),
+                )
+            )
+        return pdf_links
+
+    @staticmethod
+    def _get_base_url(target_url: str) -> str:
+        if target_url.endswith("/") or target_url.endswith(".html"):
+            return target_url
+        return f"{target_url}/"
+
+    @staticmethod
+    def _get_filename(text: str, href: str) -> str:
+        filename = re.sub(r"\[pdf.*?]", "", text, flags=re.IGNORECASE).strip()
+        filename = re.sub(r'[\\/:*?"<>|]', "_", filename)
+        filename = re.sub(r"\s+", "_", filename)
+        return filename or Path(href).name
 
 
 class RokunoheMinutesPdfImportService:
