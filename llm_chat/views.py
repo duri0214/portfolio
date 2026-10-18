@@ -630,23 +630,24 @@ class RokunohePdfDownloadView(UserPassesTestMixin, View):
         for pdf in pdfs:
             year_group = year_groups_by_label.get(pdf.year_label)
             if year_group is None:
-                year_group = {"label": pdf.year_label, "categories": []}
+                year_group = {"label": pdf.year_label, "meetings": []}
                 year_groups_by_label[pdf.year_label] = year_group
                 year_groups.append(year_group)
 
-            category_group = next(
+            meeting_label = pdf.meeting_label or "公式ページの見出しなし"
+            meeting_group = next(
                 (
-                    category
-                    for category in year_group["categories"]
-                    if category["name"] == pdf.category
+                    meeting
+                    for meeting in year_group["meetings"]
+                    if meeting["label"] == meeting_label
                 ),
                 None,
             )
-            if category_group is None:
-                category_group = {"name": pdf.category, "pdfs": []}
-                year_group["categories"].append(category_group)
+            if meeting_group is None:
+                meeting_group = {"label": meeting_label, "pdfs": []}
+                year_group["meetings"].append(meeting_group)
 
-            category_group["pdfs"].append(
+            meeting_group["pdfs"].append(
                 {
                     "filename": pdf.filename,
                     "title": pdf.title,

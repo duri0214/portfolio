@@ -278,6 +278,7 @@ class RokunohePdfDownloadViewTest(TestCase):
         pdf = RokunoheMinutesPdfIndex(
             filename="令和8年会議録.pdf",
             url="https://example.com/minutes.pdf",
+            meeting_label="第3回定例会［6月］",
         )
 
         with patch(
@@ -299,6 +300,7 @@ class RokunohePdfDownloadViewTest(TestCase):
         self.assertTemplateUsed(response, "llm_chat/rokunohe_pdf_single_select.html")
         self.assertContains(response, 'type="radio"')
         self.assertContains(response, "令和8年会議録.pdf")
+        self.assertContains(response, "第3回定例会［6月］")
         self.assertContains(
             response,
             "https://www.town.rokunohe.aomori.jp/docs/2023051900005/",
@@ -1025,19 +1027,22 @@ class RokunoheMinutesPdfIndexServiceTest(TestCase):
         self.assertEqual("本会議", pdf.category)
         self.assertEqual("2026年6月9日", pdf.held_on_label)
 
-    def test_sorts_main_meeting_records_by_official_date_then_name_within_year(self):
+    def test_preserves_official_page_order_and_meeting_headings(self):
         """
         シナリオ:
-        - 入力: 同一年の本会議1号から3号が公式ページとは異なる順序で並ぶHTML。
+        - 入力: 定例会・臨時会の見出しと、その配下に会議録リンクが並ぶHTML。
         - 処理: PDF一覧取得Serviceを実行する。
-        - 期待値: 本会議を先頭の種別にまとめ、公式ページ表記の日付、会議録名の順で返すこと。
+        - 期待値: 公式ページの掲載順と会見出しを保持して返すこと。
         """
         first_response = Mock()
         first_response.text = (
             "<h3>令和8年</h3>"
+            "<p>第3回定例会［6月］</p>"
             '<a href="three.pdf">本会議3号（6月9日）[PDF]</a>'
-            '<a href="one.pdf">本会議1号（6月5日）[PDF]</a>'
             '<a href="two.pdf">本会議2号（6月8日）[PDF]</a>'
+            '<a href="one.pdf">本会議1号（6月5日）[PDF]</a>'
+            "<p>第2回臨時会［5月］</p>"
+            '<a href="extra.pdf">本会議1号（5月12日）[PDF]</a>'
         )
         first_response.apparent_encoding = "utf-8"
         second_response = Mock()
@@ -1051,8 +1056,22 @@ class RokunoheMinutesPdfIndexServiceTest(TestCase):
             pdfs = RokunoheMinutesPdfIndexService().list_pdfs()
 
         self.assertEqual(
-            ["本会議3号（6月9日）", "本会議2号（6月8日）", "本会議1号（6月5日）"],
+            [
+                "本会議3号（6月9日）",
+                "本会議2号（6月8日）",
+                "本会議1号（6月5日）",
+                "本会議1号（5月12日）",
+            ],
             [pdf.title for pdf in pdfs],
+        )
+        self.assertEqual(
+            [
+                "第3回定例会［6月］",
+                "第3回定例会［6月］",
+                "第3回定例会［6月］",
+                "第2回臨時会［5月］",
+            ],
+            [pdf.meeting_label for pdf in pdfs],
         )
 
     def test_filters_pdf_list_by_held_on_range(self):

@@ -30,10 +30,10 @@
                 {% for year_group in year_groups %}
                     <section class="mb-4">
                         <h2 class="h5 border-bottom pb-2 mb-3">{{ year_group.label }}</h2>
-                        {% for category in year_group.categories %}
-                            <h3 class="h6 text-muted mb-2">{{ category.name }}</h3>
+                        {% for meeting in year_group.meetings %}
+                            <h3 class="h6 text-muted mb-2">{{ meeting.label }}</h3>
                             <div class="list-group mb-3">
-                                {% for pdf in category.pdfs %}
+                                {% for pdf in meeting.pdfs %}
                                     <label class="list-group-item d-flex align-items-center gap-2">
                                         <input class="form-check-input mt-0" type="radio" name="selected_pdf" value="{{ pdf.token }}" required>
                                         <span>

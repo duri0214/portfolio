@@ -37,6 +37,7 @@ class RokunoheMinutesPdfIndex:
         era_year: 公式サイトの見出しにある和暦年度。取得できない場合は空文字。
         calendar_year: era_yearから換算した西暦年。取得できない場合はNone。
         category: 会議録名から導出した種別。本会議の号数はこの値に含めない。
+        meeting_label: 公式ページで会議録の前に示される定例会・臨時会の見出し。
         month: 会議録名から取得した開催月。取得できない場合はNone。
         day: 会議録名から取得した開催日。取得できない場合はNone。
     """
@@ -47,6 +48,7 @@ class RokunoheMinutesPdfIndex:
     era_year: str = ""
     calendar_year: int | None = None
     category: str = "その他"
+    meeting_label: str = ""
     month: int | None = None
     day: int | None = None
 

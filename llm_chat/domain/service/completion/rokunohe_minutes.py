@@ -62,7 +62,7 @@ class RokunoheMinutesPdfIndexService:
         現行ページとバックナンバーページのHTMLだけを取得してPDFリンクを返します。
 
         PDF本体、Chroma DB、OpenAI APIにはアクセスしません。リンクが重複している場合は
-        URL単位で1件にまとめます。開催日が見出しとリンク表示から取得できるPDFは、
+        URL単位で1件にまとめ、公式ページの掲載順を維持します。開催日が見出しとリンク表示から取得できるPDFは、
         held_on_from/toで指定された範囲に絞り込みます。
         """
         pdfs_by_url: dict[str, RokunoheMinutesPdfIndex] = {}
@@ -82,7 +82,7 @@ class RokunoheMinutesPdfIndexService:
                 held_on_to=held_on_to,
             )
         ]
-        return sorted(pdfs, key=self._get_pdf_sort_key)
+        return pdfs
 
     @staticmethod
     def _find_pdf_links(links, target_url: str) -> list[RokunoheMinutesPdfIndex]:
@@ -101,6 +101,7 @@ class RokunoheMinutesPdfIndexService:
                 filename += ".pdf"
             title = RokunoheMinutesPdfIndexService._get_title(text)
             era_year, calendar_year = RokunoheMinutesPdfIndexService._get_year(link)
+            meeting_label = RokunoheMinutesPdfIndexService._get_meeting_label(link)
             month, day = RokunoheMinutesPdfIndexService._get_held_on(title)
             pdf_links.append(
                 RokunoheMinutesPdfIndex(
@@ -112,28 +113,12 @@ class RokunoheMinutesPdfIndexService:
                     era_year=era_year,
                     calendar_year=calendar_year,
                     category=RokunoheMinutesPdfIndexService._get_category(title),
+                    meeting_label=meeting_label,
                     month=month,
                     day=day,
                 )
             )
         return pdf_links
-
-    @staticmethod
-    def _get_pdf_sort_key(
-        pdf: RokunoheMinutesPdfIndex,
-    ) -> tuple[int, bool, str, int, int, str]:
-        calendar_year = pdf.calendar_year or 0
-        month = pdf.month or 0
-        day = pdf.day or 0
-        normalized_title = unicodedata.normalize("NFKC", pdf.title)
-        return (
-            -calendar_year,
-            pdf.category != "本会議",
-            pdf.category,
-            -month,
-            -day,
-            normalized_title,
-        )
 
     @staticmethod
     def _is_within_held_on_range(
@@ -188,6 +173,16 @@ class RokunoheMinutesPdfIndexService:
                 era_number = int(heisei_match.group(1))
                 return f"平成{era_number}年", 1988 + era_number
         return "", None
+
+    @staticmethod
+    def _get_meeting_label(link) -> str:
+        for element in link.find_all_previous(
+            ["h1", "h2", "h3", "h4", "h5", "h6", "p", "li"]
+        ):
+            label = unicodedata.normalize("NFKC", element.get_text(" ", strip=True))
+            if re.search(r"第\s*\d+\s*回(?:定例会|臨時会)", label):
+                return label.replace("[", "［").replace("]", "］")
+        return ""
 
     @staticmethod
     def _get_held_on(title: str) -> tuple[int | None, int | None]:
