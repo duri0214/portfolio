@@ -175,6 +175,25 @@ class CraftBeerPlacesExporterTests(SimpleTestCase):
                 self.config
             )
 
+    def test_sends_type_only_results_to_manual_review(self):
+        """
+        シナリオ:
+        - 入力: 検索語で見つかった必須店舗と、Nearby Search の type だけで見つかった営業中の店舗。
+        - 処理: クラフトビール候補を分類する。
+        - 期待値: type だけで見つかった店舗は候補一覧へ混ぜず、type_search_only 理由の手動確認になること。
+        """
+        type_only_place = self.place(place_id="type-only", name="一般的なレストラン")
+        result = CraftBeerPlacesExporter(
+            FakePlacesApiClient([self.place()], [type_only_place])
+        ).collect(self.config)
+
+        self.assertEqual(1, result["counts"]["candidates"])
+        self.assertEqual(1, result["counts"]["manual_review"])
+        self.assertEqual("type-only", result["manual_review"][0]["place_id"])
+        self.assertEqual(
+            "type_search_only", result["manual_review"][0]["exclusion_reason"]
+        )
+
     def test_writes_json_and_csv_without_api_key(self):
         """
         シナリオ:

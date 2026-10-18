@@ -318,6 +318,8 @@ class CraftBeerPlacesExporter:
             return "excluded", "business_closed"
         if record["business_status"] != "OPERATIONAL":
             return "manual_review", "business_status_unknown"
+        if not any(query.startswith("keyword:") for query in record["matched_queries"]):
+            return "manual_review", "type_search_only"
         return "candidates", None
 
     @staticmethod

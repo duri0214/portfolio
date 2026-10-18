@@ -100,8 +100,9 @@ python manage.py export_craft_beer_places --config gmarker/configs/shibuya_craft
 ```
 
 コマンドは Text Search と Nearby Search の結果を Place ID で統合します。円形検索結果から、
-設定した矩形境界外、座標欠落、閉店状態の店舗を候補から除外し、営業状態が不明な店舗は
-手動確認へ分けます。`TAP&CROWLER Shibuya` は営業中かつ対象範囲内、設定した住所照合語に
+設定した矩形境界外、座標欠落、閉店状態の店舗を候補から除外します。営業状態が不明な店舗と、
+`bar`・`pub`・`restaurant` の type 検索だけで見つかった店舗は、クラフトビール専門性を確定
+できないため手動確認へ分けます。`TAP&CROWLER Shibuya` は営業中かつ対象範囲内、設定した住所照合語に
 一致する必須候補です。満たさない場合はファイルを出力せずエラーで終了します。Place ID が
 人手で確定した後は、`required_place.place_id` へ追加できます。
 
