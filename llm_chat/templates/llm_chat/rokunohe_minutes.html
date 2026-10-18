@@ -37,17 +37,6 @@
 
                 <div class="d-flex justify-content-end mb-3 gap-2">
                     {% if is_superuser %}
-                        <form id="pdfDownloadForm" method="post" action="{% url 'llm:rokunohe_pdf_download' %}" class="me-auto">
-                            {% csrf_token %}
-                            <input type="hidden" name="reset_consent" value="1">
-                            <input type="hidden" name="source_date_from" id="pdfSourceDateFrom">
-                            <input type="hidden" name="source_date_to" id="pdfSourceDateTo">
-                            <div class="form-check form-check-inline ms-2">
-                                <input class="form-check-input" type="checkbox" name="single_pdf_trial_mode" value="1" id="singlePdfTrialMode">
-                                <label class="form-check-label small" for="singlePdfTrialMode">1件だけ試験処理する</label>
-                            </div>
-                            <button id="pdfDownloadSubmit" type="submit" class="btn btn-outline-success btn-sm">会議録PDF取得・ベクトル化</button>
-                        </form>
                         <a id="collectionStatsLink" href="{% url 'llm:rokunohe_collection_stats' %}" class="btn btn-outline-primary btn-sm">
                             頻出語集計
                         </a>
@@ -77,17 +66,30 @@
                     {% endif %}
                 </div>
                 {% if is_superuser %}
-                    <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
-                        <div>
-                            <label for="debugSourceDateFrom" class="form-label small text-muted mb-1">処理期間開始</label>
-                            <input type="date" id="debugSourceDateFrom" class="form-control form-control-sm">
+                    <form id="pdfDownloadForm" method="post" action="{% url 'llm:rokunohe_pdf_download' %}" class="mb-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="reset_consent" value="1">
+                        <input type="hidden" name="source_date_from" id="pdfSourceDateFrom">
+                        <input type="hidden" name="source_date_to" id="pdfSourceDateTo">
+                        <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
+                            <div>
+                                <label for="debugSourceDateFrom" class="form-label small text-muted mb-1">処理期間開始</label>
+                                <input type="date" id="debugSourceDateFrom" class="form-control form-control-sm">
+                            </div>
+                            <div>
+                                <label for="debugSourceDateTo" class="form-label small text-muted mb-1">処理期間終了</label>
+                                <input type="date" id="debugSourceDateTo" class="form-control form-control-sm">
+                            </div>
+                            <span class="small text-muted mb-1">未指定時は直近1年分</span>
                         </div>
-                        <div>
-                            <label for="debugSourceDateTo" class="form-label small text-muted mb-1">処理期間終了</label>
-                            <input type="date" id="debugSourceDateTo" class="form-control form-control-sm">
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <button id="pdfDownloadSubmit" type="submit" class="btn btn-outline-success btn-sm">会議録PDF取得・ベクトル化</button>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="single_pdf_trial_mode" value="1" id="singlePdfTrialMode">
+                                <label class="form-check-label small" for="singlePdfTrialMode">一覧から1件を選んで試験処理する</label>
+                            </div>
                         </div>
-                        <span class="small text-muted mb-1">未指定時は直近1年分</span>
-                    </div>
+                    </form>
                 {% endif %}
                 <p class="small text-muted mt-2 mb-3">
                     会議録PDF取得・ベクトル化、コレクション確認、頻出語集計は、期間未指定時に直近1年分の会議録を処理基準にしています。

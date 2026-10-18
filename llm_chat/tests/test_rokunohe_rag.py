@@ -510,6 +510,7 @@ class RokunohePdfDownloadViewTest(TestCase):
         response = self.client.get(reverse("llm:rokunohe_minutes"))
 
         self.assertContains(response, "会議録PDF取得・ベクトル化")
+        self.assertContains(response, "一覧から1件を選んで試験処理する")
         self.assertContains(response, "コレクションリセット")
         self.assertContains(response, "頻出語集計")
         self.assertContains(response, "コレクションビューア")
@@ -524,6 +525,10 @@ class RokunohePdfDownloadViewTest(TestCase):
         )
         self.assertLess(
             content.index("チャット履歴を削除"), content.index("コレクションリセット")
+        )
+        self.assertLess(
+            content.index("処理期間終了"),
+            content.index("一覧から1件を選んで試験処理する"),
         )
 
     def test_non_superuser_sees_disabled_admin_buttons(self):
