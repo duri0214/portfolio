@@ -1,0 +1,34 @@
+{
+  "area_name": "shibuya_craft_beer",
+  "center": {
+    "lat": 35.6617,
+    "lng": 139.6977
+  },
+  "radius_meters": 800,
+  "bounds": {
+    "south": 35.6580,
+    "north": 35.6680,
+    "west": 139.6930,
+    "east": 139.7040
+  },
+  "text_queries": [
+    "クラフトビール 渋谷",
+    "Craft Beer Shibuya",
+    "ビアバー 渋谷"
+  ],
+  "nearby_types": [
+    "bar",
+    "pub",
+    "restaurant"
+  ],
+  "language_code": "ja",
+  "region_code": "JP",
+  "required_place": {
+    "place_id": null,
+    "name_terms": [
+      "TAP&CROWLER Shibuya",
+      "TAP&CROWLER"
+    ],
+    "address_hint": "東京都渋谷区宇田川町6-20"
+  }
+}
