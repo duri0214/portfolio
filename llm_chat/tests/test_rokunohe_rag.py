@@ -299,6 +299,10 @@ class RokunohePdfDownloadViewTest(TestCase):
         self.assertTemplateUsed(response, "llm_chat/rokunohe_pdf_single_select.html")
         self.assertContains(response, 'type="radio"')
         self.assertContains(response, "令和8年会議録.pdf")
+        self.assertContains(
+            response,
+            "https://www.town.rokunohe.aomori.jp/docs/2023051900005/",
+        )
         self.assertEqual(
             ["残す会話"],
             list(
