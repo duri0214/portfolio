@@ -344,10 +344,30 @@ class RokunohePdfDownloadViewTest(TestCase):
             salt="llm_chat.rokunohe_pdf_single_import",
         )
 
+        marker = RokunoheMinutesRagService.collection_summary_marker
+        ChatLogs.objects.create(
+            user=user,
+            role=RoleType.ASSISTANT.value,
+            content=f"{marker}\n### コレクションサマリー\n古い内容",
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+        summary_message = MessageDTO(
+            user=user,
+            role=RoleType.ASSISTANT,
+            content=f"{marker}\n### コレクションサマリー\n新しい内容",
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+
         with patch(
             "llm_chat.views.call_command",
             return_value=RokunoheMinutesImportStatus.IMPORTED.value,
-        ) as call_command_mock:
+        ) as call_command_mock, patch(
+            "llm_chat.views.RokunoheMinutesRagService"
+        ) as rag_service_mock:
+            rag_service_mock.collection_summary_marker = marker
+            rag_service_mock.return_value.generate_initial_summary.return_value = (
+                summary_message
+            )
             response = self.client.post(
                 reverse("llm:rokunohe_pdf_single_import"),
                 {
@@ -369,8 +389,11 @@ class RokunohePdfDownloadViewTest(TestCase):
             source_date_from=20260225,
             source_date_to=20260225,
         )
+        rag_service_mock.return_value.generate_initial_summary.assert_called_once_with(
+            user
+        )
         self.assertEqual(
-            ["残す会話"],
+            ["残す会話", summary_message.content],
             list(
                 ChatLogs.objects.filter(
                     user=user,
@@ -498,70 +521,6 @@ class RokunohePdfDownloadViewTest(TestCase):
             fetch_redirect_response=False,
         )
         rag_service_mock.assert_not_called()
-
-    def test_superuser_can_replace_collection_summary_without_clearing_chat_history(
-        self,
-    ):
-        """
-        シナリオ:
-        - 入力: 既存のコレクションサマリーと通常の会話履歴がある管理者。
-        - 処理: コレクションサマリー更新を実行する。
-        - 期待値: 通常の会話を残したまま、コレクションサマリーだけが最新の1件に置き換わること。
-        """
-        user = User.objects.create_superuser(
-            username="admin-summary-refresh",
-            email="admin-summary-refresh@example.com",
-            password="password",
-        )
-        self.client.force_login(user)
-        marker = RokunoheMinutesRagService.collection_summary_marker
-        ChatLogs.objects.create(
-            user=user,
-            role=RoleType.ASSISTANT.value,
-            content=f"{marker}\n### コレクションサマリー\n古い内容",
-            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
-        )
-        ChatLogs.objects.create(
-            user=user,
-            role=RoleType.USER.value,
-            content="残す会話",
-            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
-        )
-        summary_message = MessageDTO(
-            user=user,
-            role=RoleType.ASSISTANT,
-            content=f"{marker}\n### コレクションサマリー\n新しい内容",
-            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
-        )
-
-        with patch("llm_chat.views.RokunoheMinutesRagService") as rag_service_mock:
-            rag_service_mock.collection_summary_marker = marker
-            rag_service_mock.return_value.generate_initial_summary.return_value = (
-                summary_message
-            )
-            response = self.client.post(
-                reverse("llm:rokunohe_collection_summary_refresh")
-            )
-
-        self.assertRedirects(
-            response,
-            reverse("llm:rokunohe_minutes"),
-            fetch_redirect_response=False,
-        )
-        rag_service_mock.return_value.generate_initial_summary.assert_called_once_with(
-            user
-        )
-        self.assertEqual(
-            ["残す会話", summary_message.content],
-            list(
-                ChatLogs.objects.filter(
-                    user=user,
-                    use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
-                )
-                .order_by("created_at")
-                .values_list("content", flat=True)
-            ),
-        )
 
     def test_superuser_sees_pdf_download_button(self):
         """

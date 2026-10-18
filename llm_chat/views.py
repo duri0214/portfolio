@@ -744,6 +744,15 @@ class RokunohePdfSingleImportView(UserPassesTestMixin, View):
             messages.warning(request, str(e))
             return redirect("llm:rokunohe_minutes")
 
+        try:
+            _replace_rokunohe_collection_summary(_get_login_user(request))
+        except Exception:
+            logger.exception("六戸町会議録コレクションサマリーの自動作成に失敗しました")
+            messages.warning(
+                request,
+                "会議録PDFは処理しましたが、コレクションサマリーを作成できませんでした。",
+            )
+
         status_messages = {
             RokunoheMinutesImportStatus.IMPORTED.value: "選択した会議録PDFをベクトル化しました。",
             RokunoheMinutesImportStatus.SKIPPED_EXISTING.value: "選択した会議録PDFは登録済みです。",
@@ -754,26 +763,6 @@ class RokunohePdfSingleImportView(UserPassesTestMixin, View):
             request,
             status_messages.get(status, "選択した会議録PDFの処理が完了しました。"),
         )
-        return redirect("llm:rokunohe_minutes")
-
-
-class RokunoheCollectionSummaryRefreshView(UserPassesTestMixin, View):
-    """現在の登録済み会議録からコレクションサマリーを作成・更新するView。"""
-
-    raise_exception = True
-
-    def test_func(self):
-        return self.request.user.is_superuser
-
-    def post(self, request, *args, **kwargs):
-        try:
-            _replace_rokunohe_collection_summary(_get_login_user(request))
-        except Exception:
-            logger.exception("六戸町会議録コレクションサマリーの更新に失敗しました")
-            messages.warning(request, "コレクションサマリーを更新できませんでした。")
-            return redirect("llm:rokunohe_minutes")
-
-        messages.success(request, "コレクションサマリーを更新しました。")
         return redirect("llm:rokunohe_minutes")
 
 
