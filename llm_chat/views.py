@@ -78,10 +78,17 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
-def _replace_rokunohe_collection_summary(user: User) -> None:
+def _replace_rokunohe_collection_summary(
+    user: User, *, processing_scope_label: str | None = None
+) -> None:
     """現在の登録済み会議録を対象にしたサマリーを1件だけ保存します。"""
     service = RokunoheMinutesRagService()
-    summary = service.generate_initial_summary(user)
+    if processing_scope_label:
+        summary = service.generate_initial_summary(
+            user, processing_scope_label=processing_scope_label
+        )
+    else:
+        summary = service.generate_initial_summary(user)
     ChatLogRepository.replace_marked_message(
         user=user,
         use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
@@ -745,7 +752,9 @@ class RokunohePdfSingleImportView(UserPassesTestMixin, View):
             return redirect("llm:rokunohe_minutes")
 
         try:
-            _replace_rokunohe_collection_summary(_get_login_user(request))
+            _replace_rokunohe_collection_summary(
+                _get_login_user(request), processing_scope_label="選択したPDF 1件"
+            )
         except Exception:
             logger.exception("六戸町会議録コレクションサマリーの自動作成に失敗しました")
             messages.warning(

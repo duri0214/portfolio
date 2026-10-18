@@ -413,7 +413,9 @@ class RokunoheMinutesRagService(BaseChatService):
             use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
         )
 
-    def generate_initial_summary(self, user: User) -> MessageDTO:
+    def generate_initial_summary(
+        self, user: User, processing_scope_label: str | None = None
+    ) -> MessageDTO:
         """
         PDF取り込み直後に表示する分析入口用サマリーを生成します。
 
@@ -436,14 +438,21 @@ class RokunoheMinutesRagService(BaseChatService):
             use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
         )
         summary = self.generate(user_message)
+        if processing_scope_label:
+            scope_content = (
+                f"> 今回の処理: {processing_scope_label}\n"
+                f"> サマリー対象: {collection_scope}\n"
+            )
+        else:
+            scope_content = f"> 検索対象: {collection_scope}\n"
         return self._create_assistant_message(
             user=user,
             content=(
                 f"{self.collection_summary_marker}\n"
                 "### コレクションサマリー\n\n"
-                f"> 検索対象: {collection_scope}\n"
-                "> このサマリーは関連する会議録チャンクの検索結果をもとに作成しています。\n\n"
-                f"{summary.content}"
+                + scope_content
+                + "> このサマリーは関連する会議録チャンクの検索結果をもとに作成しています。\n\n"
+                + summary.content
             ),
             use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
         )

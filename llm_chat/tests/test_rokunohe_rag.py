@@ -390,7 +390,7 @@ class RokunohePdfDownloadViewTest(TestCase):
             source_date_to=20260225,
         )
         rag_service_mock.return_value.generate_initial_summary.assert_called_once_with(
-            user
+            user, processing_scope_label="選択したPDF 1件"
         )
         self.assertEqual(
             ["残す会話", summary_message.content],
@@ -1337,14 +1337,17 @@ class RokunoheMinutesRagServiceTest(TestCase):
         ]
         service = RokunoheMinutesRagService(repository=repository)
 
-        assistant_message = service.generate_initial_summary(user)
+        assistant_message = service.generate_initial_summary(
+            user, processing_scope_label="選択したPDF 1件"
+        )
 
         self.assertTrue(
             assistant_message.content.startswith(
                 RokunoheMinutesRagService.collection_summary_marker
             )
         )
-        self.assertIn("検索対象: 登録済み会議録全体", assistant_message.content)
+        self.assertIn("今回の処理: 選択したPDF 1件", assistant_message.content)
+        self.assertIn("サマリー対象: 登録済み会議録全体", assistant_message.content)
         self.assertIn(
             "PDF更新日: 2026-02-25〜2026-09-18、PDF: 2件", assistant_message.content
         )
