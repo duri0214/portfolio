@@ -540,18 +540,20 @@ class RokunohePdfDownloadViewTest(TestCase):
 
         self.assertContains(response, "会議録PDF取得・ベクトル化")
         self.assertContains(response, "一覧から1件を選んで試験処理する")
-        self.assertContains(response, "取り込み済み会議録をリセット")
+        self.assertContains(response, "会議録を削除")
         self.assertContains(response, "頻出語集計")
-        self.assertContains(response, "取り込み済み会議録を確認")
-        self.assertContains(response, "検索用会議録データ")
+        self.assertContains(response, "会議録を確認")
+        self.assertContains(response, "取り込み済み会議録データ")
         self.assertContains(response, "会話履歴")
         self.assertContains(response, "直近1年分の会議録を処理基準")
         self.assertContains(response, 'class="btn btn-outline-success btn-sm"')
         content = response.content.decode()
-        self.assertLess(content.index("検索用会議録データ"), content.index("会話履歴"))
         self.assertLess(
-            content.index("検索用会議録データ"),
-            content.index("取り込み済み会議録をリセット"),
+            content.index("取り込み済み会議録データ"), content.index("会話履歴")
+        )
+        self.assertLess(
+            content.index("取り込み済み会議録データ"),
+            content.index("会議録を削除"),
         )
         self.assertLess(content.index("会話履歴"), content.index("会話履歴を削除"))
         self.assertLess(
@@ -578,17 +580,19 @@ class RokunohePdfDownloadViewTest(TestCase):
         self.assertContains(response, "会議録PDF取得・ベクトル化")
         self.assertContains(response, "管理ページに行くにはログインが必要です")
         self.assertContains(response, "disabled")
-        self.assertContains(response, "取り込み済み会議録をリセット")
+        self.assertContains(response, "会議録を削除")
         self.assertContains(response, "頻出語集計")
-        self.assertContains(response, "取り込み済み会議録を確認")
-        self.assertContains(response, "検索用会議録データ")
+        self.assertContains(response, "会議録を確認")
+        self.assertContains(response, "取り込み済み会議録データ")
         self.assertContains(response, "会話履歴")
         self.assertContains(response, "直近1年分の会議録を処理基準")
         content = response.content.decode()
-        self.assertLess(content.index("検索用会議録データ"), content.index("会話履歴"))
         self.assertLess(
-            content.index("検索用会議録データ"),
-            content.index("取り込み済み会議録をリセット"),
+            content.index("取り込み済み会議録データ"), content.index("会話履歴")
+        )
+        self.assertLess(
+            content.index("取り込み済み会議録データ"),
+            content.index("会議録を削除"),
         )
         self.assertLess(content.index("会話履歴"), content.index("会話履歴を削除"))
 
@@ -598,7 +602,7 @@ class RokunohePdfDownloadViewTest(TestCase):
         シナリオ:
         - 入力: superuserでログインし、六戸町会議録RAG履歴がある状態。
         - 処理: Vector DBコレクションリセットのPOST先へ同意値付きでリクエストする。
-        - 期待値: 検索用会議録データがリセットされ、通常の会話履歴は残ること。
+        - 期待値: 取り込み済み会議録データが削除され、通常の会話履歴は残ること。
         """
         user = User.objects.create_superuser(
             username="admin-reset",

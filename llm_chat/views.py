@@ -773,7 +773,7 @@ class RokunoheVectorDbResetView(UserPassesTestMixin, View):
 
     raise_exception = True
     reset_consent_value = "1"
-    success_message = "検索用会議録データをリセットしました。"
+    success_message = "取り込み済み会議録データを削除しました。"
 
     def test_func(self):
         return self.request.user.is_superuser
@@ -782,7 +782,7 @@ class RokunoheVectorDbResetView(UserPassesTestMixin, View):
         if request.POST.get("reset_collection_consent") != self.reset_consent_value:
             messages.warning(
                 request,
-                "検索用会議録データのリセットに同意してから実行してください。",
+                "取り込み済み会議録データの削除に同意してから実行してください。",
             )
             return redirect("llm:rokunohe_minutes")
 
