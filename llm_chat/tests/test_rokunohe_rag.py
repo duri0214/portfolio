@@ -1272,6 +1272,45 @@ class RokunoheMinutesRagServiceTest(TestCase):
             UseCaseType.ROKUNOHE_MINUTES_RAG,
         )
 
+    def test_initial_summary_records_registered_collection_scope(self):
+        """
+        シナリオ:
+        - 入力: PDF更新日が異なる登録済み会議録チャンクと、初回サマリーのRAG回答。
+        - 処理: 初回サマリーを生成する。
+        - 期待値: サマリー本文に生成時点のPDF更新日範囲とPDF件数を記録すること。
+        """
+        user = User.objects.create_user(username="rag-initial-summary")
+        repository = Mock()
+        repository.retrieve_answer.return_value = Mock(answer="サマリー本文です。")
+        repository.list_stats_source_chunks.return_value = [
+            RokunoheMinutesStatsSourceChunk(
+                chroma_id="first",
+                document="会議録本文",
+                source="20260225_会議録1号.pdf",
+                source_date="20260225",
+                page=1,
+                chunk_index=0,
+            ),
+            RokunoheMinutesStatsSourceChunk(
+                chroma_id="second",
+                document="会議録本文",
+                source="20260918_会議録2号.pdf",
+                source_date="20260918",
+                page=1,
+                chunk_index=0,
+            ),
+        ]
+        service = RokunoheMinutesRagService(repository=repository)
+
+        assistant_message = service.generate_initial_summary(user)
+
+        self.assertIn("検索対象: 登録済み会議録全体", assistant_message.content)
+        self.assertIn(
+            "PDF更新日: 2026-02-25〜2026-09-18、PDF: 2件", assistant_message.content
+        )
+        self.assertIn("サマリー本文です。", assistant_message.content)
+        repository.list_stats_source_chunks.assert_called_once_with()
+
 
 class RokunoheMinutesCollectionStatsServiceTest(TestCase):
     @patch("llm_chat.domain.service.completion.rokunohe_minutes.timezone.localdate")

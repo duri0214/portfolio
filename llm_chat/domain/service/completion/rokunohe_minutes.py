@@ -426,6 +426,7 @@ class RokunoheMinutesRagService(BaseChatService):
         Returns:
             MessageDTO: チャット履歴へ保存するassistantメッセージ。
         """
+        collection_scope = self._build_collection_scope_label()
         user_message = MessageDTO(
             user=user,
             role=RoleType.USER,
@@ -433,7 +434,51 @@ class RokunoheMinutesRagService(BaseChatService):
             model_name=self.model_name,
             use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
         )
-        return self.generate(user_message)
+        summary = self.generate(user_message)
+        return self._create_assistant_message(
+            user=user,
+            content=(
+                "### 初回サマリー\n\n"
+                f"> 検索対象: {collection_scope}\n"
+                "> このサマリーは関連する会議録チャンクの検索結果をもとに作成しています。\n\n"
+                f"{summary.content}"
+            ),
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+
+    def _build_collection_scope_label(self) -> str:
+        """初回サマリー生成時点の登録済み会議録の範囲を表示用テキストにします。"""
+        chunks = self.repository.list_stats_source_chunks()
+        sources = {chunk.source for chunk in chunks if chunk.source}
+        source_dates = sorted(
+            {
+                chunk.source_date
+                for chunk in chunks
+                if re.fullmatch(r"\d{8}", chunk.source_date)
+            }
+        )
+        undated_sources = {
+            chunk.source
+            for chunk in chunks
+            if chunk.source and not re.fullmatch(r"\d{8}", chunk.source_date)
+        }
+        if not sources:
+            return "登録済み会議録なし"
+        if not source_dates:
+            return f"登録済み会議録全体（PDF: {len(sources)}件、PDF更新日不明）"
+
+        details = (
+            f"PDF更新日: {self._format_source_date(source_dates[0])}〜"
+            f"{self._format_source_date(source_dates[-1])}、PDF: {len(sources)}件"
+        )
+        if undated_sources:
+            details += f"、PDF更新日不明: {len(undated_sources)}件"
+        return f"登録済み会議録全体（{details}）"
+
+    @staticmethod
+    def _format_source_date(source_date: str) -> str:
+        """YYYYMMDD形式のPDF更新日を画面表示用に整形します。"""
+        return f"{source_date[:4]}-{source_date[4:6]}-{source_date[6:]}"
 
 
 class RokunoheMinutesCollectionStatsService:
