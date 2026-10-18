@@ -1,0 +1,58 @@
+{% extends 'llm_chat/base.html' %}
+
+{% block content %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'llm:index' %}">LLM Chat</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'llm:rokunohe_minutes' %}">六戸町会議録 RAG</a></li>
+                <li class="breadcrumb-item active" aria-current="page">1件だけ試験処理</li>
+            </ol>
+        </nav>
+
+        <h1 class="h3">会議録PDFを1件選択</h1>
+        <p class="text-muted">
+            一覧の表示対象（公式ページ表記の日付）: {{ source_date_period_label }}。
+            <a href="https://www.town.rokunohe.aomori.jp/docs/2023051900005/" target="_blank" rel="noopener">六戸町公式サイトの会議録の閲覧</a>と
+            <a href="https://www.town.rokunohe.aomori.jp/docs/2023051900005/chousei_cyougikai_kaigiroku_kako.html" target="_blank" rel="noopener">バックナンバー</a>のHTMLから一覧だけを取得しています。
+            PDFのダウンロードとベクトル化は、下で1件を選んで実行したときだけ行います。
+        </p>
+        <p class="small text-muted">
+            年度と日付は公式ページの見出し・リンク表示から取得しており、アップロード日時やPDFメタデータではありません。
+            選択後はPDFの更新日でも処理期間を確認するため、指定期間外の場合は処理せず結果を表示します。
+        </p>
+
+        {% if year_groups %}
+            <form method="post" action="{% url 'llm:rokunohe_pdf_single_import' %}">
+                {% csrf_token %}
+                <input type="hidden" name="source_date_from" value="{{ source_date_from_value }}">
+                <input type="hidden" name="source_date_to" value="{{ source_date_to_value }}">
+                {% for year_group in year_groups %}
+                    <section class="mb-4">
+                        <h2 class="h5 border-bottom pb-2 mb-3">{{ year_group.label }}</h2>
+                        {% for meeting in year_group.meetings %}
+                            <h3 class="h6 text-muted mb-2">{{ meeting.label }}</h3>
+                            <div class="list-group mb-3">
+                                {% for pdf in meeting.pdfs %}
+                                    <label class="list-group-item d-flex align-items-center gap-2">
+                                        <input class="form-check-input mt-0" type="radio" name="selected_pdf" value="{{ pdf.token }}" required>
+                                        <span>
+                                            <span class="fw-semibold">{{ pdf.held_on_label }}</span>
+                                            <span>{{ pdf.title }}</span>
+                                            <small class="d-block text-muted">保存名: {{ pdf.filename }}</small>
+                                        </span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </section>
+                {% endfor %}
+                <button type="submit" class="btn btn-success">選択した1件を取得・ベクトル化</button>
+                <a href="{% url 'llm:rokunohe_minutes' %}" class="btn btn-outline-secondary">戻る</a>
+            </form>
+        {% else %}
+            <div class="alert alert-warning">会議録PDFが見つかりませんでした。</div>
+            <a href="{% url 'llm:rokunohe_minutes' %}" class="btn btn-outline-secondary">戻る</a>
+        {% endif %}
+    </div>
+{% endblock %}

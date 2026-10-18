@@ -26,6 +26,52 @@ class RokunoheMinutesImportStatus(Enum):
 
 
 @dataclass(frozen=True)
+class RokunoheMinutesPdfIndex:
+    """
+    六戸町公式サイトの会議録PDF一覧に含まれる1件分の表示・選択用情報。
+
+    Attributes:
+        filename: PDF保存時に使う、公式サイトのリンク表示から作ったファイル名。
+        url: PDFの絶対URL。
+        title: 公式サイトのリンク表示からPDFサイズ表記を除いた会議録名。
+        era_year: 公式サイトの見出しにある和暦年度。取得できない場合は空文字。
+        calendar_year: era_yearから換算した西暦年。取得できない場合はNone。
+        category: 会議録名から導出した種別。本会議の号数はこの値に含めない。
+        meeting_label: 公式ページで会議録の前に示される定例会・臨時会の見出し。
+        month: 会議録名から取得した開催月。取得できない場合はNone。
+        day: 会議録名から取得した開催日。取得できない場合はNone。
+    """
+
+    filename: str
+    url: str
+    title: str = ""
+    era_year: str = ""
+    calendar_year: int | None = None
+    category: str = "その他"
+    meeting_label: str = ""
+    month: int | None = None
+    day: int | None = None
+
+    @property
+    def year_label(self) -> str:
+        """和暦と西暦を併記した一覧見出し用の年度ラベルを返します。"""
+        if self.era_year and self.calendar_year:
+            return f"{self.era_year}（{self.calendar_year}年）"
+        if self.calendar_year:
+            return f"{self.calendar_year}年"
+        return "年度不明"
+
+    @property
+    def held_on_label(self) -> str:
+        """会議録名から取得した開催日を西暦付きで返します。"""
+        if self.calendar_year and self.month and self.day:
+            return f"{self.calendar_year}年{self.month}月{self.day}日"
+        if self.month and self.day:
+            return f"{self.month}月{self.day}日"
+        return "開催日不明"
+
+
+@dataclass(frozen=True)
 class RokunoheMinutesPdf:
     """
     六戸町会議録PDFファイルを表すValue Object。

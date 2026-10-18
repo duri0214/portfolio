@@ -13,6 +13,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import User
+from django.core import signing
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -47,7 +48,11 @@ from llm_chat.domain.service.completion.chat import ChatDisplayService
 from llm_chat.domain.service.completion.rag import OpenAIRagPdfImportService
 from llm_chat.domain.service.completion.rokunohe_minutes import (
     RokunoheMinutesCollectionStatsService,
+    RokunoheMinutesPdfIndexService,
     RokunoheMinutesRagService,
+)
+from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
+    RokunoheMinutesImportStatus,
 )
 from llm_chat.domain.use_case.completion.chat import (
     OpenAIGptStreamingUseCase,
@@ -71,6 +76,25 @@ load_dotenv()
 
 # ロガーの設定
 logger = logging.getLogger(__name__)
+
+
+def _replace_rokunohe_collection_summary(
+    user: User, *, processing_scope_label: str | None = None
+) -> None:
+    """現在の登録済み会議録を対象にしたサマリーを1件だけ保存します。"""
+    service = RokunoheMinutesRagService()
+    if processing_scope_label:
+        summary = service.generate_initial_summary(
+            user, processing_scope_label=processing_scope_label
+        )
+    else:
+        summary = service.generate_initial_summary(user)
+    ChatLogRepository.replace_marked_message(
+        user=user,
+        use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        content_marker=RokunoheMinutesRagService.collection_summary_marker,
+        message=summary,
+    )
 
 
 OPENAI_RAG_QUOTA_ERROR_MESSAGE = (
@@ -144,6 +168,18 @@ def _build_source_date_command_options(
     if source_date_to is not None:
         options["source_date_to"] = source_date_to
     return options
+
+
+def _build_pdf_index_date_range(
+    *,
+    source_date_from: int | None,
+    source_date_to: int | None,
+) -> tuple[int, int | None]:
+    """一覧表示用に、未指定時も直近1年の開催日範囲を明示します。"""
+    if source_date_from is not None:
+        return source_date_from, source_date_to
+    default_from = timezone.localdate() - timedelta(days=365)
+    return int(default_from.strftime("%Y%m%d")), source_date_to
 
 
 def _build_source_date_period_label(
@@ -533,6 +569,7 @@ class RokunohePdfDownloadView(UserPassesTestMixin, View):
     command_name = "rokunohe_pdf_download"
     success_message = "六戸町会議録PDFの直近1年分の取得・ベクトル化処理を実行しました。"
     reset_consent_value = "1"
+    single_pdf_trial_mode_value = "1"
 
     def test_func(self):
         return self.request.user.is_superuser
@@ -545,6 +582,12 @@ class RokunohePdfDownloadView(UserPassesTestMixin, View):
         古い会話履歴を残さず、取り込み後のcollectionをもとにしたサマリーを
         チャット履歴の先頭として作り直します。
         """
+        if (
+            request.POST.get("single_pdf_trial_mode")
+            == self.single_pdf_trial_mode_value
+        ):
+            return self._show_single_pdf_selection(request)
+
         if request.POST.get("reset_consent") != self.reset_consent_value:
             messages.warning(
                 request,
@@ -581,11 +624,78 @@ class RokunohePdfDownloadView(UserPassesTestMixin, View):
             messages.warning(request, str(e))
         return redirect("llm:rokunohe_minutes")
 
+    def _show_single_pdf_selection(self, request):
+        """試験処理用にPDF本文を取得せず、公式サイトのリンク一覧だけを表示します。"""
+        try:
+            source_date_from, source_date_to = _parse_source_date_range(request)
+            held_on_from, held_on_to = _build_pdf_index_date_range(
+                source_date_from=source_date_from,
+                source_date_to=source_date_to,
+            )
+            pdfs = RokunoheMinutesPdfIndexService().list_pdfs(
+                held_on_from=held_on_from,
+                held_on_to=held_on_to,
+            )
+        except ValueError as e:
+            messages.warning(request, str(e))
+            return redirect("llm:rokunohe_minutes")
+        except Exception:
+            logger.exception("六戸町会議録PDFの一覧取得に失敗しました")
+            messages.warning(request, "会議録PDFの一覧を取得できませんでした。")
+            return redirect("llm:rokunohe_minutes")
+
+        year_groups = []
+        year_groups_by_label = {}
+        for pdf in pdfs:
+            year_group = year_groups_by_label.get(pdf.year_label)
+            if year_group is None:
+                year_group = {"label": pdf.year_label, "meetings": []}
+                year_groups_by_label[pdf.year_label] = year_group
+                year_groups.append(year_group)
+
+            meeting_label = pdf.meeting_label or "公式ページの見出しなし"
+            meeting_group = next(
+                (
+                    meeting
+                    for meeting in year_group["meetings"]
+                    if meeting["label"] == meeting_label
+                ),
+                None,
+            )
+            if meeting_group is None:
+                meeting_group = {"label": meeting_label, "pdfs": []}
+                year_group["meetings"].append(meeting_group)
+
+            meeting_group["pdfs"].append(
+                {
+                    "filename": pdf.filename,
+                    "title": pdf.title,
+                    "held_on_label": pdf.held_on_label,
+                    "token": signing.dumps(
+                        {"filename": pdf.filename, "url": pdf.url},
+                        salt=RokunohePdfSingleImportView.signing_salt,
+                    ),
+                }
+            )
+        return render(
+            request,
+            "llm_chat/rokunohe_pdf_single_select.html",
+            {
+                "year_groups": year_groups,
+                "source_date_from": source_date_from,
+                "source_date_to": source_date_to,
+                "source_date_from_value": request.POST.get("source_date_from", ""),
+                "source_date_to_value": request.POST.get("source_date_to", ""),
+                "source_date_period_label": _build_source_date_period_label(
+                    source_date_from=source_date_from,
+                    source_date_to=source_date_to,
+                ),
+            },
+        )
+
     @staticmethod
     def _save_initial_summary(user: User) -> None:
-        service = RokunoheMinutesRagService()
-        summary = service.generate_initial_summary(user)
-        ChatLogRepository.insert(summary)
+        _replace_rokunohe_collection_summary(user)
 
     def _build_success_message(
         self,
@@ -602,6 +712,69 @@ class RokunohePdfDownloadView(UserPassesTestMixin, View):
         )
 
 
+class RokunohePdfSingleImportView(UserPassesTestMixin, View):
+    """一覧から選ばれた六戸町会議録PDFを1件だけ取得・登録するView。"""
+
+    raise_exception = True
+    command_name = "rokunohe_pdf_download"
+    signing_salt = "llm_chat.rokunohe_pdf_single_import"
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def post(self, request, *args, **kwargs):
+        try:
+            selected_pdf = signing.loads(
+                request.POST.get("selected_pdf", ""),
+                salt=self.signing_salt,
+                max_age=60 * 60,
+            )
+            filename = selected_pdf["filename"]
+            url = selected_pdf["url"]
+            source_date_from, source_date_to = _parse_source_date_range(request)
+            command_options = _build_source_date_command_options(
+                source_date_from=source_date_from,
+                source_date_to=source_date_to,
+            )
+        except (KeyError, TypeError, signing.BadSignature, ValueError):
+            messages.warning(request, "選択した会議録PDFを確認できませんでした。")
+            return redirect("llm:rokunohe_minutes")
+
+        try:
+            status = call_command(
+                self.command_name,
+                selected_pdf_url=url,
+                selected_pdf_filename=filename,
+                **command_options,
+            )
+        except CommandError as e:
+            messages.warning(request, str(e))
+            return redirect("llm:rokunohe_minutes")
+
+        try:
+            _replace_rokunohe_collection_summary(
+                _get_login_user(request), processing_scope_label="選択したPDF 1件"
+            )
+        except Exception:
+            logger.exception("六戸町会議録コレクションサマリーの自動作成に失敗しました")
+            messages.warning(
+                request,
+                "会議録PDFは処理しましたが、コレクションサマリーを作成できませんでした。",
+            )
+
+        status_messages = {
+            RokunoheMinutesImportStatus.IMPORTED.value: "選択した会議録PDFをベクトル化しました。",
+            RokunoheMinutesImportStatus.SKIPPED_EXISTING.value: "選択した会議録PDFは登録済みです。",
+            RokunoheMinutesImportStatus.SKIPPED_OUT_OF_SOURCE_DATE_RANGE.value: "選択した会議録PDFは指定期間外のため処理しませんでした。",
+            RokunoheMinutesImportStatus.SKIPPED_EMPTY_TEXT.value: "選択した会議録PDFから本文を抽出できませんでした。",
+        }
+        messages.success(
+            request,
+            status_messages.get(status, "選択した会議録PDFの処理が完了しました。"),
+        )
+        return redirect("llm:rokunohe_minutes")
+
+
 class RokunoheVectorDbResetView(UserPassesTestMixin, View):
     """
     六戸町会議録RAGのChroma DB collectionをリセットする管理者用ビュー。
@@ -609,7 +782,7 @@ class RokunoheVectorDbResetView(UserPassesTestMixin, View):
 
     raise_exception = True
     reset_consent_value = "1"
-    success_message = "六戸町会議録RAGのVector DBコレクションをリセットしました。"
+    success_message = "取り込み済み会議録データを削除しました。"
 
     def test_func(self):
         return self.request.user.is_superuser
@@ -618,7 +791,7 @@ class RokunoheVectorDbResetView(UserPassesTestMixin, View):
         if request.POST.get("reset_collection_consent") != self.reset_consent_value:
             messages.warning(
                 request,
-                "Vector DBコレクションのリセットに同意してから実行してください。",
+                "取り込み済み会議録データの削除に同意してから実行してください。",
             )
             return redirect("llm:rokunohe_minutes")
 
@@ -627,9 +800,10 @@ class RokunoheVectorDbResetView(UserPassesTestMixin, View):
             api_key=os.getenv("OPENAI_API_KEY") or ""
         )
         deleted_count = repository.reset_collection()
-        ChatLogRepository.clear_history(
+        ChatLogRepository.delete_marked_messages(
             user=login_user,
             use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+            content_marker=RokunoheMinutesRagService.collection_summary_marker,
         )
         messages.success(request, f"{self.success_message} 削除件数: {deleted_count}件")
         return redirect("llm:rokunohe_minutes")

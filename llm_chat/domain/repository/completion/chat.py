@@ -87,6 +87,34 @@ class ChatLogRepository:
         return chat_log
 
     @staticmethod
+    def replace_marked_message(
+        *,
+        user: User,
+        use_case_type: str,
+        content_marker: str,
+        message: MessageDTO,
+    ) -> ChatLogs:
+        """指定マーカーを持つ履歴を1件の新しいメッセージで置き換えます。"""
+        ChatLogRepository.delete_marked_messages(
+            user=user,
+            use_case_type=use_case_type,
+            content_marker=content_marker,
+        )
+        return ChatLogRepository.insert(message)
+
+    @staticmethod
+    def delete_marked_messages(
+        *, user: User, use_case_type: str, content_marker: str
+    ) -> int:
+        """指定マーカーを持つ履歴だけを削除します。"""
+        deleted_count, _ = ChatLogs.objects.filter(
+            user=user,
+            use_case_type=use_case_type,
+            content__startswith=content_marker,
+        ).delete()
+        return deleted_count
+
+    @staticmethod
     def bulk_insert(message_list: list[MessageDTO]):
         ChatLogs.objects.bulk_create([x.to_entity() for x in message_list])
 

@@ -73,6 +73,16 @@ class Command(BaseCommand):
             type=int,
             help="取り込み対象にするPDF日付の上限。YYYYMMDD形式です。",
         )
+        parser.add_argument(
+            "--selected-pdf-url",
+            default=None,
+            help="試験処理で取得するPDFのURL。selected-pdf-filenameと組み合わせて指定します。",
+        )
+        parser.add_argument(
+            "--selected-pdf-filename",
+            default=None,
+            help="試験処理で取得するPDFの保存時の元ファイル名。",
+        )
 
     def handle(self, *args, **options):
         """
@@ -82,6 +92,19 @@ class Command(BaseCommand):
         外部サイトへの連続アクセスを避けるため、HTML取得とPDF取得の両方で
         delayを挟みます。個別URLで例外が起きても、他の対象URLの処理は継続します。
         """
+        selected_pdf_url = options["selected_pdf_url"]
+        selected_pdf_filename = options["selected_pdf_filename"]
+        if bool(selected_pdf_url) != bool(selected_pdf_filename):
+            raise CommandError(
+                "selected-pdf-url と selected-pdf-filename は両方指定してください。"
+            )
+        if selected_pdf_url:
+            return self._handle_selected_pdf(
+                pdf_url=selected_pdf_url,
+                filename=selected_pdf_filename,
+                options=options,
+            )
+
         # 現行ページとバックナンバーページのURL
         target_urls = [
             "https://www.town.rokunohe.aomori.jp/docs/2023051900005/",
@@ -228,6 +251,67 @@ class Command(BaseCommand):
                 except Exception as e:
                     self._write_error(f"エラーが発生しました ({target_url}): {e}")
             self._write_info("六戸町PDFダウンロード終了")
+        finally:
+            lock_path.unlink(missing_ok=True)
+
+    def _handle_selected_pdf(
+        self,
+        *,
+        pdf_url: str,
+        filename: str,
+        options: dict,
+    ) -> str:
+        """一覧で選ばれたPDFだけを保存し、既存のインポートServiceへ渡します。"""
+        save_dir = self._get_save_dir(options["save_dir"])
+        save_dir.mkdir(parents=True, exist_ok=True)
+        lock_path = save_dir / ".rokunohe_pdf_download.lock"
+        self._create_lock(lock_path)
+
+        try:
+            source_date_from = self._get_source_date_from(
+                recent_days=options["recent_days"],
+                source_date_from=options["source_date_from"],
+            )
+            source_date_to = options["source_date_to"]
+            self._validate_source_date_range(
+                source_date_from=source_date_from,
+                source_date_to=source_date_to,
+            )
+
+            save_path = self._get_existing_dated_path(save_dir, filename)
+            if save_path is None:
+                response = requests.get(pdf_url, timeout=30)
+                response.raise_for_status()
+                filename = self._prepend_last_modified_date(filename, response)
+                if self._is_out_of_source_date_range(
+                    filename=filename,
+                    source_date_from=source_date_from,
+                    source_date_to=source_date_to,
+                ):
+                    return (
+                        RokunoheMinutesImportStatus.SKIPPED_OUT_OF_SOURCE_DATE_RANGE.value
+                    )
+
+                save_path = save_dir / filename
+                if not save_path.exists():
+                    save_path.write_bytes(response.content)
+
+            if self._is_out_of_source_date_range(
+                filename=save_path.name,
+                source_date_from=source_date_from,
+                source_date_to=source_date_to,
+            ):
+                return (
+                    RokunoheMinutesImportStatus.SKIPPED_OUT_OF_SOURCE_DATE_RANGE.value
+                )
+
+            status = self._import_to_chroma(
+                pdf_path=save_path,
+                recent_days=options["recent_days"],
+                source_date_from=source_date_from,
+                source_date_to=source_date_to,
+            )
+            return status.value if status else ""
         finally:
             lock_path.unlink(missing_ok=True)
 
@@ -417,7 +501,7 @@ class Command(BaseCommand):
         recent_days: int,
         source_date_from: int,
         source_date_to: int | None,
-    ) -> None:
+    ) -> RokunoheMinutesImportStatus | None:
         """
         保存済みPDFをRokunoheMinutesPdfImportServiceへ渡してChroma DBへ登録します。
 
@@ -434,15 +518,17 @@ class Command(BaseCommand):
             status = import_service.import_pdf(pdf_path)
             if status == RokunoheMinutesImportStatus.SKIPPED_EXISTING:
                 self._write_info(f"インポートスキップ (登録済み): {pdf_path.name}")
-                return
+                return status
             if status == RokunoheMinutesImportStatus.SKIPPED_OUT_OF_SOURCE_DATE_RANGE:
                 self._write_info(f"インポートスキップ (対象期間外): {pdf_path.name}")
-                return
+                return status
             if status == RokunoheMinutesImportStatus.SKIPPED_EMPTY_TEXT:
                 self._write_error(f"テキストが抽出できませんでした: {pdf_path.name}")
-                return
+                return status
 
             self._write_success(f"インポート完了: {pdf_path.name}")
+            return status
 
         except Exception as e:
             self._write_error(f"インポートエラー ({pdf_path.name}): {e}")
+            return None

@@ -1,10 +1,14 @@
 import logging
 import os
 import re
+import unicodedata
 from collections import Counter, defaultdict
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import urljoin
 
+import requests
+from bs4 import BeautifulSoup
 from django.contrib.auth.models import User
 from django.utils import timezone
 from janome.tokenizer import Tokenizer
@@ -24,6 +28,7 @@ from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
     RokunoheMinutesImportStatus,
     RokunoheMinutesMetadata,
     RokunoheMinutesPdf,
+    RokunoheMinutesPdfIndex,
     RokunoheMinutesSourceVolume,
     RokunoheMinutesStatsSourceChunk,
     RokunoheMinutesWordFrequency,
@@ -31,6 +36,165 @@ from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
 from llm_chat.domain.valueobject.completion.use_case import UseCaseType
 
 logger = logging.getLogger(__name__)
+
+
+class RokunoheMinutesPdfIndexService:
+    """
+    六戸町公式サイトのHTMLから会議録PDFリンクだけを一覧化するService。
+
+    Attributes:
+        target_urls: 会議録の現行ページとバックナンバーページのURL。
+    """
+
+    target_urls = (
+        "https://www.town.rokunohe.aomori.jp/docs/2023051900005/",
+        "https://www.town.rokunohe.aomori.jp/docs/2023051900005/"
+        "chousei_cyougikai_kaigiroku_kako.html",
+    )
+
+    def list_pdfs(
+        self,
+        *,
+        held_on_from: int | None = None,
+        held_on_to: int | None = None,
+    ) -> list[RokunoheMinutesPdfIndex]:
+        """
+        現行ページとバックナンバーページのHTMLだけを取得してPDFリンクを返します。
+
+        PDF本体、Chroma DB、OpenAI APIにはアクセスしません。リンクが重複している場合は
+        URL単位で1件にまとめ、公式ページの掲載順を維持します。開催日が見出しとリンク表示から取得できるPDFは、
+        held_on_from/toで指定された範囲に絞り込みます。
+        """
+        pdfs_by_url: dict[str, RokunoheMinutesPdfIndex] = {}
+        for target_url in self.target_urls:
+            response = requests.get(target_url, timeout=30)
+            response.raise_for_status()
+            response.encoding = response.apparent_encoding
+            soup = BeautifulSoup(response.text, "html.parser")
+            for pdf in self._find_pdf_links(soup.find_all("a"), target_url):
+                pdfs_by_url.setdefault(pdf.url, pdf)
+        pdfs = [
+            pdf
+            for pdf in pdfs_by_url.values()
+            if self._is_within_held_on_range(
+                pdf,
+                held_on_from=held_on_from,
+                held_on_to=held_on_to,
+            )
+        ]
+        return pdfs
+
+    @staticmethod
+    def _find_pdf_links(links, target_url: str) -> list[RokunoheMinutesPdfIndex]:
+        pdf_links = []
+        for link in links:
+            href = link.get("href")
+            if not href:
+                continue
+
+            text = link.get_text()
+            if ".pdf" not in href.lower() and "[pdf" not in text.lower():
+                continue
+
+            filename = RokunoheMinutesPdfIndexService._get_filename(text, href)
+            if not filename.lower().endswith(".pdf"):
+                filename += ".pdf"
+            title = RokunoheMinutesPdfIndexService._get_title(text)
+            era_year, calendar_year = RokunoheMinutesPdfIndexService._get_year(link)
+            meeting_label = RokunoheMinutesPdfIndexService._get_meeting_label(link)
+            month, day = RokunoheMinutesPdfIndexService._get_held_on(title)
+            pdf_links.append(
+                RokunoheMinutesPdfIndex(
+                    filename=filename,
+                    url=urljoin(
+                        RokunoheMinutesPdfIndexService._get_base_url(target_url), href
+                    ),
+                    title=title,
+                    era_year=era_year,
+                    calendar_year=calendar_year,
+                    category=RokunoheMinutesPdfIndexService._get_category(title),
+                    meeting_label=meeting_label,
+                    month=month,
+                    day=day,
+                )
+            )
+        return pdf_links
+
+    @staticmethod
+    def _is_within_held_on_range(
+        pdf: RokunoheMinutesPdfIndex,
+        *,
+        held_on_from: int | None,
+        held_on_to: int | None,
+    ) -> bool:
+        if held_on_from is None and held_on_to is None:
+            return True
+        if not (pdf.calendar_year and pdf.month and pdf.day):
+            return False
+
+        held_on = pdf.calendar_year * 10000 + pdf.month * 100 + pdf.day
+        if held_on_from is not None and held_on < held_on_from:
+            return False
+        return held_on_to is None or held_on <= held_on_to
+
+    @staticmethod
+    def _get_base_url(target_url: str) -> str:
+        if target_url.endswith("/") or target_url.endswith(".html"):
+            return target_url
+        return f"{target_url}/"
+
+    @staticmethod
+    def _get_filename(text: str, href: str) -> str:
+        filename = re.sub(r"\[pdf.*?]", "", text, flags=re.IGNORECASE).strip()
+        filename = re.sub(r'[\\/:*?"<>|]', "_", filename)
+        filename = re.sub(r"\s+", "_", filename)
+        return filename or Path(href).name
+
+    @staticmethod
+    def _get_title(text: str) -> str:
+        normalized_text = unicodedata.normalize("NFKC", text)
+        title = re.sub(r"\[pdf.*?]", "", normalized_text, flags=re.IGNORECASE)
+        normalized_title = re.sub(r"\s+", " ", title).strip()
+        return normalized_title.replace("(", "（").replace(")", "）") or "会議録名不明"
+
+    @staticmethod
+    def _get_year(link) -> tuple[str, int | None]:
+        for heading in link.find_all_previous(["h1", "h2", "h3", "h4", "h5", "h6"]):
+            heading_text = unicodedata.normalize(
+                "NFKC", heading.get_text(" ", strip=True)
+            )
+            reiwa_match = re.search(r"令和\s*(\d+)\s*年", heading_text)
+            if reiwa_match:
+                era_number = int(reiwa_match.group(1))
+                return f"令和{era_number}年", 2018 + era_number
+
+            heisei_match = re.search(r"平成\s*(\d+)\s*年", heading_text)
+            if heisei_match:
+                era_number = int(heisei_match.group(1))
+                return f"平成{era_number}年", 1988 + era_number
+        return "", None
+
+    @staticmethod
+    def _get_meeting_label(link) -> str:
+        for element in link.find_all_previous(
+            ["h1", "h2", "h3", "h4", "h5", "h6", "p", "li"]
+        ):
+            label = unicodedata.normalize("NFKC", element.get_text(" ", strip=True))
+            if re.search(r"第\s*\d+\s*回(?:定例会|臨時会)", label):
+                return label.replace("[", "［").replace("]", "］")
+        return ""
+
+    @staticmethod
+    def _get_held_on(title: str) -> tuple[int | None, int | None]:
+        held_on_match = re.search(r"(\d+)月\s*(\d+)日", title)
+        if not held_on_match:
+            return None, None
+        return int(held_on_match.group(1)), int(held_on_match.group(2))
+
+    @staticmethod
+    def _get_category(title: str) -> str:
+        category = re.split(r"[（(]", title, maxsplit=1)[0].strip()
+        return re.sub(r"本会議\s*\d+号$", "本会議", category) or "その他"
 
 
 class RokunoheMinutesPdfImportService:
@@ -200,6 +364,7 @@ class RokunoheMinutesRagService(BaseChatService):
     """
 
     model_name = ModelDefaults.ROKUNOHE_MINUTES_RAG.model
+    collection_summary_marker = "<!-- rokunohe-collection-summary -->"
     initial_summary_prompt = (
         "取り込み済みの六戸町会議録を横断して、分析の入口になる初回サマリーを作成してください。"
         "主要テーマ、直近の傾向、深掘りに向く質問例を日本語で簡潔に箇条書きしてください。"
@@ -248,7 +413,9 @@ class RokunoheMinutesRagService(BaseChatService):
             use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
         )
 
-    def generate_initial_summary(self, user: User) -> MessageDTO:
+    def generate_initial_summary(
+        self, user: User, processing_scope_label: str | None = None
+    ) -> MessageDTO:
         """
         PDF取り込み直後に表示する分析入口用サマリーを生成します。
 
@@ -262,6 +429,7 @@ class RokunoheMinutesRagService(BaseChatService):
         Returns:
             MessageDTO: チャット履歴へ保存するassistantメッセージ。
         """
+        collection_scope = self._build_collection_scope_label()
         user_message = MessageDTO(
             user=user,
             role=RoleType.USER,
@@ -269,7 +437,59 @@ class RokunoheMinutesRagService(BaseChatService):
             model_name=self.model_name,
             use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
         )
-        return self.generate(user_message)
+        summary = self.generate(user_message)
+        if processing_scope_label:
+            scope_content = (
+                f"> 今回の処理: {processing_scope_label}\n"
+                f"> サマリー対象: {collection_scope}\n"
+            )
+        else:
+            scope_content = f"> 検索対象: {collection_scope}\n"
+        return self._create_assistant_message(
+            user=user,
+            content=(
+                f"{self.collection_summary_marker}\n"
+                "### コレクションサマリー\n\n"
+                + scope_content
+                + "> このサマリーは関連する会議録チャンクの検索結果をもとに作成しています。\n\n"
+                + summary.content
+            ),
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+
+    def _build_collection_scope_label(self) -> str:
+        """初回サマリー生成時点の登録済み会議録の範囲を表示用テキストにします。"""
+        chunks = self.repository.list_stats_source_chunks()
+        sources = {chunk.source for chunk in chunks if chunk.source}
+        source_dates = sorted(
+            {
+                chunk.source_date
+                for chunk in chunks
+                if re.fullmatch(r"\d{8}", chunk.source_date)
+            }
+        )
+        undated_sources = {
+            chunk.source
+            for chunk in chunks
+            if chunk.source and not re.fullmatch(r"\d{8}", chunk.source_date)
+        }
+        if not sources:
+            return "登録済み会議録なし"
+        if not source_dates:
+            return f"登録済み会議録全体（PDF: {len(sources)}件、PDF更新日不明）"
+
+        details = (
+            f"PDF更新日: {self._format_source_date(source_dates[0])}〜"
+            f"{self._format_source_date(source_dates[-1])}、PDF: {len(sources)}件"
+        )
+        if undated_sources:
+            details += f"、PDF更新日不明: {len(undated_sources)}件"
+        return f"登録済み会議録全体（{details}）"
+
+    @staticmethod
+    def _format_source_date(source_date: str) -> str:
+        """YYYYMMDD形式のPDF更新日を画面表示用に整形します。"""
+        return f"{source_date[:4]}-{source_date[4:6]}-{source_date[6:]}"
 
 
 class RokunoheMinutesCollectionStatsService:

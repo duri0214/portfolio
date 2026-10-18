@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 
 from django.contrib.messages import get_messages
 from django.contrib.auth.models import User
+from django.core import signing
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase, Client
@@ -18,6 +19,7 @@ from llm_chat.domain.repository.completion.rokunohe_minutes import (
 from llm_chat.domain.service.completion.rokunohe_minutes import (
     RokunoheMinutesCollectionStatsService,
     RokunoheMinutesPdfImportService,
+    RokunoheMinutesPdfIndexService,
     RokunoheMinutesRagService,
 )
 from llm_chat.domain.valueobject.completion.chat import MessageDTO
@@ -28,6 +30,7 @@ from llm_chat.domain.valueobject.completion.rokunohe_minutes import (
     RokunoheMinutesDateVolume,
     RokunoheMinutesImportStatus,
     RokunoheMinutesPdf,
+    RokunoheMinutesPdfIndex,
     RokunoheMinutesSourceVolume,
     RokunoheMinutesStatsSourceChunk,
     RokunoheMinutesWordFrequency,
@@ -253,6 +256,152 @@ class RokunohePdfDownloadViewTest(TestCase):
             source_date_to=20260225,
         )
 
+    def test_superuser_can_open_single_pdf_trial_selection_without_reset(self):
+        """
+        シナリオ:
+        - 入力: superuserでログインし、1件だけ試験処理する指定で期間を入力した状態。
+        - 処理: 会議録PDF取得フォームをPOSTする。
+        - 期待値: PDF本文の取得や会話履歴リセットをせず、ラジオボタンの一覧を表示すること。
+        """
+        user = User.objects.create_superuser(
+            username="admin-single-select",
+            email="admin-single-select@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+        ChatLogs.objects.create(
+            user=user,
+            role=RoleType.USER.value,
+            content="残す会話",
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+        pdf = RokunoheMinutesPdfIndex(
+            filename="令和8年会議録.pdf",
+            url="https://example.com/minutes.pdf",
+            meeting_label="第3回定例会［6月］",
+        )
+
+        with patch(
+            "llm_chat.views.RokunoheMinutesPdfIndexService.list_pdfs",
+            return_value=[pdf],
+        ), patch("llm_chat.views.call_command") as call_command_mock, patch(
+            "llm_chat.views.RokunoheMinutesRagService"
+        ) as rag_service_mock:
+            response = self.client.post(
+                reverse("llm:rokunohe_pdf_download"),
+                {
+                    "single_pdf_trial_mode": "1",
+                    "source_date_from": "2026-02-25",
+                    "source_date_to": "2026-02-25",
+                },
+            )
+
+        self.assertEqual(200, response.status_code)
+        self.assertTemplateUsed(response, "llm_chat/rokunohe_pdf_single_select.html")
+        self.assertContains(response, 'type="radio"')
+        self.assertContains(response, "令和8年会議録.pdf")
+        self.assertContains(response, "第3回定例会［6月］")
+        self.assertContains(
+            response,
+            "https://www.town.rokunohe.aomori.jp/docs/2023051900005/",
+        )
+        self.assertEqual(
+            ["残す会話"],
+            list(
+                ChatLogs.objects.filter(
+                    user=user,
+                    use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+                ).values_list("content", flat=True)
+            ),
+        )
+        call_command_mock.assert_not_called()
+        rag_service_mock.assert_not_called()
+
+    def test_superuser_can_import_selected_single_pdf_without_reset(self):
+        """
+        シナリオ:
+        - 入力: superuserでログインし、一覧で選んだPDFの署名済みトークンをPOSTする。
+        - 処理: 1件だけ試験処理の実行先へリクエストする。
+        - 期待値: 選択したURLだけを管理コマンドへ渡し、会話履歴を残したまま完了すること。
+        """
+        user = User.objects.create_superuser(
+            username="admin-single-import",
+            email="admin-single-import@example.com",
+            password="password",
+        )
+        self.client.force_login(user)
+        ChatLogs.objects.create(
+            user=user,
+            role=RoleType.USER.value,
+            content="残す会話",
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+        token = signing.dumps(
+            {
+                "filename": "令和8年会議録.pdf",
+                "url": "https://example.com/minutes.pdf",
+            },
+            salt="llm_chat.rokunohe_pdf_single_import",
+        )
+
+        marker = RokunoheMinutesRagService.collection_summary_marker
+        ChatLogs.objects.create(
+            user=user,
+            role=RoleType.ASSISTANT.value,
+            content=f"{marker}\n### コレクションサマリー\n古い内容",
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+        summary_message = MessageDTO(
+            user=user,
+            role=RoleType.ASSISTANT,
+            content=f"{marker}\n### コレクションサマリー\n新しい内容",
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+
+        with patch(
+            "llm_chat.views.call_command",
+            return_value=RokunoheMinutesImportStatus.IMPORTED.value,
+        ) as call_command_mock, patch(
+            "llm_chat.views.RokunoheMinutesRagService"
+        ) as rag_service_mock:
+            rag_service_mock.collection_summary_marker = marker
+            rag_service_mock.return_value.generate_initial_summary.return_value = (
+                summary_message
+            )
+            response = self.client.post(
+                reverse("llm:rokunohe_pdf_single_import"),
+                {
+                    "selected_pdf": token,
+                    "source_date_from": "2026-02-25",
+                    "source_date_to": "2026-02-25",
+                },
+            )
+
+        self.assertRedirects(
+            response,
+            reverse("llm:rokunohe_minutes"),
+            fetch_redirect_response=False,
+        )
+        call_command_mock.assert_called_once_with(
+            "rokunohe_pdf_download",
+            selected_pdf_url="https://example.com/minutes.pdf",
+            selected_pdf_filename="令和8年会議録.pdf",
+            source_date_from=20260225,
+            source_date_to=20260225,
+        )
+        rag_service_mock.return_value.generate_initial_summary.assert_called_once_with(
+            user, processing_scope_label="選択したPDF 1件"
+        )
+        self.assertEqual(
+            ["残す会話", summary_message.content],
+            list(
+                ChatLogs.objects.filter(
+                    user=user,
+                    use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+                ).values_list("content", flat=True)
+            ),
+        )
+
     def test_superuser_cannot_start_pdf_download_with_only_source_date_to(self):
         """
         シナリオ:
@@ -390,20 +539,26 @@ class RokunohePdfDownloadViewTest(TestCase):
         response = self.client.get(reverse("llm:rokunohe_minutes"))
 
         self.assertContains(response, "会議録PDF取得・ベクトル化")
-        self.assertContains(response, "コレクションリセット")
-        self.assertContains(response, "頻出語集計")
-        self.assertContains(response, "コレクションビューア")
+        self.assertContains(response, "一覧から1件を選んで試験処理する")
+        self.assertContains(response, "会議録を削除")
+        self.assertContains(response, "頻出語を集計")
+        self.assertContains(response, "会議録を確認")
+        self.assertContains(response, "取り込み済み会議録データ")
+        self.assertContains(response, "会話履歴")
         self.assertContains(response, "直近1年分の会議録を処理基準")
         self.assertContains(response, 'class="btn btn-outline-success btn-sm"')
         content = response.content.decode()
         self.assertLess(
-            content.index("頻出語集計"), content.index("コレクションリセット")
+            content.index("取り込み済み会議録データ"), content.index("会話履歴")
         )
         self.assertLess(
-            content.index("コレクションビューア"), content.index("コレクションリセット")
+            content.index("取り込み済み会議録データ"),
+            content.index("会議録を削除"),
         )
+        self.assertLess(content.index("会話履歴"), content.index("会話履歴を削除"))
         self.assertLess(
-            content.index("チャット履歴を削除"), content.index("コレクションリセット")
+            content.index("処理期間終了"),
+            content.index("一覧から1件を選んで試験処理する"),
         )
 
     def test_non_superuser_sees_disabled_admin_buttons(self):
@@ -425,20 +580,21 @@ class RokunohePdfDownloadViewTest(TestCase):
         self.assertContains(response, "会議録PDF取得・ベクトル化")
         self.assertContains(response, "管理ページに行くにはログインが必要です")
         self.assertContains(response, "disabled")
-        self.assertContains(response, "コレクションリセット")
-        self.assertContains(response, "頻出語集計")
-        self.assertContains(response, "コレクションビューア")
+        self.assertContains(response, "会議録を削除")
+        self.assertContains(response, "頻出語を集計")
+        self.assertContains(response, "会議録を確認")
+        self.assertContains(response, "取り込み済み会議録データ")
+        self.assertContains(response, "会話履歴")
         self.assertContains(response, "直近1年分の会議録を処理基準")
         content = response.content.decode()
         self.assertLess(
-            content.index("頻出語集計"), content.index("コレクションリセット")
+            content.index("取り込み済み会議録データ"), content.index("会話履歴")
         )
         self.assertLess(
-            content.index("コレクションビューア"), content.index("コレクションリセット")
+            content.index("取り込み済み会議録データ"),
+            content.index("会議録を削除"),
         )
-        self.assertLess(
-            content.index("チャット履歴を削除"), content.index("コレクションリセット")
-        )
+        self.assertLess(content.index("会話履歴"), content.index("会話履歴を削除"))
 
     @patch("llm_chat.views.RokunoheMinutesRagRepository")
     def test_superuser_can_reset_vector_db_collection(self, mock_repository):
@@ -446,7 +602,7 @@ class RokunohePdfDownloadViewTest(TestCase):
         シナリオ:
         - 入力: superuserでログインし、六戸町会議録RAG履歴がある状態。
         - 処理: Vector DBコレクションリセットのPOST先へ同意値付きでリクエストする。
-        - 期待値: コレクションがリセットされ、六戸町会議録RAG履歴も削除されること。
+        - 期待値: 取り込み済み会議録データが削除され、通常の会話履歴は残ること。
         """
         user = User.objects.create_superuser(
             username="admin-reset",
@@ -457,7 +613,14 @@ class RokunohePdfDownloadViewTest(TestCase):
         ChatLogs.objects.create(
             user=user,
             role=RoleType.USER.value,
-            content="古い質問",
+            content="残す会話",
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+        marker = RokunoheMinutesRagService.collection_summary_marker
+        ChatLogs.objects.create(
+            user=user,
+            role=RoleType.ASSISTANT.value,
+            content=f"{marker}\n### コレクションサマリー",
             use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
         )
         mock_repository.return_value.reset_collection.return_value = 3
@@ -473,11 +636,14 @@ class RokunohePdfDownloadViewTest(TestCase):
             fetch_redirect_response=False,
         )
         mock_repository.return_value.reset_collection.assert_called_once_with()
-        self.assertFalse(
-            ChatLogs.objects.filter(
-                user=user,
-                use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
-            ).exists()
+        self.assertEqual(
+            ["残す会話"],
+            list(
+                ChatLogs.objects.filter(
+                    user=user,
+                    use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+                ).values_list("content", flat=True)
+            ),
         )
 
     @patch("llm_chat.views.RokunoheMinutesRagRepository")
@@ -581,7 +747,7 @@ class RokunohePdfDownloadViewTest(TestCase):
             source_date_to=None,
         )
         mock_service.return_value.build_stats.assert_called_once_with()
-        self.assertContains(response, "六戸町会議録 頻出語集計")
+        self.assertContains(response, "六戸町会議録 頻出語を集計")
         self.assertContains(response, "対象期間: 直近1年")
         self.assertContains(response, "学校給食")
         self.assertContains(response, "20260225_会議録.pdf")
@@ -832,6 +998,147 @@ class RokunohePdfDownloadViewTest(TestCase):
         self.assertEqual(403, response.status_code)
 
 
+class RokunoheMinutesPdfIndexServiceTest(TestCase):
+    def test_lists_pdf_links_from_html_without_fetching_pdf_contents(self):
+        """
+        シナリオ:
+        - 入力: 現行ページとバックナンバーページにPDFリンクがあるHTMLレスポンス。
+        - 処理: PDF一覧取得Serviceを実行する。
+        - 期待値: HTMLを各1回だけ取得し、重複しないPDFリンクの一覧を返すこと。
+        """
+        first_response = Mock()
+        first_response.text = '<a href="current.pdf">現行会議録 [PDF]</a>'
+        first_response.apparent_encoding = "utf-8"
+        second_response = Mock()
+        second_response.text = (
+            '<a href="current.pdf">現行会議録 [PDF]</a>'
+            '<a href="archive.pdf">過去会議録 [PDF]</a>'
+        )
+        second_response.apparent_encoding = "utf-8"
+
+        with patch(
+            "llm_chat.domain.service.completion.rokunohe_minutes.requests.get",
+            side_effect=[first_response, second_response],
+        ) as get_mock:
+            pdfs = RokunoheMinutesPdfIndexService().list_pdfs()
+
+        self.assertEqual(
+            ["現行会議録.pdf", "過去会議録.pdf"],
+            [pdf.filename for pdf in pdfs],
+        )
+        self.assertEqual(2, get_mock.call_count)
+        self.assertTrue(
+            all(call.kwargs["timeout"] == 30 for call in get_mock.call_args_list)
+        )
+        first_response.raise_for_status.assert_called_once()
+        second_response.raise_for_status.assert_called_once()
+
+    def test_derives_year_category_and_held_on_from_official_page_labels(self):
+        """
+        シナリオ:
+        - 入力: 和暦見出しと開催日付きリンク表示、内容を表さないPDFファイル名を含むHTML。
+        - 処理: PDF一覧取得Serviceを実行する。
+        - 期待値: ファイル名ではなく公式ページの見出しとリンク表示から年度、種別、開催日を導出すること。
+        """
+        first_response = Mock()
+        first_response.text = (
+            "<h3>令和８年</h3>"
+            '<a href="h3002teirei_kaigiroku01.pdf">本会議３号（6月9日）[PDF：320KB]</a>'
+        )
+        first_response.apparent_encoding = "utf-8"
+        second_response = Mock()
+        second_response.text = ""
+        second_response.apparent_encoding = "utf-8"
+
+        with patch(
+            "llm_chat.domain.service.completion.rokunohe_minutes.requests.get",
+            side_effect=[first_response, second_response],
+        ):
+            pdf = RokunoheMinutesPdfIndexService().list_pdfs()[0]
+
+        self.assertEqual("本会議3号（6月9日）", pdf.title)
+        self.assertEqual("令和8年", pdf.era_year)
+        self.assertEqual(2026, pdf.calendar_year)
+        self.assertEqual("本会議", pdf.category)
+        self.assertEqual("2026年6月9日", pdf.held_on_label)
+
+    def test_preserves_official_page_order_and_meeting_headings(self):
+        """
+        シナリオ:
+        - 入力: 定例会・臨時会の見出しと、その配下に会議録リンクが並ぶHTML。
+        - 処理: PDF一覧取得Serviceを実行する。
+        - 期待値: 公式ページの掲載順と会見出しを保持して返すこと。
+        """
+        first_response = Mock()
+        first_response.text = (
+            "<h3>令和8年</h3>"
+            "<p>第3回定例会［6月］</p>"
+            '<a href="three.pdf">本会議3号（6月9日）[PDF]</a>'
+            '<a href="two.pdf">本会議2号（6月8日）[PDF]</a>'
+            '<a href="one.pdf">本会議1号（6月5日）[PDF]</a>'
+            "<p>第2回臨時会［5月］</p>"
+            '<a href="extra.pdf">本会議1号（5月12日）[PDF]</a>'
+        )
+        first_response.apparent_encoding = "utf-8"
+        second_response = Mock()
+        second_response.text = ""
+        second_response.apparent_encoding = "utf-8"
+
+        with patch(
+            "llm_chat.domain.service.completion.rokunohe_minutes.requests.get",
+            side_effect=[first_response, second_response],
+        ):
+            pdfs = RokunoheMinutesPdfIndexService().list_pdfs()
+
+        self.assertEqual(
+            [
+                "本会議3号（6月9日）",
+                "本会議2号（6月8日）",
+                "本会議1号（6月5日）",
+                "本会議1号（5月12日）",
+            ],
+            [pdf.title for pdf in pdfs],
+        )
+        self.assertEqual(
+            [
+                "第3回定例会［6月］",
+                "第3回定例会［6月］",
+                "第3回定例会［6月］",
+                "第2回臨時会［5月］",
+            ],
+            [pdf.meeting_label for pdf in pdfs],
+        )
+
+    def test_filters_pdf_list_by_held_on_range(self):
+        """
+        シナリオ:
+        - 入力: 開催日が2025年と2026年に分かれる会議録リンクを含むHTML。
+        - 処理: 2026年以降の開催日範囲を指定してPDF一覧取得Serviceを実行する。
+        - 期待値: 開催日が範囲内の2026年会議録だけを返すこと。
+        """
+        first_response = Mock()
+        first_response.text = (
+            "<h3>令和7年</h3>"
+            '<a href="old.pdf">本会議1号（12月5日）[PDF]</a>'
+            "<h3>令和8年</h3>"
+            '<a href="current.pdf">本会議1号（2月27日）[PDF]</a>'
+        )
+        first_response.apparent_encoding = "utf-8"
+        second_response = Mock()
+        second_response.text = ""
+        second_response.apparent_encoding = "utf-8"
+
+        with patch(
+            "llm_chat.domain.service.completion.rokunohe_minutes.requests.get",
+            side_effect=[first_response, second_response],
+        ):
+            pdfs = RokunoheMinutesPdfIndexService().list_pdfs(
+                held_on_from=20260101,
+            )
+
+        self.assertEqual(["本会議1号（2月27日）"], [pdf.title for pdf in pdfs])
+
+
 class RokunoheMinutesPdfImportServiceTest(TestCase):
     @patch("llm_chat.domain.service.completion.rokunohe_minutes.PdfReader")
     def test_imports_pdf_text_to_repository(self, mock_pdf_reader):
@@ -999,6 +1306,53 @@ class RokunoheMinutesRagServiceTest(TestCase):
             assistant_message.use_case_type,
             UseCaseType.ROKUNOHE_MINUTES_RAG,
         )
+
+    def test_initial_summary_records_registered_collection_scope(self):
+        """
+        シナリオ:
+        - 入力: PDF更新日が異なる登録済み会議録チャンクと、初回サマリーのRAG回答。
+        - 処理: 初回サマリーを生成する。
+        - 期待値: サマリー本文に生成時点のPDF更新日範囲とPDF件数を記録すること。
+        """
+        user = User.objects.create_user(username="rag-initial-summary")
+        repository = Mock()
+        repository.retrieve_answer.return_value = Mock(answer="サマリー本文です。")
+        repository.list_stats_source_chunks.return_value = [
+            RokunoheMinutesStatsSourceChunk(
+                chroma_id="first",
+                document="会議録本文",
+                source="20260225_会議録1号.pdf",
+                source_date="20260225",
+                page=1,
+                chunk_index=0,
+            ),
+            RokunoheMinutesStatsSourceChunk(
+                chroma_id="second",
+                document="会議録本文",
+                source="20260918_会議録2号.pdf",
+                source_date="20260918",
+                page=1,
+                chunk_index=0,
+            ),
+        ]
+        service = RokunoheMinutesRagService(repository=repository)
+
+        assistant_message = service.generate_initial_summary(
+            user, processing_scope_label="選択したPDF 1件"
+        )
+
+        self.assertTrue(
+            assistant_message.content.startswith(
+                RokunoheMinutesRagService.collection_summary_marker
+            )
+        )
+        self.assertIn("今回の処理: 選択したPDF 1件", assistant_message.content)
+        self.assertIn("サマリー対象: 登録済み会議録全体", assistant_message.content)
+        self.assertIn(
+            "PDF更新日: 2026-02-25〜2026-09-18、PDF: 2件", assistant_message.content
+        )
+        self.assertIn("サマリー本文です。", assistant_message.content)
+        repository.list_stats_source_chunks.assert_called_once_with()
 
 
 class RokunoheMinutesCollectionStatsServiceTest(TestCase):
@@ -1453,6 +1807,49 @@ class RokunoheMinutesRagRepositoryTest(TestCase):
 
 
 class RokunohePdfDownloadCommandTest(TestCase):
+    @patch(
+        "llm_chat.management.commands.rokunohe_pdf_download.RokunoheMinutesPdfImportService"
+    )
+    def test_imports_only_selected_pdf_without_fetching_index_pages(
+        self, mock_import_service
+    ):
+        """
+        シナリオ:
+        - 入力: 選択済みPDFのURLとファイル名、Last-Modifiedを持つPDFレスポンス。
+        - 処理: 1件用の管理コマンド引数で実行する。
+        - 期待値: インデックスHTMLへはアクセスせず、選択したPDFだけを保存・登録すること。
+        """
+        mock_import_service.return_value.import_pdf.return_value = (
+            RokunoheMinutesImportStatus.IMPORTED
+        )
+        pdf_response = self._create_response(
+            "",
+            content=b"%PDF",
+            headers={"Last-Modified": "Wed, 25 Feb 2026 01:55:27 GMT"},
+        )
+
+        with TemporaryDirectory() as temp_dir:
+            with patch(
+                "llm_chat.management.commands.rokunohe_pdf_download.requests.get",
+                return_value=pdf_response,
+            ) as get_mock:
+                status = call_command(
+                    "rokunohe_pdf_download",
+                    save_dir=temp_dir,
+                    selected_pdf_url="https://example.com/selected.pdf",
+                    selected_pdf_filename="選択会議録.pdf",
+                    source_date_from=20260225,
+                )
+
+            self.assertEqual(
+                RokunoheMinutesImportStatus.IMPORTED.value,
+                status,
+            )
+            self.assertTrue((Path(temp_dir) / "20260225_選択会議録.pdf").exists())
+
+        get_mock.assert_called_once_with("https://example.com/selected.pdf", timeout=30)
+        mock_import_service.return_value.import_pdf.assert_called_once()
+
     @patch(
         "llm_chat.management.commands.rokunohe_pdf_download.RokunoheMinutesPdfImportService"
     )
