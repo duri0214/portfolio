@@ -540,22 +540,20 @@ class RokunohePdfDownloadViewTest(TestCase):
 
         self.assertContains(response, "会議録PDF取得・ベクトル化")
         self.assertContains(response, "一覧から1件を選んで試験処理する")
-        self.assertContains(response, "コレクションリセット")
+        self.assertContains(response, "取り込み済み会議録をリセット")
         self.assertContains(response, "頻出語集計")
         self.assertContains(response, "取り込み済み会議録を確認")
+        self.assertContains(response, "検索用会議録データ")
+        self.assertContains(response, "会話履歴")
         self.assertContains(response, "直近1年分の会議録を処理基準")
         self.assertContains(response, 'class="btn btn-outline-success btn-sm"')
         content = response.content.decode()
+        self.assertLess(content.index("検索用会議録データ"), content.index("会話履歴"))
         self.assertLess(
-            content.index("頻出語集計"), content.index("コレクションリセット")
+            content.index("検索用会議録データ"),
+            content.index("取り込み済み会議録をリセット"),
         )
-        self.assertLess(
-            content.index("取り込み済み会議録を確認"),
-            content.index("コレクションリセット"),
-        )
-        self.assertLess(
-            content.index("チャット履歴を削除"), content.index("コレクションリセット")
-        )
+        self.assertLess(content.index("会話履歴"), content.index("会話履歴を削除"))
         self.assertLess(
             content.index("処理期間終了"),
             content.index("一覧から1件を選んで試験処理する"),
@@ -580,21 +578,19 @@ class RokunohePdfDownloadViewTest(TestCase):
         self.assertContains(response, "会議録PDF取得・ベクトル化")
         self.assertContains(response, "管理ページに行くにはログインが必要です")
         self.assertContains(response, "disabled")
-        self.assertContains(response, "コレクションリセット")
+        self.assertContains(response, "取り込み済み会議録をリセット")
         self.assertContains(response, "頻出語集計")
         self.assertContains(response, "取り込み済み会議録を確認")
+        self.assertContains(response, "検索用会議録データ")
+        self.assertContains(response, "会話履歴")
         self.assertContains(response, "直近1年分の会議録を処理基準")
         content = response.content.decode()
+        self.assertLess(content.index("検索用会議録データ"), content.index("会話履歴"))
         self.assertLess(
-            content.index("頻出語集計"), content.index("コレクションリセット")
+            content.index("検索用会議録データ"),
+            content.index("取り込み済み会議録をリセット"),
         )
-        self.assertLess(
-            content.index("取り込み済み会議録を確認"),
-            content.index("コレクションリセット"),
-        )
-        self.assertLess(
-            content.index("チャット履歴を削除"), content.index("コレクションリセット")
-        )
+        self.assertLess(content.index("会話履歴"), content.index("会話履歴を削除"))
 
     @patch("llm_chat.views.RokunoheMinutesRagRepository")
     def test_superuser_can_reset_vector_db_collection(self, mock_repository):
@@ -602,7 +598,7 @@ class RokunohePdfDownloadViewTest(TestCase):
         シナリオ:
         - 入力: superuserでログインし、六戸町会議録RAG履歴がある状態。
         - 処理: Vector DBコレクションリセットのPOST先へ同意値付きでリクエストする。
-        - 期待値: コレクションがリセットされ、六戸町会議録RAG履歴も削除されること。
+        - 期待値: 検索用会議録データがリセットされ、通常の会話履歴は残ること。
         """
         user = User.objects.create_superuser(
             username="admin-reset",
@@ -613,7 +609,14 @@ class RokunohePdfDownloadViewTest(TestCase):
         ChatLogs.objects.create(
             user=user,
             role=RoleType.USER.value,
-            content="古い質問",
+            content="残す会話",
+            use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+        )
+        marker = RokunoheMinutesRagService.collection_summary_marker
+        ChatLogs.objects.create(
+            user=user,
+            role=RoleType.ASSISTANT.value,
+            content=f"{marker}\n### コレクションサマリー",
             use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
         )
         mock_repository.return_value.reset_collection.return_value = 3
@@ -629,11 +632,14 @@ class RokunohePdfDownloadViewTest(TestCase):
             fetch_redirect_response=False,
         )
         mock_repository.return_value.reset_collection.assert_called_once_with()
-        self.assertFalse(
-            ChatLogs.objects.filter(
-                user=user,
-                use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
-            ).exists()
+        self.assertEqual(
+            ["残す会話"],
+            list(
+                ChatLogs.objects.filter(
+                    user=user,
+                    use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+                ).values_list("content", flat=True)
+            ),
         )
 
     @patch("llm_chat.views.RokunoheMinutesRagRepository")

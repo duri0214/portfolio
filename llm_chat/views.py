@@ -773,7 +773,7 @@ class RokunoheVectorDbResetView(UserPassesTestMixin, View):
 
     raise_exception = True
     reset_consent_value = "1"
-    success_message = "六戸町会議録RAGのVector DBコレクションをリセットしました。"
+    success_message = "検索用会議録データをリセットしました。"
 
     def test_func(self):
         return self.request.user.is_superuser
@@ -782,7 +782,7 @@ class RokunoheVectorDbResetView(UserPassesTestMixin, View):
         if request.POST.get("reset_collection_consent") != self.reset_consent_value:
             messages.warning(
                 request,
-                "Vector DBコレクションのリセットに同意してから実行してください。",
+                "検索用会議録データのリセットに同意してから実行してください。",
             )
             return redirect("llm:rokunohe_minutes")
 
@@ -791,9 +791,10 @@ class RokunoheVectorDbResetView(UserPassesTestMixin, View):
             api_key=os.getenv("OPENAI_API_KEY") or ""
         )
         deleted_count = repository.reset_collection()
-        ChatLogRepository.clear_history(
+        ChatLogRepository.delete_marked_messages(
             user=login_user,
             use_case_type=UseCaseType.ROKUNOHE_MINUTES_RAG,
+            content_marker=RokunoheMinutesRagService.collection_summary_marker,
         )
         messages.success(request, f"{self.success_message} 削除件数: {deleted_count}件")
         return redirect("llm:rokunohe_minutes")
