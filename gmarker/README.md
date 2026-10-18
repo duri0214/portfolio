@@ -82,6 +82,43 @@ GCP技術サポートからの回答では、Places API (New)
 - フロントエンドのJavaScriptコードでは `GOOGLE_MAPS_FE_API_KEY` を使用する
 - テンプレート内でAPIキーを渡す際は、目的に応じて適切なキーを選択する
 
+### クラフトビール候補の手動抽出
+
+フライヤー作成前の調査用として、渋谷センター街から ABEMA Towers 周辺の候補を
+Places API (New) から取得し、検品用の JSON または CSV に出力できます。画面検索や
+`Place`・`Review` テーブルへの保存は行いません。
+
+初期設定は [configs/shibuya_craft_beer.json](configs/shibuya_craft_beer.json) にあります。
+エリア名、検索中心、半径、矩形境界、検索語、Nearby Search の type、必須店舗は、この
+設定ファイルを複製・編集して変更します。`nearby_types` は Google Places API で有効な
+`bar`、`pub`、`restaurant` だけを指定できます。
+
+```powershell
+$env:GOOGLE_MAPS_BE_API_KEY = "サーバー用APIキー"
+python manage.py export_craft_beer_places --config gmarker/configs/shibuya_craft_beer.json --format json --output output/shibuya_craft_beer.json
+python manage.py export_craft_beer_places --config gmarker/configs/shibuya_craft_beer.json --format csv --output output/shibuya_craft_beer.csv
+```
+
+コマンドは Text Search と Nearby Search の結果を Place ID で統合します。円形検索結果から、
+設定した矩形境界外、座標欠落、閉店状態の店舗を候補から除外します。営業状態が不明な店舗と、
+`bar`・`pub`・`restaurant` の type 検索だけで見つかった店舗は、クラフトビール専門性を確定
+できないため手動確認へ分けます。`TAP&CROWLER Shibuya` は営業中かつ対象範囲内、設定した住所照合語に
+一致する必須候補です。満たさない場合はファイルを出力せずエラーで終了します。Place ID が
+人手で確定した後は、`required_place.place_id` へ追加できます。
+
+gmarker トップの「クラフトビール候補」ボタンも同じ設定で抽出した候補だけを地図と一覧へ
+表示します。通常の「レストラン」検索とは別機能であり、現在設定されている自位置ではなく、
+設定ファイルの渋谷エリアを検索します。
+
+出力された候補は掲載確定データではありません。`craft_beer_specialty`、`tap_count`、
+`publication_permission` は未確認値として必ず出力されます。フライヤー入稿前に公式情報、
+営業実態、タップ数、店舗への掲載許可を人手で確認してください。APIキーは出力しません。
+
+実行前に [Google Maps Platform 利用規約](https://mapsplatform.google.com/terms/) と
+[Places API のポリシー・帰属表示要件](https://developers.google.com/maps/documentation/places/web-service/policies)
+を確認し、実データの保存期間・利用方法・必要な帰属表示を満たしてください。レビュー本文や
+写真は取得せず、Google Maps の画像生成や他サイトのスクレイピングも行いません。
+
 ## 必要な環境変数
 
 ```

@@ -21,6 +21,10 @@
                         <a class="btn btn-outline-secondary" href="{% url 'mrk:coordinate_create' %}">中心座標の編集</a>
                         <a href="#" class="btn btn-outline-primary" onclick="submitSearchForm(1, 'restaurant')">レストラン</a>
                         <a href="#" class="btn btn-outline-primary" onclick="submitSearchForm(1, 'hotel')">ホテル</a>
+                        <form action="{% url 'mrk:craft_beer_candidates' %}" method="POST">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-primary">クラフトビール候補</button>
+                        </form>
                         <a href="#" class="btn btn-outline-secondary" onclick="submitSearchForm(2, 'presets')">Presets</a>
                     </div>
                     <!-- 非表示のフォーム -->
@@ -43,8 +47,49 @@
                 </div>
             </div>
 
+            {% if craft_beer_error %}
+                <div class="col-12">
+                    <div class="alert alert-danger mb-0" role="alert">{{ craft_beer_error }}</div>
+                </div>
+            {% endif %}
+
+            {% if craft_beer_result %}
+                <div class="col-12">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-white pt-3 pb-2">
+                            <h2 class="h5 mb-1">クラフトビール候補</h2>
+                            <p class="small text-muted mb-0">
+                                候補 {{ craft_beer_result.counts.candidates }} 件 / 手動確認 {{ craft_beer_result.counts.manual_review }} 件 / 除外 {{ craft_beer_result.counts.excluded }} 件
+                            </p>
+                        </div>
+                        <div class="card-body p-0 table-responsive">
+                            <table class="table table-striped table-sm mb-0">
+                                <thead class="table-light">
+                                <tr>
+                                    <th scope="col" class="ps-3">店舗名</th>
+                                    <th scope="col">住所</th>
+                                    <th scope="col">検索経路</th>
+                                    <th scope="col">評価</th>
+                                    <th scope="col">検品状況</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for place in places %}
+                                    <tr>
+                                        <td class="ps-3"><a href="{{ place.google_maps_uri }}" target="_blank" rel="noreferrer">{{ place.name }}</a></td>
+                                        <td>{{ place.formatted_address }}</td>
+                                        <td>{{ place.matched_queries|join:", " }}</td>
+                                        <td>{{ place.rating|default:"-" }}</td>
+                                        <td>専門性・タップ数・掲載許可は未確認</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             <!-- Reviews -->
-            {% if places %}
+            {% elif places %}
                 <div class="col-12">
                     <h2 class="h5 mb-3">レビュー一覧</h2>
                     <div class="row row-cols-1 g-3">
