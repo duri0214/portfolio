@@ -121,7 +121,7 @@ class RokunoheMinutesPdfIndexService:
     @staticmethod
     def _get_pdf_sort_key(
         pdf: RokunoheMinutesPdfIndex,
-    ) -> tuple[int, bool, str, str, int, int]:
+    ) -> tuple[int, bool, str, int, int, str]:
         calendar_year = pdf.calendar_year or 0
         month = pdf.month or 0
         day = pdf.day or 0
@@ -130,9 +130,9 @@ class RokunoheMinutesPdfIndexService:
             -calendar_year,
             pdf.category != "本会議",
             pdf.category,
-            normalized_title,
             -month,
             -day,
+            normalized_title,
         )
 
     @staticmethod

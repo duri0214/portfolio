@@ -1021,12 +1021,12 @@ class RokunoheMinutesPdfIndexServiceTest(TestCase):
         self.assertEqual("本会議", pdf.category)
         self.assertEqual("2026年6月9日", pdf.held_on_label)
 
-    def test_sorts_main_meeting_records_by_name_within_year(self):
+    def test_sorts_main_meeting_records_by_official_date_then_name_within_year(self):
         """
         シナリオ:
         - 入力: 同一年の本会議1号から3号が公式ページとは異なる順序で並ぶHTML。
         - 処理: PDF一覧取得Serviceを実行する。
-        - 期待値: 本会議を先頭の種別にまとめ、号数を含む会議録名の順で返すこと。
+        - 期待値: 本会議を先頭の種別にまとめ、公式ページ表記の日付、会議録名の順で返すこと。
         """
         first_response = Mock()
         first_response.text = (
@@ -1047,7 +1047,7 @@ class RokunoheMinutesPdfIndexServiceTest(TestCase):
             pdfs = RokunoheMinutesPdfIndexService().list_pdfs()
 
         self.assertEqual(
-            ["本会議1号（6月5日）", "本会議2号（6月8日）", "本会議3号（6月9日）"],
+            ["本会議3号（6月9日）", "本会議2号（6月8日）", "本会議1号（6月5日）"],
             [pdf.title for pdf in pdfs],
         )
 
