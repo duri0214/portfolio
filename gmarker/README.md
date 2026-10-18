@@ -105,6 +105,10 @@ python manage.py export_craft_beer_places --config gmarker/configs/shibuya_craft
 一致する必須候補です。満たさない場合はファイルを出力せずエラーで終了します。Place ID が
 人手で確定した後は、`required_place.place_id` へ追加できます。
 
+gmarker トップの「クラフトビール候補」ボタンも同じ設定で抽出した候補だけを地図と一覧へ
+表示します。通常の「レストラン」検索とは別機能であり、現在設定されている自位置ではなく、
+設定ファイルの渋谷エリアを検索します。
+
 出力された候補は掲載確定データではありません。`craft_beer_specialty`、`tap_count`、
 `publication_permission` は未確認値として必ず出力されます。フライヤー入稿前に公式情報、
 営業実態、タップ数、店舗への掲載許可を人手で確認してください。APIキーは出力しません。
