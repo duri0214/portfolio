@@ -748,6 +748,15 @@ class HardnessUploadView(FormView):
             self.request.FILES["file"], app_name
         )
         if os.path.exists(upload_folder):
+            upload_folder_path = Path(upload_folder)
+            nested_zip_files = [
+                zip_path
+                for zip_path in upload_folder_path.glob("*.zip")
+                if zip_path.name != "uploaded.zip"
+            ]
+            for nested_zip_path in nested_zip_files:
+                ZipFileService.extract_zip_file(nested_zip_path, upload_folder_path)
+
             # エラーログのクリア
             HardnessImportErrorRepository.delete_all()
             imported_folder_names = set()
