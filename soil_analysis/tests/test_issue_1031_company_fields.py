@@ -84,6 +84,40 @@ class CompanyLandListViewTest(TestCase):
         self.assertContains(list_response, land_url)
         self.assertContains(detail_response, land_url)
 
+    def test_list_orders_lands_by_prefecture_code(self):
+        """
+        シナリオ:
+        - 入力: 北海道と沖縄県にそれぞれ圃場を登録する。
+        - 操作: 企業別圃場一覧を開く。
+        - 期待値: 圃場名の五十音順ではなく、北海道から沖縄県の順で表示されること。
+        """
+        hokkaido_land = self._land(name="北海道圃場")
+        okinawa_area = JmaArea.objects.create(code="14", name="沖縄")
+        okinawa_prefecture = JmaPrefecture.objects.create(
+            code="471000", name="沖縄県", jma_area=okinawa_area
+        )
+        okinawa_region = JmaRegion.objects.create(
+            code="471000", name="那覇", jma_prefecture=okinawa_prefecture
+        )
+        okinawa_city = JmaCity.objects.create(
+            code="471000", name="那覇市", jma_region=okinawa_region
+        )
+        okinawa_land = Land.objects.create(
+            name="あいう圃場",
+            company=self.company,
+            jma_city=okinawa_city,
+            cultivation_type=self.cultivation_type,
+            owner=self.user,
+            center="26.2,127.7",
+        )
+
+        response = self.client.get(reverse("soil:company_land_list"))
+        lands = response.context["companies"][0].lands
+
+        self.assertEqual(
+            [land.id for land in lands], [hokkaido_land.id, okinawa_land.id]
+        )
+
     @patch("soil_analysis.views.PrefectureCommercialAreaService.build")
     def test_home_moves_company_and_import_actions_to_company_land_list(self, build):
         """

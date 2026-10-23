@@ -423,8 +423,10 @@ class CompanyLandListView(ListView):
     context_object_name = "companies"
 
     def get_queryset(self):
-        """圃場が未登録の企業も含めて、名前順に取得する。"""
-        lands = Land.objects.select_related("company").order_by("name", "id")
+        """圃場が未登録の企業も含めて、都道府県コード順に取得する。"""
+        lands = Land.objects.select_related("company").order_by(
+            "jma_city__jma_region__jma_prefecture__code", "name", "id"
+        )
         return Company.objects.prefetch_related(
             Prefetch("land_set", queryset=lands, to_attr="lands")
         ).order_by("name", "id")
