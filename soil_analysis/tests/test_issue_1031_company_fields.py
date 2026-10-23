@@ -84,12 +84,12 @@ class CompanyLandListViewTest(TestCase):
         self.assertContains(list_response, land_url)
         self.assertContains(detail_response, land_url)
 
-    def test_list_orders_lands_by_prefecture_code(self):
+    def test_list_and_detail_order_lands_by_prefecture_code(self):
         """
         シナリオ:
         - 入力: 北海道と沖縄県にそれぞれ圃場を登録する。
-        - 操作: 企業別圃場一覧を開く。
-        - 期待値: 圃場名の五十音順ではなく、北海道から沖縄県の順で表示されること。
+        - 操作: 企業別圃場一覧と会社詳細を開く。
+        - 期待値: 両画面で圃場名の五十音順ではなく、北海道から沖縄県の順で表示されること。
         """
         hokkaido_land = self._land(name="北海道圃場")
         okinawa_area = JmaArea.objects.create(code="14", name="沖縄")
@@ -111,11 +111,18 @@ class CompanyLandListViewTest(TestCase):
             center="26.2,127.7",
         )
 
-        response = self.client.get(reverse("soil:company_land_list"))
-        lands = response.context["companies"][0].lands
+        list_response = self.client.get(reverse("soil:company_land_list"))
+        detail_response = self.client.get(
+            reverse("soil:company_detail", kwargs={"pk": self.company.id})
+        )
+        list_lands = list_response.context["companies"][0].lands
+        detail_lands = detail_response.context["company_lands"]
 
         self.assertEqual(
-            [land.id for land in lands], [hokkaido_land.id, okinawa_land.id]
+            [land.id for land in list_lands], [hokkaido_land.id, okinawa_land.id]
+        )
+        self.assertEqual(
+            [land.id for land in detail_lands], [hokkaido_land.id, okinawa_land.id]
         )
 
     @patch("soil_analysis.views.PrefectureCommercialAreaService.build")

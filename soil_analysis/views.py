@@ -448,7 +448,9 @@ class CompanyDetailView(DetailView):
             raise Http404("Company does not exist.")
 
         company_lands = list(
-            Land.objects.filter(company_id=company_id).order_by("name", "id")
+            Land.objects.filter(company_id=company_id).order_by(
+                "jma_city__jma_region__jma_prefecture__code", "name", "id"
+            )
         )
         context["land_ledger_map"] = LandRepository.get_land_to_ledgers_map(
             company_lands
