@@ -164,3 +164,35 @@ class LandDetailViewTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, f'href="{self.report_url(ledger)}"')
+
+    def test_land_detail_shows_measurement_registration_statuses(self):
+        """
+        シナリオ:
+        - 入力: 化学分析と土壌硬度の両方を紐付けた通知表台帳。
+        - 処理: 圃場詳細画面を表示する。
+        - 期待値: 各測定データが登録済みであることを一覧上で確認できる。
+        """
+        ledger = self.create_ledger(
+            period_name="播種時", year=2026, sampling_date=date(2026, 3, 3)
+        )
+        SoilChemicalMeasurement.objects.create(land_ledger=ledger, ph=6.5, ec=0.1)
+        device = Device.objects.create(name="硬度計")
+        block = LandBlock.objects.create(name="A1")
+        SoilHardnessMeasurement.objects.create(
+            set_memory=1,
+            set_datetime=timezone.now(),
+            set_depth=60,
+            set_spring=1,
+            set_cone=1,
+            depth=10,
+            pressure=100,
+            folder="FIELD001",
+            set_device=device,
+            land_block=block,
+            land_ledger=ledger,
+        )
+
+        response = self.client.get(self.detail_url())
+
+        self.assertContains(response, "化学分析 登録済み")
+        self.assertContains(response, "土壌硬度 登録済み")

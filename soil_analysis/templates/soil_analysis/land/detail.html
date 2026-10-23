@@ -199,6 +199,7 @@
                                 <th>作物</th>
                                 <th>採土日</th>
                                 <th>分析番号</th>
+                                <th>測定データ</th>
                                 <th>操作</th>
                             </tr>
                             </thead>
@@ -209,6 +210,18 @@
                                     <td>{{ ledger.crop.name|default:"-" }}</td>
                                     <td>{{ ledger.sampling_date|default:"-" }}</td>
                                     <td>{{ ledger.analysis_number|default:"-" }}</td>
+                                    <td>
+                                        {% if ledger.chemical_measurement_count %}
+                                            <span class="badge text-bg-success">化学分析 登録済み</span>
+                                        {% else %}
+                                            <span class="badge text-bg-secondary">化学分析 未登録</span>
+                                        {% endif %}
+                                        {% if ledger.hardness_measurement_count %}
+                                            <span class="badge text-bg-success">土壌硬度 登録済み</span>
+                                        {% else %}
+                                            <span class="badge text-bg-secondary">土壌硬度 未登録</span>
+                                        {% endif %}
+                                    </td>
                                     <td>
                                         {% if ledger.chemical_measurement_count or ledger.hardness_measurement_count %}
                                             <a href="{% url 'soil:standard_report' object.company.id ledger.id %}"
