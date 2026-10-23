@@ -777,7 +777,8 @@ class PrefectureCommercialAreaDashboardTest(TestCase):
         self.assertNotContains(response, "天気リスク県への売り込み候補")
         self.assertNotContains(response, "売り込み候補")
         self.assertNotContains(response, "配車候補キュー")
-        self.assertNotContains(response, "企業別圃場一覧")
+        self.assertContains(response, "企業別圃場一覧")
+        self.assertContains(response, reverse("soil:company_land_list"))
         self.assertContains(response, reverse("soil:prefecture_detail", args=[22]))
         self.assertContains(response, "静岡県")
 
