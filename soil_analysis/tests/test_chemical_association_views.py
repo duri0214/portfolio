@@ -1,10 +1,11 @@
 import io
-from datetime import date
+from datetime import date, datetime
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 from openpyxl import load_workbook
 
 from soil_analysis.domain.service.chemical_import_service import ChemicalImportService
@@ -13,6 +14,7 @@ from soil_analysis.models import (
     CompanyCategory,
     Crop,
     CultivationType,
+    Device,
     JmaArea,
     JmaCity,
     JmaPrefecture,
@@ -23,6 +25,7 @@ from soil_analysis.models import (
     SamplingMethod,
     LandBlock,
     SoilChemicalMeasurement,
+    SoilHardnessMeasurement,
 )
 
 
@@ -635,3 +638,93 @@ class ChemicalAssociationViewsTest(TestCase):
             },
         )
         self.assertRedirects(upload_response, reverse("soil:chemical_success"))
+
+    def test_chemical_sample_download_uses_hardness_linked_field_names(self):
+        """
+        シナリオ:
+        - 入力: 硬度データを関連付けた台帳を3件用意する。
+        - 処理: 化学分析のサンプルExcelをダウンロードして、先頭行の関連付け画面を開く。
+        - 期待値: Excelの圃場名が硬度連携済み台帳と一致し、対象台帳が候補に表示されること。
+        """
+        land_b = Land.objects.create(
+            name="圃場B",
+            company=self.company,
+            jma_city=self.ledger.land.jma_city,
+            cultivation_type=self.ledger.land.cultivation_type,
+            owner=self.user,
+            center="36.1,140.1",
+        )
+        land_c = Land.objects.create(
+            name="圃場C",
+            company=self.company,
+            jma_city=self.ledger.land.jma_city,
+            cultivation_type=self.ledger.land.cultivation_type,
+            owner=self.user,
+            center="36.2,140.2",
+        )
+        ledgers = [
+            self.ledger,
+            LandLedger.objects.create(
+                land=land_b,
+                land_period=self.ledger.land_period,
+                sampling_date=date(2024, 4, 2),
+                analytical_agency=self.company,
+                crop=self.ledger.crop,
+                sampling_method=self.ledger.sampling_method,
+                sampling_staff=self.user,
+            ),
+            LandLedger.objects.create(
+                land=land_c,
+                land_period=self.ledger.land_period,
+                sampling_date=date(2024, 4, 3),
+                analytical_agency=self.company,
+                crop=self.ledger.crop,
+                sampling_method=self.ledger.sampling_method,
+                sampling_staff=self.user,
+            ),
+        ]
+        device = Device.objects.create(name="テスト硬度計")
+        block = LandBlock.objects.first()
+        for index, ledger in enumerate(ledgers, start=1):
+            SoilHardnessMeasurement.objects.create(
+                set_device=device,
+                set_memory=index,
+                set_datetime=timezone.make_aware(datetime(2024, 4, index, 10, 0)),
+                set_depth=50,
+                set_spring=1,
+                set_cone=1,
+                depth=1,
+                pressure=100,
+                folder=f"sample_{index}",
+                land_block=block,
+                land_ledger=ledger,
+            )
+
+        sample_response = self.client.get(reverse("soil:chemical_download_sample"))
+        workbook = load_workbook(io.BytesIO(sample_response.content), data_only=True)
+        parse_result = ChemicalImportService.parse_kawada_worksheet(workbook.active)
+        self.assertEqual(
+            [row.land_name for row in parse_result.rows],
+            [ledger.land.name for ledger in ledgers],
+        )
+
+        self.client.post(
+            reverse("soil:chemical_upload"),
+            {
+                "file": SimpleUploadedFile(
+                    "chemical_sample.xlsx",
+                    sample_response.content,
+                    content_type=(
+                        "application/vnd.openxmlformats-officedocument."
+                        "spreadsheetml.sheet"
+                    ),
+                )
+            },
+        )
+        row_response = self.client.get(
+            reverse("soil:chemical_association_field_row", kwargs={"row_index": 0})
+        )
+        self.assertEqual(
+            [ledger.id for ledger in row_response.context["suggested_ledgers"]],
+            [self.ledger.id],
+        )

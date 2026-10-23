@@ -1024,7 +1024,7 @@ class ChemicalAssociationRowView(TemplateView):
         all_ledgers = (
             LandLedger.objects.select_related("land", "land__company", "land_period")
             .exclude(id__in=ChemicalImportService.get_used_ledger_ids())
-            .order_by("-id")[:200]
+            .order_by("id")[:200]
         )
         suggested_ids = {ledger.id for ledger in suggested_ledgers}
         fallback_ledgers = [
@@ -1167,7 +1167,10 @@ class ChemicalDownloadSampleView(View):
     @staticmethod
     def get(request, *args, **kwargs):
         response = HttpResponse(
-            ChemicalDownloadSampleView._create_workbook_bytes(stage=1),
+            ChemicalDownloadSampleView._create_workbook_bytes(
+                stage=1,
+                field_samples=ChemicalDownloadSampleView._get_hardness_field_samples(),
+            ),
             content_type=(
                 "application/vnd.openxmlformats-officedocument." "spreadsheetml.sheet"
             ),
@@ -1176,7 +1179,31 @@ class ChemicalDownloadSampleView(View):
         return response
 
     @staticmethod
-    def _create_workbook_bytes(stage: int) -> bytes:
+    def _get_hardness_field_samples() -> list[tuple[str, str]] | None:
+        """硬度データを関連付けた先頭3台帳の圃場名と作物名を取得する。"""
+        hardness_ledger_ids = list(
+            SoilHardnessMeasurement.objects.filter(land_ledger__isnull=False)
+            .values_list("land_ledger_id", flat=True)
+            .distinct()
+            .order_by("land_ledger_id")[:3]
+        )
+        if len(hardness_ledger_ids) != 3:
+            return None
+
+        ledgers = (
+            LandLedger.objects.filter(id__in=hardness_ledger_ids)
+            .select_related("land", "crop")
+            .order_by("id")
+        )
+        return [
+            (ledger.land.name, ledger.crop.name if ledger.crop else "サンプル作物")
+            for ledger in ledgers
+        ]
+
+    @staticmethod
+    def _create_workbook_bytes(
+        stage: int, field_samples: list[tuple[str, str]] | None = None
+    ) -> bytes:
         workbook = Workbook()
         worksheet = workbook.active
         worksheet.title = "川田研究所レポート"
@@ -1219,17 +1246,17 @@ class ChemicalDownloadSampleView(View):
         )
 
         base_analysis_number = 2606000 + (stage * 100)
-        land_names = (
-            "FIELD001（点検用圃場）",
-            "FIELD002（点検用圃場）",
-            "FIELD003（点検用圃場）",
-        )
-        for row_index, land_name in enumerate(land_names, start=1):
+        samples = field_samples or [
+            ("FIELD001（点検用圃場）", "レタス"),
+            ("FIELD002（点検用圃場）", "キャベツ"),
+            ("FIELD003（点検用圃場）", "トマト"),
+        ]
+        for row_index, (land_name, crop_name) in enumerate(samples, start=1):
             worksheet.append(
                 ChemicalDownloadSampleView._create_chemical_row(
                     analysis_number=base_analysis_number + row_index,
                     land_name=land_name,
-                    crop_name=("レタス", "キャベツ", "トマト")[row_index - 1],
+                    crop_name=crop_name,
                     value_offset=(stage * 10) + row_index,
                 )
             )
