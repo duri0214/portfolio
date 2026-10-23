@@ -416,6 +416,21 @@ class CompanyCreateView(CreateView):
         return reverse("soil:company_detail", kwargs={"pk": self.object.pk})
 
 
+class CompanyLandListView(ListView):
+    """企業を起点に、登録済みの圃場へ進むための一覧を表示する。"""
+
+    model = Company
+    template_name = "soil_analysis/company/list.html"
+    context_object_name = "companies"
+
+    def get_queryset(self):
+        """圃場が未登録の企業も含めて、名前順に取得する。"""
+        lands = Land.objects.select_related("company").order_by("name", "id")
+        return Company.objects.prefetch_related(
+            Prefetch("land_set", queryset=lands, to_attr="lands")
+        ).order_by("name", "id")
+
+
 class CompanyDetailView(DetailView):
     model = Company
     template_name = "soil_analysis/company/detail.html"
@@ -431,11 +446,14 @@ class CompanyDetailView(DetailView):
         except Company.DoesNotExist:
             raise Http404("Company does not exist.")
 
-        company_lands = list(Land.objects.filter(company_id=company_id))
+        company_lands = list(
+            Land.objects.filter(company_id=company_id).order_by("name", "id")
+        )
         context["land_ledger_map"] = LandRepository.get_land_to_ledgers_map(
             company_lands
         )
         context["company"] = company
+        context["company_lands"] = company_lands
 
         return context
 
@@ -1096,6 +1114,8 @@ class ChemicalSuccessView(TemplateView):
                 for ledger in ledgers:
                     ledger_summary.append(
                         {
+                            "company_id": ledger.land.company_id,
+                            "land_ledger_id": ledger.id,
                             "company_name": ledger.land.company.name,
                             "land_name": ledger.land.name,
                             "period_year": ledger.land_period.year,

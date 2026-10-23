@@ -5,7 +5,7 @@
     <div class="container mt-4">
         <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
             <ol class="breadcrumb mb-0 small">
-                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}" class="text-decoration-none">土壌分析CRM</a>
+                <li class="breadcrumb-item"><a href="{% url 'soil:company_land_list' %}" class="text-decoration-none">企業別圃場一覧</a>
                 </li>
                 <li class="breadcrumb-item"><a href="{% url 'soil:chemical_upload' %}" class="text-decoration-none">化学分析データ取り込み</a>
                 </li>
@@ -59,6 +59,7 @@
                                 <th>圃場名</th>
                                 <th>時期</th>
                                 <th>合計</th>
+                                <th>通知表</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -68,6 +69,7 @@
                                     <td><strong>{{ row.land_name }}</strong></td>
                                     <td>{{ row.period_year }} {{ row.period_name }}</td>
                                     <td><span class="badge bg-success">{{ row.total }}</span></td>
+                                    <td><a href="{% url 'soil:standard_report' row.company_id row.land_ledger_id %}" class="btn btn-sm btn-outline-primary">通知表を開く</a></td>
                                 </tr>
                             {% empty %}
                                 <tr>
@@ -92,7 +94,7 @@
         {% endif %}
 
         <div class="text-center">
-            <a class="btn btn-primary btn-lg" href="{% url 'soil:home' %}" role="button">
+            <a class="btn btn-primary btn-lg" href="{% url 'soil:company_land_list' %}" role="button">
                 <i class="fas fa-home"></i> ホームに戻る
             </a>
             <a class="btn btn-outline-secondary btn-lg ms-2" href="{% url 'soil:chemical_upload' %}" role="button">

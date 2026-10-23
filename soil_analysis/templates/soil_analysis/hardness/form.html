@@ -4,7 +4,7 @@
     <div class="container mt-4">
         <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
             <ol class="breadcrumb mb-0 small">
-                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}" class="text-decoration-none">土壌分析CRM</a>
+                <li class="breadcrumb-item"><a href="{% url 'soil:company_land_list' %}" class="text-decoration-none">企業別圃場一覧</a>
                 </li>
                 <li class="breadcrumb-item active" aria-current="page">土壌硬度データ取り込み</li>
             </ol>
@@ -78,7 +78,7 @@
                         <span class="badge bg-primary me-3">5</span>
                         <div>
                             <strong>グラフ確認</strong>
-                            <br><small class="text-muted">任意の <a href="{% url 'soil:home' %}">圃場の詳細ページ</a>
+                            <br><small class="text-muted">任意の <a href="{% url 'soil:company_land_list' %}">圃場の詳細ページ</a>
                             で、生成された3Dプロット画像を確認</small>
                         </div>
                     </div>
@@ -102,7 +102,7 @@
                     <button class="btn btn-primary" type="submit">
                         <i class="fas fa-upload me-1"></i>取り込み実行
                     </button>
-                    <a href="{% url 'soil:home' %}" class="btn btn-outline-secondary">
+                    <a href="{% url 'soil:company_land_list' %}" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-left me-1"></i>キャンセル
                     </a>
                 </form>

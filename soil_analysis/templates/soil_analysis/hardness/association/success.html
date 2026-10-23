@@ -5,7 +5,7 @@
     <div class="container mt-4">
         <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
             <ol class="breadcrumb mb-0 small">
-                <li class="breadcrumb-item"><a href="{% url 'soil:home' %}" class="text-decoration-none">土壌分析CRM</a>
+                <li class="breadcrumb-item"><a href="{% url 'soil:company_land_list' %}" class="text-decoration-none">企業別圃場一覧</a>
                 </li>
                 <li class="breadcrumb-item"><a href="{% url 'soil:hardness_upload' %}" class="text-decoration-none">土壌硬度データ取り込み</a>
                 </li>
@@ -141,6 +141,7 @@
                                         <th>作物</th>
                                         <th>関連付けレコード数</th>
                                         <th>測定データ概要</th>
+                                        <th>通知表</th>
                                         <th>3Dプロット</th>
                                     </tr>
                                     </thead>
@@ -156,6 +157,7 @@
                                                     期間: {{ ledger_stat.period_name }}
                                                 </small>
                                             </td>
+                                            <td><a href="{% url 'soil:standard_report' ledger_stat.company_id ledger_stat.land_ledger_id %}" class="btn btn-sm btn-outline-primary">通知表を開く</a></td>
                                             <td>
                                                 {% if ledger_stat.hardness_image %}
                                                     <a href="{{ MEDIA_URL }}{{ ledger_stat.hardness_image }}"
@@ -190,7 +192,7 @@
             </div>
 
             <div class="text-center">
-                <a class="btn btn-primary btn-lg" href="{% url 'soil:home' %}" role="button">
+                <a class="btn btn-primary btn-lg" href="{% url 'soil:company_land_list' %}" role="button">
                     <i class="fas fa-home"></i> ホームに戻る
                 </a>
                 <a class="btn btn-outline-secondary btn-lg ms-2" href="{% url 'soil:hardness_upload' %}" role="button">

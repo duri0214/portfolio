@@ -34,6 +34,11 @@ urlpatterns = [
     ),
     path("company/create", views.CompanyCreateView.as_view(), name="company_create"),
     path(
+        "company-fields/",
+        views.CompanyLandListView.as_view(),
+        name="company_land_list",
+    ),
+    path(
         "company/<int:pk>/detail",
         views.CompanyDetailView.as_view(),
         name="company_detail",

@@ -505,6 +505,41 @@ class ChemicalAssociationViewsTest(TestCase):
         self.assertEqual(summary_periods, ["2026 播種時", "2026 播種時", "2026 播種時"])
         self.assertContains(response, "2026 播種時")
 
+    def test_association_success_links_to_the_processed_ledger_report(self):
+        """
+        シナリオ:
+        - 入力: 化学分析データを関連付けた台帳が1件ある。
+        - 操作: 関連付け完了画面を開く。
+        - 結果: 処理した台帳の通知表へ進むリンクが表示される。
+        """
+        SoilChemicalMeasurement.objects.create(
+            land_ledger=self.ledger,
+            ph=6.5,
+            ec=0.1,
+            source_file="processed.xlsx",
+        )
+        session = self.client.session
+        session["chemical_import_result"] = {
+            "created": 1,
+            "updated": 0,
+            "ledger_ids": [self.ledger.id],
+            "error_count": 0,
+        }
+        session.save()
+
+        response = self.client.get(reverse("soil:chemical_association_success"))
+
+        self.assertContains(
+            response,
+            reverse(
+                "soil:standard_report",
+                kwargs={
+                    "company_id": self.company.id,
+                    "land_ledger_id": self.ledger.id,
+                },
+            ),
+        )
+
     def test_save_all_redirects_to_success(self):
         session = self.client.session
         session["chemical_import_session"] = {
