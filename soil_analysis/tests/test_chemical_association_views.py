@@ -1,8 +1,8 @@
 import io
-import zipfile
 from datetime import date
 
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 from openpyxl import load_workbook
@@ -597,33 +597,41 @@ class ChemicalAssociationViewsTest(TestCase):
         self.assertIsNotNone(analysis)
         self.assertEqual(analysis.source_file, "web_upload.xlsx")
 
-    def test_chemical_sample_download_returns_stage_workbooks(self):
+    def test_chemical_sample_download_returns_uploadable_workbook(self):
         """
         シナリオ:
         - 入力: サンプルExcelダウンロードURLへGETする。
-        - 処理: 返却されたZIP内の stage01/stage02/duplicate Excel を読み込む。
-        - 期待値: 各Excelが川田形式としてパースでき、連続登録検証用の行を含むこと。
+        - 処理: 返却されたExcelを読み込む。
+        - 期待値: 化学分析アップロード画面で直接選択できる川田形式のExcelであること。
         """
         response = self.client.get(reverse("soil:chemical_download_sample"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "application/zip")
+        self.assertEqual(
+            response["Content-Type"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        self.assertEqual(
+            response["Content-Disposition"],
+            'attachment; filename="chemical_sample.xlsx"',
+        )
 
-        with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
-            names = set(archive.namelist())
-            self.assertIn("chemical_stage01.xlsx", names)
-            self.assertIn("chemical_stage02.xlsx", names)
-            self.assertIn("chemical_duplicate.xlsx", names)
-            for workbook_name in (
-                "chemical_stage01.xlsx",
-                "chemical_stage02.xlsx",
-                "chemical_duplicate.xlsx",
-            ):
-                workbook = load_workbook(
-                    io.BytesIO(archive.read(workbook_name)), data_only=True
+        workbook = load_workbook(io.BytesIO(response.content), data_only=True)
+        parse_result = ChemicalImportService.parse_kawada_worksheet(workbook.active)
+        self.assertEqual(parse_result.errors, [])
+        self.assertEqual(len(parse_result.rows), 3)
+
+        upload_response = self.client.post(
+            reverse("soil:chemical_upload"),
+            {
+                "file": SimpleUploadedFile(
+                    "chemical_sample.xlsx",
+                    response.content,
+                    content_type=(
+                        "application/vnd.openxmlformats-officedocument."
+                        "spreadsheetml.sheet"
+                    ),
                 )
-                parse_result = ChemicalImportService.parse_kawada_worksheet(
-                    workbook.active
-                )
-                self.assertEqual(parse_result.errors, [])
-                self.assertEqual(len(parse_result.rows), 3)
+            },
+        )
+        self.assertRedirects(upload_response, reverse("soil:chemical_success"))

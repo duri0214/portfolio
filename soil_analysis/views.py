@@ -4,7 +4,6 @@ import io
 import os
 import re
 import shutil
-import zipfile
 from pathlib import Path
 
 from django.contrib import messages
@@ -1163,32 +1162,17 @@ class HardnessDeleteAllView(View):
 
 
 class ChemicalDownloadSampleView(View):
-    """
-    連続登録テスト用のサンプルExcel一式をZIPでダウンロード提供
-    """
+    """化学分析アップロード画面で直接選択できるサンプル Excel を提供する。"""
 
     @staticmethod
     def get(request, *args, **kwargs):
-        zip_buffer = io.BytesIO()
-        sample_files = {
-            "chemical_stage01.xlsx": ChemicalDownloadSampleView._create_workbook_bytes(
-                stage=1
+        response = HttpResponse(
+            ChemicalDownloadSampleView._create_workbook_bytes(stage=1),
+            content_type=(
+                "application/vnd.openxmlformats-officedocument." "spreadsheetml.sheet"
             ),
-            "chemical_stage02.xlsx": ChemicalDownloadSampleView._create_workbook_bytes(
-                stage=2
-            ),
-            "chemical_duplicate.xlsx": ChemicalDownloadSampleView._create_workbook_bytes(
-                stage=1
-            ),
-            "README.txt": ChemicalDownloadSampleView._create_readme().encode("utf-8"),
-        }
-
-        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-            for filename, content in sample_files.items():
-                zip_file.writestr(filename, content)
-
-        response = HttpResponse(zip_buffer.getvalue(), content_type="application/zip")
-        response["Content-Disposition"] = 'attachment; filename="chemical_samples.zip"'
+        )
+        response["Content-Disposition"] = 'attachment; filename="chemical_sample.xlsx"'
         return response
 
     @staticmethod
@@ -1280,20 +1264,6 @@ class ChemicalDownloadSampleView(View):
             round(2.0 + value_offset * 0.06, 2),
             round(1.00 + value_offset * 0.01, 2),
         ]
-
-    @staticmethod
-    def _create_readme() -> str:
-        return "\n".join(
-            [
-                "化学分析 連続アップロード検証用データ",
-                "",
-                "1. chemical_stage01.xlsx を soil:chemical_upload へ投入してください。",
-                "2. chemical_stage02.xlsx を続けて投入してください。",
-                "3. chemical_duplicate.xlsx は stage01 と同じ圃場名を含むため、同じ台帳に割り当てた場合の更新検証に使います。",
-                "",
-                "各Excelは川田研究所形式の列順に合わせています。",
-            ]
-        )
 
 
 class ChemicalDeleteAllView(View):
