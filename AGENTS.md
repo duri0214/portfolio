@@ -31,6 +31,13 @@
 
 ## 常用フロー
 
+### 開発DBを初期Seeder状態へ戻す
+
+1. `python manage.py shell -c "from django.conf import settings; print(settings.DATABASES['default']['NAME'])"` で対象DBを確認する。
+2. `python manage.py flush --noinput` を実行する。これは全アプリのデータを削除する。
+3. Windowsでは `.\scripts\step2_import_data.ps1`、Linuxでは `./scripts/step2_import_data.sh` を実行して初期Seederを投入する。
+4. アプリ単位のテーブル削除や個別fixtureの投入は、標準のリセット手順に含めない。
+
 ### ブランチ作成
 
 1. 作業開始前に対応する GitHub Issue を用意する。新規スレッドに Issue URL が貼られている場合は、その Issue を使い、追加確認なしで着手する。Issue がなければ `ticket` スキルで作成する。
