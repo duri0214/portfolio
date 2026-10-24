@@ -20,3 +20,18 @@ class LandReviewRepository:
             QuerySet[LandReview]: 評価データのクエリセット
         """
         return LandReview.objects.filter(land_ledger=land_ledger)
+
+    @staticmethod
+    def get_one_by_ledger(land_ledger: LandLedger) -> LandReview | None:
+        """台帳に保存済みの評価コメントを1件取得する。"""
+        return LandReviewRepository.get_by_ledger(land_ledger).first()
+
+    @staticmethod
+    def save(
+        land_ledger: LandLedger, comment: str, source: str
+    ) -> tuple[LandReview, bool]:
+        """台帳ごとに評価コメントを新規作成または更新する。"""
+        return LandReview.objects.update_or_create(
+            land_ledger=land_ledger,
+            defaults={"comment": comment, "source": source},
+        )

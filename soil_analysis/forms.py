@@ -9,6 +9,7 @@ from .models import (
     JmaPrefecture,
     JmaCity,
     LandLedger,
+    LandReviewTemplate,
     SamplingMethod,
     UserAttribute,
 )
@@ -287,6 +288,75 @@ class CsvGenerateForm(forms.Form):
         ),
         help_text="1〜16圃場まで指定可能です（計測器の制約により最大16圃場）",
     )
+
+
+class LandReviewForm(forms.Form):
+    """台帳の評価コメントを手入力・定型文・GPT下書きから保存するフォーム。"""
+
+    source = forms.ChoiceField(
+        label="コメントの作成方法",
+        choices=(),
+        widget=forms.RadioSelect,
+        initial="manual",
+    )
+    template = forms.ModelChoiceField(
+        label="定型コメント",
+        queryset=LandReviewTemplate.objects.none(),
+        required=False,
+        empty_label="選択してください",
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    comment = forms.CharField(
+        label="評価コメント",
+        required=False,
+        widget=forms.Textarea(
+            attrs={
+                "class": "form-control",
+                "rows": 8,
+                "placeholder": "化学性・物理性・総評を含めて入力してください。",
+            }
+        ),
+    )
+
+    def __init__(self, *args, is_superuser: bool, **kwargs):
+        super().__init__(*args, **kwargs)
+        choices = [
+            ("manual", "手入力"),
+            ("template", "定型コメントから選ぶ"),
+        ]
+        if is_superuser:
+            choices.append(("gpt", "GPTで下書きを作成する"))
+        self.fields["source"].choices = choices
+        self.fields["template"].queryset = LandReviewTemplate.objects.all()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        source = cleaned_data.get("source")
+        template = cleaned_data.get("template")
+
+        if source == "template":
+            if template is None:
+                self.add_error("template", "定型コメントを選択してください。")
+            else:
+                cleaned_data["comment"] = template.comment
+
+        comment = cleaned_data.get("comment", "")
+        if not comment.strip():
+            self.add_error("comment", "空白だけのコメントは保存できません。")
+
+        return cleaned_data
+
+
+class LandReviewTemplateForm(forms.ModelForm):
+    """定型評価コメントを作成・編集するフォーム。"""
+
+    class Meta:
+        model = LandReviewTemplate
+        fields = ("name", "comment")
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "form-control"}),
+            "comment": forms.Textarea(attrs={"class": "form-control", "rows": 6}),
+        }
 
 
 class LandLedgerCreateForm(forms.ModelForm):

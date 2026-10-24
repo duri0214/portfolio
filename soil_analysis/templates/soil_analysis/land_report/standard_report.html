@@ -374,19 +374,27 @@
                         <i class="bi bi-clipboard-check me-1"></i>専門家評価
                     </h6>
                     {% if land_review.first.comment %}
-                        <p class="mb-0">{{ land_review.first.comment }}</p>
+                        <p class="mb-0">{{ land_review.first.comment|linebreaksbr }}</p>
+                        <p class="text-muted small mb-0 mt-2">作成方法: {{ land_review.first.get_source_display }}</p>
                     {% else %}
                         <p class="text-muted mb-0 small">
                             この台帳にはまだ評価コメントが登録されていません。
                         </p>
                     {% endif %}
                 </div>
-                <button type="button"
-                        class="btn btn-outline-primary flex-shrink-0"
-                        disabled
-                        title="評価コメントの登録機能は Issue #720 で実装予定です">
-                    評価する
-                </button>
+                {% if user.is_authenticated %}
+                    <a class="btn btn-outline-primary flex-shrink-0"
+                       href="{% url 'soil:land_review_edit' company.id land_ledger.id %}">
+                        {% if land_review.first.comment %}評価を編集する{% else %}評価する{% endif %}
+                    </a>
+                {% else %}
+                    <button type="button"
+                            class="btn btn-outline-primary flex-shrink-0"
+                            disabled
+                            title="評価コメントの登録にはログインが必要です">
+                        評価する
+                    </button>
+                {% endif %}
             </div>
         </div>
 
