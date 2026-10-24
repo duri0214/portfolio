@@ -73,6 +73,16 @@ urlpatterns = [
         views.LandCreateView.as_view(),
         name="land_create",
     ),
+    path(
+        "land/geocode/address",
+        views.LandAddressGeocodingView.as_view(),
+        name="land_geocode_address",
+    ),
+    path(
+        "land/geocode/coordinate",
+        views.LandCoordinateGeocodingView.as_view(),
+        name="land_geocode_coordinate",
+    ),
     path("prefectures/", views.PrefecturesView.as_view(), name="prefectures"),
     path(
         "prefecture/<int:prefecture_id>/cities",

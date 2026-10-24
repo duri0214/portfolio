@@ -25,6 +25,7 @@ function setDropdownList(optionsData, selectElement) {
         option.text = item.name
         selectElement.appendChild(option)
     })
+    updateAddressToCenterButton()
 }
 
 /**
@@ -40,6 +41,16 @@ function disableCitySelect() {
     clearDropdown(citySelect)
     citySelect.disabled = true
     citySelect.classList.add('disabled-field')
+    updateAddressToCenterButton()
+}
+
+function updateAddressToCenterButton() {
+    const prefectureSelect = document.getElementById("id_jma_prefecture")
+    const citySelect = document.getElementById("id_jma_city")
+    const button = document.getElementById("address-to-center-button")
+    if (prefectureSelect && citySelect && button) {
+        button.disabled = !prefectureSelect.value || !citySelect.value
+    }
 }
 
 /**
@@ -96,6 +107,79 @@ document.addEventListener('DOMContentLoaded', function () {
 
         prefectureSelect.addEventListener("change", function () {
             fetchCities(this.value)
+        })
+    }
+
+    const form = document.getElementById("land-create-form")
+    const citySelect = document.getElementById("id_jma_city")
+    const centerInput = document.getElementById("id_center")
+    const addressToCenterButton = document.getElementById("address-to-center-button")
+    const centerToAddressButton = document.getElementById("center-to-address-button")
+    const feedback = document.getElementById("geocoding-feedback")
+
+    function showFeedback(message, isError = false) {
+        feedback.textContent = message
+        feedback.classList.remove("d-none", "alert-success", "alert-danger", "alert-warning")
+        feedback.classList.add(isError ? "alert-danger" : "alert-success")
+    }
+
+    async function postGeocoding(url, data) {
+        const csrfToken = form.querySelector("[name=csrfmiddlewaretoken]").value
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "X-CSRFToken": csrfToken },
+            body: new URLSearchParams(data),
+        })
+        const responseData = await response.json()
+        if (!response.ok) {
+            throw new Error(responseData.message)
+        }
+        return responseData
+    }
+
+    if (citySelect) {
+        citySelect.addEventListener("change", updateAddressToCenterButton)
+    }
+
+    if (addressToCenterButton) {
+        addressToCenterButton.addEventListener("click", async function () {
+            addressToCenterButton.disabled = true
+            try {
+                const response = await postGeocoding(form.dataset.addressGeocodeUrl, {
+                    prefecture_id: prefectureSelect.value,
+                    city_id: citySelect.value,
+                })
+                centerInput.value = response.center
+                showFeedback("選択した地域の代表地点を中心座標へ設定しました。")
+            } catch (error) {
+                showFeedback(error.message, true)
+            } finally {
+                updateAddressToCenterButton()
+            }
+        })
+    }
+
+    if (centerToAddressButton) {
+        centerToAddressButton.addEventListener("click", async function () {
+            centerToAddressButton.disabled = true
+            try {
+                const response = await postGeocoding(form.dataset.coordinateGeocodeUrl, {
+                    center: centerInput.value,
+                })
+                prefectureSelect.value = response.prefecture_id || ""
+                if (response.prefecture_id) {
+                    await fetchCities(response.prefecture_id)
+                    citySelect.value = response.city_id || ""
+                } else {
+                    disableCitySelect()
+                }
+                updateAddressToCenterButton()
+                showFeedback(response.message, !response.city_id)
+            } catch (error) {
+                showFeedback(error.message, true)
+            } finally {
+                centerToAddressButton.disabled = false
+            }
         })
     }
 })

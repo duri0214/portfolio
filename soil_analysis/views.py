@@ -1,9 +1,11 @@
 import dataclasses
 import glob
 import io
+import logging
 import os
 import re
 import shutil
+import xml.etree.ElementTree as et
 from pathlib import Path
 
 from django.contrib import messages
@@ -32,9 +34,11 @@ from django.views.generic import (
     FormView,
     UpdateView,
 )
+import requests
 from openpyxl import Workbook, load_workbook
 
-from lib.geo.valueobject.coord import XarvioCoord
+from lib.geo.valueobject.coord import GoogleMapsCoord, XarvioCoord
+from lib.geo.yahoo_geocoder import ForwardGeocoderService, ReverseGeocoderService
 from lib.zipfileservice import ZipFileService
 from soil_analysis.domain.repository.chemical_import_error import (
     ChemicalImportErrorRepository,
@@ -143,6 +147,12 @@ from soil_analysis.models import (
 )
 
 SAMPLING_TIMES_PER_BLOCK = 5
+JMA_REGIONAL_PREFECTURE_NAMES = {
+    "01": "北海道",
+    "46": "鹿児島県",
+    "47": "沖縄県",
+}
+logger = logging.getLogger(__name__)
 
 
 class Home(TemplateView):
@@ -727,6 +737,165 @@ class PrefectureCitiesView(View):
 
         data = {"cities": list(cities.values("id", "name"))}
         return JsonResponse(data)
+
+
+def _parse_center_coordinate(value: str) -> GoogleMapsCoord:
+    """緯度,経度形式の入力値を検証して Google Maps 座標へ変換します。"""
+    try:
+        latitude_text, longitude_text = value.split(",")
+        latitude = float(latitude_text.strip())
+        longitude = float(longitude_text.strip())
+    except (AttributeError, ValueError) as error:
+        raise ValueError("中心座標は「緯度,経度」形式で入力してください。") from error
+
+    if not -90 <= latitude <= 90 or not -180 <= longitude <= 180:
+        raise ValueError("中心座標は有効な緯度と経度で入力してください。")
+
+    return GoogleMapsCoord(latitude=latitude, longitude=longitude)
+
+
+def _address_prefecture_name(prefecture: JmaPrefecture) -> str:
+    """気象庁の地域区分を Yahoo API 用の都道府県名へ正規化します。"""
+    return JMA_REGIONAL_PREFECTURE_NAMES.get(prefecture.code[:2], prefecture.name)
+
+
+def _find_jma_city(
+    prefecture_code: str | None, city_name: str | None
+) -> JmaCity | None:
+    """Yahoo の行政区画名から、対応する気象庁市区町村を取得します。"""
+    if city_name is None:
+        return None
+
+    cities = JmaCity.objects.select_related("jma_region__jma_prefecture")
+    if prefecture_code is not None:
+        cities = cities.filter(
+            jma_region__jma_prefecture__code__startswith=prefecture_code.zfill(2)
+        )
+
+    city = cities.filter(name=city_name).first()
+    if city is not None:
+        return city
+
+    return next(
+        (
+            candidate
+            for candidate in cities
+            if city_name.startswith(candidate.name)
+            or candidate.name.startswith(city_name)
+        ),
+        None,
+    )
+
+
+class LandAddressGeocodingView(View):
+    """選択済みの都道府県・市区町村を Yahoo API で代表座標へ変換します。"""
+
+    def post(self, request):
+        prefecture_id = request.POST.get("prefecture_id")
+        city_id = request.POST.get("city_id")
+        city = (
+            JmaCity.objects.select_related("jma_region__jma_prefecture")
+            .filter(
+                pk=city_id,
+                jma_region__jma_prefecture_id=prefecture_id,
+            )
+            .first()
+        )
+        if city is None:
+            return JsonResponse(
+                {"message": "都道府県と市区町村を選択してください。"}, status=400
+            )
+
+        prefecture = city.jma_region.jma_prefecture
+        try:
+            coordinate = ForwardGeocoderService.get_coord_from_address(
+                f"{_address_prefecture_name(prefecture)}{city.name}"
+            )
+        except (
+            requests.RequestException,
+            ValueError,
+            AttributeError,
+            TypeError,
+            et.ParseError,
+        ) as error:
+            logger.warning(
+                "Yahoo API による住所から座標への変換に失敗しました。error_type=%s",
+                type(error).__name__,
+            )
+            return JsonResponse(
+                {
+                    "message": "座標候補を取得できませんでした。入力内容を確認してから、もう一度お試しください。"
+                },
+                status=502,
+            )
+
+        return JsonResponse({"center": coordinate.to_str()})
+
+
+class LandCoordinateGeocodingView(View):
+    """中心座標を Yahoo API で都道府県・市区町村の選択値へ変換します。"""
+
+    def post(self, request):
+        try:
+            coordinate = _parse_center_coordinate(request.POST.get("center", ""))
+        except ValueError as error:
+            return JsonResponse({"message": str(error), "field": "center"}, status=400)
+
+        try:
+            ydf = ReverseGeocoderService.get_ydf_from_coord(coordinate)
+        except (
+            requests.RequestException,
+            ValueError,
+            AttributeError,
+            TypeError,
+            et.ParseError,
+        ) as error:
+            logger.warning(
+                "Yahoo API による座標から住所への変換に失敗しました。error_type=%s",
+                type(error).__name__,
+            )
+            return JsonResponse(
+                {
+                    "message": "都道府県と市区町村を取得できませんでした。入力内容を確認してから、もう一度お試しください。"
+                },
+                status=502,
+            )
+
+        yahoo_prefecture = ydf.feature.prefecture
+        yahoo_city = ydf.feature.city
+        prefecture_name = (
+            yahoo_prefecture.name if yahoo_prefecture is not None else None
+        )
+        prefecture_code = (
+            getattr(yahoo_prefecture, "code", None)
+            if yahoo_prefecture is not None
+            else None
+        )
+        city_name = yahoo_city.name if yahoo_city is not None else None
+        prefecture = JmaPrefecture.objects.filter(name=prefecture_name).first()
+        if prefecture is None and prefecture_code is not None:
+            prefecture = JmaPrefecture.objects.filter(
+                code__startswith=prefecture_code.zfill(2)
+            ).first()
+        city = _find_jma_city(prefecture_code, city_name)
+        if city is not None:
+            prefecture = city.jma_region.jma_prefecture
+
+        if prefecture is None or city is None:
+            message = (
+                "Yahoo の結果に対応する都道府県または市区町村を取得できませんでした。"
+                "該当する選択欄を「選択してください」に戻しました。"
+            )
+        else:
+            message = "中心座標から都道府県と市区町村を設定しました。"
+
+        return JsonResponse(
+            {
+                "prefecture_id": prefecture.pk if prefecture is not None else None,
+                "city_id": city.pk if city is not None else None,
+                "message": message,
+            }
+        )
 
 
 class LandDetailView(DetailView):
