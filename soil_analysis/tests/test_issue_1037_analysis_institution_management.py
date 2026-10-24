@@ -154,6 +154,8 @@ class AnalysisInstitutionManagementViewTests(TestCase):
         get_response = self.client.get(delete_url)
         self.assertContains(get_response, "1 件の既存台帳")
         self.assertContains(get_response, "引き継ぎ先の分析機関")
+        self.assertContains(get_response, self.replacement.name)
+        self.assertNotContains(get_response, f"Company object ({self.replacement.id})")
 
         post_response = self.client.post(
             delete_url, {"replacement_agency": self.replacement.id}
