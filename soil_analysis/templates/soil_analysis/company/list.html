@@ -42,9 +42,6 @@
                                     </h2>
                                     <span class="text-muted small">{{ company.category }}</span>
                                 </div>
-                                <a class="btn btn-sm btn-outline-success" href="{% url 'soil:land_create' company.id %}">
-                                    <i class="fas fa-plus me-1"></i>圃場を追加
-                                </a>
                             </div>
                             {% if company.lands %}
                                 <ul class="list-group list-group-horizontal-md flex-wrap">
@@ -57,7 +54,7 @@
                                     {% endfor %}
                                 </ul>
                             {% else %}
-                                <p class="text-muted mb-0">圃場はまだ登録されていません。「圃場を追加」から最初の圃場を登録してください。</p>
+                                <p class="text-muted mb-0">圃場はまだ登録されていません。企業詳細から最初の圃場を登録してください。</p>
                             {% endif %}
                         </section>
                     {% endfor %}

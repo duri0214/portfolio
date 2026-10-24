@@ -44,12 +44,12 @@ class CompanyLandListViewTest(TestCase):
             center="43.0,141.0",
         )
 
-    def test_list_shows_empty_company_and_add_land_action(self):
+    def test_list_shows_empty_company_and_link_to_company_detail(self):
         """
         シナリオ:
         - 入力: 圃場未登録の企業が1件ある。
         - 操作: 企業別圃場一覧を開く。
-        - 結果: 企業詳細と最初の圃場を追加するリンクが表示される。
+        - 結果: 企業詳細へのリンクと、企業詳細から圃場を追加する案内が表示される。
         """
         response = self.client.get(reverse("soil:company_land_list"))
 
@@ -57,11 +57,11 @@ class CompanyLandListViewTest(TestCase):
         self.assertContains(
             response, reverse("soil:company_detail", kwargs={"pk": self.company.id})
         )
-        self.assertContains(
+        self.assertNotContains(
             response,
             reverse("soil:land_create", kwargs={"company_id": self.company.id}),
         )
-        self.assertContains(response, "圃場はまだ登録されていません")
+        self.assertContains(response, "企業詳細から最初の圃場を登録してください")
 
     def test_list_shows_registered_land_and_company_detail_links(self):
         """
