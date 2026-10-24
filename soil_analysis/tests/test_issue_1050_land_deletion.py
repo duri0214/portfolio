@@ -86,16 +86,18 @@ class LandDeletionViewTests(TestCase):
             kwargs={"company_id": company.id, "pk": land.id},
         )
 
-    def test_land_detail_has_delete_action(self):
+    def test_company_detail_has_delete_action_for_each_land(self):
         """
         シナリオ:
-        - 入力: 圃場の詳細画面を表示する。
-        - 処理: 圃場の削除導線を確認する。
-        - 期待値: 圃場削除の確認画面へのリンクが表示されること。
+        - 入力: 農業法人詳細画面に圃場が表示されている。
+        - 処理: 所属圃場の削除導線を確認する。
+        - 期待値: 各圃場の削除確認画面へのリンクが表示されること。
         """
         self.land = self._create_land()
 
-        response = self.client.get(self.detail_url())
+        response = self.client.get(
+            reverse("soil:company_detail", kwargs={"pk": self.company.id})
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.delete_url())

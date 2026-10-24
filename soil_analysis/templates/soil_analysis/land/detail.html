@@ -255,12 +255,6 @@
                 <i class="fas fa-arrow-left"></i> 一覧に戻る
             </a>
             <div>
-                <a href="{% url 'soil:land_delete' object.company.id object.id %}"
-                   class="btn btn-outline-danger btn-sm me-2"
-                   aria-label="{{ object.name }}を削除"
-                   title="{{ object.name }}を削除">
-                    <i class="fas fa-trash-alt" aria-hidden="true"></i> 圃場を削除
-                </a>
                 <button type="button" class="btn btn-outline-primary btn-sm me-2">
                     <i class="fas fa-edit"></i> 編集（未実装）
                 </button>
