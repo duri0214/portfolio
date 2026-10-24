@@ -140,6 +140,10 @@ class LandReviewCommentViewTest(TestCase):
         self.assertRedirects(response, reverse("soil:land_review_template_list"))
         template = LandReviewTemplate.objects.get(name="追肥の確認")
 
+        response = self.client.get(self.edit_url)
+        self.assertContains(response, 'id="comment-field"')
+        self.assertContains(response, "選んだ本文をそのまま保存します。")
+
         response = self.client.post(
             self.edit_url,
             {

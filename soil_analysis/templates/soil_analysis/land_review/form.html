@@ -36,7 +36,7 @@
                     <div class="mb-4" id="template-field">
                         <label class="form-label" for="{{ form.template.id_for_label }}">{{ form.template.label }}</label>
                         {{ form.template }}
-                        <div class="form-text">選んだ本文を下の入力欄にコピーして保存します。定型文の追加・編集は<a href="{% url 'soil:land_review_template_list' %}">定型コメント管理</a>から行えます。</div>
+                        <div class="form-text">選んだ本文をそのまま保存します。定型文の追加・編集は<a href="{% url 'soil:land_review_template_list' %}">定型コメント管理</a>から行えます。</div>
                         {% for error in form.template.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                     </div>
 
@@ -47,7 +47,7 @@
                         </div>
                     {% endif %}
 
-                    <div class="mb-4">
+                    <div class="mb-4" id="comment-field">
                         <label class="form-label" for="{{ form.comment.id_for_label }}">{{ form.comment.label }}</label>
                         {{ form.comment }}
                         {% for error in form.comment.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
@@ -68,10 +68,12 @@
         (() => {
             const sourceInputs = document.querySelectorAll('input[name="source"]');
             const templateField = document.getElementById('template-field');
+            const commentField = document.getElementById('comment-field');
             const gptAction = document.getElementById('gpt-action');
             const updateVisibility = () => {
                 const source = document.querySelector('input[name="source"]:checked')?.value;
                 templateField.hidden = source !== 'template';
+                commentField.hidden = source === 'template';
                 if (gptAction) gptAction.hidden = source !== 'gpt';
             };
             sourceInputs.forEach((input) => input.addEventListener('change', updateVisibility));
