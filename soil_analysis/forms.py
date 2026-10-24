@@ -131,6 +131,15 @@ class CompanyDeleteForm(forms.Form):
     )
 
 
+class LandDeleteForm(forms.Form):
+    """台帳を持たない圃場の削除確認を受け付けるフォーム。"""
+
+    confirm_deletion = forms.BooleanField(
+        label="この圃場を削除することを確認しました。",
+        required=True,
+    )
+
+
 class LandCreateForm(forms.ModelForm):
     jma_prefecture = forms.ModelChoiceField(
         queryset=JmaPrefecture.objects.all(),
@@ -206,18 +215,35 @@ class LandCreateForm(forms.ModelForm):
 
     def clean_name(self):
         name = self.cleaned_data.get("name")
-        company_id = self.data.get("company-id")
+        company_id = self.data.get("company-id") or self.instance.company_id
+        if not name:
+            return name
         if "あの" in name:
             raise forms.ValidationError(
                 "「あの」を含む圃場名は登録できなくなりました（あいまい）"
             )
 
-        if Land.objects.filter(name=name, company_id=company_id).exists():
+        if (
+            Land.objects.filter(name=name, company_id=company_id)
+            .exclude(pk=self.instance.pk)
+            .exists()
+        ):
             raise forms.ValidationError(
                 "この名前の圃場は既に存在します。別の名前を選択してください"
             )
 
         return name
+
+
+class LandUpdateForm(LandCreateForm):
+    """既存の圃場情報を編集するフォーム。"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.jma_city_id:
+            self.initial["jma_prefecture"] = (
+                self.instance.jma_city.jma_region.jma_prefecture_id
+            )
 
 
 class UploadForm(forms.Form):

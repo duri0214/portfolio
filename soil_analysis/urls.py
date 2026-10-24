@@ -79,6 +79,11 @@ urlpatterns = [
         name="land_create",
     ),
     path(
+        "company/<int:company_id>/land/<int:pk>/edit/",
+        views.LandUpdateView.as_view(),
+        name="land_update",
+    ),
+    path(
         "land/geocode/address",
         views.LandAddressGeocodingView.as_view(),
         name="land_geocode_address",
@@ -103,6 +108,11 @@ urlpatterns = [
         "company/<int:company_id>/land/<int:pk>/detail",
         views.LandDetailView.as_view(),
         name="land_detail",
+    ),
+    path(
+        "company/<int:company_id>/land/<int:pk>/delete/",
+        views.LandDeleteView.as_view(),
+        name="land_delete",
     ),
     path(
         "company/<int:company_id>/land_ledger/<int:land_ledger_id>/standard_report",

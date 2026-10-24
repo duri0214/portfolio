@@ -119,7 +119,9 @@ from soil_analysis.forms import (
     CompanyDeleteForm,
     AnalysisInstitutionForm,
     AnalysisInstitutionDeleteForm,
+    LandDeleteForm,
     LandCreateForm,
+    LandUpdateForm,
     UploadForm,
     ChemicalUploadForm,
     CsvGenerateForm,
@@ -737,6 +739,45 @@ class LandCreateView(CreateView):
         )
 
 
+class LandUpdateView(UpdateView):
+    """圃場の所属法人を維持したまま、圃場情報を編集する。"""
+
+    model = Land
+    form_class = LandUpdateForm
+    template_name = "soil_analysis/land/create.html"
+
+    def get_queryset(self):
+        return Land.objects.filter(company_id=self.kwargs["company_id"]).select_related(
+            "company", "jma_city__jma_region__jma_prefecture"
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "company": self.object.company,
+                "is_edit": True,
+                "page_title": "圃場を編集",
+                "page_description": "圃場情報を編集してください",
+                "submit_label": "更新する",
+                "cancel_url": reverse(
+                    "soil:land_detail",
+                    kwargs={
+                        "company_id": self.object.company_id,
+                        "pk": self.object.pk,
+                    },
+                ),
+            }
+        )
+        return context
+
+    def get_success_url(self):
+        return reverse(
+            "soil:land_detail",
+            kwargs={"company_id": self.object.company_id, "pk": self.object.pk},
+        )
+
+
 class PrefecturesView(View):
 
     @staticmethod
@@ -950,6 +991,72 @@ class LandDetailView(DetailView):
             super()
             .get_queryset()
             .prefetch_related(weather_prefetch, warning_prefetch, land_ledger_prefetch)
+        )
+
+
+class LandDeleteView(View):
+    """関連する台帳を連鎖削除せずに圃場を削除する。"""
+
+    template_name = "soil_analysis/land/delete.html"
+
+    def get_queryset(self):
+        return Land.objects.filter(company_id=self.kwargs["company_id"]).select_related(
+            "company"
+        )
+
+    def get_land(self):
+        return get_object_or_404(self.get_queryset(), pk=self.kwargs["pk"])
+
+    @staticmethod
+    def _ledger_count(land: Land) -> int:
+        return LandLedger.objects.filter(land=land).count()
+
+    def get(self, request, *args, **kwargs):
+        land = self.get_land()
+        ledger_count = self._ledger_count(land)
+        return self.render_to_response(land, ledger_count, LandDeleteForm())
+
+    def post(self, request, *args, **kwargs):
+        land = self.get_land()
+        ledger_count = self._ledger_count(land)
+        form = LandDeleteForm(request.POST)
+        if ledger_count:
+            form.add_error(
+                None,
+                "関連する台帳があるため、この圃場は削除できません。",
+            )
+            return self.render_to_response(land, ledger_count, form)
+        if not form.is_valid():
+            return self.render_to_response(land, ledger_count, form)
+
+        with transaction.atomic():
+            land = get_object_or_404(
+                self.get_queryset().select_for_update(), pk=self.kwargs["pk"]
+            )
+            ledger_count = self._ledger_count(land)
+            if ledger_count:
+                form.add_error(
+                    None,
+                    "関連する台帳があるため、この圃場は削除できません。",
+                )
+                return self.render_to_response(land, ledger_count, form)
+            company_id = land.company_id
+            land.delete()
+
+        messages.success(request, "圃場を削除しました。")
+        return redirect("soil:company_detail", pk=company_id)
+
+    def render_to_response(self, land, ledger_count, form):
+        return render(
+            self.request,
+            self.template_name,
+            {
+                "land": land,
+                "company": land.company,
+                "ledger_count": ledger_count,
+                "can_delete": ledger_count == 0,
+                "form": form,
+            },
         )
 
 

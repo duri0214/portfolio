@@ -127,10 +127,25 @@
                     {% if company_lands %}
                         <div class="list-group">
                             {% for land in company_lands %}
-                                <a href="{% url 'soil:land_detail' object.id land.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                                    <span>{{ land.name }}</span>
-                                    <i class="fas fa-chevron-right text-muted"></i>
-                                </a>
+                                <div class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                                    <a href="{% url 'soil:land_detail' object.id land.id %}" class="text-decoration-none flex-grow-1">
+                                        {{ land.name }}
+                                    </a>
+                                    <div class="d-flex gap-2">
+                                        <a href="{% url 'soil:land_update' object.id land.id %}"
+                                           class="btn btn-outline-primary btn-sm"
+                                           aria-label="{{ land.name }}を編集"
+                                           title="{{ land.name }}を編集">
+                                            <i class="fas fa-edit" aria-hidden="true"></i> 編集
+                                        </a>
+                                        <a href="{% url 'soil:land_delete' object.id land.id %}"
+                                           class="btn btn-outline-danger btn-sm"
+                                           aria-label="{{ land.name }}を削除"
+                                           title="{{ land.name }}を削除">
+                                            <i class="fas fa-trash-alt" aria-hidden="true"></i> 削除
+                                        </a>
+                                    </div>
+                                </div>
                             {% endfor %}
                         </div>
                     {% else %}
