@@ -42,9 +42,14 @@
                                     </h2>
                                     <span class="text-muted small">{{ company.category }}</span>
                                 </div>
-                                <a class="btn btn-sm btn-outline-success" href="{% url 'soil:land_create' company.id %}">
-                                    <i class="fas fa-plus me-1"></i>圃場を追加
-                                </a>
+                                <div class="d-flex gap-2">
+                                    <a class="btn btn-sm btn-outline-success" href="{% url 'soil:land_create' company.id %}">
+                                        <i class="fas fa-plus me-1"></i>圃場を追加
+                                    </a>
+                                    <a class="btn btn-sm btn-outline-danger" href="{% url 'soil:company_delete' company.id %}">
+                                        <i class="fas fa-trash-alt me-1"></i>削除
+                                    </a>
+                                </div>
                             </div>
                             {% if company.lands %}
                                 <ul class="list-group list-group-horizontal-md flex-wrap">

@@ -100,6 +100,7 @@ from soil_analysis.domain.valueobject.report.hardness_assessment import (
 )
 from soil_analysis.forms import (
     CompanyCreateForm,
+    CompanyDeleteForm,
     AnalysisInstitutionForm,
     AnalysisInstitutionDeleteForm,
     LandCreateForm,
@@ -465,6 +466,73 @@ class CompanyDetailView(DetailView):
         context["company_lands"] = company_lands
 
         return context
+
+
+class AgriculturalCompanyQuerysetMixin:
+    """農業法人だけを対象にする会社管理画面用の共通クエリ。"""
+
+    queryset = Company.objects.filter(category__name="農業法人")
+
+    def get_queryset(self):
+        return self.queryset.select_related("category").order_by("name", "id")
+
+
+class CompanyDeleteView(AgriculturalCompanyQuerysetMixin, View):
+    """関連する圃場や台帳を連鎖削除せずに農業法人を削除する。"""
+
+    template_name = "soil_analysis/company/delete.html"
+
+    def get_company(self):
+        return get_object_or_404(self.get_queryset(), pk=self.kwargs["pk"])
+
+    @staticmethod
+    def _related_counts(company: Company) -> tuple[int, int]:
+        land_count = Land.objects.filter(company=company).count()
+        ledger_count = LandLedger.objects.filter(land__company=company).count()
+        return land_count, ledger_count
+
+    def get(self, request, *args, **kwargs):
+        company = self.get_company()
+        land_count, ledger_count = self._related_counts(company)
+        return self.render_to_response(
+            company, land_count, ledger_count, CompanyDeleteForm()
+        )
+
+    def post(self, request, *args, **kwargs):
+        company = self.get_company()
+        land_count, ledger_count = self._related_counts(company)
+        form = CompanyDeleteForm(request.POST)
+        if not form.is_valid():
+            return self.render_to_response(company, land_count, ledger_count, form)
+
+        with transaction.atomic():
+            company = get_object_or_404(
+                self.get_queryset().select_for_update(), pk=self.kwargs["pk"]
+            )
+            land_count, ledger_count = self._related_counts(company)
+            if land_count or ledger_count:
+                form.add_error(
+                    None,
+                    "関連する圃場または台帳があるため、この農業法人は削除できません。",
+                )
+                return self.render_to_response(company, land_count, ledger_count, form)
+            company.delete()
+
+        messages.success(request, "農業法人を削除しました。")
+        return redirect("soil:company_land_list")
+
+    def render_to_response(self, company, land_count, ledger_count, form):
+        return render(
+            self.request,
+            self.template_name,
+            {
+                "company": company,
+                "land_count": land_count,
+                "ledger_count": ledger_count,
+                "can_delete": not land_count and not ledger_count,
+                "form": form,
+            },
+        )
 
 
 class AnalysisInstitutionQuerysetMixin:
