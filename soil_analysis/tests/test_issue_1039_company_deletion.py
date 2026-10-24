@@ -84,10 +84,18 @@ class CompanyDeletionViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(Company.objects.filter(pk=self.company.id).exists())
 
-        response = self.client.post(delete_url, {"confirm_deletion": "on"})
+        response = self.client.post(
+            delete_url,
+            {"confirm_deletion": "on"},
+            follow=True,
+        )
 
         self.assertRedirects(response, reverse("soil:company_land_list"))
         self.assertFalse(Company.objects.filter(pk=self.company.id).exists())
+        self.assertContains(response, "農業法人を削除しました。", count=1)
+
+        next_response = self.client.get(reverse("soil:company_land_list"))
+        self.assertNotContains(next_response, "農業法人を削除しました。")
 
     def test_company_list_identifies_delete_action_as_company_deletion(self):
         """

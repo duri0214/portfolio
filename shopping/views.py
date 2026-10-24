@@ -370,6 +370,7 @@ class StorePlanningView(TemplateView):
                         fetch_result.error_url,
                         fetch_result.error_url_label or "確認する",
                     ),
+                    extra_tags="html",
                 )
             else:
                 messages.warning(request, error_message)
@@ -546,6 +547,7 @@ class StorePlanningView(TemplateView):
                         fetch_result.error_url,
                         fetch_result.error_url_label or "確認する",
                     ),
+                    extra_tags="html",
                 )
             else:
                 messages.warning(request, error_message)
