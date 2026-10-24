@@ -72,7 +72,7 @@ class AnalysisInstitutionManagementViewTests(TestCase):
         シナリオ:
         - 入力: 圃場未登録の農業法人と分析機関が登録されている。
         - 操作: 企業別圃場一覧を開く。
-        - 期待値: 農業法人だけが表示され、圃場追加導線を利用できる。
+        - 期待値: 農業法人だけが表示され、企業詳細へ進める。
         """
         response = self.client.get(reverse("soil:company_land_list"))
 
@@ -81,7 +81,7 @@ class AnalysisInstitutionManagementViewTests(TestCase):
         self.assertNotContains(response, self.institution.name)
         self.assertContains(
             response,
-            reverse("soil:land_create", kwargs={"company_id": self.farmer.id}),
+            reverse("soil:company_detail", kwargs={"pk": self.farmer.id}),
         )
 
     def test_analysis_institution_can_be_created_and_edited(self):

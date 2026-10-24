@@ -31,42 +31,29 @@
         </div>
 
         {% if companies %}
-            <div class="card shadow-sm">
-                <div class="list-group list-group-flush">
-                    {% for company in companies %}
-                        <section class="list-group-item p-4">
-                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                                <div class="d-flex align-items-center gap-2">
-                                    <h2 class="h5 mb-1">
-                                        <a href="{% url 'soil:company_detail' company.id %}" class="text-decoration-none">{{ company.name }}</a>
-                                    </h2>
-                                    <a class="btn btn-sm btn-outline-danger" href="{% url 'soil:company_delete' company.id %}" aria-label="{{ company.name }}を削除" title="{{ company.name }}を削除">
-                                        <i class="fas fa-trash-alt" aria-hidden="true"></i>
-                                        <span class="visually-hidden">{{ company.name }}を削除</span>
+            {% for company in companies %}
+                <section{% if not forloop.last %} class="border-bottom pb-4 mb-4"{% endif %}>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <h2 class="h5 mb-0">
+                            <a href="{% url 'soil:company_detail' company.id %}" class="text-decoration-none">{{ company.name }}</a>
+                        </h2>
+                        <span class="text-muted small">{{ company.category }}</span>
+                    </div>
+                    {% if company.lands %}
+                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-5 g-2">
+                            {% for land in company.lands %}
+                                <div class="col">
+                                    <a href="{% url 'soil:land_detail' company.id land.id %}" class="d-block text-decoration-none py-1">
+                                        <i class="fas fa-map-marker-alt me-1"></i>{{ land.name }}
                                     </a>
-                                    <span class="text-muted small">{{ company.category }}</span>
                                 </div>
-                                <a class="btn btn-sm btn-outline-success" href="{% url 'soil:land_create' company.id %}">
-                                    <i class="fas fa-plus me-1"></i>圃場を追加
-                                </a>
-                            </div>
-                            {% if company.lands %}
-                                <ul class="list-group list-group-horizontal-md flex-wrap">
-                                    {% for land in company.lands %}
-                                        <li class="list-group-item flex-fill">
-                                            <a href="{% url 'soil:land_detail' company.id land.id %}" class="text-decoration-none">
-                                                <i class="fas fa-map-marker-alt me-1"></i>{{ land.name }}
-                                            </a>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            {% else %}
-                                <p class="text-muted mb-0">圃場はまだ登録されていません。「圃場を追加」から最初の圃場を登録してください。</p>
-                            {% endif %}
-                        </section>
-                    {% endfor %}
-                </div>
-            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">圃場はまだ登録されていません。企業詳細から最初の圃場を登録してください。</p>
+                    {% endif %}
+                </section>
+            {% endfor %}
         {% else %}
             <div class="card shadow-sm">
                 <div class="card-body text-center py-5">

@@ -47,9 +47,27 @@ class CompanyCreateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["category"].queryset = CompanyCategory.objects.filter(
-            name="農業法人"
-        ).order_by("id")
+        if "category" in self.fields:
+            self.fields["category"].queryset = CompanyCategory.objects.filter(
+                name="農業法人"
+            ).order_by("id")
+
+
+class AgriculturalCompanyUpdateForm(CompanyCreateForm):
+    """農業法人の基本情報だけを編集するフォーム。"""
+
+    class Meta(CompanyCreateForm.Meta):
+        fields = ("name", "image", "remark")
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "form-control"}),
+            "image": forms.ClearableFileInput(attrs={"class": "form-control"}),
+            "remark": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+        }
+        labels = {
+            "name": "農業法人名",
+            "image": "画像",
+            "remark": "備考",
+        }
 
 
 class AnalysisInstitutionForm(forms.ModelForm):

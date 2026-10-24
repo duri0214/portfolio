@@ -114,6 +114,7 @@ from soil_analysis.domain.valueobject.report.hardness_assessment import (
     HardnessBlockAssessment,
 )
 from soil_analysis.forms import (
+    AgriculturalCompanyUpdateForm,
     CompanyCreateForm,
     CompanyDeleteForm,
     AnalysisInstitutionForm,
@@ -499,6 +500,26 @@ class AgriculturalCompanyQuerysetMixin:
 
     def get_queryset(self):
         return self.queryset.select_related("category").order_by("name", "id")
+
+
+class CompanyUpdateView(AgriculturalCompanyQuerysetMixin, UpdateView):
+    """農業法人の名称、画像、備考を編集する。"""
+
+    model = Company
+    form_class = AgriculturalCompanyUpdateForm
+    template_name = "soil_analysis/company/form.html"
+
+    def form_valid(self, form):
+        messages.success(self.request, "農業法人を更新しました。")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse("soil:company_detail", kwargs={"pk": self.object.pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = "農業法人を編集"
+        return context
 
 
 class CompanyDeleteView(AgriculturalCompanyQuerysetMixin, View):

@@ -97,20 +97,26 @@ class CompanyDeletionViewTests(TestCase):
         next_response = self.client.get(reverse("soil:company_land_list"))
         self.assertNotContains(next_response, "農業法人を削除しました。")
 
-    def test_company_list_identifies_delete_action_as_company_deletion(self):
+    def test_company_deletion_action_is_available_on_detail_page(self):
         """
         シナリオ:
         - 入力: 圃場未登録の農業法人が企業別圃場一覧に表示されている。
-        - 操作: 一覧の企業名付近にある削除アイコンを確認する。
-        - 期待値: 削除対象が企業であることがラベルから分かる。
+        - 操作: 一覧と農業法人の詳細画面を開く。
+        - 期待値: 一覧に削除導線はなく、詳細画面に企業削除導線がある。
         """
-        response = self.client.get(reverse("soil:company_land_list"))
-
-        self.assertContains(
-            response,
-            f'aria-label="{self.company.name}を削除"',
+        delete_url = reverse("soil:company_delete", kwargs={"pk": self.company.id})
+        list_response = self.client.get(reverse("soil:company_land_list"))
+        detail_response = self.client.get(
+            reverse("soil:company_detail", kwargs={"pk": self.company.id})
         )
-        self.assertContains(response, f"{self.company.name}を削除")
+
+        self.assertNotContains(list_response, delete_url)
+        self.assertContains(detail_response, delete_url)
+        self.assertContains(detail_response, f"{self.company.name}を削除")
+        self.assertLess(
+            detail_response.content.decode().index(delete_url),
+            detail_response.content.decode().index("所属圃場"),
+        )
 
     def test_company_with_land_and_ledger_is_not_deleted(self):
         """

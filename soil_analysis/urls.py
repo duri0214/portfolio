@@ -64,6 +64,11 @@ urlpatterns = [
         name="company_detail",
     ),
     path(
+        "company/<int:pk>/edit/",
+        views.CompanyUpdateView.as_view(),
+        name="company_update",
+    ),
+    path(
         "company/<int:pk>/delete/",
         views.CompanyDeleteView.as_view(),
         name="company_delete",

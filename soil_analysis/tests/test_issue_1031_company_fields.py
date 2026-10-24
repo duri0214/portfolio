@@ -44,12 +44,12 @@ class CompanyLandListViewTest(TestCase):
             center="43.0,141.0",
         )
 
-    def test_list_shows_empty_company_and_add_land_action(self):
+    def test_list_shows_empty_company_and_link_to_company_detail(self):
         """
         シナリオ:
         - 入力: 圃場未登録の企業が1件ある。
         - 操作: 企業別圃場一覧を開く。
-        - 結果: 企業詳細と最初の圃場を追加するリンクが表示される。
+        - 結果: 企業詳細へのリンクと、企業詳細から圃場を追加する案内が表示される。
         """
         response = self.client.get(reverse("soil:company_land_list"))
 
@@ -57,18 +57,18 @@ class CompanyLandListViewTest(TestCase):
         self.assertContains(
             response, reverse("soil:company_detail", kwargs={"pk": self.company.id})
         )
-        self.assertContains(
+        self.assertNotContains(
             response,
             reverse("soil:land_create", kwargs={"company_id": self.company.id}),
         )
-        self.assertContains(response, "圃場はまだ登録されていません")
+        self.assertContains(response, "企業詳細から最初の圃場を登録してください")
 
     def test_list_shows_registered_land_and_company_detail_links(self):
         """
         シナリオ:
         - 入力: 企業に圃場が1件登録されている。
         - 操作: 企業別圃場一覧と企業詳細を開く。
-        - 結果: どちらの画面からも圃場詳細へ移動できる。
+        - 結果: どちらの画面からも圃場詳細へ移動でき、一覧では枠線付きの横並びリストを使わない。
         """
         land = self._land()
 
@@ -83,6 +83,24 @@ class CompanyLandListViewTest(TestCase):
 
         self.assertContains(list_response, land_url)
         self.assertContains(detail_response, land_url)
+        self.assertContains(list_response, "row-cols-xl-5")
+        self.assertNotContains(list_response, "list-group-horizontal-md")
+
+    def test_list_separates_each_company_without_a_card(self):
+        """
+        シナリオ:
+        - 入力: 圃場未登録の農業法人が2件ある。
+        - 操作: 企業別圃場一覧を開く。
+        - 結果: 各法人のまとまりは横線で区切られ、カードで囲まれない。
+        """
+        second_company = Company.objects.create(name="別の農園", category=self.category)
+
+        response = self.client.get(reverse("soil:company_land_list"))
+
+        self.assertContains(response, self.company.name)
+        self.assertContains(response, second_company.name)
+        self.assertContains(response, 'class="border-bottom pb-4 mb-4"', count=1)
+        self.assertNotContains(response, 'class="card shadow-sm"')
 
     def test_list_and_detail_order_lands_by_prefecture_code(self):
         """
