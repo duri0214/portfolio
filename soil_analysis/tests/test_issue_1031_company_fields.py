@@ -68,7 +68,7 @@ class CompanyLandListViewTest(TestCase):
         シナリオ:
         - 入力: 企業に圃場が1件登録されている。
         - 操作: 企業別圃場一覧と企業詳細を開く。
-        - 結果: どちらの画面からも圃場詳細へ移動できる。
+        - 結果: どちらの画面からも圃場詳細へ移動でき、一覧では枠線付きの横並びリストを使わない。
         """
         land = self._land()
 
@@ -83,6 +83,8 @@ class CompanyLandListViewTest(TestCase):
 
         self.assertContains(list_response, land_url)
         self.assertContains(detail_response, land_url)
+        self.assertContains(list_response, "row-cols-xl-5")
+        self.assertNotContains(list_response, "list-group-horizontal-md")
 
     def test_list_and_detail_order_lands_by_prefecture_code(self):
         """
