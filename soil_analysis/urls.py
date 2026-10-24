@@ -34,6 +34,26 @@ urlpatterns = [
     ),
     path("company/create", views.CompanyCreateView.as_view(), name="company_create"),
     path(
+        "analysis-institutions/",
+        views.AnalysisInstitutionListView.as_view(),
+        name="analysis_institution_list",
+    ),
+    path(
+        "analysis-institutions/create/",
+        views.AnalysisInstitutionCreateView.as_view(),
+        name="analysis_institution_create",
+    ),
+    path(
+        "analysis-institutions/<int:pk>/edit/",
+        views.AnalysisInstitutionUpdateView.as_view(),
+        name="analysis_institution_update",
+    ),
+    path(
+        "analysis-institutions/<int:pk>/delete/",
+        views.AnalysisInstitutionDeleteView.as_view(),
+        name="analysis_institution_delete",
+    ),
+    path(
         "company-fields/",
         views.CompanyLandListView.as_view(),
         name="company_land_list",

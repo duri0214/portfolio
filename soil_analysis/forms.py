@@ -4,6 +4,7 @@ from django.forms import ClearableFileInput
 
 from .models import (
     Company,
+    CompanyCategory,
     Land,
     JmaPrefecture,
     JmaCity,
@@ -42,6 +43,64 @@ class CompanyCreateForm(forms.ModelForm):
             )
 
         return name
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["category"].queryset = CompanyCategory.objects.filter(
+            name="農業法人"
+        ).order_by("id")
+
+
+class AnalysisInstitutionForm(forms.ModelForm):
+    """分析機関の登録・編集に使うフォーム。"""
+
+    class Meta:
+        model = Company
+        fields = ("name", "image", "remark")
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "form-control"}),
+            "image": forms.ClearableFileInput(attrs={"class": "form-control"}),
+            "remark": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+        }
+        labels = {
+            "name": "分析機関名",
+            "image": "画像",
+            "remark": "備考",
+        }
+
+
+class AnalysisInstitutionDeleteForm(forms.Form):
+    """台帳参照を引き継いで分析機関を削除するフォーム。"""
+
+    replacement_agency = forms.ModelChoiceField(
+        queryset=Company.objects.none(),
+        required=False,
+        empty_label="選択してください",
+        label="引き継ぎ先の分析機関",
+    )
+
+    def __init__(self, *args, agency: Company, ledger_count: int, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.ledger_count = ledger_count
+        self.fields["replacement_agency"].queryset = (
+            Company.objects.filter(category__name="分析機関")
+            .exclude(pk=agency.pk)
+            .order_by("name", "id")
+        )
+        if ledger_count:
+            self.fields["replacement_agency"].required = True
+            self.fields["replacement_agency"].help_text = (
+                f"{ledger_count} 件の既存台帳は、選択した分析機関へ引き継がれます。"
+            )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if self.ledger_count and not cleaned_data.get("replacement_agency"):
+            self.add_error(
+                "replacement_agency",
+                "台帳を保持するため、引き継ぎ先の分析機関を選択してください。",
+            )
+        return cleaned_data
 
 
 class LandCreateForm(forms.ModelForm):
@@ -269,6 +328,10 @@ class LandLedgerCreateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.fields["analytical_agency"].queryset = Company.objects.filter(
+            category__name="分析機関"
+        ).order_by("name", "id")
 
         # 必須フィールドのスタイル設定
         for field_name in self.fields:

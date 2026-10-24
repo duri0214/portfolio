@@ -19,7 +19,7 @@ from soil_analysis.models import (
 
 class CompanyLandListViewTest(TestCase):
     def setUp(self):
-        self.category = CompanyCategory.objects.create(name="生産者")
+        self.category = CompanyCategory.objects.create(name="農業法人")
         self.company = Company.objects.create(name="テスト農園", category=self.category)
         self.user = get_user_model().objects.create_user(username="field-owner")
         area = JmaArea.objects.create(code="01", name="北海道")

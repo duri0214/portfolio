@@ -1,0 +1,45 @@
+{% extends "soil_analysis/base.html" %}
+
+{% block content %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'soil:company_land_list' %}">企業別圃場一覧</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:analysis_institution_list' %}">分析機関を管理</a></li>
+                <li class="breadcrumb-item active" aria-current="page">分析機関を削除</li>
+            </ol>
+        </nav>
+
+        <div class="card border-danger shadow-sm">
+            <div class="card-body p-4">
+                <h1 class="h3">分析機関を削除</h1>
+                <p>「{{ institution.name }}」を削除します。</p>
+
+                {% if ledger_count %}
+                    <div class="alert alert-warning" role="alert">
+                        この分析機関は {{ ledger_count }} 件の既存台帳から参照されています。台帳を保持するため、削除時に引き継ぎ先を選択してください。
+                    </div>
+                {% else %}
+                    <div class="alert alert-secondary" role="alert">参照中の台帳はありません。</div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    {% if ledger_count %}
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ form.replacement_agency.id_for_label }}">{{ form.replacement_agency.label }}</label>
+                            {{ form.replacement_agency }}
+                            {% if form.replacement_agency.help_text %}<div class="form-text">{{ form.replacement_agency.help_text }}</div>{% endif %}
+                            {% for error in form.replacement_agency.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                            {% if not has_replacement_agencies %}<div class="form-text text-danger">先に別の分析機関を追加してください。</div>{% endif %}
+                        </div>
+                    {% endif %}
+                    <div class="d-flex justify-content-end gap-2">
+                        <a class="btn btn-outline-secondary" href="{% url 'soil:analysis_institution_list' %}">キャンセル</a>
+                        <button class="btn btn-danger" type="submit">削除する</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

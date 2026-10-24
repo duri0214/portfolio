@@ -267,6 +267,9 @@ class Company(models.Model):
         CompanyCategory, on_delete=models.CASCADE, verbose_name="カテゴリ"
     )
 
+    def __str__(self):
+        return self.name
+
 
 class Crop(models.Model):
     """
