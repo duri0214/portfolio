@@ -142,7 +142,9 @@ class LandLedgerRepository:
             ],
             "analytical_agencies": [
                 {"id": company.id, "name": company.name}
-                for company in Company.objects.filter(category_id=2)
+                for company in Company.objects.filter(
+                    category__name="分析機関"
+                ).order_by("name", "id")
             ],
             "sampling_staff": [
                 {"id": user.id, "name": user.get_username()}

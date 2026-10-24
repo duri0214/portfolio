@@ -18,7 +18,7 @@ from django.http import (
     JsonResponse,
     Http404,
 )
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views import View
@@ -28,6 +28,7 @@ from django.views.generic import (
     DetailView,
     TemplateView,
     FormView,
+    UpdateView,
 )
 from openpyxl import Workbook, load_workbook
 
@@ -99,6 +100,8 @@ from soil_analysis.domain.valueobject.report.hardness_assessment import (
 )
 from soil_analysis.forms import (
     CompanyCreateForm,
+    AnalysisInstitutionForm,
+    AnalysisInstitutionDeleteForm,
     LandCreateForm,
     UploadForm,
     ChemicalUploadForm,
@@ -109,6 +112,7 @@ from soil_analysis.forms import (
 )
 from soil_analysis.models import (
     Company,
+    CompanyCategory,
     Land,
     SoilChemicalMeasurement,
     LandLedger,
@@ -423,13 +427,15 @@ class CompanyLandListView(ListView):
     context_object_name = "companies"
 
     def get_queryset(self):
-        """圃場が未登録の企業も含めて、都道府県コード順に取得する。"""
+        """圃場が未登録の農業法人も含めて、都道府県コード順に取得する。"""
         lands = Land.objects.select_related("company").order_by(
             "jma_city__jma_region__jma_prefecture__code", "name", "id"
         )
-        return Company.objects.prefetch_related(
-            Prefetch("land_set", queryset=lands, to_attr="lands")
-        ).order_by("name", "id")
+        return (
+            Company.objects.filter(category__name="農業法人")
+            .prefetch_related(Prefetch("land_set", queryset=lands, to_attr="lands"))
+            .order_by("name", "id")
+        )
 
 
 class CompanyDetailView(DetailView):
@@ -459,6 +465,124 @@ class CompanyDetailView(DetailView):
         context["company_lands"] = company_lands
 
         return context
+
+
+class AnalysisInstitutionQuerysetMixin:
+    """分析機関カテゴリの会社だけを扱うための共通処理。"""
+
+    queryset = Company.objects.filter(category__name="分析機関")
+
+    def get_queryset(self):
+        return self.queryset.select_related("category").order_by("name", "id")
+
+
+class AnalysisInstitutionListView(AnalysisInstitutionQuerysetMixin, ListView):
+    """分析機関の一覧と台帳での参照件数を表示する。"""
+
+    template_name = "soil_analysis/analysis_institution/list.html"
+    context_object_name = "institutions"
+
+    def get_queryset(self):
+        return super().get_queryset().annotate(ledger_count=Count("landledger"))
+
+
+class AnalysisInstitutionCreateView(CreateView):
+    """分析機関カテゴリを固定して、新しい分析機関を登録する。"""
+
+    model = Company
+    form_class = AnalysisInstitutionForm
+    template_name = "soil_analysis/analysis_institution/form.html"
+
+    def form_valid(self, form):
+        category = get_object_or_404(CompanyCategory, name="分析機関")
+        form.instance.category = category
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse("soil:analysis_institution_list")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = "分析機関を追加"
+        context["submit_label"] = "追加する"
+        return context
+
+
+class AnalysisInstitutionUpdateView(AnalysisInstitutionQuerysetMixin, UpdateView):
+    """分析機関の名称、画像、備考を編集する。"""
+
+    model = Company
+    form_class = AnalysisInstitutionForm
+    template_name = "soil_analysis/analysis_institution/form.html"
+
+    def get_success_url(self):
+        return reverse("soil:analysis_institution_list")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = "分析機関を編集"
+        context["submit_label"] = "保存する"
+        return context
+
+
+class AnalysisInstitutionDeleteView(AnalysisInstitutionQuerysetMixin, View):
+    """台帳を別の分析機関へ引き継いでから削除する。"""
+
+    template_name = "soil_analysis/analysis_institution/delete.html"
+
+    def get_institution(self):
+        return get_object_or_404(self.get_queryset(), pk=self.kwargs["pk"])
+
+    @staticmethod
+    def _ledger_count(institution: Company) -> int:
+        return LandLedger.objects.filter(analytical_agency=institution).count()
+
+    def get(self, request, *args, **kwargs):
+        institution = self.get_institution()
+        ledger_count = self._ledger_count(institution)
+        form = AnalysisInstitutionDeleteForm(
+            agency=institution, ledger_count=ledger_count
+        )
+        return self.render_to_response(institution, ledger_count, form)
+
+    def post(self, request, *args, **kwargs):
+        institution = self.get_institution()
+        ledger_count = self._ledger_count(institution)
+        form = AnalysisInstitutionDeleteForm(
+            request.POST, agency=institution, ledger_count=ledger_count
+        )
+        if not form.is_valid():
+            return self.render_to_response(institution, ledger_count, form)
+
+        replacement_agency = form.cleaned_data["replacement_agency"]
+        with transaction.atomic():
+            LandLedger.objects.filter(analytical_agency=institution).update(
+                analytical_agency=replacement_agency
+            )
+            institution.delete()
+
+        if ledger_count:
+            messages.success(
+                request,
+                f"分析機関を削除し、{ledger_count} 件の台帳を「{replacement_agency.name}」へ引き継ぎました。",
+            )
+        else:
+            messages.success(request, "分析機関を削除しました。")
+        return redirect("soil:analysis_institution_list")
+
+    def render_to_response(self, institution, ledger_count, form):
+        return render(
+            self.request,
+            self.template_name,
+            {
+                "institution": institution,
+                "ledger_count": ledger_count,
+                "form": form,
+                "has_replacement_agencies": form.fields[
+                    "replacement_agency"
+                ].queryset.exists(),
+            },
+        )
 
 
 class LandCreateView(CreateView):
