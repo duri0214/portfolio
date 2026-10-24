@@ -27,7 +27,13 @@
 
                 <div class="card-body p-4">
                     <!-- Form Section -->
-                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                    <form id="land-create-form"
+                          method="post"
+                          enctype="multipart/form-data"
+                          class="needs-validation"
+                          novalidate
+                          data-address-geocode-url="{% url 'soil:land_geocode_address' %}"
+                          data-coordinate-geocode-url="{% url 'soil:land_geocode_coordinate' %}">
                         {% csrf_token %}
 
                         <!-- 圃場名（1行全体） -->
@@ -108,10 +114,60 @@
                             </div>
                         </div>
 
+                        <div class="row">
+                            <div class="col-12 mb-4">
+                                <button id="address-to-center-button"
+                                        type="button"
+                                        class="btn btn-outline-primary"
+                                        disabled>
+                                    <i class="fas fa-location-dot me-2"></i>選択した地域から中心座標を設定
+                                </button>
+                                <div class="form-text text-muted mt-2">
+                                    都道府県と市区町村の代表地点を設定します。圃場そのものの正確な位置ではありません。
+                                    <a href="https://developer.yahoo.co.jp/webapi/map/openlocalplatform/v1/geocoder.html"
+                                       target="_blank"
+                                       rel="noopener noreferrer">Yahoo! JAPAN ジオコーディングAPI</a>の応答を、ボタンを押した時点で取得します。
+                                    変換結果は保存前の入力値です。
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- その他のフィールド -->
                         <div class="row">
+                            <div class="col-md-6 mb-4">
+                                {% if form.center.label %}
+                                    <label for="{{ form.center.id_for_label }}"
+                                           class="form-label text-muted fw-semibold mb-2">
+                                        {{ form.center.label }}
+                                        {% if form.center.field.required %}
+                                            <span class="text-danger ms-1">*</span>
+                                        {% endif %}
+                                    </label>
+                                {% endif %}
+
+                                <div class="input-wrapper">
+                                    {{ form.center }}
+                                </div>
+
+                                <button id="center-to-address-button"
+                                        type="button"
+                                        class="btn btn-outline-primary btn-sm mt-2">
+                                    <i class="fas fa-map-marker-alt me-2"></i>中心座標から地域を設定
+                                </button>
+
+                                {% if form.center.errors %}
+                                    {% for error in form.center.errors %}
+                                        <div class="invalid-feedback d-block mt-1">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>{{ error }}
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+
+                                <div id="geocoding-feedback" class="alert d-none mt-3" role="status" aria-live="polite"></div>
+                            </div>
+
                             {% for field in form %}
-                                {% if field.name != 'name' and field.name != 'jma_prefecture' and field.name != 'jma_city' %}
+                                {% if field.name != 'name' and field.name != 'jma_prefecture' and field.name != 'jma_city' and field.name != 'center' %}
                                     <div class="col-md-6 mb-4">
                                         {% if field.label %}
                                             <label for="{{ field.id_for_label }}"
