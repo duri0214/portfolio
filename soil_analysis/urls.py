@@ -64,6 +64,11 @@ urlpatterns = [
         name="company_detail",
     ),
     path(
+        "company/<int:pk>/delete/",
+        views.CompanyDeleteView.as_view(),
+        name="company_delete",
+    ),
+    path(
         "company/<int:company_id>/land/create",
         views.LandCreateView.as_view(),
         name="land_create",

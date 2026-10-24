@@ -141,6 +141,11 @@
                     <a href="{% url 'soil:land_create' object.id %}" class="btn btn-outline-success btn-sm">
                         <i class="fas fa-plus"></i> 圃場を追加
                     </a>
+                    {% if object.category.name == "農業法人" %}
+                        <a href="{% url 'soil:company_delete' object.id %}" class="btn btn-outline-danger btn-sm ms-2" aria-label="{{ object.name }}を削除" title="{{ object.name }}を削除">
+                            <i class="fas fa-trash-alt" aria-hidden="true"></i> 企業を削除
+                        </a>
+                    {% endif %}
                 </div>
             </div>
 

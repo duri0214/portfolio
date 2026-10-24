@@ -1,0 +1,53 @@
+{% extends "soil_analysis/base.html" %}
+
+{% block content %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'soil:company_land_list' %}">企業別圃場一覧</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:company_detail' company.id %}">{{ company.name }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">農業法人を削除</li>
+            </ol>
+        </nav>
+
+        <div class="card border-danger shadow-sm">
+            <div class="card-body p-4">
+                <h1 class="h3">農業法人を削除</h1>
+                <p>「{{ company.name }}」を削除します。</p>
+
+                {% if can_delete %}
+                    <div class="alert alert-secondary" role="alert">
+                        関連する圃場・台帳はありません。確認後、この農業法人だけを削除できます。
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning" role="alert">
+                        <p class="mb-1">この農業法人は削除できません。</p>
+                        <ul class="mb-2">
+                            <li>関連する圃場: {{ land_count }} 件</li>
+                            <li>関連する台帳: {{ ledger_count }} 件</li>
+                        </ul>
+                        <p class="mb-0">圃場と台帳を整理してから、もう一度削除してください。関連する圃場は法人詳細で確認できます。</p>
+                    </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    {% if can_delete %}
+                        {% for error in form.non_field_errors %}<div class="invalid-feedback d-block mb-3">{{ error }}</div>{% endfor %}
+                        <div class="form-check mb-3">
+                            {{ form.confirm_deletion }}
+                            <label class="form-check-label" for="{{ form.confirm_deletion.id_for_label }}">{{ form.confirm_deletion.label }}</label>
+                            {% for error in form.confirm_deletion.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                        </div>
+                    {% else %}
+                        {% for error in form.non_field_errors %}<div class="invalid-feedback d-block mb-3">{{ error }}</div>{% endfor %}
+                    {% endif %}
+                    <div class="d-flex justify-content-end gap-2">
+                        <a class="btn btn-outline-secondary" href="{% url 'soil:company_detail' company.id %}">法人詳細へ戻る</a>
+                        {% if can_delete %}<button class="btn btn-danger" type="submit">削除する</button>{% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

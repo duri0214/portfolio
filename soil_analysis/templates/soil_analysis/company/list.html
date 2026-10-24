@@ -36,10 +36,14 @@
                     {% for company in companies %}
                         <section class="list-group-item p-4">
                             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                                <div>
+                                <div class="d-flex align-items-center gap-2">
                                     <h2 class="h5 mb-1">
                                         <a href="{% url 'soil:company_detail' company.id %}" class="text-decoration-none">{{ company.name }}</a>
                                     </h2>
+                                    <a class="btn btn-sm btn-outline-danger" href="{% url 'soil:company_delete' company.id %}" aria-label="{{ company.name }}を削除" title="{{ company.name }}を削除">
+                                        <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                                        <span class="visually-hidden">{{ company.name }}を削除</span>
+                                    </a>
                                     <span class="text-muted small">{{ company.category }}</span>
                                 </div>
                                 <a class="btn btn-sm btn-outline-success" href="{% url 'soil:land_create' company.id %}">

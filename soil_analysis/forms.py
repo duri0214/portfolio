@@ -103,6 +103,15 @@ class AnalysisInstitutionDeleteForm(forms.Form):
         return cleaned_data
 
 
+class CompanyDeleteForm(forms.Form):
+    """圃場も台帳も持たない農業法人の削除確認を受け付けるフォーム。"""
+
+    confirm_deletion = forms.BooleanField(
+        label="この農業法人を削除することを確認しました。",
+        required=True,
+    )
+
+
 class LandCreateForm(forms.ModelForm):
     jma_prefecture = forms.ModelChoiceField(
         queryset=JmaPrefecture.objects.all(),
