@@ -1,50 +1,36 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
-$env:PYTHONUTF8 = "1"
 
 if (-not (Test-Path "manage.py")) {
   throw "manage.py not found. Please run this script from the repository root."
 }
 
-if (Test-Path ".\.venv\Scripts\python.exe") {
-    $pythonExe = (Resolve-Path ".\.venv\Scripts\python.exe").Path
-} elseif (Get-Command python -ErrorAction SilentlyContinue) {
-    $pythonExe = "python"
-} else {
-    throw "Python not found. Create .venv or add python to PATH."
-}
-
-function Invoke-Manage {
-    & $pythonExe manage.py @args
-    if ($LASTEXITCODE -ne 0) {
-        throw "manage.py $($args -join ' ') failed with exit code $LASTEXITCODE."
-    }
-}
-
-# --- User Check (ID 1 is required for some fixtures) ---
+# --- User Check (ID 1 is required for many fixtures) ---
 while ($true) {
-    $userExists = Invoke-Manage shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); print(User.objects.filter(id=1).exists())"
-    if ($userExists -match "True") {
+    $user_exists = python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); print(User.objects.filter(id=1).exists())"
+    if ($user_exists.Trim() -eq "True") {
         break
     }
     Write-Host "----------------------------------------------------------------------" -ForegroundColor Yellow
-    Write-Host "ID 1 のユーザーが必要です。別のターミナルで次を実行してください。" -ForegroundColor Yellow
-    Write-Host ">> $pythonExe manage.py createsuperuser" -ForegroundColor Green
-    Write-Host "ユーザー作成後、この画面でEnterを押すとSeederを再開します。" -ForegroundColor White
-    Read-Host "Enterで再確認、Ctrl+Cで中止"
+    Write-Host "CRITICAL: Superuser with ID 1 not found." -ForegroundColor Red
+    Write-Host "Many fixtures (Vietnam Research, USA Research, etc.) depend on user_id 1." -ForegroundColor Yellow
+    Write-Host "Please create a superuser now in another terminal:" -ForegroundColor White
+    Write-Host ">> python manage.py createsuperuser" -ForegroundColor Green
+    Write-Host "----------------------------------------------------------------------" -ForegroundColor Yellow
+    Read-Host "Press Enter AFTER creating the user to check again, or Ctrl+C to abort."
 }
 
 # --- Migrate ---
-Invoke-Manage migrate
+python manage.py migrate
 
 # --- USA Research (Masters) ---
-Invoke-Manage loaddata `
+python manage.py loaddata `
     usa_research\fixtures\market.json `
     usa_research\fixtures\symbol.json `
     usa_research\fixtures\unit.json
 
 # --- Vietnam Research ---
-Invoke-Manage loaddata `
+python manage.py loaddata `
     vietnam_research\fixtures\group.json `
     vietnam_research\fixtures\indClass.json `
     vietnam_research\fixtures\market.json `
@@ -56,36 +42,36 @@ Invoke-Manage loaddata `
     vietnam_research\fixtures\watchlist.json
 
 # Batches for Vietnam Research
-Invoke-Manage daily_import_market_data
-Invoke-Manage daily_import_from_sbi
-Invoke-Manage daily_import_usa_from_sbi
-Invoke-Manage daily_import_from_vietkabu
+python manage.py daily_import_market_data
+python manage.py daily_import_from_sbi
+python manage.py daily_import_usa_from_sbi
+python manage.py daily_import_from_vietkabu
 
 # Data generation and charts
 # Note: --clear is for initial data.
-Invoke-Manage generate_industry_dummy_data --clear
-Invoke-Manage daily_industry_chart_and_uptrend
-Invoke-Manage daily_industry_stacked_bar_chart
+python manage.py generate_industry_dummy_data --clear
+python manage.py daily_industry_chart_and_uptrend
+python manage.py daily_industry_stacked_bar_chart
 
 # FAO Food Balance / Vietnam Statistics
-Invoke-Manage monthly_fao_food_balance_chart
+python manage.py monthly_fao_food_balance_chart
 # Using dummy data for statistics due to server certificate issues
-Invoke-Manage generate_vietnam_statistics_dummy_data --clear
+python manage.py generate_vietnam_statistics_dummy_data --clear
 
 # --- GMarker ---
-Invoke-Manage loaddata `
+python manage.py loaddata `
     gmarker\fixtures\place.json `
     gmarker\fixtures\nearbyPlace.json
 
 # --- Shopping ---
-Invoke-Manage loaddata `
+python manage.py loaddata `
     shopping\fixtures\user.json `
     shopping\fixtures\store.json `
     shopping\fixtures\userattribute.json `
     shopping\fixtures\product.json
 
 # --- Rental Shop (Warehouse) ---
-Invoke-Manage loaddata `
+python manage.py loaddata `
     rental_shop\fixtures\warehouse.json `
     rental_shop\fixtures\user.json `
     rental_shop\fixtures\userattribute.json `
@@ -97,7 +83,7 @@ Invoke-Manage loaddata `
     rental_shop\fixtures\item.json
 
 # --- Soil Analysis ---
-Invoke-Manage loaddata `
+python manage.py loaddata `
     soil_analysis\fixtures\user.json `
     soil_analysis\fixtures\userattribute.json `
     soil_analysis\fixtures\companycategory.json `
@@ -107,34 +93,34 @@ Invoke-Manage loaddata `
     soil_analysis\fixtures\cultivationtype.json
 
 # Batches for Soil Analysis master data
-Invoke-Manage weather_load_const_master
+python manage.py weather_load_const_master
 
-Invoke-Manage loaddata soil_analysis\fixtures\jma_weather_code.json
-Invoke-Manage loaddata soil_analysis\fixtures\rokunohe_land_registry.json
+python manage.py loaddata soil_analysis\fixtures\jma_weather_code.json
+python manage.py loaddata soil_analysis\fixtures\rokunohe_land_registry.json
 
-Invoke-Manage loaddata soil_analysis\fixtures\samplingmethod.json
-Invoke-Manage generate_prefecture_representative_fixtures
+python manage.py loaddata soil_analysis\fixtures\samplingmethod.json
+python manage.py generate_prefecture_representative_fixtures
 
 # Weather data fetch
 try {
-    Invoke-Manage weather_fetch_forecast
+    python manage.py weather_fetch_forecast
 } catch {
     Write-Warning "weather_fetch_forecast failed. JMA API may be temporarily unavailable; continuing import."
 }
 try {
-    Invoke-Manage weather_fetch_warning
+    python manage.py weather_fetch_warning
 } catch {
     Write-Warning "weather_fetch_warning failed. JMA API may be temporarily unavailable; continuing import."
 }
 
-Invoke-Manage loaddata soil_analysis\fixtures\samplingorder.json
-Invoke-Manage loaddata soil_analysis\fixtures\device.json
+python manage.py loaddata soil_analysis\fixtures\samplingorder.json
+python manage.py loaddata soil_analysis\fixtures\device.json
 
 # --- Taxonomy ---
-Invoke-Manage seed_taxonomy_data
+python manage.py seed_taxonomy_data
 
-# --- Hospital ---
-Invoke-Manage loaddata `
+# --- Hospital / AI Agent ---
+python manage.py loaddata `
     hospital\fixtures\user.json `
     hospital\fixtures\ward.json `
     hospital\fixtures\city.json `
@@ -142,11 +128,16 @@ Invoke-Manage loaddata `
     hospital\fixtures\userattribute.json `
     hospital\fixtures\voteplace.json
 
+python manage.py loaddata `
+    ai_agent\fixtures\entity.json `
+    ai_agent\fixtures\guardrail_config.json `
+    ai_agent\fixtures\rag_material.json
+
 # --- USA Research ---
-Invoke-Manage loaddata usa_research\fixtures\financial_results.json
+python manage.py loaddata usa_research\fixtures\financial_results.json
 
 # Historical asset data update (from 1980)
-Invoke-Manage monthly_update_historical_assets --start 1980-01-01
+python manage.py monthly_update_historical_assets --start 1980-01-01
 
 # --- Bank ---
-Invoke-Manage loaddata bank\fixtures\mufg_summary_master.json
+python manage.py loaddata bank\fixtures\mufg_summary_master.json
