@@ -19,7 +19,7 @@
                 {% if object.category.name == "農業法人" %}
                     <div class="d-flex flex-wrap gap-2">
                         <a href="{% url 'soil:company_update' object.id %}" class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-edit"></i> 編集
+                            <i class="fas fa-edit"></i> 企業を編集
                         </a>
                         <a href="{% url 'soil:company_delete' object.id %}" class="btn btn-outline-danger btn-sm" aria-label="{{ object.name }}を削除" title="{{ object.name }}を削除">
                             <i class="fas fa-trash-alt" aria-hidden="true"></i> 企業を削除
