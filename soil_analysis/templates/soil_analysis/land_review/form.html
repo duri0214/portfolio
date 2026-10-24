@@ -20,6 +20,7 @@
 
                 <form method="post" id="land-review-form">
                     {% csrf_token %}
+                    <input type="hidden" name="action" value="generate" id="gpt-generation-action" disabled>
                     {% for error in form.non_field_errors %}<div class="alert alert-danger">{{ error }}</div>{% endfor %}
 
                     <fieldset class="mb-4">
@@ -76,6 +77,7 @@
             const gptAction = document.getElementById('gpt-action');
             const form = document.getElementById('land-review-form');
             const gptLoadingIndicator = document.getElementById('gpt-loading-indicator');
+            const gptGenerationAction = document.getElementById('gpt-generation-action');
             const updateVisibility = () => {
                 const source = document.querySelector('input[name="source"]:checked')?.value;
                 templateField.hidden = source !== 'template';
@@ -89,6 +91,7 @@
                 if (event.submitter?.value !== 'generate') return;
 
                 const button = event.submitter;
+                gptGenerationAction.disabled = false;
                 button.disabled = true;
                 button.setAttribute('aria-busy', 'true');
                 button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>生成中…';
