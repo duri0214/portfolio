@@ -1,5 +1,6 @@
 [
   {
+    "pk": 1,
     "model": "gmarker.place",
     "fields": {
       "place_id": "ChIJnxAAO1aLGGARJqvi8d4oczM",
@@ -11,6 +12,7 @@
     }
   },
   {
+    "pk": 2,
     "model": "gmarker.place",
     "fields": {
       "place_id": "ChIJx1e971eLGGARum8w_tnpFwI",
@@ -22,6 +24,7 @@
     }
   },
   {
+    "pk": 3,
     "model": "gmarker.place",
     "fields": {
       "place_id": "ChIJ5SZMmreMGGARcz8QSTiJyo8",
