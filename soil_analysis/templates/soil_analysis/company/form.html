@@ -1,0 +1,37 @@
+{% extends "soil_analysis/base.html" %}
+
+{% block content %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4 border-bottom pb-2">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="{% url 'soil:company_land_list' %}">企業別圃場一覧</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'soil:company_detail' object.id %}">{{ object.name }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ page_title }}</li>
+            </ol>
+        </nav>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h1 class="h3 mb-4">{{ page_title }}</h1>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                    {% endif %}
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="text-danger"> *</span>{% endif %}</label>
+                            {{ field }}
+                            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                            {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                        </div>
+                    {% endfor %}
+                    <div class="d-flex justify-content-end gap-2">
+                        <a class="btn btn-outline-secondary" href="{% url 'soil:company_detail' object.id %}">キャンセル</a>
+                        <button class="btn btn-primary" type="submit"><i class="fas fa-save me-1"></i>保存する</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
