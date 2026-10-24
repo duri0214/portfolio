@@ -26,9 +26,13 @@ class AgriculturalCompanyUpdateViewTests(TestCase):
         """
         detail_url = reverse("soil:company_detail", kwargs={"pk": self.company.id})
         update_url = reverse("soil:company_update", kwargs={"pk": self.company.id})
+        land_create_url = reverse(
+            "soil:land_create", kwargs={"company_id": self.company.id}
+        )
 
         detail_response = self.client.get(detail_url)
         self.assertContains(detail_response, update_url)
+        self.assertContains(detail_response, land_create_url, count=1)
         self.assertNotContains(detail_response, "編集（未実装）")
 
         edit_response = self.client.get(update_url)
