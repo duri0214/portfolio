@@ -8,6 +8,7 @@ from pathlib import Path
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.core.exceptions import PermissionDenied
 from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
 from django.db import transaction
@@ -26,6 +27,7 @@ from django.views.generic import (
     ListView,
     CreateView,
     DetailView,
+    DeleteView,
     TemplateView,
     FormView,
     UpdateView,
@@ -51,6 +53,9 @@ from soil_analysis.domain.repository.land import LandRepository
 from soil_analysis.domain.repository.land_block import LandBlockRepository
 from soil_analysis.domain.repository.land_ledger import LandLedgerRepository
 from soil_analysis.domain.repository.land_review import LandReviewRepository
+from soil_analysis.domain.repository.land_review_template import (
+    LandReviewTemplateRepository,
+)
 from soil_analysis.domain.service.chemical_import_service import (
     ChemicalImportService,
 )
@@ -90,6 +95,12 @@ from soil_analysis.domain.service.shape_import_job import (
     ShapeImportJobService,
 )
 from soil_analysis.domain.service.photo_processing import PhotoProcessingService
+from soil_analysis.domain.service.land_review_comment_generation import (
+    LandReviewCommentGenerationService,
+)
+from soil_analysis.domain.dataprovider.land_review_comment_generator import (
+    LandReviewCommentGenerationError,
+)
 from soil_analysis.domain.valueobject.photo_processing.photo_spot import PhotoSpot
 from soil_analysis.domain.valueobject.report.chemical_assessment import (
     ChemicalAssessmentVO,
@@ -108,6 +119,8 @@ from soil_analysis.forms import (
     ChemicalUploadForm,
     CsvGenerateForm,
     LandLedgerCreateForm,
+    LandReviewForm,
+    LandReviewTemplateForm,
     MunicipalityBoundaryUploadForm,
     SoilMapUploadForm,
 )
@@ -126,6 +139,7 @@ from soil_analysis.models import (
     JmaWeather,
     JmaWarning,
     ShapeImportJob,
+    LandReviewTemplate,
 )
 
 SAMPLING_TIMES_PER_BLOCK = 5
@@ -843,6 +857,148 @@ class StandardReportView(ListView):
         ]
 
         return context
+
+
+class LandReviewContextMixin:
+    """URLの企業と一致する台帳だけを評価コメント画面の対象にする。"""
+
+    def get_land_ledger(self) -> LandLedger:
+        """URL上の企業に属する対象台帳を取得し、不一致は404として扱う。"""
+        return get_object_or_404(
+            LandLedger.objects.select_related("land__company", "land_period"),
+            pk=self.kwargs["land_ledger_id"],
+            land__company_id=self.kwargs["company_id"],
+        )
+
+    def get_report_url(self) -> str:
+        """対象台帳の通知表へ戻るURLを返す。"""
+        return reverse(
+            "soil:standard_report",
+            kwargs={
+                "company_id": self.kwargs["company_id"],
+                "land_ledger_id": self.kwargs["land_ledger_id"],
+            },
+        )
+
+
+class LandReviewEditView(LoginRequiredMixin, LandReviewContextMixin, View):
+    """台帳単位の評価コメントを保存し、GPT下書きも編集可能な状態で表示する。"""
+
+    template_name = "soil_analysis/land_review/form.html"
+
+    def get(self, request, *args, **kwargs):
+        land_ledger = self.get_land_ledger()
+        review = LandReviewRepository.get_one_by_ledger(land_ledger)
+        initial = {}
+        if review:
+            initial = {"source": review.source, "comment": review.comment}
+        form = LandReviewForm(initial=initial, is_superuser=request.user.is_superuser)
+        return self.render_to_response(land_ledger, form)
+
+    def post(self, request, *args, **kwargs):
+        land_ledger = self.get_land_ledger()
+        if request.POST.get("action") == "generate":
+            return self.generate_draft(request, land_ledger)
+
+        form = LandReviewForm(request.POST, is_superuser=request.user.is_superuser)
+        if not form.is_valid():
+            return self.render_to_response(land_ledger, form)
+
+        LandReviewRepository.save(
+            land_ledger,
+            form.cleaned_data["comment"],
+            form.cleaned_data["source"],
+        )
+        messages.success(request, "評価コメントを保存しました。")
+        return redirect(self.get_report_url())
+
+    def generate_draft(self, request, land_ledger: LandLedger):
+        """スーパーユーザーだけがGPT下書きを作成し、未保存のフォームへ反映する。"""
+        if not request.user.is_superuser:
+            raise PermissionDenied(
+                "GPT下書きの生成はスーパーユーザーに限定されています。"
+            )
+
+        try:
+            comment = LandReviewCommentGenerationService.generate(land_ledger)
+        except LandReviewCommentGenerationError as error:
+            form = LandReviewForm(request.POST, is_superuser=True)
+            form.add_error(None, str(error))
+            return self.render_to_response(land_ledger, form)
+
+        form = LandReviewForm(
+            initial={"source": "gpt", "comment": comment}, is_superuser=True
+        )
+        messages.info(
+            request, "GPT下書きを作成しました。内容を確認してから保存してください。"
+        )
+        return self.render_to_response(land_ledger, form)
+
+    def render_to_response(self, land_ledger: LandLedger, form: LandReviewForm):
+        """台帳の識別情報とフォームを評価コメント画面へ渡す。"""
+        return render(
+            self.request,
+            self.template_name,
+            {
+                "land_ledger": land_ledger,
+                "company": land_ledger.land.company,
+                "form": form,
+                "report_url": self.get_report_url(),
+                "can_generate_gpt": self.request.user.is_superuser,
+            },
+        )
+
+
+class LandReviewTemplateListView(LoginRequiredMixin, ListView):
+    """評価コメントに利用できる定型文を一覧表示する。"""
+
+    template_name = "soil_analysis/land_review_template/list.html"
+    context_object_name = "templates"
+
+    def get_queryset(self):
+        return LandReviewTemplateRepository.get_all()
+
+
+class LandReviewTemplateCreateView(LoginRequiredMixin, CreateView):
+    """評価コメント用の定型文を新規作成する。"""
+
+    model = LandReviewTemplate
+    form_class = LandReviewTemplateForm
+    template_name = "soil_analysis/land_review_template/form.html"
+
+    def get_success_url(self):
+        return reverse("soil:land_review_template_list")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"page_title": "定型コメントを追加", "submit_label": "追加する"})
+        return context
+
+
+class LandReviewTemplateUpdateView(LoginRequiredMixin, UpdateView):
+    """既存の定型評価コメントを編集する。"""
+
+    model = LandReviewTemplate
+    form_class = LandReviewTemplateForm
+    template_name = "soil_analysis/land_review_template/form.html"
+
+    def get_success_url(self):
+        return reverse("soil:land_review_template_list")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"page_title": "定型コメントを編集", "submit_label": "保存する"})
+        return context
+
+
+class LandReviewTemplateDeleteView(LoginRequiredMixin, DeleteView):
+    """不要になった定型評価コメントを削除する。"""
+
+    model = LandReviewTemplate
+    template_name = "soil_analysis/land_review_template/confirm_delete.html"
+
+    def get_success_url(self):
+        return reverse("soil:land_review_template_list")
 
 
 class LandLedgerCreateAjaxView(View):

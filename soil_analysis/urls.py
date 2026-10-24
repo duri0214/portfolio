@@ -95,6 +95,31 @@ urlpatterns = [
         name="standard_report",
     ),
     path(
+        "company/<int:company_id>/land_ledger/<int:land_ledger_id>/review/",
+        views.LandReviewEditView.as_view(),
+        name="land_review_edit",
+    ),
+    path(
+        "review-templates/",
+        views.LandReviewTemplateListView.as_view(),
+        name="land_review_template_list",
+    ),
+    path(
+        "review-templates/create/",
+        views.LandReviewTemplateCreateView.as_view(),
+        name="land_review_template_create",
+    ),
+    path(
+        "review-templates/<int:pk>/edit/",
+        views.LandReviewTemplateUpdateView.as_view(),
+        name="land_review_template_update",
+    ),
+    path(
+        "review-templates/<int:pk>/delete/",
+        views.LandReviewTemplateDeleteView.as_view(),
+        name="land_review_template_delete",
+    ),
+    path(
         "hardness/upload",
         views.HardnessUploadView.as_view(),
         name="hardness_upload",

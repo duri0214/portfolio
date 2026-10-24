@@ -1,0 +1,102 @@
+{% extends "soil_analysis/base.html" %}
+
+{% block content %}
+    <div class="container py-4">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ report_url }}">通知表</a></li>
+                <li class="breadcrumb-item active" aria-current="page">評価コメント</li>
+            </ol>
+        </nav>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <h1 class="h3 mb-3">評価コメントを入力</h1>
+                <dl class="row small border rounded p-3 mx-0 mb-4 bg-light">
+                    <dt class="col-sm-3">企業</dt><dd class="col-sm-9">{{ company.name }}</dd>
+                    <dt class="col-sm-3">圃場</dt><dd class="col-sm-9">{{ land_ledger.land.name }}</dd>
+                    <dt class="col-sm-3">年度・時期</dt><dd class="col-sm-9">{{ land_ledger.land_period.year }}年 {{ land_ledger.land_period.name }}</dd>
+                </dl>
+
+                <form method="post" id="land-review-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="generate" id="gpt-generation-action" disabled>
+                    {% for error in form.non_field_errors %}<div class="alert alert-danger">{{ error }}</div>{% endfor %}
+
+                    <fieldset class="mb-4">
+                        <legend class="h6">{{ form.source.label }}</legend>
+                        {% for choice in form.source %}
+                            <div class="form-check mb-2">
+                                {{ choice.tag }}
+                                <label class="form-check-label" for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>
+                            </div>
+                        {% endfor %}
+                        {% for error in form.source.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </fieldset>
+
+                    <div class="mb-4" id="template-field">
+                        <label class="form-label" for="{{ form.template.id_for_label }}">{{ form.template.label }}</label>
+                        {{ form.template }}
+                        <div class="form-text">選んだ本文をそのまま保存します。定型文の追加・編集は<a href="{% url 'soil:land_review_template_list' %}">定型コメント管理</a>から行えます。</div>
+                        {% for error in form.template.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+
+                    {% if can_generate_gpt %}
+                        <div class="mb-4" id="gpt-action">
+                            <button class="btn btn-outline-secondary" type="submit" name="action" value="generate" id="gpt-generate-button">GPTで下書きを作成</button>
+                            <div class="form-text">硬度・化学分析が取り込み済みかどうかだけを材料に下書きを作成します。保存前に内容を確認・編集してください。</div>
+                            <div class="d-flex align-items-center mt-2 d-none" id="gpt-loading-indicator" role="status" aria-live="polite">
+                                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                                <span class="small">GPTで下書きを作成しています…</span>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-4" id="comment-field">
+                        <label class="form-label" for="{{ form.comment.id_for_label }}">{{ form.comment.label }}</label>
+                        {{ form.comment }}
+                        {% for error in form.comment.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ report_url }}" class="btn btn-outline-secondary">キャンセル</a>
+                        <button class="btn btn-primary" type="submit" name="action" value="save">保存する</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        (() => {
+            const sourceInputs = document.querySelectorAll('input[name="source"]');
+            const templateField = document.getElementById('template-field');
+            const commentField = document.getElementById('comment-field');
+            const gptAction = document.getElementById('gpt-action');
+            const form = document.getElementById('land-review-form');
+            const gptLoadingIndicator = document.getElementById('gpt-loading-indicator');
+            const gptGenerationAction = document.getElementById('gpt-generation-action');
+            const updateVisibility = () => {
+                const source = document.querySelector('input[name="source"]:checked')?.value;
+                templateField.hidden = source !== 'template';
+                commentField.hidden = source === 'template';
+                if (gptAction) gptAction.hidden = source !== 'gpt';
+            };
+            sourceInputs.forEach((input) => input.addEventListener('change', updateVisibility));
+            updateVisibility();
+
+            form?.addEventListener('submit', (event) => {
+                if (event.submitter?.value !== 'generate') return;
+
+                const button = event.submitter;
+                gptGenerationAction.disabled = false;
+                button.disabled = true;
+                button.setAttribute('aria-busy', 'true');
+                button.textContent = '生成中…';
+                gptLoadingIndicator?.classList.remove('d-none');
+            });
+        })();
+    </script>
+{% endblock %}

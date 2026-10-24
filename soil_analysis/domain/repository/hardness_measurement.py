@@ -199,6 +199,11 @@ class SoilHardnessMeasurementRepository:
         }
 
     @staticmethod
+    def has_measurements(land_ledger: LandLedger) -> bool:
+        """台帳に土壌硬度の測定値が1件以上取り込まれているかを返す。"""
+        return SoilHardnessMeasurement.objects.filter(land_ledger=land_ledger).exists()
+
+    @staticmethod
     def get_depth_averages(land_ledger: LandLedger) -> list[dict]:
         """
         指定された台帳に紐づくブロックごと、深度ごとの平均圧力を取得します。

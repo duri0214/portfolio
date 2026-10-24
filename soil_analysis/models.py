@@ -622,13 +622,31 @@ class LandReview(models.Model):
 
     Attributes:
         comment (str): コメント
+        source (str): コメントの作成方法
         remark (str): 備考
         created_at (datetime): 作成日時
         updated_at (datetime): 更新日時
         land_ledger (LandLedger): 台帳
     """
 
+    class Source(models.TextChoices):
+        """
+        評価コメントの作成方法。
+
+        Attributes:
+            MANUAL: 利用者が直接入力したコメント。
+            TEMPLATE: 登録済みの定型コメントから選択したコメント。
+            GPT: GPTが作成した下書きを利用者が保存したコメント。
+        """
+
+        MANUAL = "manual", "手入力"
+        TEMPLATE = "template", "定型コメント"
+        GPT = "gpt", "GPT下書き"
+
     comment = models.TextField("コメント")
+    source = models.CharField(
+        "作成方法", max_length=16, choices=Source, default=Source.MANUAL
+    )
     remark = models.TextField("備考", null=True)
     created_at = models.DateTimeField("作成日時", auto_now_add=True)
     updated_at = models.DateTimeField("更新日時", auto_now=True)
@@ -640,6 +658,29 @@ class LandReview(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["land_ledger"], name="land_ledger_unique"),
         ]
+
+
+class LandReviewTemplate(models.Model):
+    """
+    通知表へコピーして使う定型評価コメント。
+
+    Attributes:
+        name (str): 選択画面に表示するテンプレート名。
+        comment (str): 台帳の評価コメントへコピーする本文。
+        created_at (datetime): 作成日時。
+        updated_at (datetime): 更新日時。
+    """
+
+    name = models.CharField("テンプレート名", max_length=100, unique=True)
+    comment = models.TextField("コメント")
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    class Meta:
+        ordering = ["name", "id"]
+
+    def __str__(self):
+        return self.name
 
 
 class Device(models.Model):

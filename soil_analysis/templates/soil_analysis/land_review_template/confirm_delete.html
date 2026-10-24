@@ -1,0 +1,9 @@
+{% extends "soil_analysis/base.html" %}
+
+{% block content %}
+    <div class="container py-4"><div class="card border-danger shadow-sm"><div class="card-body p-4">
+        <h1 class="h3">定型コメントを削除</h1>
+        <p>「{{ object.name }}」を削除します。すでに通知表へ保存した評価コメントは変更されません。</p>
+        <form method="post">{% csrf_token %}<div class="d-flex justify-content-end gap-2"><a class="btn btn-outline-secondary" href="{% url 'soil:land_review_template_list' %}">キャンセル</a><button class="btn btn-danger" type="submit">削除する</button></div></form>
+    </div></div></div>
+{% endblock %}
