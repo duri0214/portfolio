@@ -243,7 +243,7 @@ class MufgDepositUploadView(View):
                         msg_md += f"- {m}: {c}件\n"
 
                 msg_html = markdown.markdown(msg_md)
-                messages.success(request, msg_html)
+                messages.success(request, msg_html, extra_tags="html")
 
                 if processed_files:
                     logger.info("-" * 40)
@@ -258,7 +258,7 @@ class MufgDepositUploadView(View):
                 # 全体がロールバックされたことを明示する。Markdownの構造を保つため2つの改行を入れる
                 error_msg_md = f"**エラーが発生しました（処理は中断され、データは保存されていません）**\n\n{str(e)}"
                 error_msg_html = markdown.markdown(error_msg_md)
-                messages.error(request, error_msg_html)
+                messages.error(request, error_msg_html, extra_tags="html")
             return redirect("bank:mufg_deposit_upload")
         return render(request, self.template_name, {"form": form})
 
@@ -493,5 +493,5 @@ class MufgDepositDeleteView(View):
                 msg_md += f"- {m}: {c}件\n"
 
         msg_html = markdown.markdown(msg_md)
-        messages.success(request, msg_html)
+        messages.success(request, msg_html, extra_tags="html")
         return redirect("bank:mufg_deposit_upload")

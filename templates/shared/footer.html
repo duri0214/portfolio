@@ -9,3 +9,6 @@
         </div>
     </div>
 </footer>
+{% if not messages.used %}
+    {% include 'shared/messages.html' %}
+{% endif %}

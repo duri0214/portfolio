@@ -1,0 +1,17 @@
+{% if messages %}
+    <div class="messages-container position-fixed top-0 end-0 p-3"
+         style="top: 70px !important; z-index: 1050;"
+         aria-live="polite" aria-atomic="true">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.level_tag|default:'info' }} alert-dismissible fade show mb-2"
+                 role="alert">
+                {% if 'html' in message.extra_tags %}
+                    {{ message|safe }}
+                {% else %}
+                    {{ message }}
+                {% endif %}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
