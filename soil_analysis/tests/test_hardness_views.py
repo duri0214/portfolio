@@ -1,6 +1,12 @@
+import io
+import shutil
+import zipfile
 from datetime import datetime
+from pathlib import Path
 
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.test import TestCase, Client
 from django.urls import reverse
 
@@ -94,6 +100,44 @@ class HardnessViewsTest(TestCase):
         self.assertEqual(response.context["min_memory"], 1)
         self.assertEqual(response.context["max_memory"], 1)
         self.assertEqual(response.context["folder_name"], "Folder1")
+
+    def test_upload_accepts_the_downloaded_sample_package(self):
+        """
+        シナリオ:
+        - 入力: テスト用CSV生成が返す投入用ZIPを含む配布ZIPがある。
+        - 操作: 配布ZIPを硬度データ取り込み画面からアップロードする。
+        - 結果: 内側の投入用ZIPも展開され、硬度測定データが取り込まれる。
+        """
+        output_path = Path(
+            call_command(
+                "hardness_generate_dummy_csv",
+                "--num_fields=1",
+                "--want_to_create_dataset_round=1",
+            )
+        )
+        self.addCleanup(lambda: shutil.rmtree(output_path.parent, ignore_errors=True))
+        package = io.BytesIO()
+        with zipfile.ZipFile(package, "w", zipfile.ZIP_DEFLATED) as archive:
+            for sample_file in output_path.iterdir():
+                archive.write(sample_file, sample_file.name)
+
+        response = self.client.post(
+            reverse("soil:hardness_upload"),
+            {
+                "file": SimpleUploadedFile(
+                    "hardness_samples.zip",
+                    package.getvalue(),
+                    content_type="application/zip",
+                )
+            },
+        )
+
+        self.assertRedirects(response, reverse("soil:hardness_success"))
+        self.assertTrue(
+            SoilHardnessMeasurement.objects.filter(
+                folder__startswith="FIELD001_ROUND01"
+            ).exists()
+        )
 
     def test_hardness_success_view_uses_current_import_folders(self):
         """

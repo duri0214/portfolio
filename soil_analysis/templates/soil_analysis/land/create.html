@@ -10,7 +10,8 @@
         <div class="container">
             <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'soil:home' %}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'soil:company_land_list' %}">企業別圃場一覧</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'soil:company_detail' company.id %}">企業詳細</a></li>
                     <li class="breadcrumb-item active" aria-current="page">Land Create</li>
                 </ol>
             </nav>
@@ -154,7 +155,7 @@
                                     <i class="fas fa-times me-2"></i>キャンセル
                                 </a>
                             {% else %}
-                                <a href="{% url 'soil:home' %}"
+                                <a href="{% url 'soil:company_detail' company.id %}"
                                    class="btn btn-outline-secondary btn-lg me-md-2">
                                     <i class="fas fa-times me-2"></i>キャンセル
                                 </a>

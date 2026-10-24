@@ -275,6 +275,8 @@ class LandLedgerRepository:
                 "land_ledger__land", "land_ledger__crop", "land_ledger__land_period"
             )
             .values(
+                "land_ledger__id",
+                "land_ledger__land__company_id",
                 "land_ledger__land__name",
                 "land_ledger__sampling_date",
                 "land_ledger__crop__name",
@@ -301,6 +303,8 @@ class LandLedgerRepository:
 
         land_ledger_stats_formatted = [
             {
+                "company_id": stat["land_ledger__land__company_id"],
+                "land_ledger_id": stat["land_ledger__id"],
                 "land_name": stat["land_ledger__land__name"],
                 "sampling_date": stat["land_ledger__sampling_date"],
                 "crop_name": stat["land_ledger__crop__name"],

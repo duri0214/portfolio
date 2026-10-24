@@ -4,7 +4,6 @@ import io
 import os
 import re
 import shutil
-import zipfile
 from pathlib import Path
 
 from django.contrib import messages
@@ -416,6 +415,23 @@ class CompanyCreateView(CreateView):
         return reverse("soil:company_detail", kwargs={"pk": self.object.pk})
 
 
+class CompanyLandListView(ListView):
+    """企業を起点に、登録済みの圃場へ進むための一覧を表示する。"""
+
+    model = Company
+    template_name = "soil_analysis/company/list.html"
+    context_object_name = "companies"
+
+    def get_queryset(self):
+        """圃場が未登録の企業も含めて、都道府県コード順に取得する。"""
+        lands = Land.objects.select_related("company").order_by(
+            "jma_city__jma_region__jma_prefecture__code", "name", "id"
+        )
+        return Company.objects.prefetch_related(
+            Prefetch("land_set", queryset=lands, to_attr="lands")
+        ).order_by("name", "id")
+
+
 class CompanyDetailView(DetailView):
     model = Company
     template_name = "soil_analysis/company/detail.html"
@@ -431,11 +447,16 @@ class CompanyDetailView(DetailView):
         except Company.DoesNotExist:
             raise Http404("Company does not exist.")
 
-        company_lands = list(Land.objects.filter(company_id=company_id))
+        company_lands = list(
+            Land.objects.filter(company_id=company_id).order_by(
+                "jma_city__jma_region__jma_prefecture__code", "name", "id"
+            )
+        )
         context["land_ledger_map"] = LandRepository.get_land_to_ledgers_map(
             company_lands
         )
         context["company"] = company
+        context["company_lands"] = company_lands
 
         return context
 
@@ -730,6 +751,15 @@ class HardnessUploadView(FormView):
             self.request.FILES["file"], app_name
         )
         if os.path.exists(upload_folder):
+            upload_folder_path = Path(upload_folder)
+            nested_zip_files = [
+                zip_path
+                for zip_path in upload_folder_path.glob("*.zip")
+                if zip_path.name != "uploaded.zip"
+            ]
+            for nested_zip_path in nested_zip_files:
+                ZipFileService.extract_zip_file(nested_zip_path, upload_folder_path)
+
             # エラーログのクリア
             HardnessImportErrorRepository.delete_all()
             imported_folder_names = set()
@@ -998,7 +1028,7 @@ class ChemicalAssociationRowView(TemplateView):
         all_ledgers = (
             LandLedger.objects.select_related("land", "land__company", "land_period")
             .exclude(id__in=ChemicalImportService.get_used_ledger_ids())
-            .order_by("-id")[:200]
+            .order_by("id")[:200]
         )
         suggested_ids = {ledger.id for ledger in suggested_ledgers}
         fallback_ledgers = [
@@ -1096,6 +1126,8 @@ class ChemicalSuccessView(TemplateView):
                 for ledger in ledgers:
                     ledger_summary.append(
                         {
+                            "company_id": ledger.land.company_id,
+                            "land_ledger_id": ledger.id,
                             "company_name": ledger.land.company.name,
                             "land_name": ledger.land.name,
                             "period_year": ledger.land_period.year,
@@ -1134,36 +1166,48 @@ class HardnessDeleteAllView(View):
 
 
 class ChemicalDownloadSampleView(View):
-    """
-    連続登録テスト用のサンプルExcel一式をZIPでダウンロード提供
-    """
+    """化学分析アップロード画面で直接選択できるサンプル Excel を提供する。"""
 
     @staticmethod
     def get(request, *args, **kwargs):
-        zip_buffer = io.BytesIO()
-        sample_files = {
-            "chemical_stage01.xlsx": ChemicalDownloadSampleView._create_workbook_bytes(
-                stage=1
+        response = HttpResponse(
+            ChemicalDownloadSampleView._create_workbook_bytes(
+                stage=1,
+                field_samples=ChemicalDownloadSampleView._get_hardness_field_samples(),
             ),
-            "chemical_stage02.xlsx": ChemicalDownloadSampleView._create_workbook_bytes(
-                stage=2
+            content_type=(
+                "application/vnd.openxmlformats-officedocument." "spreadsheetml.sheet"
             ),
-            "chemical_duplicate.xlsx": ChemicalDownloadSampleView._create_workbook_bytes(
-                stage=1
-            ),
-            "README.txt": ChemicalDownloadSampleView._create_readme().encode("utf-8"),
-        }
-
-        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-            for filename, content in sample_files.items():
-                zip_file.writestr(filename, content)
-
-        response = HttpResponse(zip_buffer.getvalue(), content_type="application/zip")
-        response["Content-Disposition"] = 'attachment; filename="chemical_samples.zip"'
+        )
+        response["Content-Disposition"] = 'attachment; filename="chemical_sample.xlsx"'
         return response
 
     @staticmethod
-    def _create_workbook_bytes(stage: int) -> bytes:
+    def _get_hardness_field_samples() -> list[tuple[str, str]] | None:
+        """硬度データを関連付けた先頭3台帳の圃場名と作物名を取得する。"""
+        hardness_ledger_ids = list(
+            SoilHardnessMeasurement.objects.filter(land_ledger__isnull=False)
+            .values_list("land_ledger_id", flat=True)
+            .distinct()
+            .order_by("land_ledger_id")[:3]
+        )
+        if len(hardness_ledger_ids) != 3:
+            return None
+
+        ledgers = (
+            LandLedger.objects.filter(id__in=hardness_ledger_ids)
+            .select_related("land", "crop")
+            .order_by("id")
+        )
+        return [
+            (ledger.land.name, ledger.crop.name if ledger.crop else "サンプル作物")
+            for ledger in ledgers
+        ]
+
+    @staticmethod
+    def _create_workbook_bytes(
+        stage: int, field_samples: list[tuple[str, str]] | None = None
+    ) -> bytes:
         workbook = Workbook()
         worksheet = workbook.active
         worksheet.title = "川田研究所レポート"
@@ -1206,17 +1250,17 @@ class ChemicalDownloadSampleView(View):
         )
 
         base_analysis_number = 2606000 + (stage * 100)
-        land_names = (
-            "FIELD001（点検用圃場）",
-            "FIELD002（点検用圃場）",
-            "FIELD003（点検用圃場）",
-        )
-        for row_index, land_name in enumerate(land_names, start=1):
+        samples = field_samples or [
+            ("FIELD001（点検用圃場）", "レタス"),
+            ("FIELD002（点検用圃場）", "キャベツ"),
+            ("FIELD003（点検用圃場）", "トマト"),
+        ]
+        for row_index, (land_name, crop_name) in enumerate(samples, start=1):
             worksheet.append(
                 ChemicalDownloadSampleView._create_chemical_row(
                     analysis_number=base_analysis_number + row_index,
                     land_name=land_name,
-                    crop_name=("レタス", "キャベツ", "トマト")[row_index - 1],
+                    crop_name=crop_name,
                     value_offset=(stage * 10) + row_index,
                 )
             )
@@ -1251,20 +1295,6 @@ class ChemicalDownloadSampleView(View):
             round(2.0 + value_offset * 0.06, 2),
             round(1.00 + value_offset * 0.01, 2),
         ]
-
-    @staticmethod
-    def _create_readme() -> str:
-        return "\n".join(
-            [
-                "化学分析 連続アップロード検証用データ",
-                "",
-                "1. chemical_stage01.xlsx を soil:chemical_upload へ投入してください。",
-                "2. chemical_stage02.xlsx を続けて投入してください。",
-                "3. chemical_duplicate.xlsx は stage01 と同じ圃場名を含むため、同じ台帳に割り当てた場合の更新検証に使います。",
-                "",
-                "各Excelは川田研究所形式の列順に合わせています。",
-            ]
-        )
 
 
 class ChemicalDeleteAllView(View):
