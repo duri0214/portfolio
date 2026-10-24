@@ -89,6 +89,21 @@ class CompanyDeletionViewTests(TestCase):
         self.assertRedirects(response, reverse("soil:company_land_list"))
         self.assertFalse(Company.objects.filter(pk=self.company.id).exists())
 
+    def test_company_list_identifies_delete_action_as_company_deletion(self):
+        """
+        シナリオ:
+        - 入力: 圃場未登録の農業法人が企業別圃場一覧に表示されている。
+        - 操作: 一覧の企業名付近にある削除アイコンを確認する。
+        - 期待値: 削除対象が企業であることがラベルから分かる。
+        """
+        response = self.client.get(reverse("soil:company_land_list"))
+
+        self.assertContains(
+            response,
+            f'aria-label="{self.company.name}を削除"',
+        )
+        self.assertContains(response, f"{self.company.name}を削除")
+
     def test_company_with_land_and_ledger_is_not_deleted(self):
         """
         シナリオ:
@@ -128,4 +143,10 @@ class CompanyDeletionViewTests(TestCase):
         self.assertNotContains(
             self.client.get(reverse("soil:analysis_institution_list")),
             reverse("soil:company_delete", kwargs={"pk": self.company.id}),
+        )
+        self.assertNotContains(
+            self.client.get(
+                reverse("soil:company_detail", kwargs={"pk": self.institution.id})
+            ),
+            reverse("soil:company_delete", kwargs={"pk": self.institution.id}),
         )
