@@ -112,12 +112,14 @@
                                     {% endfor %}
                                 {% endif %}
 
-                                <button id="address-to-center-button"
-                                        type="button"
-                                        class="btn btn-outline-primary btn-sm mt-2"
-                                        disabled>
-                                    <i class="fas fa-location-dot me-2"></i>選択した地域から中心座標を設定
-                                </button>
+                                <div class="d-flex justify-content-end mt-2">
+                                    <button id="address-to-center-button"
+                                            type="button"
+                                            class="btn btn-outline-primary btn-sm"
+                                            disabled>
+                                        <i class="fas fa-location-dot me-2"></i>選択した地域から中心座標を設定
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -150,11 +152,13 @@
                                     {{ form.center }}
                                 </div>
 
-                                <button id="center-to-address-button"
-                                        type="button"
-                                        class="btn btn-outline-primary btn-sm mt-2">
-                                    <i class="fas fa-map-marker-alt me-2"></i>中心座標から地域を設定
-                                </button>
+                                <div class="d-flex justify-content-end mt-2">
+                                    <button id="center-to-address-button"
+                                            type="button"
+                                            class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-map-marker-alt me-2"></i>中心座標から地域を設定
+                                    </button>
+                                </div>
 
                                 {% if form.center.errors %}
                                     {% for error in form.center.errors %}

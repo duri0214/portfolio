@@ -172,3 +172,6 @@ class LandGeocodingViewTests(TestCase):
         self.assertContains(response, "中心座標から地域を設定")
         self.assertContains(response, "圃場そのものの正確な位置ではありません")
         self.assertNotContains(response, 'value="35.658581,139.745433"')
+        self.assertContains(
+            response, 'class="d-flex justify-content-end mt-2"', count=2
+        )
