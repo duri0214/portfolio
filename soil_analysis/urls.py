@@ -79,6 +79,11 @@ urlpatterns = [
         name="land_create",
     ),
     path(
+        "company/<int:company_id>/land/<int:pk>/edit/",
+        views.LandUpdateView.as_view(),
+        name="land_update",
+    ),
+    path(
         "land/geocode/address",
         views.LandAddressGeocodingView.as_view(),
         name="land_geocode_address",

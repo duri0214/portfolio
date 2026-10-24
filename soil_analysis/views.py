@@ -121,6 +121,7 @@ from soil_analysis.forms import (
     AnalysisInstitutionDeleteForm,
     LandDeleteForm,
     LandCreateForm,
+    LandUpdateForm,
     UploadForm,
     ChemicalUploadForm,
     CsvGenerateForm,
@@ -735,6 +736,45 @@ class LandCreateView(CreateView):
         return reverse(
             "soil:land_detail",
             kwargs={"company_id": self.kwargs["company_id"], "pk": self.object.pk},
+        )
+
+
+class LandUpdateView(UpdateView):
+    """圃場の所属法人を維持したまま、圃場情報を編集する。"""
+
+    model = Land
+    form_class = LandUpdateForm
+    template_name = "soil_analysis/land/create.html"
+
+    def get_queryset(self):
+        return Land.objects.filter(company_id=self.kwargs["company_id"]).select_related(
+            "company", "jma_city__jma_region__jma_prefecture"
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "company": self.object.company,
+                "is_edit": True,
+                "page_title": "圃場を編集",
+                "page_description": "圃場情報を編集してください",
+                "submit_label": "更新する",
+                "cancel_url": reverse(
+                    "soil:land_detail",
+                    kwargs={
+                        "company_id": self.object.company_id,
+                        "pk": self.object.pk,
+                    },
+                ),
+            }
+        )
+        return context
+
+    def get_success_url(self):
+        return reverse(
+            "soil:land_detail",
+            kwargs={"company_id": self.object.company_id, "pk": self.object.pk},
         )
 
 
