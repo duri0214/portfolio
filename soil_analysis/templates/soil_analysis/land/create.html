@@ -111,18 +111,19 @@
                                         </div>
                                     {% endfor %}
                                 {% endif %}
+
+                                <button id="address-to-center-button"
+                                        type="button"
+                                        class="btn btn-outline-primary btn-sm mt-2"
+                                        disabled>
+                                    <i class="fas fa-location-dot me-2"></i>選択した地域から中心座標を設定
+                                </button>
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-12 mb-4">
-                                <button id="address-to-center-button"
-                                        type="button"
-                                        class="btn btn-outline-primary"
-                                        disabled>
-                                    <i class="fas fa-location-dot me-2"></i>選択した地域から中心座標を設定
-                                </button>
-                                <div class="form-text text-muted mt-2">
+                                <div class="form-text text-muted">
                                     都道府県と市区町村の代表地点を設定します。圃場そのものの正確な位置ではありません。
                                     <a href="https://developer.yahoo.co.jp/webapi/map/openlocalplatform/v1/geocoder.html"
                                        target="_blank"

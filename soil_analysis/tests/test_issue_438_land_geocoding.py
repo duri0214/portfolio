@@ -171,3 +171,4 @@ class LandGeocodingViewTests(TestCase):
         self.assertContains(response, "選択した地域から中心座標を設定")
         self.assertContains(response, "中心座標から地域を設定")
         self.assertContains(response, "圃場そのものの正確な位置ではありません")
+        self.assertNotContains(response, 'value="35.658581,139.745433"')

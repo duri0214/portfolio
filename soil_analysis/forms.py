@@ -147,7 +147,6 @@ class LandCreateForm(forms.ModelForm):
                     "class": "form-control",
                     "tabindex": "4",
                     "placeholder": "例: 35.658581,139.745433",
-                    "value": "35.658581,139.745433",
                 }
             ),
             "area": forms.TextInput(
