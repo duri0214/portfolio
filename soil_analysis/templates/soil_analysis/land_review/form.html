@@ -94,7 +94,7 @@
                 gptGenerationAction.disabled = false;
                 button.disabled = true;
                 button.setAttribute('aria-busy', 'true');
-                button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>生成中…';
+                button.textContent = '生成中…';
                 gptLoadingIndicator?.classList.remove('d-none');
             });
         })();
