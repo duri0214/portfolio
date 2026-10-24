@@ -131,6 +131,15 @@ class CompanyDeleteForm(forms.Form):
     )
 
 
+class LandDeleteForm(forms.Form):
+    """台帳を持たない圃場の削除確認を受け付けるフォーム。"""
+
+    confirm_deletion = forms.BooleanField(
+        label="この圃場を削除することを確認しました。",
+        required=True,
+    )
+
+
 class LandCreateForm(forms.ModelForm):
     jma_prefecture = forms.ModelChoiceField(
         queryset=JmaPrefecture.objects.all(),
