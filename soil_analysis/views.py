@@ -817,8 +817,11 @@ class LandAddressGeocodingView(View):
             AttributeError,
             TypeError,
             et.ParseError,
-        ):
-            logger.exception("Yahoo API による住所から座標への変換に失敗しました。")
+        ) as error:
+            logger.warning(
+                "Yahoo API による住所から座標への変換に失敗しました。error_type=%s",
+                type(error).__name__,
+            )
             return JsonResponse(
                 {
                     "message": "座標候補を取得できませんでした。入力内容を確認してから、もう一度お試しください。"
@@ -846,8 +849,11 @@ class LandCoordinateGeocodingView(View):
             AttributeError,
             TypeError,
             et.ParseError,
-        ):
-            logger.exception("Yahoo API による座標から住所への変換に失敗しました。")
+        ) as error:
+            logger.warning(
+                "Yahoo API による座標から住所への変換に失敗しました。error_type=%s",
+                type(error).__name__,
+            )
             return JsonResponse(
                 {
                     "message": "都道府県と市区町村を取得できませんでした。入力内容を確認してから、もう一度お試しください。"
