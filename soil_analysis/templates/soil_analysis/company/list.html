@@ -32,7 +32,7 @@
 
         {% if companies %}
             {% for company in companies %}
-                <section class="mb-4">
+                <section{% if not forloop.last %} class="border-bottom pb-4 mb-4"{% endif %}>
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <h2 class="h5 mb-0">
                             <a href="{% url 'soil:company_detail' company.id %}" class="text-decoration-none">{{ company.name }}</a>

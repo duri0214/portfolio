@@ -86,6 +86,22 @@ class CompanyLandListViewTest(TestCase):
         self.assertContains(list_response, "row-cols-xl-5")
         self.assertNotContains(list_response, "list-group-horizontal-md")
 
+    def test_list_separates_each_company_without_a_card(self):
+        """
+        シナリオ:
+        - 入力: 圃場未登録の農業法人が2件ある。
+        - 操作: 企業別圃場一覧を開く。
+        - 結果: 各法人のまとまりは横線で区切られ、カードで囲まれない。
+        """
+        second_company = Company.objects.create(name="別の農園", category=self.category)
+
+        response = self.client.get(reverse("soil:company_land_list"))
+
+        self.assertContains(response, self.company.name)
+        self.assertContains(response, second_company.name)
+        self.assertContains(response, 'class="border-bottom pb-4 mb-4"', count=1)
+        self.assertNotContains(response, 'class="card shadow-sm"')
+
     def test_list_and_detail_order_lands_by_prefecture_code(self):
         """
         シナリオ:
