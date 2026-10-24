@@ -223,6 +223,9 @@ class LandReviewCommentViewTest(TestCase):
                 ("manual", "手入力"),
             ],
         )
+        self.assertContains(response, 'id="gpt-generate-button"')
+        self.assertContains(response, 'id="gpt-loading-indicator"')
+        self.assertContains(response, "GPTで下書きを作成しています…")
         with patch(
             "soil_analysis.views.LandReviewCommentGenerationService.generate",
             return_value="GPTが作成した下書きです。",

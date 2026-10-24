@@ -18,7 +18,7 @@
                     <dt class="col-sm-3">年度・時期</dt><dd class="col-sm-9">{{ land_ledger.land_period.year }}年 {{ land_ledger.land_period.name }}</dd>
                 </dl>
 
-                <form method="post">
+                <form method="post" id="land-review-form">
                     {% csrf_token %}
                     {% for error in form.non_field_errors %}<div class="alert alert-danger">{{ error }}</div>{% endfor %}
 
@@ -42,8 +42,12 @@
 
                     {% if can_generate_gpt %}
                         <div class="mb-4" id="gpt-action">
-                            <button class="btn btn-outline-secondary" type="submit" name="action" value="generate">GPTで下書きを作成</button>
+                            <button class="btn btn-outline-secondary" type="submit" name="action" value="generate" id="gpt-generate-button">GPTで下書きを作成</button>
                             <div class="form-text">硬度・化学分析が取り込み済みかどうかだけを材料に下書きを作成します。保存前に内容を確認・編集してください。</div>
+                            <div class="d-flex align-items-center mt-2 d-none" id="gpt-loading-indicator" role="status" aria-live="polite">
+                                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                                <span class="small">GPTで下書きを作成しています…</span>
+                            </div>
                         </div>
                     {% endif %}
 
@@ -70,6 +74,8 @@
             const templateField = document.getElementById('template-field');
             const commentField = document.getElementById('comment-field');
             const gptAction = document.getElementById('gpt-action');
+            const form = document.getElementById('land-review-form');
+            const gptLoadingIndicator = document.getElementById('gpt-loading-indicator');
             const updateVisibility = () => {
                 const source = document.querySelector('input[name="source"]:checked')?.value;
                 templateField.hidden = source !== 'template';
@@ -78,6 +84,16 @@
             };
             sourceInputs.forEach((input) => input.addEventListener('change', updateVisibility));
             updateVisibility();
+
+            form?.addEventListener('submit', (event) => {
+                if (event.submitter?.value !== 'generate') return;
+
+                const button = event.submitter;
+                button.disabled = true;
+                button.setAttribute('aria-busy', 'true');
+                button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>生成中…';
+                gptLoadingIndicator?.classList.remove('d-none');
+            });
         })();
     </script>
 {% endblock %}
