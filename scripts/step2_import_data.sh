@@ -119,7 +119,7 @@ python manage.py loaddata soil_analysis/fixtures/device.json
 # --- Taxonomy ---
 python manage.py seed_taxonomy_data
 
-# --- Hospital / AI Agent ---
+# --- Hospital ---
 python manage.py loaddata \
     hospital/fixtures/user.json \
     hospital/fixtures/ward.json \
@@ -127,11 +127,6 @@ python manage.py loaddata \
     hospital/fixtures/election.json \
     hospital/fixtures/userattribute.json \
     hospital/fixtures/voteplace.json
-
-python manage.py loaddata \
-    ai_agent/fixtures/entity.json \
-    ai_agent/fixtures/guardrail_config.json \
-    ai_agent/fixtures/rag_material.json
 
 # --- USA Research ---
 python manage.py loaddata usa_research/fixtures/financial_results.json
