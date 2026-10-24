@@ -297,7 +297,7 @@ class LandReviewForm(forms.Form):
         label="コメントの作成方法",
         choices=(),
         widget=forms.RadioSelect,
-        initial="manual",
+        initial="template",
     )
     template = forms.ModelChoiceField(
         label="定型コメント",
@@ -321,11 +321,11 @@ class LandReviewForm(forms.Form):
     def __init__(self, *args, is_superuser: bool, **kwargs):
         super().__init__(*args, **kwargs)
         choices = [
-            ("manual", "手入力"),
             ("template", "定型コメントから選ぶ"),
         ]
         if is_superuser:
             choices.append(("gpt", "GPTで下書きを作成する"))
+        choices.append(("manual", "手入力"))
         self.fields["source"].choices = choices
         self.fields["template"].queryset = LandReviewTemplate.objects.all()
 

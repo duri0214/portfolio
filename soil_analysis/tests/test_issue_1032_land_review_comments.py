@@ -143,6 +143,7 @@ class LandReviewCommentViewTest(TestCase):
         response = self.client.get(self.edit_url)
         self.assertContains(response, 'id="comment-field"')
         self.assertContains(response, "選んだ本文をそのまま保存します。")
+        self.assertEqual(response.context["form"]["source"].value(), "template")
 
         response = self.client.post(
             self.edit_url,
@@ -213,6 +214,15 @@ class LandReviewCommentViewTest(TestCase):
         self.assertEqual(forbidden.status_code, 403)
 
         self.client.force_login(self.superuser)
+        response = self.client.get(self.edit_url)
+        self.assertEqual(
+            response.context["form"].fields["source"].choices,
+            [
+                ("template", "定型コメントから選ぶ"),
+                ("gpt", "GPTで下書きを作成する"),
+                ("manual", "手入力"),
+            ],
+        )
         with patch(
             "soil_analysis.views.LandReviewCommentGenerationService.generate",
             return_value="GPTが作成した下書きです。",
