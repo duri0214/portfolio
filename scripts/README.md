@@ -87,9 +87,8 @@ Set-Content -Path "scripts\.my.cnf" -Value $content -Encoding ASCII
 .\scripts\step2_import_data.ps1
 ```
 
-- **注**: `auth_user` (ID 1) が存在しない場合、スクリプト実行中に一時停止して作成を促します。
-  多くの Fixture が `user_id: 1` に依存しているため、必ず ID 1 のスーパーユーザーを作成してください。
-  別のターミナルで `python manage.py createsuperuser` を行い、ユーザー作成後に Enter で続行してください。
+- リポジトリ直下の `.venv` があれば自動で使用します。
+- Seeder開始時にID 1のユーザーを確認します。存在しない場合は、別のターミナルで表示された `createsuperuser` コマンドを実行し、ユーザー名・メールアドレス・パスワードを入力してください。
 
 **インポートの順序:**
 
