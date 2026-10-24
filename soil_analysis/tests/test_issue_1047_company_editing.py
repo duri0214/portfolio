@@ -34,6 +34,10 @@ class AgriculturalCompanyUpdateViewTests(TestCase):
         self.assertContains(detail_response, update_url)
         self.assertContains(detail_response, land_create_url, count=1)
         self.assertNotContains(detail_response, "編集（未実装）")
+        self.assertLess(
+            detail_response.content.decode().index(update_url),
+            detail_response.content.decode().index("所属圃場"),
+        )
 
         edit_response = self.client.get(update_url)
         self.assertContains(edit_response, "更新前の農業法人")
