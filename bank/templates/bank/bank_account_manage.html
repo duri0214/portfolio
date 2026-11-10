@@ -92,8 +92,7 @@
                 </form>
                 </div>
                 <div class="tab-pane fade {% if bank_csv_form.is_bound %}show active{% endif %}" id="csv-panel" role="tabpanel" aria-labelledby="csv-tab" tabindex="0">
-                    <div class="d-flex align-items-center justify-content-between gap-3">
-                        <h3 class="mb-0">CSVで登録</h3>
+                    <div class="d-flex justify-content-end mb-3">
                         <a class="btn btn-outline-secondary btn-sm" href="{% url 'bank:bank_account_sample_csv' %}">
                             <i class="bi bi-download"></i> サンプルCSV
                         </a>
