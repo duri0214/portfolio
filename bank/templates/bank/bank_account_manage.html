@@ -21,7 +21,16 @@
 
         <div class="row g-4 mb-4">
             <div class="col-lg-6">
-                <h3>手入力で登録</h3>
+                <ul class="nav nav-tabs mb-3" role="tablist" aria-label="登録方法">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {% if not bank_csv_form.is_bound %}active{% endif %}" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual-panel" type="button" role="tab" aria-controls="manual-panel" aria-selected="{% if bank_csv_form.is_bound %}false{% else %}true{% endif %}">手入力で登録</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {% if bank_csv_form.is_bound %}active{% endif %}" id="csv-tab" data-bs-toggle="tab" data-bs-target="#csv-panel" type="button" role="tab" aria-controls="csv-panel" aria-selected="{% if bank_csv_form.is_bound %}true{% else %}false{% endif %}">CSVで登録</button>
+                    </li>
+                </ul>
+                <div class="tab-content">
+                <div class="tab-pane fade {% if not bank_csv_form.is_bound %}show active{% endif %}" id="manual-panel" role="tabpanel" aria-labelledby="manual-tab" tabindex="0">
                 <form method="post">
                     {% csrf_token %}
                     <input type="hidden" name="form_type" value="bank_account">
@@ -81,14 +90,8 @@
                         <i class="bi bi-plus-circle"></i> 口座登録
                     </button>
                 </form>
-
-                <div class="mt-4">
-                    <div class="d-flex align-items-center justify-content-between gap-3">
-                        <h3 class="mb-0">CSVで登録</h3>
-                        <a class="btn btn-outline-secondary btn-sm" href="{% url 'bank:bank_account_sample_csv' %}">
-                            <i class="bi bi-download"></i> サンプルCSV
-                        </a>
-                    </div>
+                </div>
+                <div class="tab-pane fade {% if bank_csv_form.is_bound %}show active{% endif %}" id="csv-panel" role="tabpanel" aria-labelledby="csv-tab" tabindex="0">
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
                         <input type="hidden" name="form_type" value="bank_account_csv">
@@ -102,10 +105,16 @@
                                 <div class="invalid-feedback d-block">{{ bank_csv_form.file.errors }}</div>
                             {% endif %}
                         </div>
-                        <button class="btn btn-outline-primary" type="submit">
-                            <i class="bi bi-file-earmark-arrow-up"></i> CSV登録
-                        </button>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="btn btn-outline-primary" type="submit">
+                                <i class="bi bi-file-earmark-arrow-up"></i> CSV登録
+                            </button>
+                            <a class="btn btn-outline-secondary" href="{% url 'bank:bank_account_sample_csv' %}">
+                                <i class="bi bi-download"></i> サンプルCSV
+                            </a>
+                        </div>
                     </form>
+                </div>
                 </div>
             </div>
 
