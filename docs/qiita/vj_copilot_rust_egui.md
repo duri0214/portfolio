@@ -38,9 +38,9 @@ https://github.com/duri0214/vj-copilot/tree/1027388098ed9c51080ff5fa62b9f2beab21
 
 ### 準備と素材の生成
 
-Windowsで、Git、Rust stableのMSVCツールチェーン、`ffmpeg` コマンドを用意します。サンプル動画の生成には、FFmpegの `libx264` エンコーダーも必要です。PowerShellで次を確認します。
+Windowsで、Git、Rust stableのMSVCツールチェーン、`ffmpeg` コマンドを用意します。サンプル動画の生成には、FFmpegの `libx264` エンコーダーも必要です。以降のコマンドはすべてPowerShellで実行します。まず、次を確認します。
 
-```powershell:console
+```bash:console
 git --version
 rustc --version
 cargo --version
@@ -49,7 +49,7 @@ ffmpeg -version
 
 次は、`vj-copilot` ディレクトリがまだ存在しない場所で実行する例です。記事の説明と同じ実装を確認できるよう、取得後に対象コミットをチェックアウトします。
 
-```powershell:console
+```bash:console
 git clone https://github.com/duri0214/vj-copilot.git
 Set-Location vj-copilot
 git switch --detach 1027388098ed9c51080ff5fa62b9f2beab212a32
@@ -57,7 +57,7 @@ git switch --detach 1027388098ed9c51080ff5fa62b9f2beab212a32
 
 以降はリポジトリのルートで実行します。付属スクリプトで、8本のサンプルMP4とメタデータを生成します。ForegroundのサンプルPNGはリポジトリに2点同梱されています。
 
-```powershell:console
+```bash:console
 .\scripts\generate-background-metadata.ps1
 ```
 
@@ -71,7 +71,7 @@ https://github.com/duri0214/vj-copilot/blob/1027388098ed9c51080ff5fa62b9f2beab21
 
 入力機器がなくても、次のコマンドで画面と解析を試せます。
 
-```powershell:console
+```bash:console
 cargo run --release -- --demo
 ```
 
