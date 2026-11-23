@@ -20,6 +20,6 @@
 
 既存依存の [pyproj](https://pyproj4.github.io/pyproj/stable/api/transformer.html) と [PROJのUTM投影](https://proj.org/en/stable/operations/projections/utm.html) を用い、WGS84の緯度経度とUTMの相互変換を提供する。PROJは楕円体を指定したUTM投影にも対応するが、旧版の丸めた係数や計算結果と一致することは意味しない。旧モデルの再現や異なる測地基準系間の変換、GEOREFとコンソール画面は対象外とする。
 
-`soil_analysis.domain.service.utm` の `to_utm(longitude, latitude, zone, northern)` は経度・緯度を度で受け、東距・北距をメートルで返す。`from_utm(easting, northing, zone, northern)` は逆順に変換し、経度・緯度を返す。ゾーン（1〜60）と北半球かどうかは呼び出し側が指定する。ゾーンは自動選択せず、座標が指定ゾーンに適合するかも検証しないため、呼び出し側で確認する。UTMの緯度範囲外と非有限値は拒否する。
+`soil_analysis.domain.valueobject.utm` の `GeographicCoordinate` は経度・緯度を度で、`UtmZone` はゾーン番号と北半球かどうかを、`UtmCoordinate` は東距・北距をメートルでゾーンとともに保持する。`soil_analysis.domain.service.utm` の `to_utm(coordinate, zone)` は緯度経度とゾーンからUTM座標を返し、`from_utm(coordinate)` は逆変換する。東距は100,000〜900,000メートル、北距は0〜10,000,000メートルを受け付ける。ゾーン（1〜60）と北半球かどうかは呼び出し側が指定する。ゾーンは自動選択せず、座標が指定ゾーンに適合するかも検証しないため、呼び出し側で確認する。UTMの緯度範囲外と非有限値は拒否する。
 
 旧形式のデータを扱う具体的な要件ができた時点で、測地基準系の特定、代表データによる精度比較、GEOREFや隣接ゾーン変換の必要性を検討する。
