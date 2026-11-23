@@ -28,7 +28,7 @@
 
 ハイライトには、元の録画の先頭からの経過時間も表示します。たとえば `00:10:23.400` と表示されたら、元動画の開始から約10分23秒の場面です。時計の時刻ではありません。詳しく見たい場面があれば、この表示を手がかりに元動画の該当箇所へ戻れます。
 
-![動きのある3つの場面と元動画の経過時間を表示するハイライト動画](https://raw.githubusercontent.com/duri0214/portfolio/master/docs/images/qiita/video_cue_highlight.gif)
+![動きのある3つの場面と元動画の経過時間を表示するハイライト動画](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/ae7bf85e-ede8-4a82-a73e-fa1f99f6fec6.gif)
 
 *VIDEO CUEでサンプルのハイライトを再生し、元動画の経過時間を見ながら動きのある場面を続けて確認する。*
 
@@ -57,7 +57,7 @@
 
 詳細画面では、動きが検出された区間の一覧やタイムラインを選び、その場面へ移動できます。「前」「次」でもイベントを切り替えられます。元動画内の時刻は動きの区間内で表示され、前後の余白では「区間外」と表示されます。
 
-![ハイライト動画、元動画内の時刻、検出イベント一覧を表示したVIDEO CUE画面](https://raw.githubusercontent.com/duri0214/portfolio/master/docs/images/qiita/video_cue_viewer.png)
+![ハイライト動画、元動画内の時刻、検出イベント一覧を表示したVIDEO CUE画面](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/94562/6ece3f0a-069c-48ef-b220-6a7f49bd12a3.png)
 
 *サンプルのイベントを選び、気になる場面と元動画内の時刻を確認する。*
 
